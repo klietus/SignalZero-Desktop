@@ -1,18 +1,11 @@
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { domainService } from "./domainService.js";
-import { agentService } from "./agentService.js";
 import { traceService } from "./traceService.js";
-import { SymbolDef, TraceData } from "../types.js";
-import { loggerService } from "./loggerService.js";
-import { sqliteService } from "./sqliteService.js";
+import { SymbolDef, VectorSearchResult } from "../types.js";
 import { settingsService } from "./settingsService.js";
-import { contextService } from "./contextService.js";
 import { symbolCacheService } from "./symbolCacheService.js";
-import { eventBusService, KernelEventType } from "./eventBusService.js";
-import { documentMeaningService } from "./documentMeaningService.js";
 import { mcpClientService } from "./mcpClientService.js";
 import fs from 'fs';
-import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
@@ -257,20 +250,20 @@ export const createToolExecutor = (contextSessionId?: string) => {
 
     switch (name) {
       case 'find_symbols': {
-        const results = [];
+        const results: VectorSearchResult[] = [];
         for (const q of args.queries) {
           const res = await domainService.search(q.query, q.limit || 10, { metadata_filter: { symbol_domain: q.symbol_domains } });
           results.push(...res);
         }
         if (contextSessionId && results.length > 0) {
             // Minimal mapping for cache
-            await symbolCacheService.batchUpsertSymbols(contextSessionId, results as any);
+            await symbolCacheService.batchUpsertSymbols(contextSessionId, results.map(r => r.metadata));
         }
         return { symbols: results };
       }
 
       case 'load_symbols': {
-        const found = [];
+        const found: SymbolDef[] = [];
         for (const id of args.ids) {
           const s = await domainService.findById(id);
           if (s) found.push(s);

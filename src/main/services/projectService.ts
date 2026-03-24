@@ -1,0 +1,165 @@
+import { domainService } from './domainService.js';
+import { testService } from './testService.js';
+import { agentService } from './agentService.js';
+import { ProjectMeta, ProjectImportStats, SymbolDef } from '../types.js';
+import { eventBusService, KernelEventType } from './eventBusService.js';
+import { lancedbService } from './lancedbService.js';
+import JSZip from 'jszip';
+
+const yieldToEventLoop = () => new Promise(resolve => setTimeout(resolve, 0));
+
+export const projectService = {
+    async getActiveProjectMeta(): Promise<ProjectMeta> {
+        return { name: 'SignalZero Desktop', version: '1.0', created_at: '', updated_at: '', author: 'klietus' };
+    },
+
+    async export(meta: ProjectMeta, systemPrompt: string, mcpPrompt: string): Promise<Uint8Array> {
+        const zip = new JSZip();
+        
+        zip.file('metadata.json', JSON.stringify(meta, null, 2));
+        zip.file('system_prompt.txt', systemPrompt);
+        zip.file('mcp_prompt.txt', mcpPrompt);
+
+        const allDomains = await domainService.listDomains();
+        const globalDomains = allDomains.filter(d => d !== 'user' && d !== 'state');
+        
+        const domainsFolder = zip.folder('domains');
+        for (const d of globalDomains) {
+            const domainMeta = await domainService.getDomain(d);
+            const symbols = await domainService.getSymbols(d);
+            if (domainsFolder) {
+                domainsFolder.file(`${d}.json`, JSON.stringify({ meta: domainMeta, symbols }, null, 2));
+            }
+        }
+
+        const testSets = await testService.listTestSets();
+        if (testSets.length > 0) {
+            zip.file('tests.json', JSON.stringify(testSets, null, 2));
+        }
+
+        const agents = await agentService.listAgents();
+        if (agents.length > 0) {
+            zip.file('agents.json', JSON.stringify(agents, null, 2));
+        }
+
+        return await zip.generateAsync({ type: 'uint8array' });
+    },
+
+    async import(buffer: Buffer): Promise<{ stats: ProjectImportStats, systemPrompt?: string, mcpPrompt?: string }> {
+        const zip = await JSZip.loadAsync(buffer);
+        
+        const emitStatus = (status: string, progress: number) => {
+            eventBusService.emitKernelEvent(KernelEventType.PROJECT_IMPORT_STATUS, { status, progress });
+        };
+
+        emitStatus("Parsing project metadata...", 5);
+        await yieldToEventLoop();
+
+        let meta: ProjectMeta = { name: 'Imported', version: '1.0', created_at: '', updated_at: '', author: '' };
+        if (zip.file('metadata.json')) {
+            const text = await zip.file('metadata.json')?.async('string');
+            if (text) meta = JSON.parse(text);
+        }
+
+        let systemPrompt: string | undefined;
+        if (zip.file('system_prompt.txt')) {
+            systemPrompt = await zip.file('system_prompt.txt')?.async('string');
+        }
+
+        let mcpPrompt: string | undefined;
+        if (zip.file('mcp_prompt.txt')) {
+            mcpPrompt = await zip.file('mcp_prompt.txt')?.async('string');
+        }
+
+        emitStatus("Clearing existing symbolic graph...", 10);
+        await domainService.clearAll();
+        await yieldToEventLoop();
+
+        const domains: Array<{ id: string; name: string; symbolCount: number }> = [];
+        const domainFiles = zip.folder('domains')?.filter((path) => path.endsWith('.json')) || [];
+        const allSymbolsToUpsert: SymbolDef[] = [];
+
+        emitStatus(`Preparing to import ${domainFiles.length} domains...`, 15);
+        
+        for (let i = 0; i < domainFiles.length; i++) {
+            const file = domainFiles[i];
+            const text = await file.async('string');
+            const data = JSON.parse(text);
+            const { meta: dMeta, symbols } = data;
+            
+            await domainService.createDomain(dMeta.id, dMeta);
+            if (Array.isArray(symbols)) {
+                allSymbolsToUpsert.push(...symbols);
+                domains.push({ id: dMeta.id, name: dMeta.name, symbolCount: symbols.length });
+            }
+            
+            const domainProgress = 15 + Math.floor(((i + 1) / domainFiles.length) * 15);
+            emitStatus(`Parsing domain: ${dMeta.id} (${symbols?.length || 0} symbols)`, domainProgress);
+            
+            // Throttle domain parsing
+            if (i % 5 === 0) await yieldToEventLoop();
+        }
+
+        emitStatus(`Establishing relational integrity for ${allSymbolsToUpsert.length} symbols...`, 30);
+        await yieldToEventLoop();
+        await domainService.bulkUpsertSymbols(allSymbolsToUpsert, undefined, true); // skipIndexing=true
+
+        emitStatus(`Vectorizing ${allSymbolsToUpsert.length} symbols (this may take a while)...`, 40);
+        await lancedbService.indexBatch(allSymbolsToUpsert, async (indexed, total) => {
+            const vectorProgress = 40 + Math.floor((indexed / total) * 40);
+            emitStatus(`Vectorizing: ${indexed}/${total} symbols`, vectorProgress);
+            
+            // Explicitly throttle vector indexing
+            await yieldToEventLoop();
+        });
+
+        emitStatus("Restoring test suites...", 85);
+        await yieldToEventLoop();
+        let testCaseCount = 0;
+        if (zip.file('tests.json')) {
+            const text = await zip.file('tests.json')?.async('string');
+            if (text) {
+                const sets = JSON.parse(text);
+                await testService.replaceAllTestSets(sets);
+                testCaseCount = sets.reduce((sum: number, s: any) => sum + (s.tests?.length || 0), 0);
+            }
+        }
+
+        emitStatus("Restoring autonomous agents...", 95);
+        await yieldToEventLoop();
+        let agentCount = 0;
+        const agentsFile = zip.file('agents.json') || zip.file('loops.json');
+        if (agentsFile) {
+            const text = await agentsFile.async('string');
+            if (text) {
+                const agents = JSON.parse(text);
+                if (Array.isArray(agents)) {
+                    for (const agent of agents) {
+                        await agentService.upsertAgent(
+                            agent.id, 
+                            agent.prompt, 
+                            agent.enabled, 
+                            agent.schedule
+                        );
+                    }
+                    agentCount = agents.length;
+                }
+            }
+        }
+
+        emitStatus("Import complete.", 100);
+        await yieldToEventLoop();
+
+        return {
+            stats: {
+                meta,
+                testCaseCount,
+                agentCount,
+                domains,
+                totalSymbols: allSymbolsToUpsert.length
+            },
+            systemPrompt,
+            mcpPrompt
+        };
+    }
+};

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { symbolCacheService } from '../services/symbolCacheService.ts';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { symbolCacheService } from '../services/symbolCacheService.js';
 import { sqliteService } from '../services/sqliteService.js';
 import { SymbolDef } from '../types.js';
 

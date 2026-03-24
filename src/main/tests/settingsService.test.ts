@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { settingsService } from '../services/settingsService.js';
 import { safeStorage } from 'electron';
 import fs from 'fs';

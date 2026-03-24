@@ -3,7 +3,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { domainService } from "./domainService.js";
 import { embedText } from "./embeddingService.js";
 import { settingsService } from "./settingsService.js";
-import { loggerService } from "./loggerService.js";
 
 interface DomainDescriptor {
     id: string;

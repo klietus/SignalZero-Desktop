@@ -1,24 +1,20 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { MessageSquare, Database, Loader2 } from 'lucide-react';
-import { Message, Sender, UserProfile, TraceData, SymbolDef, ProjectMeta, ProjectImportStats, ContextSession, ContextMessage, ContextHistoryGroup } from './types';
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { MessageSquare, Loader2, GitMerge } from 'lucide-react';
+import { Message, Sender, UserProfile, ContextSession, ContextMessage, ProjectMeta } from './types';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { SettingsScreen } from './components/screens/SettingsScreen';
+import { DomainScreen } from './components/screens/DomainScreen';
+import { ProjectScreen } from './components/screens/ProjectScreen';
+import { SymbolForgeScreen } from './components/screens/SymbolForgeScreen';
+import { CinematicView } from './components/screens/CinematicView';
+import { LogsScreen } from './components/screens/LogsScreen';
 import { Header, HeaderProps } from './components/Header';
 import { ContextListPanel } from './components/panels/ContextListPanel';
-// Panels
-import { SymbolDetailPanel } from './components/panels/SymbolDetailPanel';
-import { DomainPanel } from './components/panels/DomainPanel';
-import { TracePanel } from './components/panels/TracePanel';
-// Screens
-import { SymbolDevScreen } from './components/screens/SymbolDevScreen';
-import { SymbolStoreScreen } from './components/screens/SymbolStoreScreen';
-import { TestRunnerScreen } from './components/screens/TestRunnerScreen';
-import { ProjectScreen } from './components/screens/ProjectScreen';
-import { ContextScreen } from './components/screens/ContextScreen';
-import { HelpScreen } from './components/screens/HelpScreen';
-import { AgentsScreen } from './components/screens/AgentsScreen';
-import { CinematicView } from './components/screens/CinematicView';
+import { SetupScreen } from './components/screens/SetupScreen';
+import { TraceVisualizer } from './components/TraceVisualizer';
+import { StatusBar } from './components/StatusBar';
 
 import { ACTIVATION_PROMPT } from './symbolic_system/activation_prompt';
 
@@ -37,16 +33,44 @@ declare global {
       getMetadata: () => Promise<any[]>;
       searchSymbols: (query: string, limit?: number, options?: any) => Promise<any[]>;
       upsertSymbol: (domainId: string, symbol: any) => Promise<any>;
+      getSymbolsByDomain: (domainId: string) => Promise<any[]>;
+      getSymbolById: (id: string) => Promise<any>;
+      deleteSymbol: (domainId: string, symbolId: string) => Promise<boolean>;
+      getSymbolCount: () => Promise<number>;
+      getDomainCount: () => Promise<number>;
       getSettings: () => Promise<any>;
       updateSettings: (settings: any) => Promise<void>;
+      isInitialized: () => Promise<boolean>;
+      listAgents: () => Promise<any[]>;
+      upsertAgent: (id: string, prompt: string, enabled: boolean, schedule?: string) => Promise<any>;
+      deleteAgent: (id: string) => Promise<boolean>;
+      getAgentLogs: (agentId?: string, limit?: number, includeTraces?: boolean) => Promise<any[]>;
+      exportProject: (meta: any) => Promise<any>;
+      importProject: () => Promise<any>;
+      importSampleProject: () => Promise<any>;
+      openMonitor: () => Promise<void>;
       onInferenceChunk: (callback: (chunk: string) => void) => void;
       onInferenceCompleted: (callback: () => void) => void;
+      onTraceLogged: (callback: (trace: any) => void) => void;
+      onKernelEvent: (callback: (type: string, data: any) => void) => () => void;
+      onNavigate: (callback: (view: string) => void) => () => void;
       removeInferenceListeners: () => void;
     }
   }
 }
 
-const mapSingleContextMessage = (item: ContextMessage): Message => {
+const mapToolCalls = (item: ContextMessage) => {
+    if (!item || !item.toolCalls) return [];
+    return item.toolCalls.map((tc: any, tcIdx: number) => {
+        let args = {};
+        try { args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : (tc.arguments || {}); }
+        catch (e) { args = { parseError: true, raw: tc.arguments }; }
+        return { id: tc.id || `${item.timestamp || Date.now()}-${tcIdx}`, name: tc.name || item.toolName || 'tool', args, result: item.role === 'tool' ? item.content : undefined };
+    });
+};
+
+const mapSingleMessage = (item: ContextMessage): Message => {
+    if (!item) return { id: 'err', role: Sender.SYSTEM, content: 'Invalid Message', timestamp: new Date() };
     const roleStr = (item.role || 'system').toLowerCase();
     const roleMap: Record<string, Sender> = {
         user: Sender.USER,
@@ -55,87 +79,178 @@ const mapSingleContextMessage = (item: ContextMessage): Message => {
         system: Sender.SYSTEM,
         tool: Sender.MODEL
     };
-    const role = roleMap[roleStr] || Sender.SYSTEM;
     
-    const toolCalls = item.toolCalls?.map((tc: any, tcIdx: number) => {
-        let args = {};
-        try {
-            args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : (tc.arguments || {});
-        } catch (e) {
-            args = { parseError: true, raw: tc.arguments };
-        }
-        return {
-            id: tc.id || `${item.timestamp}-${tcIdx}`,
-            name: tc.name || item.toolName || 'tool',
-            args
-        };
-    });
-
     return {
-        id: item.id || `${item.timestamp}`,
-        role,
+        id: item.id || `${item.timestamp || Date.now()}`,
+        role: roleMap[roleStr] || Sender.SYSTEM,
         content: item.content || '',
-        timestamp: new Date(item.timestamp),
-        toolCalls,
+        timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
+        toolCalls: mapToolCalls(item),
         correlationId: item.correlationId,
-        toolCallId: item.toolCallId,
         metadata: item.metadata
     };
+};
+
+const groupHistoryByCorrelation = (history: ContextMessage[]): Message[] => {
+    if (!Array.isArray(history)) return [];
+    
+    const grouped: Message[] = [];
+    const groups = new Map<string, Message>();
+
+    for (const item of history) {
+        if (!item || item.role === 'system') continue;
+
+        if (item.role === 'user') {
+            grouped.push(mapSingleMessage(item));
+            continue;
+        }
+
+        const corrId = item.correlationId || item.id || `${item.timestamp || Date.now()}`;
+        let existing = groups.get(corrId);
+
+        if (!existing) {
+            existing = mapSingleMessage(item);
+            groups.set(corrId, existing);
+            grouped.push(existing);
+        } else {
+            if (item.role === 'assistant' || item.role === 'model') {
+                existing.content += item.content || '';
+                if (item.toolCalls) {
+                    existing.toolCalls = [...(existing.toolCalls || []), ...mapToolCalls(item)];
+                }
+            } else if (item.role === 'tool') {
+                const toolCallId = item.toolCallId;
+                if (toolCallId && existing.toolCalls) {
+                    const tc = existing.toolCalls.find((t: any) => t.id === toolCallId);
+                    if (tc) tc.result = item.content;
+                    else existing.toolCalls.push(...mapToolCalls(item));
+                }
+            }
+        }
+    }
+
+    return grouped;
 };
 
 function App() {
   const defaultUser: UserProfile = { name: "Desktop User", email: "local@signalzero.desktop", picture: "" };
   
-  // State
+  const [appState, setAppState] = useState<'checking' | 'setup' | 'app'>('checking');
   const [activeContextId, setActiveContextId] = useState<string | null>(null);
   const [contexts, setContexts] = useState<ContextSession[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const [user, setUser] = useState<UserProfile>(defaultUser);
-  const [currentView, setCurrentView] = useState<'context' | 'chat' | 'dev' | 'store' | 'test' | 'project' | 'help' | 'agents' | 'settings' | 'monitor'>('chat');
+  const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor'>('chat');
   
-  const [activeSystemPrompt, setActiveSystemPrompt] = useState<string>(ACTIVATION_PROMPT);
-  const [selectedSymbolId, setSelectedSymbolId] = useState<string | null>(null);
-  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
-  const [traceLog, setTraceLog] = useState<TraceData[]>([]);
   const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);
-  const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
+  const [activeTraces, setActiveTraces] = useState<any[]>([]);
 
-  // Resize Sidebar
-  const [sidebarWidth, setSidebarWidth] = useState(256);
-  const [isResizing, setIsResizing] = useState(false);
+  // Status Bar State
+  const [modelName, setModelName] = useState('');
+  const [symbolCount, setSymbolCount] = useState(0);
+  const [domainCount, setDomainCount] = useState(0);
+  const [cacheSize, setCacheSize] = useState(0);
+  const [lastRequestTokens, setLastRequestTokens] = useState<number>(0);
 
-  // Initial Load
-  useEffect(() => {
-    window.api.listContexts().then(list => {
-        const active = list.filter(c => c.status === 'open');
-        setContexts(active);
-        if (active.length > 0 && !activeContextId) {
-            setActiveContextId(active[0].id);
-        }
-    });
+  // Project Info
+  const [projectMeta, setProjectMeta] = useState<ProjectMeta>({ name: 'SignalZero Desktop', version: '1.0', author: 'klietus', created_at: '', updated_at: '' });
+  const [systemPrompt, setSystemPrompt] = useState(ACTIVATION_PROMPT);
+  const [mcpPrompt, setMcpPrompt] = useState("");
+
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const isResizing = useRef(false);
+
+  const startResizing = useCallback(() => {
+    isResizing.current = true;
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', stopResizing);
+    document.body.style.cursor = 'col-resize';
   }, []);
 
-  // History Sync
-  useEffect(() => {
-    if (activeContextId) {
-        window.api.getHistory(activeContextId).then(history => {
-            setMessages(history.map(mapSingleContextMessage));
-        });
-    } else {
-        setMessages([]);
-    }
-  }, [activeContextId]);
+  const stopResizing = useCallback(() => {
+    isResizing.current = false;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', stopResizing);
+    document.body.style.cursor = 'default';
+  }, []);
 
-  // Streaming Listener
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing.current) return;
+    const newWidth = e.clientX;
+    if (newWidth > 150 && newWidth < 600) {
+      setSidebarWidth(newWidth);
+    }
+  }, []);
+
+  const refreshSystemStats = async () => {
+      try {
+          const [sCount, dCount] = await Promise.all([
+              window.api.getSymbolCount(),
+              window.api.getDomainCount()
+          ]);
+          setSymbolCount(sCount || 0);
+          setDomainCount(dCount || 0);
+      } catch (e) {}
+  };
+
   useEffect(() => {
+    const checkInit = async () => {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('view') === 'monitor') { 
+                setCurrentView('monitor'); 
+                setAppState('app'); 
+                return; 
+            }
+
+            const initialized = await window.api.isInitialized();
+            if (initialized) {
+                const [list, settings] = await Promise.all([
+                    window.api.listContexts(),
+                    window.api.getSettings()
+                ]);
+                
+                const active = Array.isArray(list) ? list.filter(c => c.status === 'open') : [];
+                setContexts(active);
+                if (active.length > 0 && !activeContextId) setActiveContextId(active[0].id);
+
+                if (settings?.inference?.systemPrompt) setSystemPrompt(settings.inference.systemPrompt);
+                if (settings?.inference?.mcpPrompt) setMcpPrompt(settings.inference.mcpPrompt);
+                if (settings?.inference?.model) setModelName(settings.inference.model);
+                
+                setAppState('app');
+                refreshSystemStats();
+            } else {
+                setAppState('setup');
+            }
+        } catch (e) {
+            console.error("Init check failed", e);
+            setAppState('setup');
+        }
+    };
+    checkInit();
+  }, []);
+
+  useEffect(() => {
+    if (appState !== 'app' || !activeContextId || currentView === 'monitor') {
+        setMessages([]);
+        return;
+    }
+    window.api.getHistory(activeContextId).then(history => {
+        if (history) setMessages(groupHistoryByCorrelation(history));
+    }).catch(e => console.error("History fetch failed", e));
+  }, [activeContextId, appState, currentView]);
+
+  useEffect(() => {
+    if (appState !== 'app') return;
+    
     window.api.onInferenceChunk((text) => {
         setMessages(prev => {
             const last = prev[prev.length - 1];
-            if (last && last.role === Sender.MODEL) {
+            if (last && last.role === Sender.MODEL && last.isStreaming) {
                 const updated = [...prev];
-                updated[updated.length - 1] = { ...last, content: last.content + text, isStreaming: true };
+                updated[updated.length - 1] = { ...last, content: last.content + text };
                 return updated;
             } else {
                 return [...prev, {
@@ -151,32 +266,51 @@ function App() {
 
     window.api.onInferenceCompleted(() => {
         setIsProcessing(false);
-        // Refresh history to get final tool calls and formatted response
         if (activeContextId) {
             window.api.getHistory(activeContextId).then(history => {
-                setMessages(history.map(mapSingleContextMessage));
+                if (history) {
+                    const grouped = groupHistoryByCorrelation(history);
+                    setMessages(grouped);
+                    
+                    const lastGroup = grouped[grouped.length - 1];
+                    if (lastGroup && lastGroup.role === Sender.MODEL) {
+                        const text = lastGroup.content || '';
+                        const toolText = JSON.stringify(lastGroup.toolCalls || '');
+                        setLastRequestTokens(Math.floor((text.length + toolText.length) / 3.5));
+                    }
+                }
             });
+        }
+        refreshSystemStats();
+    });
+
+    window.api.onTraceLogged((trace) => {
+        setActiveTraces(prev => [trace, ...prev].slice(0, 50));
+    });
+
+    window.api.onKernelEvent((type, data) => {
+        if (type === 'cache:load') {
+            setCacheSize(data.symbolIds?.length || 0);
         }
     });
 
-    return () => window.api.removeInferenceListeners();
-  }, [activeContextId]);
+    const removeNavListener = window.api.onNavigate((view: any) => {
+        if (view) setCurrentView(view);
+    });
+
+    return () => {
+        window.api.removeInferenceListeners();
+        if (typeof removeNavListener === 'function') removeNavListener();
+    };
+  }, [activeContextId, appState]);
 
   const handleSendMessage = async (text: string) => {
       if (!activeContextId || isProcessing) return;
-
       setIsProcessing(true);
-      // Optimistic user message
-      const userMsg: Message = {
-          id: 'temp-' + Date.now(),
-          role: Sender.USER,
-          content: text,
-          timestamp: new Date()
-      };
+      const userMsg: Message = { id: 'temp-' + Date.now(), role: Sender.USER, content: text, timestamp: new Date() };
       setMessages(prev => [...prev, userMsg]);
-
       try {
-          await window.api.sendMessage(activeContextId, text, activeSystemPrompt);
+          await window.api.sendMessage(activeContextId, text, systemPrompt);
       } catch (e) {
           setIsProcessing(false);
           console.error(e);
@@ -185,57 +319,152 @@ function App() {
 
   const handleCreateContext = async () => {
       const session = await window.api.createContext('conversation');
-      setContexts(prev => [session, ...prev]);
-      setActiveContextId(session.id);
+      if (session) {
+          setContexts(prev => [session, ...prev]);
+          setActiveContextId(session.id);
+          setCurrentView('chat');
+      }
   };
 
   const handleArchiveContext = async (id: string) => {
-      await window.api.deleteContext(id);
-      setContexts(prev => prev.filter(c => c.id !== id));
-      if (activeContextId === id) setActiveContextId(null);
+      const success = await window.api.deleteContext(id);
+      if (success) {
+          setContexts(prev => prev.filter(c => c.id !== id));
+          if (activeContextId === id) setActiveContextId(null);
+      }
   };
 
-  const getHeaderProps = (title: string, icon?: React.ReactNode): Omit<HeaderProps, 'children'> => ({
-      title, icon, currentView, onNavigate: setCurrentView,
+  const getHeaderProps = (title: string, icon?: React.ReactNode): HeaderProps => ({
+      title, icon, currentView, 
+      onNavigate: (v) => setCurrentView(v),
       onToggleTrace: () => setIsTracePanelOpen(prev => !prev),
       isTraceOpen: isTracePanelOpen,
-      onOpenSettings: () => setCurrentView('settings'),
-      onNavigateToUsers: () => setCurrentView('settings'),
-      onMonitor: () => {},
-      onLogout: () => {},
-      projectName: 'SignalZero Desktop',
-      userRole: 'admin',
-      userName: 'Desktop User'
+      onMonitor: () => window.api.openMonitor(),
+      projectName: projectMeta.name
   });
 
-  const activeContext = useMemo(() => contexts.find(c => c.id === activeContextId), [activeContextId, contexts]);
+  const renderCurrentView = () => {
+      if (currentView === 'monitor') return <CinematicView />;
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 font-sans text-gray-900 dark:text-gray-100">
-        {currentView === 'chat' && (
-            <ContextListPanel 
-                contexts={contexts} activeContextId={activeContextId}
-                onSelectContext={setActiveContextId} onCreateContext={handleCreateContext}
-                onArchiveContext={handleArchiveContext} width={sidebarWidth}
-            />
-        )}
-
-        <div className="flex-1 flex flex-col min-w-0">
-            {currentView === 'settings' ? (
-                <SettingsScreen headerProps={getHeaderProps('Settings')} user={user} onLogout={() => {}} />
-            ) : (
+      switch(currentView) {
+          case 'chat':
+              return (
                 <div className="flex flex-col h-full relative">
-                    <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-500" />)} />
-                    
-                    <div className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth">
-                        <div className="max-w-full mx-auto space-y-6 pb-4">
-                            {messages.map((msg) => (
-                                <ChatMessage key={msg.id} message={msg} onSymbolClick={() => {}} />
-                            ))}
+                    <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
+                    <div className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/50">
+                        <div className="w-full max-w-7xl mx-auto space-y-10 pb-12">
+                            {messages.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center">
+                                    <MessageSquare size={64} className="mb-4 mx-auto" />
+                                    <p className="text-xl font-light tracking-widest uppercase">SignalZero Kernel</p>
+                                    <p className="text-sm mt-2 font-mono">Ready for symbolic execution</p>
+                                </div>
+                            ) : (
+                                messages.map((msg) => (
+                                    <ChatMessage key={msg.id} message={msg} onSymbolClick={() => setCurrentView('dev')} onTraceClick={() => setIsTracePanelOpen(true)} />
+                                ))
+                            )}
                         </div>
                     </div>
-                    
-                    <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
+                    <div className="p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent">
+                        <div className="w-full max-w-7xl mx-auto">
+                            <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
+                        </div>
+                    </div>
+                    <StatusBar 
+                        modelName={modelName} isBusy={isProcessing} 
+                        symbolCount={symbolCount} domainCount={domainCount} 
+                        cacheSize={cacheSize} 
+                        lastRequestTokens={lastRequestTokens}
+                    />
+                </div>
+              );
+          case 'settings':
+              return <SettingsScreen headerProps={getHeaderProps('Settings')} user={defaultUser} onLogout={() => {}} />;
+          case 'store':
+              return <DomainScreen headerProps={getHeaderProps('Domains')} onNavigateToForge={() => setCurrentView('dev')} />;
+          case 'project':
+              return (
+                <ProjectScreen 
+                    headerProps={getHeaderProps('Project')} 
+                    projectMeta={projectMeta} setProjectMeta={setProjectMeta}
+                    systemPrompt={systemPrompt} onSystemPromptChange={setSystemPrompt}
+                    mcpPrompt={mcpPrompt} onMcpPromptChange={setMcpPrompt}
+                    onNewProject={async () => {
+                        const list = await window.api.listContexts();
+                        setContexts(Array.isArray(list) ? list.filter(c => c.status === 'open') : []);
+                        refreshSystemStats();
+                    }}
+                />
+              );
+          case 'dev':
+              return <SymbolForgeScreen headerProps={getHeaderProps('Symbol Forge')} />;
+          case 'logs':
+              return <LogsScreen headerProps={getHeaderProps('System Logs')} />;
+          default:
+              return <div className="flex-1 flex items-center justify-center text-gray-500 font-mono uppercase tracking-[0.3em]">Module_Loading: {currentView}</div>;
+      }
+  };
+
+  if (appState === 'checking') {
+      return (
+          <div className="h-screen w-full flex items-center justify-center bg-gray-950">
+              <Loader2 className="animate-spin text-indigo-500" size={32} />
+          </div>
+      );
+  }
+
+  if (appState === 'setup') {
+      return (
+          <SetupScreen onComplete={() => {
+                setAppState('app');
+                window.api.listContexts().then(list => setContexts(Array.isArray(list) ? list.filter(c => c.status === 'open') : []));
+                refreshSystemStats();
+            }} 
+          />
+      );
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-gray-950 font-sans text-gray-100 selection:bg-indigo-500/30">
+        {currentView !== 'monitor' && (
+            <>
+                <ContextListPanel 
+                    contexts={contexts} activeContextId={activeContextId}
+                    onSelectContext={setActiveContextId} onCreateContext={handleCreateContext}
+                    onArchiveContext={handleArchiveContext} width={sidebarWidth}
+                />
+                <div 
+                    className="w-1 hover:w-1.5 bg-transparent hover:bg-indigo-500/30 cursor-col-resize transition-all z-50 flex-shrink-0"
+                    onMouseDown={startResizing}
+                />
+            </>
+        )}
+
+        <div className="flex-1 flex flex-col min-w-0 bg-gray-950 relative">
+            {renderCurrentView()}
+
+            {/* Popout Trace Panel Overlay */}
+            {isTracePanelOpen && (
+                <div className="absolute inset-y-0 right-0 w-[500px] bg-gray-900 border-l border-gray-800 shadow-2xl z-[100] flex flex-col transition-all animate-in slide-in-from-right">
+                    <div className="h-14 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-950/50">
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-amber-500 flex items-center gap-2">
+                            <GitMerge size={14} /> Reasoning_Graph
+                        </h3>
+                        <button onClick={() => setIsTracePanelOpen(false)} className="text-gray-500 hover:text-white uppercase text-[10px] font-mono">Close</button>
+                    </div>
+                    <div className="flex-1 overflow-hidden p-4 overflow-y-auto">
+                        {activeTraces.length > 0 ? (
+                            <TraceVisualizer 
+                                trace={activeTraces[0]} 
+                                onSymbolClick={() => { setCurrentView('dev'); setIsTracePanelOpen(false); }}
+                            />
+                        ) : (
+                            <div className="h-full flex-1 flex items-center justify-center text-gray-700 font-mono text-[10px] uppercase tracking-widest">
+                                No_Active_Traces
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

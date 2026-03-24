@@ -1,6 +1,6 @@
 
 
-import { FunctionDeclaration } from "@google/genai";
+import { FunctionDeclaration } from "@google/generative-ai";
 
 export enum Sender {
   USER = 'user',

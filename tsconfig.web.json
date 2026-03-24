@@ -3,7 +3,7 @@
   "include": ["src/renderer/src/**/*", "src/preload/**/*"],
   "compilerOptions": {
     "composite": true,
-    "jsx": "react-hot-loader",
+    "jsx": "react-jsx",
     "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {

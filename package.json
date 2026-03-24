@@ -24,22 +24,28 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
-    "better-sqlite3": "^11.0.0",
-    "lucide-react": "^0.372.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@lancedb/lancedb": "^0.27.1",
-    "openai": "^4.40.0",
-    "@xenova/transformers": "^2.17.1",
     "@google/generative-ai": "^0.24.1",
+    "@lancedb/lancedb": "^0.27.1",
     "@mozilla/readability": "^0.6.0",
+    "@xenova/transformers": "^2.17.1",
+    "3d-force-graph": "^1.73.0",
+    "better-sqlite3": "^11.0.0",
     "cron-parser": "^5.4.0",
     "js-tiktoken": "^1.0.21",
     "jsdom": "^27.0.1",
     "jszip": "^3.10.1",
+    "lucide-react": "^0.372.0",
+    "openai": "^4.40.0",
     "p-limit": "^7.2.0",
     "pdf-parse": "^1.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "rss-parser": "^3.13.0",
+    "three": "^0.163.0",
+    "three-spritetext": "^1.9.1",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
@@ -61,5 +67,24 @@
     "typescript": "^5.4.5",
     "vite": "^5.2.8",
     "vitest": "^1.5.0"
+  },
+  "build": {
+    "appId": "com.signalzero.desktop",
+    "productName": "SignalZero Desktop",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "mac": {
+      "icon": "resources/cognitav.jpg"
+    },
+    "win": {
+      "icon": "resources/cognitav.jpg"
+    },
+    "linux": {
+      "icon": "resources/cognitav.jpg"
+    }
   }
 }

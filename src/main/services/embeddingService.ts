@@ -1,11 +1,13 @@
-import { pipeline, env } from '@xenova/transformers';
 
 let embeddingPipelinePromise: Promise<any> | null = null;
 
 async function getEmbeddingPipeline() {
     if (!embeddingPipelinePromise) {
-        env.allowLocalModels = true;
-        embeddingPipelinePromise = pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        embeddingPipelinePromise = (async () => {
+            const { pipeline, env } = await import('@xenova/transformers');
+            env.allowLocalModels = true;
+            return pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        })();
     }
     return embeddingPipelinePromise;
 }

@@ -1,5 +1,3 @@
-import { sqliteService } from './sqliteService.js';
-import { loggerService } from './loggerService.js';
 import { SymbolDef } from '../types.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 
@@ -9,32 +7,47 @@ export interface CacheEntry {
     lastUsed: number;
 }
 
+/**
+ * SymbolCacheService (In-Process ADT)
+ * 
+ * Manages the "working set" of symbols for active context sessions.
+ * Symbols in the cache are part of the DYNAMIC_SYMBOLS block in the context window.
+ * 
+ * Logic:
+ * - Symbols stay in cache for MAX_TURNS (default 5).
+ * - Mature symbols (turnCount > 3) are stable.
+ * - New symbols (turnCount <= 3) are volatile.
+ * - Cache is purely in-memory (in-process) for the desktop app.
+ */
 export class SymbolCacheService {
-    private readonly CACHE_PREFIX = 'sz:symbol_cache:';
     private readonly MAX_TURNS = 5;
+    
+    // Map of Session ID -> Map of Symbol ID -> CacheEntry
+    private sessionCaches: Map<string, Map<string, CacheEntry>> = new Map();
 
-    private getCacheKey(sessionId: string): string {
-        return `${this.CACHE_PREFIX}${sessionId}`;
+    private getOrCreateSessionCache(sessionId: string): Map<string, CacheEntry> {
+        let cache = this.sessionCaches.get(sessionId);
+        if (!cache) {
+            cache = new Map<string, CacheEntry>();
+            this.sessionCaches.set(sessionId, cache);
+        }
+        return cache;
     }
 
     async getSymbols(sessionId: string): Promise<SymbolDef[]> {
-        const key = this.getCacheKey(sessionId);
-        const data = await sqliteService.request(['GET', key]);
-        if (!data) return [];
+        const cache = this.sessionCaches.get(sessionId);
+        if (!cache) return [];
 
-        const cache: Record<string, CacheEntry> = JSON.parse(data);
-        const entries = Object.values(cache);
+        const entries = Array.from(cache.values());
         entries.sort((a, b) => a.symbol.id.localeCompare(b.symbol.id));
         return entries.map(e => e.symbol);
     }
 
     async getPartitionedSymbols(sessionId: string): Promise<{ mature: SymbolDef[], newSymbols: SymbolDef[] }> {
-        const key = this.getCacheKey(sessionId);
-        const data = await sqliteService.request(['GET', key]);
-        if (!data) return { mature: [], newSymbols: [] };
+        const cache = this.sessionCaches.get(sessionId);
+        if (!cache) return { mature: [], newSymbols: [] };
 
-        const cache: Record<string, CacheEntry> = JSON.parse(data);
-        const entries = Object.values(cache);
+        const entries = Array.from(cache.values());
 
         const matureEntries = entries.filter(e => e.turnCount > 3);
         const newEntries = entries.filter(e => e.turnCount <= 3);
@@ -50,53 +63,44 @@ export class SymbolCacheService {
 
     async upsertSymbol(sessionId: string, symbol: SymbolDef): Promise<void> {
         if (!sessionId) return;
-        const key = this.getCacheKey(sessionId);
-        const data = await sqliteService.request(['GET', key]);
-        const cache: Record<string, CacheEntry> = data ? JSON.parse(data) : {};
+        const cache = this.getOrCreateSessionCache(sessionId);
 
-        cache[symbol.id] = {
+        cache.set(symbol.id, {
             symbol,
             turnCount: 0,
             lastUsed: Date.now()
-        };
-
-        await sqliteService.request(['SET', key, JSON.stringify(cache)]);
+        });
     }
 
     async batchUpsertSymbols(sessionId: string, symbols: SymbolDef[], initialTurnCount: number = 0): Promise<void> {
         if (!sessionId || symbols.length === 0) return;
 
-        const key = this.getCacheKey(sessionId);
-        const data = await sqliteService.request(['GET', key]);
-        const cache: Record<string, CacheEntry> = data ? JSON.parse(data) : {};
-
+        const cache = this.getOrCreateSessionCache(sessionId);
         const now = Date.now();
+
         for (const symbol of symbols) {
-            if (cache[symbol.id]) {
-                cache[symbol.id] = {
-                    ...cache[symbol.id],
+            const existing = cache.get(symbol.id);
+            if (existing) {
+                cache.set(symbol.id, {
+                    ...existing,
                     symbol,
                     lastUsed: now
-                };
+                });
             } else {
-                cache[symbol.id] = {
+                cache.set(symbol.id, {
                     symbol,
                     turnCount: initialTurnCount,
                     lastUsed: now
-                };
+                });
             }
         }
-
-        await sqliteService.request(['SET', key, JSON.stringify(cache)]);
     }
 
     async emitCacheLoad(sessionId: string): Promise<void> {
-        const key = this.getCacheKey(sessionId);
-        const data = await sqliteService.request(['GET', key]);
-        if (!data) return;
+        const cache = this.sessionCaches.get(sessionId);
+        if (!cache) return;
 
-        const cache: Record<string, CacheEntry> = JSON.parse(data);
-        const entries = Object.values(cache);
+        const entries = Array.from(cache.values());
 
         entries.sort((a, b) => {
             if (a.turnCount !== b.turnCount) return a.turnCount - b.turnCount;
@@ -113,47 +117,31 @@ export class SymbolCacheService {
 
     async touchSymbol(sessionId: string, symbolId: string): Promise<void> {
         if (!sessionId) return;
-        const key = this.getCacheKey(sessionId);
-        const data = await sqliteService.request(['GET', key]);
-        if (!data) return;
+        const cache = this.sessionCaches.get(sessionId);
+        if (!cache) return;
 
-        const cache: Record<string, CacheEntry> = JSON.parse(data);
-        if (cache[symbolId]) {
-            cache[symbolId].turnCount = 0;
-            cache[symbolId].lastUsed = Date.now();
-            await sqliteService.request(['SET', key, JSON.stringify(cache)]);
+        const entry = cache.get(symbolId);
+        if (entry) {
+            entry.turnCount = 0;
+            entry.lastUsed = Date.now();
         }
     }
 
     async incrementTurns(sessionId: string): Promise<void> {
         if (!sessionId) return;
-        const key = this.getCacheKey(sessionId);
-        const data = await sqliteService.request(['GET', key]);
-        if (!data) return;
+        const cache = this.sessionCaches.get(sessionId);
+        if (!cache) return;
 
-        const cache: Record<string, CacheEntry> = JSON.parse(data);
-        const newCache: Record<string, CacheEntry> = {};
-        const evictedIds: string[] = [];
-
-        for (const [id, entry] of Object.entries(cache)) {
-            const newTurnCount = entry.turnCount + 1;
-            if (newTurnCount < this.MAX_TURNS) {
-                newCache[id] = { ...entry, turnCount: newTurnCount };
-            } else {
-                evictedIds.push(id);
+        for (const [id, entry] of cache.entries()) {
+            entry.turnCount += 1;
+            if (entry.turnCount >= this.MAX_TURNS) {
+                cache.delete(id);
             }
-        }
-
-        if (Object.keys(newCache).length > 0) {
-            await sqliteService.request(['SET', key, JSON.stringify(newCache)]);
-        } else {
-            await sqliteService.request(['DEL', key]);
         }
     }
 
     async clearCache(sessionId: string): Promise<void> {
-        const key = this.getCacheKey(sessionId);
-        await sqliteService.request(['DEL', key]);
+        this.sessionCaches.delete(sessionId);
     }
 }
 

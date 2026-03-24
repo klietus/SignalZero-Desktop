@@ -1,9 +1,7 @@
-import { SymbolDef, SymbolLink, VectorSearchResult, isUserSpecificDomain } from '../types.js';
+import { SymbolDef, SymbolLink, VectorSearchResult } from '../types.js';
 import { lancedbService } from './lancedbService.js';
 import { sqliteService } from './sqliteService.js';
-import { symbolCacheService } from './symbolCacheService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
-import { loggerService } from './loggerService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
 
 const mapRowToDomain = (row: any): any => ({
@@ -13,13 +11,15 @@ const mapRowToDomain = (row: any): any => ({
     invariants: row.invariants ? JSON.parse(row.invariants) : [],
     enabled: !!row.enabled,
     readOnly: !!row.read_only,
-    lastUpdated: row.last_updated
+    lastUpdated: row.last_updated,
+    symbolCount: row.symbolCount || 0
 });
 
 const mapRowToSymbol = (row: any, links: SymbolLink[] = []): SymbolDef => ({
     id: row.id,
     domain_id: row.domain_id,
     symbol_domain: row.domain_id,
+    symbol_tag: row.symbol_tag || '',
     name: row.name,
     kind: row.kind as any,
     triad: row.triad,
@@ -34,41 +34,55 @@ const mapRowToSymbol = (row: any, links: SymbolLink[] = []): SymbolDef => ({
 });
 
 export const domainService = {
+  // --- Domain Management ---
+
   async init(domainId: string, name: string): Promise<any> {
-    const existing = sqliteService.get(`SELECT * FROM domains WHERE id = ?`, [domainId]);
-    if (existing) return mapRowToDomain(existing);
+    const existing = await this.get(domainId);
+    if (existing) return existing;
 
     let template: any = {};
     if (domainId === 'user') template = USER_DOMAIN_TEMPLATE;
     else if (domainId === 'state') template = STATE_DOMAIN_TEMPLATE;
 
-    sqliteService.run(
-        `INSERT INTO domains (id, name, description, invariants, enabled, read_only) VALUES (?, ?, ?, ?, ?, ?)`,
-        [domainId, template.name || name, template.description || "", JSON.stringify(template.invariants || []), 1, 0]
-    );
+    await this.createDomain(domainId, {
+        name: template.name || name,
+        description: template.description || "",
+        invariants: template.invariants || [],
+        readOnly: template.readOnly || false
+    });
 
     if (template.symbols && template.symbols.length > 0) {
-        for (const sym of template.symbols) {
-            await this.addSymbol(domainId, sym);
-        }
+        await this.bulkUpsertSymbols(template.symbols, domainId);
     }
 
     return this.get(domainId);
   },
 
   async listDomains(): Promise<string[]> {
-    const rows = sqliteService.all(`SELECT id FROM domains`);
+    const rows = sqliteService.all(`SELECT id FROM domains`) as any[];
     return rows.map(r => r.id);
   },
 
   async getMetadata(): Promise<any[]> {
-    const rows = sqliteService.all(`SELECT * FROM domains ORDER BY name ASC`);
+    const rows = sqliteService.all(`
+        SELECT d.*, (SELECT COUNT(*) FROM symbols s WHERE s.domain_id = d.id) as symbolCount 
+        FROM domains d 
+        ORDER BY name ASC
+    `);
     return rows.map(mapRowToDomain);
   },
 
   async get(domainId: string): Promise<any | null> {
-    const row = sqliteService.get(`SELECT * FROM domains WHERE id = ?`, [domainId]);
+    const row = sqliteService.get(`
+        SELECT d.*, (SELECT COUNT(*) FROM symbols s WHERE s.domain_id = d.id) as symbolCount 
+        FROM domains d 
+        WHERE d.id = ?
+    `, [domainId]);
     return row ? mapRowToDomain(row) : null;
+  },
+
+  async getDomain(domainId: string): Promise<any | null> {
+    return this.get(domainId);
   },
 
   async hasDomain(domainId: string): Promise<boolean> {
@@ -78,20 +92,73 @@ export const domainService = {
 
   async createDomain(domainId: string, data: any): Promise<any> {
     sqliteService.run(
-        `INSERT INTO domains (id, name, description, invariants, enabled, read_only) VALUES (?, ?, ?, ?, ?, ?)`,
-        [domainId, data.name || domainId, data.description || "", JSON.stringify(data.invariants || []), 1, 0]
+        `INSERT OR REPLACE INTO domains (id, name, description, invariants, enabled, read_only) VALUES (?, ?, ?, ?, ?, ?)`,
+        [domainId, data.name || domainId, data.description || "", JSON.stringify(data.invariants || []), 1, data.readOnly ? 1 : 0]
     );
     return this.get(domainId);
   },
 
+  async updateDomain(domainId: string, data: Partial<{ name: string; description: string; invariants: string[]; enabled: boolean; readOnly: boolean }>): Promise<any> {
+    const existing = await this.get(domainId);
+    if (!existing) throw new Error(`Domain '${domainId}' not found.`);
+
+    const name = data.name !== undefined ? data.name : existing.name;
+    const description = data.description !== undefined ? data.description : existing.description;
+    const invariants = data.invariants !== undefined ? JSON.stringify(data.invariants) : JSON.stringify(existing.invariants);
+    const enabled = data.enabled !== undefined ? (data.enabled ? 1 : 0) : (existing.enabled ? 1 : 0);
+    const readOnly = data.readOnly !== undefined ? (data.readOnly ? 1 : 0) : (existing.readOnly ? 1 : 0);
+
+    sqliteService.run(
+        `UPDATE domains SET name = ?, description = ?, invariants = ?, enabled = ?, read_only = ?, last_updated = CURRENT_TIMESTAMP WHERE id = ?`,
+        [name, description, invariants, enabled, readOnly, domainId]
+    );
+    return this.get(domainId);
+  },
+
+  async upsertDomain(domainId: string, data: any): Promise<any> {
+    if (await this.hasDomain(domainId)) {
+        return await this.updateDomain(domainId, data);
+    }
+    return await this.createDomain(domainId, data);
+  },
+
+  async deleteDomain(domainId: string): Promise<boolean> {
+    const result = sqliteService.run(`DELETE FROM domains WHERE id = ?`, [domainId]);
+    return result.changes > 0;
+  },
+
+  // --- Symbol Management ---
+
   async addSymbol(domainId: string, symbol: SymbolDef): Promise<SymbolDef> {
+    await this.bulkUpsertSymbols([symbol], domainId);
+    return symbol;
+  },
+
+  async bulkUpsert(domainId: string, symbols: SymbolDef[]): Promise<void> {
+      await this.bulkUpsertSymbols(symbols, domainId);
+  },
+
+  /**
+   * Cross-domain relational bulk upsert.
+   */
+  async bulkUpsertSymbols(symbols: SymbolDef[], defaultDomainId?: string, skipIndexing: boolean = false): Promise<void> {
+    if (symbols.length === 0) return;
+
     const now = new Date().toISOString();
     
+    // Pass 1 & 2: Single heavy transaction for relational integrity
     sqliteService.transaction(() => {
-        sqliteService.run(
-            `INSERT OR REPLACE INTO symbols (id, domain_id, name, kind, triad, role, macro, facets, activation_conditions, failure_mode, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
+        const stmt = sqliteService.db().prepare(`
+            INSERT OR REPLACE INTO symbols (id, domain_id, name, kind, triad, role, macro, facets, activation_conditions, failure_mode, symbol_tag, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        // First pass: symbols
+        for (const symbol of symbols) {
+            const domainId = symbol.symbol_domain || symbol.domain_id || defaultDomainId;
+            if (!domainId) continue;
+
+            stmt.run(
                 symbol.id,
                 domainId,
                 symbol.name,
@@ -102,30 +169,41 @@ export const domainService = {
                 JSON.stringify(symbol.facets || {}),
                 JSON.stringify(symbol.activation_conditions || []),
                 symbol.failure_mode,
+                symbol.symbol_tag || '',
                 now
-            ]
-        );
+            );
+        }
 
-        // Update links
-        sqliteService.run(`DELETE FROM symbol_links WHERE source_id = ?`, [symbol.id]);
-        if (symbol.linked_patterns && symbol.linked_patterns.length > 0) {
-            const insertLink = sqliteService.db().prepare(`INSERT INTO symbol_links (source_id, target_id, link_type, bidirectional) VALUES (?, ?, ?, ?)`);
-            for (const link of symbol.linked_patterns) {
-                insertLink.run(symbol.id, link.id, link.link_type || 'relates_to', link.bidirectional ? 1 : 0);
+        // Second pass: links
+        const deleteLinks = sqliteService.db().prepare(`DELETE FROM symbol_links WHERE source_id = ?`);
+        const insertLink = sqliteService.db().prepare(`INSERT INTO symbol_links (source_id, target_id, link_type, bidirectional) VALUES (?, ?, ?, ?)`);
+
+        for (const symbol of symbols) {
+            deleteLinks.run(symbol.id);
+            if (symbol.linked_patterns && symbol.linked_patterns.length > 0) {
+                for (const link of symbol.linked_patterns) {
+                    const targetId = typeof link === 'string' ? link : link.id;
+                    const linkType = typeof link === 'string' ? 'relates_to' : (link.link_type || 'relates_to');
+                    const bidirectional = typeof link === 'string' ? 0 : (link.bidirectional ? 1 : 0);
+                    try {
+                        insertLink.run(symbol.id, targetId, linkType, bidirectional);
+                    } catch (e) {}
+                }
             }
         }
     })();
 
-    await lancedbService.indexSymbol(symbol);
-    eventBusService.emitKernelEvent(KernelEventType.SYMBOL_UPSERTED, { symbolId: symbol.id, domainId });
-    return symbol;
-  },
+    // Efficient Batch Indexing (Optionally skipped for project imports which handle it separately)
+    if (!skipIndexing) {
+        await lancedbService.indexBatch(symbols);
+    }
 
-  async bulkUpsert(domainId: string, symbols: SymbolDef[]): Promise<void> {
-    const domain = await this.get(domainId);
-    if (!domain) throw new Error(`Domain '${domainId}' not found.`);
+    // Events
     for (const s of symbols) {
-        await this.addSymbol(domainId, s);
+        eventBusService.emitKernelEvent(KernelEventType.SYMBOL_UPSERTED, { 
+            symbolId: s.id, 
+            domainId: s.symbol_domain || s.domain_id || defaultDomainId 
+        });
     }
   },
 
@@ -133,31 +211,100 @@ export const domainService = {
     const row = sqliteService.get(`SELECT * FROM symbols WHERE id = ?`, [id]);
     if (!row) return null;
 
-    const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [id]);
+    const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [id]) as any[];
     return mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional })));
   },
 
+  async deleteSymbol(domainId: string, symbolId: string): Promise<boolean> {
+    const domain = await this.get(domainId);
+    if (domain?.readOnly) throw new Error(`Domain '${domainId}' is read-only.`);
+
+    const result = sqliteService.run(`DELETE FROM symbols WHERE id = ? AND domain_id = ?`, [symbolId, domainId]);
+    if (result.changes > 0) {
+        eventBusService.emitKernelEvent(KernelEventType.SYMBOL_DELETED, { symbolId, domainId });
+        return true;
+    }
+    return false;
+  },
+
   async getSymbols(domainId: string): Promise<SymbolDef[]> {
-    const rows = sqliteService.all(`SELECT * FROM symbols WHERE domain_id = ?`, [domainId]);
+    const rows = sqliteService.all(`SELECT * FROM symbols WHERE domain_id = ?`, [domainId]) as any[];
     const symbols: SymbolDef[] = [];
     for (const row of rows) {
-        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]);
+        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
         symbols.push(mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional }))));
     }
     return symbols;
   },
 
   async getAllSymbols(): Promise<SymbolDef[]> {
-    const rows = sqliteService.all(`SELECT * FROM symbols`);
+    const rows = sqliteService.all(`SELECT * FROM symbols`) as any[];
     const symbols: SymbolDef[] = [];
     for (const row of rows) {
-        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]);
+        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
         symbols.push(mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional }))));
     }
     return symbols;
   },
 
+  async findSymbolsByTags(tags: string[]): Promise<SymbolDef[]> {
+    if (tags.length === 0) return [];
+    const placeholders = tags.map(() => '?').join(',');
+    const rows = sqliteService.all(`SELECT * FROM symbols WHERE symbol_tag IN (${placeholders})`, tags) as any[];
+    const symbols: SymbolDef[] = [];
+    for (const row of rows) {
+        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
+        symbols.push(mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional }))));
+    }
+    return symbols;
+  },
+
+  async getRecentSymbols(limit: number = 50): Promise<SymbolDef[]> {
+    const rows = sqliteService.all(`SELECT * FROM symbols ORDER BY updated_at DESC LIMIT ?`, [limit]) as any[];
+    const symbols: SymbolDef[] = [];
+    for (const row of rows) {
+        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
+        symbols.push(mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional }))));
+    }
+    return symbols;
+  },
+
+  async getSymbolCount(): Promise<number> {
+    const row = sqliteService.get(`SELECT COUNT(*) as count FROM symbols`);
+    return row?.count || 0;
+  },
+
+  async getDomainCount(): Promise<number> {
+    const row = sqliteService.get(`SELECT COUNT(*) as count FROM domains`);
+    return row?.count || 0;
+  },
+
   async search(query: string, limit: number = 10, filter?: any): Promise<VectorSearchResult[]> {
     return await lancedbService.search(query, limit, filter);
+  },
+
+  async clearAll(): Promise<void> {
+    sqliteService.transaction(() => {
+        sqliteService.run(`DELETE FROM symbol_links`);
+        sqliteService.run(`DELETE FROM symbols`);
+        sqliteService.run(`DELETE FROM domains WHERE id NOT IN ('root', 'user', 'state')`);
+    })();
+  },
+
+  // Legacy/Compatibility methods
+  async clearCache(): Promise<void> {
+    // SQLite doesn't need explicit cache clearing in this implementation
+  },
+
+  getDomainKey(domainId: string): string {
+    return `domain:${domainId}`;
+  },
+
+  canAccessDomain(): boolean {
+    return true; // Single user mode
+  },
+
+  ensureWritableDomain(domain: any) {
+    if (domain.readOnly) throw new Error(`Domain is read-only.`);
   }
 };

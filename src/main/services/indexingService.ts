@@ -26,7 +26,7 @@ let queueState: IndexQueueState = {
 
 let lastReindexAt: string | null = null;
 
-async function reindexSymbols(includeDisabled: boolean = false): Promise<ReindexResult> {
+async function reindexSymbols(_includeDisabled: boolean = false): Promise<ReindexResult> {
     if (queueState.running) {
         return { status: 'already-running', queue: { ...queueState }, lastReindexAt };
     }
@@ -34,7 +34,7 @@ async function reindexSymbols(includeDisabled: boolean = false): Promise<Reindex
     queueState = { pending: 0, total: 0, running: true };
 
     try {
-        const symbols = await domainService.getAllSymbols(undefined, includeDisabled);
+        const symbols = await domainService.getAllSymbols();
         queueState.total = symbols.length;
         queueState.pending = symbols.length;
 
@@ -49,7 +49,7 @@ async function reindexSymbols(includeDisabled: boolean = false): Promise<Reindex
             } else {
                 failedIds.push(symbol.id);
                 try {
-                    await domainService.deleteSymbol(symbol.symbol_domain, symbol.id);
+                    await (domainService as any).deleteSymbol(symbol.id);
                 } catch (delErr) {
                     loggerService.error(`Failed to remove failed symbol ${symbol.id}`, { error: delErr });
                 }

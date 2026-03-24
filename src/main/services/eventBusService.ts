@@ -14,7 +14,9 @@ export enum KernelEventType {
     INFERENCE_COMPLETED = 'inference:completed',
     INFERENCE_ERROR = 'inference:error',
     CACHE_LOAD = 'cache:load',
-    AGENT_HEARTBEAT = 'agent:heartbeat'
+    AGENT_HEARTBEAT = 'agent:heartbeat',
+    PROJECT_IMPORT_STATUS = 'project:import-status',
+    SYSTEM_LOG = 'system:log'
 }
 
 class EventBusService extends EventEmitter {

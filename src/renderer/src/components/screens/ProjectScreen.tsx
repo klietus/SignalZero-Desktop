@@ -1,12 +1,10 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Package, Download, Upload, Save, AlertTriangle, FileText, CheckCircle2, Loader2, Plus } from 'lucide-react';
-import { projectService } from '../../services/projectService';
+import React, { useState, useEffect } from 'react';
+import { Package, Download, Upload, Save, AlertTriangle, FileText, Loader2, Plus, CheckCircle2 } from 'lucide-react';
 import { ProjectMeta } from '../../types';
 import { Header, HeaderProps } from '../Header';
 
 interface ProjectScreenProps {
-  // onBack removed as global nav handles it
   headerProps: Omit<HeaderProps, 'children'>;
   projectMeta: ProjectMeta;
   setProjectMeta: (meta: ProjectMeta) => void;
@@ -14,8 +12,6 @@ interface ProjectScreenProps {
   onSystemPromptChange: (newPrompt: string) => void;
   mcpPrompt: string;
   onMcpPromptChange: (newPrompt: string) => void;
-  onClearChat: () => void;
-  onImportProject: (file: File) => Promise<void>;
   onNewProject: () => void;
 }
 
@@ -27,8 +23,6 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
     onSystemPromptChange,
     mcpPrompt,
     onMcpPromptChange,
-    onClearChat,
-    onImportProject,
     onNewProject
 }) => {
   const [promptText, setPromptText] = useState(systemPrompt);
@@ -36,89 +30,76 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
 
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [isSavingMeta, setIsSavingMeta] = useState(false);
+  const [importStatus, setImportStatus] = useState({ message: '', progress: 0 });
   
-  // New Project Modal State
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync local state with prop when it changes (e.g. on navigation or external update)
-  useEffect(() => {
-      setPromptText(systemPrompt);
-  }, [systemPrompt]);
+  useEffect(() => { setPromptText(systemPrompt); }, [systemPrompt]);
+  useEffect(() => { setMcpPromptText(mcpPrompt); }, [mcpPrompt]);
 
   useEffect(() => {
-      setMcpPromptText(mcpPrompt);
-  }, [mcpPrompt]);
+      // Listen for import status events from main process
+      const removeListener = window.api.onKernelEvent((type, data) => {
+          if (type === 'project:import-status') {
+              setImportStatus({ message: data.status, progress: data.progress });
+          }
+      });
+      return () => {
+          if (typeof removeListener === 'function') removeListener();
+      };
+  }, []);
 
-  const handleSavePrompt = () => {
+  const handleSavePrompt = async () => {
+      await window.api.updateSettings({ systemPrompt: promptText, mcpPrompt: mcpPromptText });
       onSystemPromptChange(promptText);
-      alert("System Prompt updated active context.");
-  };
-
-  const handleSaveMcpPrompt = () => {
       onMcpPromptChange(mcpPromptText);
-      alert("MCP Prompt updated.");
   };
 
   const handleExportProject = async () => {
       setIsExporting(true);
       try {
-          const blob = await projectService.export(projectMeta, promptText);
-          
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `${projectMeta.name.toLowerCase().replace(/\s+/g, '-')}.szproject`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-
+          await (window.api as any).exportProject(projectMeta);
       } catch (e) {
           console.error("Export failed", e);
-          alert("Failed to export project: " + String(e));
       } finally {
           setIsExporting(false);
       }
   };
 
-  const handleImportClick = () => {
-      if (fileInputRef.current) {
-          console.log("[ProjectScreen] Triggering file input click");
-          fileInputRef.current.click();
-      } else {
-          console.error("[ProjectScreen] File input ref is null");
+  const handleImportClick = async () => {
+      // DO NOT set isImporting here, wait for file selection result
+      try {
+          const stats = await (window.api as any).importProject();
+          if (stats) {
+              setIsImporting(true); // Trigger overlay ONLY after file selected and processing starts
+              setImportStatus({ message: 'Establishing relational integrity...', progress: 100 });
+              setTimeout(() => {
+                  setIsImporting(false);
+                  onNewProject();
+              }, 1500);
+          }
+      } catch (err) {
+          console.error("Import failed:", err);
+          setIsImporting(false);
       }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      console.log("[ProjectScreen] File input change event triggered");
-      const file = e.target.files?.[0];
-      if (!file) {
-          console.warn("[ProjectScreen] No file selected in input");
-          return;
-      }
-
-      console.log(`[ProjectScreen] File selected: ${file.name} (${file.size} bytes, type: ${file.type})`);
-
-      // NOTE: Removed native confirm() dialog as it was causing issues with cancellation logging in some environments.
-      // Importing is an explicit action via file selector, so we proceed directly.
-      
-      console.log("[ProjectScreen] Starting import process...");
+  const handleLoadSample = async () => {
       setIsImporting(true);
+      setImportStatus({ message: 'Locating sample project...', progress: 0 });
       try {
-          console.log("[ProjectScreen] Calling onImportProject...");
-          await onImportProject(file);
-          console.log("[ProjectScreen] onImportProject returned successfully");
-      } catch (err) {
-          console.error("[ProjectScreen] Import failed in screen:", err);
-          alert(`Import Failed: ${String(err)}`);
-      } finally {
+          const stats = await (window.api as any).importSampleProject();
+          if (stats) {
+              setTimeout(() => {
+                  setIsImporting(false);
+                  onNewProject();
+              }, 1500);
+          } else {
+              setIsImporting(false);
+          }
+      } catch (e) {
+          console.error("Sample load failed", e);
           setIsImporting(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          console.log("[ProjectScreen] Import process cleanup complete");
       }
   };
 
@@ -126,71 +107,18 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
       setProjectMeta({ ...projectMeta, [field]: value });
   };
 
-  const handleSaveMeta = async () => {
-      setIsSavingMeta(true);
-      const updatedMeta = { ...projectMeta, updated_at: new Date().toISOString() };
-      try {
-          const savedMeta = await projectService.updateActive(updatedMeta);
-          setProjectMeta(savedMeta);
-          alert('Project metadata saved.');
-      } catch (e) {
-          console.error('Failed to save project metadata', e);
-          alert('Failed to save project metadata: ' + String(e));
-      } finally {
-          setIsSavingMeta(false);
-      }
-  };
-
-  // --- New Project Handlers ---
-  const handleNewProjectClick = () => {
-      setIsNewProjectModalOpen(true);
-  };
-
-  const confirmNewProject = (shouldExport: boolean) => {
-      if (shouldExport) {
-          handleExportProject().then(() => {
-              onNewProject();
-              setIsNewProjectModalOpen(false);
-          });
-      } else {
-          onNewProject();
-          setIsNewProjectModalOpen(false);
-      }
-  };
-
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-950 font-sans text-gray-800 dark:text-gray-200">
-      {/* Input hidden with style to prevent layout issues but ensure presence */}
-      <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleFileChange} 
-          accept=".szproject,.zip" 
-          style={{ display: 'none' }}
-      />
-
+    <div className="flex flex-col h-full bg-gray-950 font-sans text-gray-200 relative">
       <Header {...headerProps}>
          <div className="flex items-center gap-2">
              <button 
-                onClick={handleNewProjectClick}
+                onClick={() => setIsNewProjectModalOpen(true)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-mono font-bold transition-colors"
              >
                  <Plus size={14} /> New Project
              </button>
              <button
-                onClick={async () => {
-                    if (confirm("This will overwrite your current project. Load Sample?")) {
-                        try {
-                            const res = await fetch('/signalzero_sample.szproject');
-                            if (!res.ok) throw new Error("Sample file not found");
-                            const blob = await res.blob();
-                            const file = new File([blob], "signalzero_sample.szproject", { type: "application/zip" });
-                            await onImportProject(file);
-                        } catch (e) {
-                            alert("Failed to load sample: " + String(e));
-                        }
-                    }
-                }}
+                onClick={handleLoadSample}
                 className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-mono font-bold transition-colors"
              >
                  <Package size={14} /> Load Sample
@@ -198,7 +126,7 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
              <button 
                 onClick={handleImportClick}
                 disabled={isImporting}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md text-xs font-mono font-bold transition-colors border border-gray-200 dark:border-gray-700"
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 hover:bg-gray-800 text-gray-300 rounded-md text-xs font-mono font-bold transition-colors border border-gray-800"
              >
                  {isImporting ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                  Import
@@ -206,7 +134,7 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
              <button 
                 onClick={handleExportProject}
                 disabled={isExporting}
-                className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-xs font-mono font-bold transition-colors shadow-sm"
+                className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-xs font-mono font-bold transition-colors"
              >
                  {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                  Export
@@ -215,146 +143,141 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
       </Header>
 
       <div className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-4xl mx-auto space-y-8">
+          <div className="max-w-5xl mx-auto space-y-8">
               
-              {/* Meta Section */}
-              <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2 mb-4">
-                      <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 font-mono flex items-center gap-2">
-                          <Package size={16} /> Project Metadata
+              <section className="bg-gray-900/40 rounded-2xl p-8 border border-gray-800 shadow-xl space-y-6">
+                  <div className="flex items-center justify-between border-b border-gray-800/50 pb-4 mb-4">
+                      <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 font-mono flex items-center gap-2">
+                          <Package size={16} /> Project_Metadata
                       </h2>
                       <button
-                          onClick={handleSaveMeta}
-                          disabled={isSavingMeta}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-mono font-bold transition-colors disabled:opacity-70"
+                          onClick={() => {}} 
+                          className="flex items-center gap-1.5 px-4 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all"
                       >
-                          {isSavingMeta ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Metadata
+                          <Save size={14} /> Commit Meta
                       </button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-1">
-                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Project Name</label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600 font-mono">Project_Name</label>
                           <input
                               value={projectMeta.name}
                               onChange={(e) => handleChangeMeta('name', e.target.value)}
-                              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                              className="w-full bg-black/40 border border-gray-800 rounded-lg p-3 text-sm text-gray-300 focus:border-indigo-500 transition-colors"
                           />
                       </div>
-                      <div className="space-y-1">
-                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Version</label>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600 font-mono">Version</label>
                           <input 
                               value={projectMeta.version}
                               onChange={(e) => handleChangeMeta('version', e.target.value)}
-                              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                              className="w-full bg-black/40 border border-gray-800 rounded-lg p-3 text-sm text-gray-300 focus:border-indigo-500 transition-colors"
                           />
                       </div>
-                      <div className="space-y-1">
-                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Author</label>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600 font-mono">Author_Handle</label>
                           <input 
                               value={projectMeta.author}
                               onChange={(e) => handleChangeMeta('author', e.target.value)}
-                              className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                              className="w-full bg-black/40 border border-gray-800 rounded-lg p-3 text-sm text-gray-300 focus:border-indigo-500 transition-colors"
                           />
                       </div>
                   </div>
               </section>
 
-              {/* System Prompt Editor */}
-              <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2 mb-4">
-                      <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 font-mono flex items-center gap-2">
-                          <FileText size={16} /> Active System Context
+              <section className="bg-gray-900/40 rounded-2xl p-8 border border-gray-800 shadow-xl space-y-6">
+                  <div className="flex items-center justify-between border-b border-gray-800/50 pb-4 mb-4">
+                      <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 font-mono flex items-center gap-2">
+                          <FileText size={16} /> Activation_Protocol
                       </h2>
                       <button 
                           onClick={handleSavePrompt}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-mono font-bold transition-colors"
+                          className="flex items-center gap-1.5 px-4 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all"
                       >
-                          <Save size={12} /> Apply Changes
+                          <Save size={14} /> Update Kernel
                       </button>
                   </div>
                   
-                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 p-3 rounded-lg text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2 mb-4">
-                      <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                  <div className="bg-amber-900/10 border border-amber-900/30 p-4 rounded-xl text-[11px] text-amber-500/80 flex items-start gap-3 mb-4 font-mono leading-relaxed uppercase tracking-tighter">
+                      <AlertTriangle size={16} className="shrink-0" />
                       <span>
-                          <strong>Kernel Warning:</strong> Modifying the system prompt fundamentally alters the behavior of SignalZero. 
-                          Changes here persist for this project environment.
+                          Kernel_Warning: Modifying the activation protocol fundamentally alters the identity and operational constraints of Axiom. 
+                          Changes are atomic and persistent.
                       </span>
                   </div>
 
                   <textarea 
                       value={promptText}
                       onChange={(e) => setPromptText(e.target.value)}
-                      className="w-full h-96 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded p-4 font-mono text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                      className="w-full h-[500px] bg-black/40 border border-gray-800 rounded-xl p-6 font-mono text-xs leading-relaxed text-gray-400 focus:border-indigo-500 transition-colors resize-none"
                       spellCheck={false}
                   />
               </section>
-
-              {/* MCP Prompt Editor */}
-              <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2 mb-4">
-                      <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400 font-mono flex items-center gap-2">
-                          <FileText size={16} /> MCP Prompt
-                      </h2>
-                      <button 
-                          onClick={handleSaveMcpPrompt}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-mono font-bold transition-colors"
-                      >
-                          <Save size={12} /> Save MCP Prompt
-                      </button>
-                  </div>
-                  
-                  <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 p-3 rounded-lg text-xs text-blue-800 dark:text-blue-200 flex items-start gap-2 mb-4">
-                      <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                      <span>
-                          <strong>MCP Configuration:</strong> This prompt is exposed to the MCP server. 
-                          It will be available to MCP clients as 'project-prompt'.
-                      </span>
-                  </div>
-
-                  <textarea 
-                      value={mcpPromptText}
-                      onChange={(e) => setMcpPromptText(e.target.value)}
-                      className="w-full h-48 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded p-4 font-mono text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
-                      spellCheck={false}
-                      placeholder="Enter MCP prompt here..."
-                  />
-              </section>
-
           </div>
       </div>
 
+      {/* Import Status Overlay */}
+      {isImporting && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
+              <div className="max-w-md w-full space-y-8 text-center">
+                  <div className="relative inline-block">
+                      <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full"></div>
+                      <Package size={64} className="text-indigo-500 animate-pulse relative z-10 mx-auto" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                      <h3 className="text-xl font-light tracking-[0.2em] uppercase text-white">Project_Sync_Active</h3>
+                      <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">{importStatus.message}</p>
+                  </div>
+
+                  <div className="space-y-4">
+                      <div className="h-1 w-full bg-gray-900 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-indigo-500 transition-all duration-500 ease-out"
+                            style={{ width: `${importStatus.progress}%` }}
+                          />
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-mono text-gray-600">
+                          <span>{importStatus.progress}% COMPLETE</span>
+                          <span>STABLE_RECURSION_PENDING</span>
+                      </div>
+                  </div>
+
+                  {importStatus.progress === 100 && (
+                      <div className="flex items-center justify-center gap-2 text-emerald-500 animate-in fade-in zoom-in duration-500">
+                          <CheckCircle2 size={16} />
+                          <span className="text-xs font-bold uppercase tracking-widest">Integrity Verified</span>
+                      </div>
+                  )}
+              </div>
+          </div>
+      )}
+
       {/* New Project Modal */}
       {isNewProjectModalOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-sm w-full p-6 border border-gray-200 dark:border-gray-800">
-                  <h3 className="font-bold font-mono text-gray-900 dark:text-white mb-2 text-lg">Start New Project?</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                      This will reset the current environment. You can export the current project first.
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-8 border border-gray-800">
+                  <h3 className="font-light tracking-[0.2em] uppercase text-gray-100 mb-4 text-center">Reset_Environment?</h3>
+                  <p className="text-xs text-gray-500 text-center mb-8 font-mono leading-relaxed">
+                      Current symbolic graph and activation protocols will be purged.
                   </p>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-3">
                       <button 
-                          onClick={() => confirmNewProject(true)} 
-                          className="w-full py-2 bg-orange-600 hover:bg-orange-700 text-white rounded text-xs font-mono font-bold flex items-center justify-center gap-2"
+                          onClick={() => { window.api.upsertSymbol('root', { id: 'INIT', name: 'Init' }); setIsNewProjectModalOpen(false); }} 
+                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all"
                       >
-                          <Download size={14} /> Export & New
-                      </button>
-                      <button 
-                          onClick={() => confirmNewProject(false)} 
-                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-mono font-bold"
-                      >
-                          Discard & New
+                          Purge & Initialize
                       </button>
                       <button 
                           onClick={() => setIsNewProjectModalOpen(false)} 
-                          className="w-full py-2 border border-gray-300 dark:border-gray-700 rounded text-xs font-mono hover:bg-gray-50 dark:hover:bg-gray-800"
+                          className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all"
                       >
-                          Cancel
+                          Abort
                       </button>
                   </div>
               </div>
           </div>
       )}
-
     </div>
   );
 };

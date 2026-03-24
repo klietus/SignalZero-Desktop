@@ -1,50 +1,66 @@
-import { randomUUID } from 'crypto';
 import { sqliteService } from './sqliteService.js';
-import { loggerService } from './loggerService.js';
+import { loggerService, LogCategory } from './loggerService.js';
 import { AgentDefinition, AgentExecutionLog } from '../types.js';
-
-const AGENT_INDEX_KEY = 'agent:index';
-const agentKey = (id: string) => `agent:payload:${id}`;
-const agentLogsKey = (id: string) => `agent:logs:${id}`;
+import { randomUUID } from 'crypto';
 
 export const agentService = {
     async listAgents(): Promise<AgentDefinition[]> {
-        const ids = await sqliteService.request(['SMEMBERS', AGENT_INDEX_KEY]);
-        if (!ids) return [];
-        const agents = await Promise.all(ids.map(id => this.getAgent(id)));
-        return agents.filter((a): a is AgentDefinition => a !== null);
+        const rows = sqliteService.all(`SELECT * FROM agents ORDER BY id ASC`);
+        return rows.map(r => ({
+            ...r,
+            enabled: !!r.enabled
+        }));
     },
 
     async getAgent(id: string): Promise<AgentDefinition | null> {
-        const payload = await sqliteService.request(['GET', agentKey(id)]);
-        return payload ? JSON.parse(payload) : null;
-    },
-
-    async upsertAgent(id: string, prompt: string, enabled: boolean, schedule?: string): Promise<AgentDefinition> {
-        const existing = await this.getAgent(id);
-        const agent: AgentDefinition = {
-            id,
-            prompt,
-            enabled,
-            schedule,
-            createdAt: existing?.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+        const row = sqliteService.get(`SELECT * FROM agents WHERE id = ?`, [id]);
+        if (!row) return null;
+        return {
+            ...row,
+            enabled: !!row.enabled
         };
-
-        await sqliteService.request(['SET', agentKey(id), JSON.stringify(agent)]);
-        await sqliteService.request(['SADD', AGENT_INDEX_KEY, id]);
-        return agent;
     },
 
-    async deleteAgent(id: string): Promise<boolean> {
-        await sqliteService.request(['DEL', agentKey(id)]);
-        await sqliteService.request(['SREM', AGENT_INDEX_KEY, id]);
-        await sqliteService.request(['DEL', agentLogsKey(id)]);
-        return true;
+    async upsertAgent(id: string, prompt: string, enabled: boolean, schedule?: string): Promise<void> {
+        const now = new Date().toISOString();
+        sqliteService.run(
+            `INSERT OR REPLACE INTO agents (id, prompt, enabled, schedule, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, COALESCE((SELECT created_at FROM agents WHERE id = ?), ?), ?)`,
+            [id, prompt, enabled ? 1 : 0, schedule || null, id, now, now]
+        );
+        loggerService.catInfo(LogCategory.AGENT, "Agent upserted", { id, enabled });
     },
 
-    async getExecutionLogs(agentId?: string, limit: number = 20, includeTraces: boolean = false): Promise<AgentExecutionLog[]> {
-        // Simple implementation for desktop
-        return [];
+    async deleteAgent(id: string): Promise<void> {
+        sqliteService.run(`DELETE FROM agents WHERE id = ?`, [id]);
+        loggerService.catInfo(LogCategory.AGENT, "Agent deleted", { id });
+    },
+
+    async logExecution(log: Omit<AgentExecutionLog, 'id'>): Promise<string> {
+        const id = randomUUID();
+        sqliteService.run(
+            `INSERT INTO agent_execution_logs (id, agent_id, started_at, finished_at, status, trace_count, log_file_path, response_preview, error)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                id,
+                log.agentId,
+                log.startedAt,
+                log.finishedAt || null,
+                log.status,
+                log.traceCount,
+                log.logFilePath || null,
+                log.responsePreview || null,
+                log.error || null
+            ]
+        );
+        return id;
+    },
+
+    async getExecutionLogs(agentId: string, limit: number = 50): Promise<AgentExecutionLog[]> {
+        const rows = sqliteService.all(
+            `SELECT * FROM agent_execution_logs WHERE agent_id = ? ORDER BY started_at DESC LIMIT ?`,
+            [agentId, limit]
+        );
+        return rows as AgentExecutionLog[];
     }
 };

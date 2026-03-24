@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { systemPromptService } from '../services/systemPromptService.js';
 import { sqliteService } from '../services/sqliteService.js';
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { agentService } from '../services/agentService.js';
 import { sqliteService } from '../services/sqliteService.js';
 
@@ -13,8 +13,8 @@ describe('AgentService Relational', () => {
 
         const list = await agentService.listAgents();
         expect(list).toHaveLength(2);
-        expect(list.find(a => a.id === 'agent-1')?.enabled).toBe(1);
-        expect(list.find(a => a.id === 'agent-2')?.enabled).toBe(0);
+        expect(list.find(a => a.id === 'agent-1')?.enabled).toBe(true);
+        expect(list.find(a => a.id === 'agent-2')?.enabled).toBe(false);
     });
 
     it('should delete an agent', async () => {

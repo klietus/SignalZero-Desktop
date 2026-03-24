@@ -1,7 +1,6 @@
 import { sqliteService } from './sqliteService.js';
-import { loggerService } from './loggerService.js';
 import { symbolCacheService } from './symbolCacheService.js';
-import { ContextMessage, ContextSession, ContextHistoryGroup } from '../types.js';
+import { ContextMessage, ContextSession } from '../types.js';
 import { randomUUID } from 'crypto';
 
 const generateId = () => `ctx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -12,6 +11,7 @@ const mapRowToSession = (row: any): ContextSession => ({
     summary: row.summary,
     type: row.type as any,
     status: row.status as any,
+    activeMessageId: row.active_message_id || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     closedAt: row.closed_at,
@@ -24,7 +24,9 @@ const mapRowToMessage = (row: any): ContextMessage => ({
     content: row.content,
     timestamp: row.timestamp,
     toolCalls: row.tool_calls ? JSON.parse(row.tool_calls) : [],
-    correlationId: row.correlation_id
+    correlationId: row.correlation_id,
+    toolCallId: row.tool_call_id,
+    toolName: row.tool_name
 });
 
 export const contextService = {
@@ -37,8 +39,8 @@ export const contextService = {
     const now = new Date().toISOString();
     
     sqliteService.run(
-        `INSERT INTO contexts (id, name, type, status, created_at, updated_at, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [id, name || `Context ${new Date().toLocaleTimeString()}`, type, 'open', now, now, JSON.stringify(metadata || {})]
+        `INSERT INTO contexts (id, name, type, status, active_message_id, summary, closed_at, created_at, updated_at, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, name || `Context ${new Date().toLocaleTimeString()}`, type, 'open', null, null, null, now, now, JSON.stringify(metadata || {})]
     );
 
     const session = await this.getSession(id);
@@ -56,6 +58,32 @@ export const contextService = {
     return row ? mapRowToSession(row) : null;
   },
 
+  async getHistory(sessionId: string): Promise<ContextMessage[]> {
+    const rows = sqliteService.all(`SELECT * FROM messages WHERE context_id = ? ORDER BY timestamp ASC`, [sessionId]);
+    return rows.map(mapRowToMessage);
+  },
+
+  async getUnfilteredHistory(sessionId: string): Promise<ContextMessage[]> {
+    return this.getHistory(sessionId);
+  },
+
+  async setActiveMessage(sessionId: string, messageId: string | null): Promise<void> {
+    sqliteService.run(
+        `UPDATE contexts SET active_message_id = ?, updated_at = ? WHERE id = ?`,
+        [messageId, new Date().toISOString(), sessionId]
+    );
+  },
+
+  async hasActiveMessage(sessionId: string): Promise<boolean> {
+    const session = await this.getSession(sessionId);
+    return !!session?.activeMessageId;
+  },
+
+  async deleteSession(id: string): Promise<boolean> {
+    const result = sqliteService.run(`DELETE FROM contexts WHERE id = ?`, [id]);
+    return result.changes > 0;
+  },
+
   async closeSession(id: string): Promise<ContextSession | null> {
     const now = new Date().toISOString();
     sqliteService.run(
@@ -66,34 +94,19 @@ export const contextService = {
     return this.getSession(id);
   },
 
-  async deleteSession(id: string): Promise<boolean> {
-    const result = sqliteService.run(`DELETE FROM contexts WHERE id = ?`, [id]);
-    return result.changes > 0;
-  },
-
-  async getHistory(sessionId: string): Promise<ContextMessage[]> {
-    const rows = sqliteService.all(
-        `SELECT * FROM messages WHERE context_id = ? ORDER BY timestamp ASC`,
-        [sessionId]
-    );
-    return rows.map(mapRowToMessage);
-  },
-
-  async getUnfilteredHistory(sessionId: string): Promise<ContextMessage[]> {
-    return this.getHistory(sessionId);
-  },
-
   async recordMessage(sessionId: string, message: ContextMessage): Promise<void> {
     const now = new Date().toISOString();
     
     sqliteService.run(
-        `INSERT INTO messages (id, context_id, role, content, tool_calls, timestamp, correlation_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO messages (id, context_id, role, content, tool_calls, tool_call_id, tool_name, timestamp, correlation_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             message.id || randomUUID(),
             sessionId,
             message.role,
             message.content || "",
             JSON.stringify(message.toolCalls || []),
+            message.toolCallId || null,
+            message.toolName || null,
             message.timestamp || now,
             message.correlationId || null
         ]

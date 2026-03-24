@@ -4,7 +4,7 @@ import { domainService } from './domainService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { SymbolDef, ContextMessage, ContextKind } from '../types.js';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import { loggerService } from './loggerService.js';
+import { loggerService, LogCategory } from './loggerService.js';
 import { buildSystemMetadataBlock } from './timeService.js';
 import { getEncoding } from "js-tiktoken";
 
@@ -13,27 +13,44 @@ const enc = getEncoding("cl100k_base");
 export class ContextWindowService {
     private readonly TOKEN_LIMIT = 100000;
 
+    /**
+     * Constructs the full context window for an LLM request.
+     * Optimized for Prompt Caching (Context Checkpoints):
+     * 1. System Prompt (Static Anchor)
+     * 2. Stable Symbolic Context (Kernel/Domains)
+     * 3. Mature Symbols (turnCount > 3) -> Sorted by ID
+     * 4. History Summary (Compressed prefix)
+     * 5. Conversation History (Sliding window of last 3-5 rounds)
+     * 6. New Symbols (turnCount <= 3) -> Volatile tail
+     * 7. System Metadata (Turn-specific state)
+     */
     async constructContextWindow(
         contextSessionId: string,
         systemPrompt: string
     ): Promise<ChatCompletionMessageParam[]> {
         const messages: ChatCompletionMessageParam[] = [];
 
+        // Determine context type for selective injection
         const session = await contextService.getSession(contextSessionId);
         const type = session?.type || 'conversation';
 
+        // 1. System Prompt (Stable Anchor)
         let effectiveSystemPrompt = systemPrompt;
         if (type === 'agent' && session?.metadata?.agentPrompt) {
             effectiveSystemPrompt = `${systemPrompt}\n\n[Agent Prompt]\n${session.metadata.agentPrompt}`;
         }
         messages.push({ role: 'system', content: effectiveSystemPrompt });
 
+        // 2. Stable Symbolic Context (Cache Anchor)
+        // Domains and core recursive symbols are mostly static.
         const stableContext = await this.buildStableContext(contextSessionId);
         messages.push({
             role: 'system',
             content: `[KERNEL]\n${stableContext}`
         });
 
+        // 3. Mature Symbols (Cache Anchor Expansion)
+        // Symbols that have survived decay (turnCount > 3) are stable.
         const { mature, newSymbols } = await symbolCacheService.getPartitionedSymbols(contextSessionId);
         if (mature.length > 0) {
             messages.push({
@@ -42,6 +59,7 @@ export class ContextWindowService {
             });
         }
 
+        // 4. History Summary (Stable Prefix of History)
         if (session?.summary) {
             messages.push({
                 role: 'system',
@@ -49,10 +67,13 @@ export class ContextWindowService {
             });
         }
 
+        // Calculate tokens used by static prefix (Sections 1-4)
         let currentTokens = messages.reduce((sum, m) => sum + this.estimateTokens(JSON.stringify(m)), 0);
 
+        // 5. Sliding History Window (Sliding Cache)
         const rawHistory = await contextService.getUnfilteredHistory(contextSessionId);
         
+        // Filter history to only include messages AFTER the last summarized round
         const lastSummarized = session?.metadata?.lastSummarizedRoundCount || 0;
         const userMessageIndices = rawHistory
             .map((m, i) => m.role === 'user' ? i : -1)
@@ -65,6 +86,7 @@ export class ContextWindowService {
         const effectiveHistory = rawHistory.slice(firstIncludedIndex);
         const historyMessages: ChatCompletionMessageParam[] = [];
 
+        // Group into rounds (reverse chronological: Newest -> Oldest)
         const rounds: ContextMessage[][] = [];
         let currentRound: ContextMessage[] = [];
 
@@ -76,23 +98,41 @@ export class ContextWindowService {
                 currentRound = [];
             }
         }
-        if (currentRound.length > 0) rounds.push(currentRound);
+        if (currentRound.length > 0) {
+            rounds.push(currentRound);
+        }
 
+        // Process rounds (Limit to 5 rounds if summary exists, else 10)
         const maxRounds = session?.summary ? 5 : 10;
         for (let index = 0; index < rounds.length; index++) {
-            if (index >= maxRounds) break;
+            if (index >= maxRounds) {
+                loggerService.catInfo(LogCategory.KERNEL, `Context window round limit reached for ${contextSessionId}. Included ${index} rounds.`);
+                break;
+            }
 
             let round = rounds[index];
-            if (index > 0) round = this.stripTools(round);
+
+            // Strip tools from older rounds (index > 0)
+            if (index > 0) {
+                round = this.stripTools(round);
+            }
+
             if (round.length === 0) continue;
 
             let roundMessages = round.map(msg => this.mapToOpenAIMessage(msg));
             let roundTokens = roundMessages.reduce((sum, msg) => sum + this.estimateTokens(JSON.stringify(msg)), 0);
 
+            // Check if adding this round exceeds limit
             if (currentTokens + roundTokens > this.TOKEN_LIMIT) {
-                if (index > 0) break;
+                if (index === 0) {
+                    loggerService.catInfo(LogCategory.KERNEL, `Latest round preserved despite size (${roundTokens} tokens).`);
+                } else {
+                    loggerService.catInfo(LogCategory.KERNEL, `Context window limit reached for ${contextSessionId}. Included ${historyMessages.length} messages.`);
+                    break;
+                }
             }
 
+            // Prepend round messages to history (maintaining order within round)
             historyMessages.unshift(...roundMessages);
             currentTokens += roundTokens;
         }
@@ -102,6 +142,8 @@ export class ContextWindowService {
             messages.push(...historyMessages);
         }
 
+        // 6. New Symbols (Volatile Tail)
+        // Recently activated symbols (turnCount <= 3) change frequently.
         const dynamicContext = await this.buildDynamicContext(contextSessionId, type, newSymbols);
         if (dynamicContext.trim().length > 0) {
             messages.push({
@@ -110,6 +152,8 @@ export class ContextWindowService {
             });
         }
 
+        // 7. System Metadata (Highly Volatile)
+        // Contains current time and lifecycle status - changes every turn.
         const systemMetadata = buildSystemMetadataBlock({
             id: session?.id,
             type: session?.type,
@@ -119,23 +163,49 @@ export class ContextWindowService {
             trace_reason: session?.metadata?.trace_reason
         });
 
+        const systemMetadataStr = JSON.stringify(systemMetadata, null, 2);
+
         messages.push({
             role: 'system',
-            content: `[SYSTEM_STATE]\n${JSON.stringify(systemMetadata, null, 2)}`
+            content: `[SYSTEM_STATE]\n${systemMetadataStr}`
+        });
+
+        const totalTokens = messages.reduce((sum, m) => sum + this.estimateTokens(JSON.stringify(m)), 0);
+        loggerService.catInfo(LogCategory.KERNEL, `Constructed Context Window for ${contextSessionId}`, {
+            type,
+            historyRounds: Math.min(rounds.length, maxRounds),
+            historyMessages: historyMessages.length,
+            historyTokens: currentTokens,
+            totalMessages: messages.length,
+            totalTokens
         });
 
         return messages;
     }
 
+    /**
+     * Removes tool-related messages and metadata from a conversation round.
+     * Useful for history compression and summarization.
+     */
     public stripTools(round: ContextMessage[]): ContextMessage[] {
         return round.map(msg => {
-            if (msg.role === 'tool') return null;
-            if ((msg.role === 'assistant' || msg.role === 'model') && msg.toolCalls) {
-                return { ...msg, toolCalls: undefined } as ContextMessage;
+            // 1. Collapse tool response messages
+            if (msg.role === 'tool') {
+                return null;
             }
+
+            // 2. Remove tool call metadata from assistant messages
+            if ((msg.role === 'assistant' || msg.role === 'model') && msg.toolCalls) {
+                return {
+                    ...msg,
+                    toolCalls: undefined
+                } as ContextMessage;
+            }
+
             return msg;
         }).filter((msg): msg is ContextMessage => {
             if (!msg) return false;
+            // Remove assistant messages that have no content after stripping tools
             if ((msg.role === 'assistant' || msg.role === 'model')) {
                 return !!(msg.content && msg.content.trim().length > 0);
             }
@@ -176,52 +246,155 @@ export class ContextWindowService {
 
     private formatSymbols(symbols: SymbolDef[]): string {
         if (symbols.length === 0) return "None found.";
+
+        // De-duplicate by ID
         const uniqueMap = new Map<string, SymbolDef>();
         symbols.forEach(s => uniqueMap.set(s.id, s));
         const uniqueSymbols = Array.from(uniqueMap.values());
+
+        // Sort by ID to ensure deterministic output for cache stability
         uniqueSymbols.sort((a, b) => a.id.localeCompare(b.id));
 
+        const TOPOLOGY_MAP: Record<string, string> = {
+            'inductive': '♻️',
+            'deductive': '⬇️',
+            'bidirectional': '⇄',
+            'invariant': '🔒',
+            'energy': '⚡'
+        };
+
+        const CLOSURE_MAP: Record<string, string> = {
+            'loop': '➰',
+            'branch': '🌿',
+            'collapse': '💥',
+            'constellation': '✨',
+            'synthesis': '⚗️'
+        };
+
+        const KIND_MAP: Record<string, string> = {
+            'pattern': '🧩',
+            'persona': '👤',
+            'data': '💾'
+        };
+
+        // Format symbols using DSL: | ID | Name | Triad | Kind |
+        // This reduces token usage significantly compared to JSON.
         return uniqueSymbols.map(s => {
-            const triadStr = Array.isArray(s.triad) ? s.triad.join(', ') : s.triad;
-            return `| ${s.id} | ${s.name} | ${triadStr} | ${s.kind || 'pattern'} | ${(s.macro || "").slice(0, 100)} |`;
+            // Remove volatile fields
+            const { updated_at, turnCount, lastUsed, ...sym } = s as any;
+
+            let triadDisplay = "";
+            let kindDisplay = KIND_MAP[sym.kind || 'pattern'] || (sym.kind || 'pattern');
+            let payloadDisplay = "";
+
+            if (sym.kind === 'lattice') {
+                const topKey = sym.lattice?.topology || 'inductive';
+                const top = TOPOLOGY_MAP[topKey] || topKey;
+
+                const cloKey = sym.lattice?.closure || 'loop';
+                const clo = CLOSURE_MAP[cloKey] || cloKey;
+
+                kindDisplay = `${top} ${clo}`;
+
+                // Triad as array of linked triads
+                if (sym.linked_patterns && sym.linked_patterns.length > 0) {
+                    const linkedTriads = sym.linked_patterns
+                        .map((link: any) => uniqueSymbols.find((ext: SymbolDef) => ext.id === link.id)?.triad)
+                        .filter(Boolean);
+                    if (linkedTriads.length > 0) {
+                        kindDisplay += ` (Links: ${linkedTriads.join(', ')})`;
+                    }
+                }
+            } else if (sym.kind === 'data') {
+                // For data symbols, include the payload
+                if (sym.data && sym.data.payload) {
+                    payloadDisplay = `Payload: ${JSON.stringify(sym.data.payload)}`;
+                }
+                let triadArr: string[] = [];
+                if (Array.isArray(sym.triad)) {
+                    triadArr = sym.triad;
+                } else if (typeof sym.triad === 'string') {
+                    triadArr = (sym.triad as string).split(',').map(t => t.trim());
+                }
+                triadDisplay = `[${triadArr.slice(0, 3).join(', ')}]`;
+            } else {
+                let triadArr: string[] = [];
+                if (Array.isArray(sym.triad)) {
+                    triadArr = sym.triad;
+                } else if (typeof sym.triad === 'string') {
+                    triadArr = (sym.triad as string).split(',').map(t => t.trim());
+                }
+                triadDisplay = `[${triadArr.slice(0, 3).join(', ')}]`;
+            }
+
+            // Truncate macro for brevity if needed
+            const macroDisplay = (sym.macro || "").slice(0, 100).replace(/\n/g, " ");
+            const content = payloadDisplay ? `${payloadDisplay}` : macroDisplay;
+
+            return `| ${sym.id} | ${sym.name} | ${triadDisplay} | ${kindDisplay} | ${content} |`;
         }).join('\n');
     }
 
+    /**
+     * Fetches stable symbols (Domains, Core, Personas) that rarely change.
+     */
     private async buildStableContext(contextSessionId: string): Promise<string> {
         try {
             const results: string[] = [];
+
+            // Query 1: List Domains
             const meta = await domainService.getMetadata();
             const domains = meta.map(d => `| ${d.id} | ${d.name} | ${d.invariants?.join('; ') || ''} |`);
             results.push(`[DOMAINS]\n${domains.join('\n')}`);
 
+            // Query 2: Recursive Core Injection
             const coreSet = new Map<string, SymbolDef>();
             await this.recursiveSymbolLoad('SELF-RECURSIVE-CORE', 3, coreSet);
+
             const coreSymbols = Array.from(coreSet.values());
+            // Inject with turnCount 4 to stabilize immediately
             symbolCacheService.batchUpsertSymbols(contextSessionId, coreSymbols, 4);
 
+            // Query 3: Root Domain
             const rootSet = new Map<string, SymbolDef>();
             await this.recursiveSymbolLoad('ROOT-SYNTHETIC-CORE', 3, rootSet);
+
             const rootSymbols = Array.from(rootSet.values());
             symbolCacheService.batchUpsertSymbols(contextSessionId, rootSymbols, 4);
 
-            return results.join('');
+            const fullContext = results.join('');
+            loggerService.catInfo(LogCategory.KERNEL, `Built Stable Context`, {
+                domains: domains.length,
+                coreSymbols: coreSymbols.length,
+                root: rootSymbols.length,
+                chars: fullContext.length
+            });
+            return fullContext;
         } catch (error: any) {
+            loggerService.catError(LogCategory.KERNEL, "Failed to build stable context", { message: error.message, stack: error.stack });
             return "Error loading stable context.";
         }
     }
 
     private async recursiveSymbolLoad(startId: string, depth: number, collected: Map<string, SymbolDef>) {
-        if (depth < 0 || collected.has(startId)) return;
+        if (depth < 0) return;
+        if (collected.has(startId)) return;
+
         const symbol = await domainService.findById(startId);
         if (!symbol) return;
+
         collected.set(symbol.id, symbol);
-        if (depth > 0 && symbol.linked_patterns) {
+
+        if (depth > 0 && symbol.linked_patterns && symbol.linked_patterns.length > 0) {
             await Promise.all(symbol.linked_patterns.map(link =>
                 this.recursiveSymbolLoad(link.id, depth - 1, collected)
             ));
         }
     }
 
+    /**
+     * Fetches dynamic symbols (Identity, Preferences, Recent State) that change frequently.
+     */
     private async buildDynamicContext(
         contextSessionId: string, 
         type: ContextKind = 'conversation', 
@@ -229,18 +402,34 @@ export class ContextWindowService {
     ): Promise<string> {
         try {
             const results: string[] = [];
+            let userCoreCount = 0;
+
             if (type !== 'agent') {
+                // Query 4: Recursive User Core Injection
                 const userSet = new Map<string, SymbolDef>();
                 await this.recursiveSymbolLoad('USER-RECURSIVE-CORE', 3, userSet);
+
                 const userSymbols = Array.from(userSet.values());
+                userCoreCount = userSymbols.length;
                 symbolCacheService.batchUpsertSymbols(contextSessionId, userSymbols, 4);
             }
+
+            // Symbol Cache Injection (New/Volatile Symbols)
             if (newSymbols.length > 0) {
                 results.push(`\n[SYMBOL CACHE]\n${this.formatSymbols(newSymbols)}`);
             }
             await symbolCacheService.emitCacheLoad(contextSessionId);
-            return results.join('');
+
+            const fullContext = results.join('');
+            loggerService.catInfo(LogCategory.KERNEL, `Built Dynamic Context`, {
+                type,
+                userCoreSymbols: userCoreCount,
+                symbolCacheCount: newSymbols.length,
+                chars: fullContext.length
+            });
+            return fullContext;
         } catch (error: any) {
+            loggerService.catError(LogCategory.KERNEL, "Failed to build dynamic context", { message: error.message, stack: error.stack });
             return "Error loading dynamic context.";
         }
     }

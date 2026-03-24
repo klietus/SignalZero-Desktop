@@ -61,6 +61,25 @@ const getTable = async () => {
     return null;
 };
 
+const symbolToContent = (symbol: SymbolDef) => {
+    return `
+        Symbol: ${symbol.name} (${symbol.id})
+        Triad: ${symbol.triad}
+        Domain: ${symbol.symbol_domain}
+        Tag: ${symbol.symbol_tag || 'N/A'}
+        Kind: ${symbol.kind || 'pattern'}
+        Role: ${symbol.role}
+        Macro: ${symbol.macro || ''}
+        Activation Conditions: ${(symbol.activation_conditions || []).join(', ')}
+        Invariants: ${(symbol.facets?.invariants || []).join(', ')}
+        Description: ${JSON.stringify(symbol.facets || {})}
+        Lattice: ${symbol.kind === 'lattice' ? JSON.stringify(symbol.lattice) : 'N/A'}
+        Persona: ${symbol.kind === 'persona' ? JSON.stringify(symbol.persona) : 'N/A'}
+        Data Source: ${symbol.kind === 'data' ? symbol.data?.source : 'N/A'}
+        Data Status: ${symbol.kind === 'data' ? symbol.data?.status : 'N/A'}
+    `.trim().replace(/\s+/g, ' ');
+};
+
 export const lancedbService = {
     async healthCheck(): Promise<boolean> {
         try {
@@ -72,65 +91,65 @@ export const lancedbService = {
     },
 
     async indexSymbol(symbol: SymbolDef): Promise<boolean> {
-        const content = `
-            Symbol: ${symbol.name} (${symbol.id})
-            Triad: ${symbol.triad}
-            Domain: ${symbol.symbol_domain}
-            Tag: ${symbol.symbol_tag || 'N/A'}
-            Kind: ${symbol.kind || 'pattern'}
-            Role: ${symbol.role}
-            Macro: ${symbol.macro || ''}
-            Activation Conditions: ${(symbol.activation_conditions || []).join(', ')}
-            Invariants: ${(symbol.facets?.invariants || []).join(', ')}
-            Description: ${JSON.stringify(symbol.facets || {})}
-            Lattice: ${symbol.kind === 'lattice' ? JSON.stringify(symbol.lattice) : 'N/A'}
-            Persona: ${symbol.kind === 'persona' ? JSON.stringify(symbol.persona) : 'N/A'}
-            Data Source: ${symbol.kind === 'data' ? symbol.data?.source : 'N/A'}
-            Data Status: ${symbol.kind === 'data' ? symbol.data?.status : 'N/A'}
-        `.trim().replace(/\s+/g, ' ');
-
-        try {
-            const [vector] = await embedTexts([content]);
-            const conn = await getDb();
-            const table = await getTable();
-
-            const record = {
-                vector,
-                id: symbol.id,
-                text: content,
-                name: symbol.name,
-                triad: symbol.triad,
-                domain: symbol.symbol_domain,
-                symbol_domain: symbol.symbol_domain,
-                symbol_tag: symbol.symbol_tag,
-                role: symbol.role,
-                macro: symbol.macro,
-                kind: symbol.kind || 'pattern'
-            };
-
-            if (!table) {
-                await conn.createTable(COLLECTION_NAME, [record]);
-            } else {
-                // LanceDB doesn't have a direct upsert by ID in the same way Chroma does
-                // We typically delete and add, or use a merge if supported by the version
-                await table.delete(`id = '${symbol.id}'`);
-                await table.add([record]);
-            }
-
-            return true;
-        } catch (e) {
-            console.error("[LanceDB] Indexing error", e);
-            return false;
-        }
+        return (await this.indexBatch([symbol])) > 0;
     },
 
-    async indexBatch(symbols: SymbolDef[]): Promise<number> {
+    /**
+     * High-performance batch indexing with chunked embedding generation.
+     */
+    async indexBatch(symbols: SymbolDef[], onProgress?: (indexed: number, total: number) => void): Promise<number> {
         if (symbols.length === 0) return 0;
-        let successCount = 0;
-        for (const sym of symbols) {
-            if (await this.indexSymbol(sym)) successCount++;
+
+        const allRecords: any[] = [];
+        const EMBED_CHUNK_SIZE = 10; // Conservative chunk size for ONNX Stability
+
+        try {
+            for (let i = 0; i < symbols.length; i += EMBED_CHUNK_SIZE) {
+                const chunk = symbols.slice(i, i + EMBED_CHUNK_SIZE);
+                const contents = chunk.map(symbolToContent);
+                const vectors = await embedTexts(contents);
+                
+                for (let j = 0; j < chunk.length; j++) {
+                    const symbol = chunk[j];
+                    allRecords.push({
+                        vector: vectors[j],
+                        id: symbol.id,
+                        text: contents[j],
+                        name: symbol.name,
+                        triad: symbol.triad,
+                        domain: symbol.symbol_domain,
+                        symbol_domain: symbol.symbol_domain,
+                        symbol_tag: symbol.symbol_tag,
+                        role: symbol.role,
+                        macro: symbol.macro,
+                        kind: symbol.kind || 'pattern'
+                    });
+                }
+                
+                if (onProgress) {
+                    onProgress(Math.min(i + EMBED_CHUNK_SIZE, symbols.length), symbols.length);
+                }
+            }
+
+            const conn = await getDb();
+            let table = await getTable();
+
+            if (!table) {
+                await conn.createTable(COLLECTION_NAME, allRecords);
+            } else {
+                // Large batches require robust delete/add
+                // We split IDs into chunks for the delete query if necessary, but 
+                // for standard imports, a single IN clause is usually fine.
+                const ids = symbols.map(s => `'${s.id}'`).join(',');
+                await table.delete(`id IN (${ids})`);
+                await table.add(allRecords);
+            }
+
+            return symbols.length;
+        } catch (e) {
+            console.error("[LanceDB] Batch indexing error", e);
+            return 0;
         }
-        return successCount;
     },
 
     async deleteSymbol(symbolId: string): Promise<boolean> {
@@ -155,7 +174,6 @@ export const lancedbService = {
             
             let searchBuilder = table.search(queryVector).limit(nResults);
             
-            // Apply filtering if metadataFilter is provided
             if (metadataFilter) {
                 const filterParts: string[] = [];
                 for (const [key, value] of Object.entries(metadataFilter)) {
@@ -173,7 +191,7 @@ export const lancedbService = {
                 }
             }
 
-            const results = await searchBuilder.execute();
+            const results = await searchBuilder.toArray();
 
             return results.map((r: any) => ({
                 id: r.id,

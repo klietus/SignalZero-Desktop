@@ -1,4 +1,4 @@
-import { UserProfile, GraphHygieneSettings } from '../types.js';
+import { GraphHygieneSettings } from '../types.js';
 import fs from 'fs';
 import path from 'path';
 import { app, safeStorage } from 'electron';
@@ -102,6 +102,12 @@ const saveToFile = (settings: SystemSettings): void => {
 export const settingsService = {
   initialize: async () => {
     loadFromFile();
+  },
+
+  isInitialized: (): boolean => {
+    if (!fs.existsSync(SETTINGS_FILE)) return false;
+    const settings = loadFromFile();
+    return !!(settings.inference?.provider);
   },
 
   getApiKey: (): string => {
@@ -228,8 +234,6 @@ export const settingsService = {
   },
 
   update: async (settings: Partial<SystemSettings>) => {
-    const current = loadFromFile();
-    
     if (settings.inference) {
         await settingsService.setInferenceSettings(settings.inference as InferenceSettings);
     }

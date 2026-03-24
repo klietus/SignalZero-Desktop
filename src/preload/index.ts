@@ -23,10 +23,25 @@ const api = {
     ipcRenderer.invoke('domain:search', query, limit, options),
   upsertSymbol: (domainId: string, symbol: any) => 
     ipcRenderer.invoke('domain:upsert-symbol', domainId, symbol),
+  getSymbolsByDomain: (domainId: string) => 
+    ipcRenderer.invoke('domain:get-symbols', domainId),
+  getSymbolById: (id: string) => 
+    ipcRenderer.invoke('domain:get-symbol', id),
+  deleteSymbol: (domainId: string, symbolId: string) => 
+    ipcRenderer.invoke('domain:delete-symbol', domainId, symbolId),
+  getSymbolCount: () => ipcRenderer.invoke('domain:get-symbol-count'),
+  getDomainCount: () => ipcRenderer.invoke('domain:get-domain-count'),
+  
+  // Projects
+  exportProject: (meta: any) => ipcRenderer.invoke('project:export', meta),
+  importProject: () => ipcRenderer.invoke('project:import'),
+  importSampleProject: () => ipcRenderer.invoke('project:import-sample'),
+  openMonitor: () => ipcRenderer.invoke('window:open-monitor'),
   
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
   updateSettings: (settings: any) => ipcRenderer.invoke('settings:update', settings),
+  isInitialized: () => ipcRenderer.invoke('settings:is-initialized'),
   
   // Agent Management
   listAgents: () => ipcRenderer.invoke('agent:list'),
@@ -46,10 +61,23 @@ const api = {
   onTraceLogged: (callback: (trace: any) => void) => 
     ipcRenderer.on('trace:logged', (_event, trace) => callback(trace)),
   
+  onKernelEvent: (callback: (type: string, data: any) => void) => {
+    const subscription = (_event, { type, data }) => callback(type, data);
+    ipcRenderer.on('kernel:event', subscription);
+    return () => ipcRenderer.removeListener('kernel:event', subscription);
+  },
+
+  onNavigate: (callback: (view: string) => void) => {
+    const subscription = (_event, view) => callback(view);
+    ipcRenderer.on('navigate', subscription);
+    return () => ipcRenderer.removeListener('navigate', subscription);
+  },
+  
   removeInferenceListeners: () => {
     ipcRenderer.removeAllListeners('inference:chunk');
     ipcRenderer.removeAllListeners('inference:completed');
     ipcRenderer.removeAllListeners('trace:logged');
+    ipcRenderer.removeAllListeners('kernel:event');
   }
 }
 

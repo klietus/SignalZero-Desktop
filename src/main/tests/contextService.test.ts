@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { contextService } from '../services/contextService.js';
 import { sqliteService } from '../services/sqliteService.js';
 
@@ -11,7 +11,7 @@ describe('ContextService Relational', () => {
         const session = await contextService.createSession('conversation', { theme: 'dark' }, 'Test Session');
         expect(session.id).toBeDefined();
         expect(session.name).toBe('Test Session');
-        expect(session.metadata.theme).toBe('dark');
+        expect(session.metadata?.theme).toBe('dark');
 
         const retrieved = await contextService.getSession(session.id);
         expect(retrieved).toEqual(session);
@@ -21,6 +21,7 @@ describe('ContextService Relational', () => {
         const session = await contextService.createSession('conversation');
         
         await contextService.recordMessage(session.id, {
+            id: 'm1',
             role: 'user',
             content: 'Hello Kernel',
             timestamp: new Date().toISOString()
@@ -33,7 +34,7 @@ describe('ContextService Relational', () => {
 
     it('should delete session and cascade messages', async () => {
         const session = await contextService.createSession('conversation');
-        await contextService.recordMessage(session.id, { role: 'user', content: 'test' });
+        await contextService.recordMessage(session.id, { id: 'm2', role: 'user', content: 'test', timestamp: new Date().toISOString() });
         
         await contextService.deleteSession(session.id);
         

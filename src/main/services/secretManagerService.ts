@@ -1,5 +1,4 @@
 import { sqliteService } from './sqliteService.js';
-import { loggerService } from './loggerService.js';
 import { safeStorage } from 'electron';
 
 const SECRET_PREFIX = 'secret:';

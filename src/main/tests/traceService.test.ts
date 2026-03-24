@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { traceService } from '../services/traceService.js';
 import { sqliteService } from '../services/sqliteService.js';
 import { eventBusService, KernelEventType } from '../services/eventBusService.js';
@@ -10,6 +10,9 @@ describe('TraceService Relational', () => {
     });
 
     it('should add a trace and persist it to the traces table', async () => {
+        // Must create context first due to foreign key
+        sqliteService.run("INSERT INTO contexts (id, name) VALUES (?, ?)", ['sess-1', 'Session 1']);
+
         const trace: any = {
             id: 'tr-123',
             sessionId: 'sess-1',

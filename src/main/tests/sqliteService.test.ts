@@ -1,8 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { sqliteService } from '../services/sqliteService'
-import fs from 'fs'
-import path from 'path'
-import { app } from 'electron'
 
 describe('SqliteService Normalized Schema', () => {
     beforeEach(async () => {
@@ -41,7 +38,7 @@ describe('SqliteService Normalized Schema', () => {
             JOIN symbols s ON l.target_id = s.id 
             WHERE l.source_id = ?`, 
             ['S1']
-        );
+        ) as any[];
         
         expect(links).toHaveLength(1);
         expect(links[0].target_name).toBe('Symbol 2');

@@ -1,31 +1,23 @@
 
 import React from 'react';
 import {
-  FolderOpen, Database, Hammer, FlaskConical, MessageSquare,
-  Network, Settings, HelpCircle, ShieldCheck, RefreshCcw, Users, Zap, LogOut, User as UserIcon, Activity
+  Network, ShieldCheck, Activity, MessageSquare
 } from 'lucide-react';
 
 export interface HeaderProps {
   title: string;
   subtitle?: string;
   icon?: React.ReactNode;
-  children?: React.ReactNode; // For screen-specific actions (Right side before nav)
-  
-  // Global Navigation Props
+  children?: React.ReactNode; 
+
   currentView: string;
   onNavigate: (view: any) => void;
-  
-  // Global Tools
+
   onToggleTrace?: () => void;
   isTraceOpen?: boolean;
-  onOpenSettings?: () => void;
-  onNavigateToUsers?: () => void;
-  onLogout?: () => void;
   onMonitor?: () => void;
-  
+
   projectName?: string;
-  userRole?: string;
-  userName?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -37,114 +29,61 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate,
   onToggleTrace,
   isTraceOpen,
-  onOpenSettings,
-  onLogout,
   onMonitor,
-  projectName,
-  userRole,
-  userName
+  projectName
 }) => {
-  const NavButton = ({ view, icon: Icon, label }: any) => (
-    <button
-      onClick={() => onNavigate(view)}
-      className={`p-2 rounded-lg transition-colors ${
-        currentView === view 
-          ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 dark:text-indigo-400 font-bold' 
-          : 'text-gray-500 hover:text-indigo-500 hover:bg-gray-100 dark:hover:bg-gray-800'
-      }`}
-      title={label}
-    >
-      <Icon size={18} />
-    </button>
-  );
-
   return (
-    <header className="h-14 bg-white/50 dark:bg-gray-900/50 backdrop-blur border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 z-50 shrink-0 relative">
-      
-      {/* Left: Identity / Screen Title */}
+    <header className="h-14 bg-gray-950/50 backdrop-blur border-b border-gray-800/50 flex items-center justify-between px-6 z-50 shrink-0 relative">
+
       <div className="flex items-center gap-4 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
-            {icon && <div className="text-gray-500 dark:text-gray-400 shrink-0">{icon}</div>}
-            <div className="min-w-0">
-                <h1 className="text-lg font-bold font-mono text-gray-900 dark:text-white flex items-center gap-2 truncate">
-                    {title}
-                </h1>
-                {subtitle && <p className="text-xs text-gray-500 font-mono truncate">{subtitle}</p>}
-            </div>
+          {icon && <div className="text-gray-400 shrink-0">{icon}</div>}
+          <div className="min-w-0">
+            <h1 className="text-lg font-light tracking-widest uppercase text-gray-100 flex items-center gap-2 truncate">
+              {title}
+            </h1>
+            {subtitle && <p className="text-[10px] text-gray-500 font-mono uppercase tracking-tighter truncate">{subtitle}</p>}
+          </div>
         </div>
-        
-        {/* Project Name Badge */}
-        {projectName && (
-             <span className="hidden lg:inline-flex items-center gap-1 text-[10px] text-gray-400 font-mono px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ml-4 truncate max-w-[200px]">
-                <ShieldCheck size={10} /> {projectName}
-            </span>
-        )}
 
-        {/* User Banner */}
-        {userName && (
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ml-4">
-                <UserIcon size={12} className="text-gray-400" />
-                <span className="text-[10px] font-bold font-mono text-gray-600 dark:text-gray-300 uppercase tracking-wider">{userName}</span>
-                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter ${userRole === 'admin' ? 'bg-purple-100 text-purple-600 border border-purple-200 dark:bg-purple-900/30 dark:border-purple-800' : 'bg-blue-100 text-blue-600 border border-blue-200 dark:bg-blue-900/30 dark:border-blue-800'}`}>
-                    {userRole}
-                </span>
-            </div>
+        {projectName && (
+          <span className="hidden lg:inline-flex items-center gap-1 text-[10px] text-gray-500 font-mono px-2 py-0.5 rounded bg-gray-900 border border-gray-800 ml-4 truncate max-w-[200px]">
+            <ShieldCheck size={10} /> {projectName}
+          </span>
         )}
       </div>
 
-      {/* Center/Right: Navigation & Actions */}
       <div className="flex items-center gap-4 shrink-0">
-        
-        {/* Screen Specific Actions (passed as children) */}
+        <button 
+          onClick={() => onNavigate('chat')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition-all ${currentView === 'chat' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-900 text-gray-400 hover:bg-gray-800'}`}
+        >
+          <MessageSquare size={14} />
+          {currentView === 'chat' ? 'Kernel_Active' : 'Kernel_Chat'}
+        </button>
+
         {children && (
-            <div className="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 pr-4 mr-2">
-                {children}
-            </div>
+          <div className="flex items-center gap-2 border-r border-gray-800 pr-4 mr-2">
+            {children}
+          </div>
         )}
 
-        {/* Global Navigation */}
         <div className="flex items-center gap-1">
-            <NavButton view="project" icon={FolderOpen} label="Project Manager" />
-            <NavButton view="store" icon={Database} label="Symbol Store" />
-            <NavButton view="dev" icon={Hammer} label="Symbol Forge" />
-            <NavButton view="test" icon={FlaskConical} label="Test Runner" />
-            <NavButton view="agents" icon={Zap} label="Agents" />
-            
-            <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
+          {onMonitor && (
+            <button onClick={onMonitor} className="p-2 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-900/20 rounded-lg transition-colors" title="Monitor">
+              <Activity size={18} />
+            </button>
+          )}
 
-            {onOpenSettings && (
-                <button onClick={onOpenSettings} className="p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Settings">
-                    <Settings size={18} />
-                </button>
-            )}
-
-            <NavButton view="help" icon={HelpCircle} label="Help" />
-
-            {onLogout && (
-                <button onClick={onLogout} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Sign Out">
-                    <LogOut size={18} />
-                </button>
-            )}
-
-            <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
-
-            {onMonitor && (
-                <button onClick={onMonitor} className="p-2 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors" title="Pop-out Kernel Monitor">
-                    <Activity size={18} />
-                </button>
-            )}
-
-            {onToggleTrace && (
-                <button 
-                    onClick={onToggleTrace} 
-                    className={`p-2 rounded-lg transition-colors ${isTraceOpen ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`} 
-                    title="Toggle Reasoning Trace"
-                >
-                    <Network size={18} />
-                </button>
-            )}
-
-            <NavButton view="chat" icon={MessageSquare} label="Kernel Chat" />
+          {onToggleTrace && (
+            <button
+              onClick={onToggleTrace}
+              className={`p-2 rounded-lg transition-colors ${isTraceOpen ? 'text-amber-400 bg-amber-900/20' : 'text-gray-500 hover:bg-gray-900'}`}
+              title="Toggle Reasoning Trace"
+            >
+              <Network size={18} />
+            </button>
+          )}
         </div>
       </div>
     </header>

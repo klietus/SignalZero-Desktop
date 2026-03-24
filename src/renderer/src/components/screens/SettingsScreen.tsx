@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    Save, Shield, Database, Network, Cpu, Cloud, 
-    Search, CheckCircle2, AlertCircle, Mic, RefreshCw
+    Save, Database, Network, Cpu, Cloud, 
+    Search, AlertCircle, Mic
 } from 'lucide-react';
 import { UserProfile, GraphHygieneSettings, McpConfiguration } from '../../types';
 import { Header, HeaderProps } from '../Header';
