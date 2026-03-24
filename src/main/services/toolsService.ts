@@ -1,0 +1,352 @@
+import type { ChatCompletionTool } from "openai/resources/chat/completions";
+import { domainService } from "./domainService.js";
+import { agentService } from "./agentService.js";
+import { traceService } from "./traceService.js";
+import { SymbolDef, TraceData } from "../types.js";
+import { loggerService } from "./loggerService.js";
+import { sqliteService } from "./sqliteService.js";
+import { settingsService } from "./settingsService.js";
+import { contextService } from "./contextService.js";
+import { symbolCacheService } from "./symbolCacheService.js";
+import { eventBusService, KernelEventType } from "./eventBusService.js";
+import { documentMeaningService } from "./documentMeaningService.js";
+import { mcpClientService } from "./mcpClientService.js";
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import os from 'os';
+
+const execAsync = promisify(exec);
+
+const SYMBOL_DATA_SCHEMA = {
+    type: 'object',
+    properties: {
+        id: { type: 'string' },
+        kind: { type: 'string' },
+        triad: { type: 'string' },
+        macro: { type: 'string' },
+        role: { type: 'string' },
+        name: { type: 'string' },
+        activation_conditions: { type: 'array', items: { type: 'string' } },
+        facets: {
+            type: 'object',
+            properties: {
+                function: { type: 'string' },
+                topology: { type: 'string' },
+                commit: { type: 'string' },
+                gate: { type: 'array', items: { type: 'string' } },
+                substrate: { type: 'array', items: { type: 'string' } },
+                temporal: { type: 'string' },
+                invariants: { type: 'array', items: { type: 'string' } }
+            },
+            required: ['function', 'topology', 'commit', 'gate', 'substrate', 'temporal', 'invariants']
+        },
+        symbol_domain: { type: 'string' },
+        symbol_tag: { type: 'string' },
+        failure_mode: { type: 'string' },
+        linked_patterns: {
+            type: 'array',
+            items: {
+                type: 'object',
+                properties: {
+                    id: { type: 'string' },
+                    link_type: { type: 'string' },
+                    bidirectional: { type: 'boolean' }
+                },
+                required: ['id', 'link_type', 'bidirectional']
+            }
+        }
+    },
+    required: ['id', 'kind', 'triad', 'macro', 'role', 'name', 'activation_conditions', 'facets', 'symbol_domain', 'failure_mode', 'linked_patterns']
+};
+
+const TRACE_DATA_SCHEMA = {
+    type: 'object',
+    properties: {
+        id: { type: 'string' },
+        entry_node: { type: 'string' },
+        activated_by: { type: 'string' },
+        activation_path: {
+            type: 'array',
+            items: {
+                type: 'object',
+                properties: {
+                    symbol_id: { type: 'string' },
+                    reason: { type: 'string' },
+                    link_type: { type: 'string' }
+                },
+                required: ['symbol_id', 'reason', 'link_type']
+            }
+        },
+        source_context: {
+            type: 'object',
+            properties: {
+                symbol_domain: { type: 'string' },
+                trigger_vector: { type: 'string' }
+            },
+            required: ['symbol_domain', 'trigger_vector']
+        },
+        output_node: { type: 'string' },
+        status: { type: 'string' }
+    },
+    required: ['entry_node', 'activated_by', 'activation_path', 'source_context', 'output_node', 'status']
+};
+
+export const SECONDARY_TOOLS_MAP: Record<string, ChatCompletionTool> = {
+  run_shell_command: {
+    type: 'function',
+    function: {
+      name: 'run_shell_command',
+      description: 'Execute a bash command on the host system. High privilege.',
+      parameters: {
+        type: 'object',
+        properties: {
+          command: { type: 'string' },
+          cwd: { type: 'string' }
+        },
+        required: ['command']
+      }
+    }
+  },
+  read_host_file: {
+    type: 'function',
+    function: {
+      name: 'read_host_file',
+      description: 'Read a file from the host filesystem.',
+      parameters: {
+        type: 'object',
+        properties: {
+          file_path: { type: 'string' }
+        },
+        required: ['file_path']
+      }
+    }
+  },
+  write_host_file: {
+    type: 'function',
+    function: {
+      name: 'write_host_file',
+      description: 'Write or overwrite a file on the host filesystem.',
+      parameters: {
+        type: 'object',
+        properties: {
+          file_path: { type: 'string' },
+          content: { type: 'string' }
+        },
+        required: ['file_path', 'content']
+      }
+    }
+  },
+  sys_info: {
+    type: 'function',
+    function: {
+      name: 'sys_info',
+      description: 'Get host system information.',
+      parameters: {
+        type: 'object',
+        properties: {
+          categories: { type: 'array', items: { type: 'string' } }
+        }
+      }
+    }
+  }
+};
+
+export const PRIMARY_TOOLS: ChatCompletionTool[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'find_symbols',
+      description: 'Search for symbols using semantic or structured queries.',
+      parameters: {
+        type: 'object',
+        properties: {
+          queries: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                query: { type: 'string' },
+                symbol_domains: { type: 'array', items: { type: 'string' } },
+                limit: { type: 'integer' }
+              }
+            }
+          }
+        },
+        required: ['queries']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'load_symbols',
+      description: 'Load specific symbols by ID.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ids: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['ids']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'upsert_symbols',
+      description: 'Create or update symbols.',
+      parameters: {
+        type: 'object',
+        properties: {
+          symbols: {
+            type: 'array',
+            items: {
+              oneOf: [
+                {
+                  type: 'object',
+                  properties: {
+                    old_id: { type: 'string' },
+                    symbol_data: SYMBOL_DATA_SCHEMA
+                  },
+                  required: ['symbol_data']
+                },
+                SYMBOL_DATA_SCHEMA
+              ]
+            }
+          }
+        },
+        required: ['symbols']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'log_trace',
+      description: 'Log a symbolic trace.',
+      parameters: {
+        type: 'object',
+        properties: {
+          trace: TRACE_DATA_SCHEMA
+        },
+        required: ['trace']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'web_search',
+      description: 'Search the web.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' }
+        },
+        required: ['query']
+      }
+    }
+  }
+];
+
+export const createToolExecutor = (contextSessionId?: string) => {
+  const executor = async (name: string, args: any): Promise<any> => {
+    console.log(`[ToolExecutor] ${name}`, args);
+
+    switch (name) {
+      case 'find_symbols': {
+        const results = [];
+        for (const q of args.queries) {
+          const res = await domainService.search(q.query, q.limit || 10, { metadata_filter: { symbol_domain: q.symbol_domains } });
+          results.push(...res);
+        }
+        if (contextSessionId && results.length > 0) {
+            // Minimal mapping for cache
+            await symbolCacheService.batchUpsertSymbols(contextSessionId, results as any);
+        }
+        return { symbols: results };
+      }
+
+      case 'load_symbols': {
+        const found = [];
+        for (const id of args.ids) {
+          const s = await domainService.findById(id);
+          if (s) found.push(s);
+        }
+        return { symbols: found };
+      }
+
+      case 'upsert_symbols': {
+        for (const entry of args.symbols) {
+          const data = entry.symbol_data || entry;
+          await domainService.addSymbol(data.symbol_domain, data);
+        }
+        return { status: "success" };
+      }
+
+      case 'log_trace': {
+        await traceService.addTrace({ ...args.trace, sessionId: contextSessionId });
+        return { status: "success" };
+      }
+
+      case 'run_shell_command': {
+        try {
+          const { stdout, stderr } = await execAsync(args.command, { cwd: args.cwd || os.homedir() });
+          return { stdout, stderr };
+        } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'read_host_file': {
+        try {
+          const content = fs.readFileSync(args.file_path, 'utf-8');
+          return { content };
+        } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'write_host_file': {
+        try {
+          fs.writeFileSync(args.file_path, args.content);
+          return { status: "success" };
+        } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'sys_info': {
+        return {
+          platform: os.platform(),
+          release: os.release(),
+          arch: os.arch(),
+          cpus: os.cpus().length,
+          memory: { total: os.totalmem(), free: os.freemem() }
+        };
+      }
+
+      case 'web_search': {
+          const settings = await settingsService.getSerpApiSettings();
+          if (!settings.apiKey) return { error: "SerpApi key not configured" };
+          const url = `https://serpapi.com/search?q=${encodeURIComponent(args.query)}&api_key=${settings.apiKey}&engine=google`;
+          const resp = await fetch(url);
+          const data = await resp.json();
+          return { results: data.organic_results };
+      }
+
+      default:
+        if (name.startsWith('mcp_')) {
+            const parts = name.split('_');
+            const mcpId = parts[1];
+            const originalName = parts.slice(2).join('_');
+            return await mcpClientService.executeTool(mcpId, originalName, args);
+        }
+        return { error: `Tool ${name} not found` };
+    }
+  };
+
+  return executor;
+};
