@@ -1,5 +1,6 @@
 import { SymbolDef } from '../types.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
+import { loggerService, LogCategory } from './loggerService.js';
 
 export interface CacheEntry {
     symbol: SymbolDef;
@@ -45,9 +46,13 @@ export class SymbolCacheService {
 
     async getPartitionedSymbols(sessionId: string): Promise<{ mature: SymbolDef[], newSymbols: SymbolDef[] }> {
         const cache = this.sessionCaches.get(sessionId);
-        if (!cache) return { mature: [], newSymbols: [] };
+        if (!cache) {
+            loggerService.catDebug(LogCategory.KERNEL, `Cache empty for session ${sessionId}`);
+            return { mature: [], newSymbols: [] };
+        }
 
         const entries = Array.from(cache.values());
+        loggerService.catDebug(LogCategory.KERNEL, `Partitioning ${entries.length} symbols for session ${sessionId}`);
 
         const matureEntries = entries.filter(e => e.turnCount > 3);
         const newEntries = entries.filter(e => e.turnCount <= 3);
@@ -65,6 +70,8 @@ export class SymbolCacheService {
         if (!sessionId) return;
         const cache = this.getOrCreateSessionCache(sessionId);
 
+        loggerService.catDebug(LogCategory.KERNEL, `Upserting symbol ${symbol.id} into cache for session ${sessionId}`);
+
         cache.set(symbol.id, {
             symbol,
             turnCount: 0,
@@ -72,11 +79,13 @@ export class SymbolCacheService {
         });
     }
 
-    async batchUpsertSymbols(sessionId: string, symbols: SymbolDef[], initialTurnCount: number = 0): Promise<void> {
-        if (!sessionId || symbols.length === 0) return;
+    async batchUpsertSymbols(sessionId: string, symbols: SymbolDef[], initialTurnCount: number = 0): Promise<{ added: number, updated: number }> {
+        if (!sessionId || symbols.length === 0) return { added: 0, updated: 0 };
 
-        const cache = this.getOrCreateSessionCache(sessionId);
+        const cache = this.sessionCaches.get(sessionId) || this.getOrCreateSessionCache(sessionId);
         const now = Date.now();
+        let added = 0;
+        let updated = 0;
 
         for (const symbol of symbols) {
             const existing = cache.get(symbol.id);
@@ -86,14 +95,19 @@ export class SymbolCacheService {
                     symbol,
                     lastUsed: now
                 });
+                updated++;
             } else {
                 cache.set(symbol.id, {
                     symbol,
                     turnCount: initialTurnCount,
                     lastUsed: now
                 });
+                added++;
             }
         }
+
+        loggerService.catInfo(LogCategory.KERNEL, `Caching: ${added} new symbols, ${updated} updated in session ${sessionId}`);
+        return { added, updated };
     }
 
     async emitCacheLoad(sessionId: string): Promise<void> {

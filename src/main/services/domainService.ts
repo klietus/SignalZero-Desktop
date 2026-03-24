@@ -1,6 +1,7 @@
 import { SymbolDef, SymbolLink, VectorSearchResult } from '../types.js';
 import { lancedbService } from './lancedbService.js';
 import { sqliteService } from './sqliteService.js';
+import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
 
@@ -37,21 +38,23 @@ export const domainService = {
   // --- Domain Management ---
 
   async init(domainId: string, name: string): Promise<any> {
-    const existing = await this.get(domainId);
-    if (existing) return existing;
+    let existing = await this.get(domainId);
 
     let template: any = {};
     if (domainId === 'user') template = USER_DOMAIN_TEMPLATE;
     else if (domainId === 'state') template = STATE_DOMAIN_TEMPLATE;
 
-    await this.createDomain(domainId, {
-        name: template.name || name,
-        description: template.description || "",
-        invariants: template.invariants || [],
-        readOnly: template.readOnly || false
-    });
+    if (!existing) {
+        await this.createDomain(domainId, {
+            name: template.name || name,
+            description: template.description || "",
+            invariants: template.invariants || [],
+            readOnly: template.readOnly || false
+        });
+    }
 
     if (template.symbols && template.symbols.length > 0) {
+        loggerService.catInfo(LogCategory.DOMAIN, `Syncing ${template.symbols.length} core symbols for domain ${domainId}`);
         await this.bulkUpsertSymbols(template.symbols, domainId);
     }
 
@@ -277,6 +280,24 @@ export const domainService = {
   async getDomainCount(): Promise<number> {
     const row = sqliteService.get(`SELECT COUNT(*) as count FROM domains`);
     return row?.count || 0;
+  },
+
+  async ensureVectorIndex(): Promise<void> {
+    const vectorCount = await lancedbService.countCollection();
+    const sqlCount = await this.getSymbolCount();
+
+    if (vectorCount === 0 && sqlCount > 0) {
+        loggerService.catInfo(LogCategory.KERNEL, `Vector index is empty. Indexing all ${sqlCount} symbols...`);
+        const allSymbols = await this.getAllSymbols();
+        await lancedbService.indexBatch(allSymbols, (indexed, total) => {
+            if (indexed % 100 === 0 || indexed === total) {
+                loggerService.catInfo(LogCategory.KERNEL, `Indexing progress: ${indexed}/${total}`);
+            }
+        });
+        loggerService.catInfo(LogCategory.KERNEL, `Vector index sync complete.`);
+    } else {
+        loggerService.catInfo(LogCategory.KERNEL, `Vector index check: ${vectorCount} vectors, ${sqlCount} sql symbols.`);
+    }
   },
 
   async search(query: string, limit: number = 10, filter?: any): Promise<VectorSearchResult[]> {

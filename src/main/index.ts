@@ -197,7 +197,10 @@ function createWindow(): void {
   // Global Event Forwarding
   Object.values(KernelEventType).forEach(type => {
       eventBusService.onKernelEvent(type, (data) => {
-          broadcast('kernel:event', { type, data });
+          // Skip ultra-high frequency events from the main monitor stream
+          if (type !== KernelEventType.INFERENCE_CHUNK) {
+              broadcast('kernel:event', { type, data });
+          }
           
           // Legacy/Specific forwards
           if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', data);
@@ -247,6 +250,13 @@ app.whenReady().then(async () => {
   await domainService.init('user', 'User Domain');
   await domainService.init('state', 'State Domain');
 
+  // Ensure Vector Index is populated
+  try {
+      await domainService.ensureVectorIndex();
+  } catch (error) {
+      loggerService.catError(LogCategory.KERNEL, "Failed to ensure vector index", { error });
+  }
+
   electronApp.setAppUserModelId('com.signalzero.desktop')
 
   app.on('browser-window-created', (_, window) => {
@@ -288,21 +298,33 @@ ipcMain.handle('context:delete', async (_, id) => {
   return await contextService.deleteSession(id);
 });
 
+ipcMain.handle('system:get-recent-logs', async (_, limit) => {
+  return await loggerService.getRecentLogs(limit);
+});
+
+ipcMain.handle('trace:list', async (_, sessionId) => {
+  return await traceService.getBySession(sessionId);
+});
+
 ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruction) => {
   try {
-    const { traceNeeded } = await primeSymbolicContext(message, sessionId);
+    const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, sessionId);
     const session = await contextService.getSession(sessionId);
     if (session) {
         await contextService.updateSession({
             ...session,
-            metadata: { ...session.metadata, trace_needed: traceNeeded }
+            metadata: { 
+                ...session.metadata, 
+                trace_needed: traceNeeded,
+                trace_reason: traceReason
+            }
         });
     }
 
     const chat = await getChatSession(systemInstruction || activeSystemPrompt, sessionId);
     const toolExecutor = createToolExecutor(sessionId);
   
-    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, systemInstruction, sessionId);
+    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, systemInstruction || activeSystemPrompt, sessionId, undefined, webResults, webBrief);
 
     for await (const chunk of stream) {
       if (chunk.text) {

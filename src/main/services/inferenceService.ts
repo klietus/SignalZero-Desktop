@@ -2,19 +2,22 @@ import OpenAI from "openai";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { randomUUID } from "crypto";
 import type {
+  ChatCompletionChunk,
   ChatCompletionMessageParam,
   ChatCompletionMessageToolCall,
   ChatCompletionTool,
-  ChatCompletionAssistantMessageParam,
 } from "openai/resources/chat/completions";
-import { PRIMARY_TOOLS } from "./toolsService.js";
-import { ContextMessage, SymbolDef } from "../types.js";
+import { PRIMARY_TOOLS, SECONDARY_TOOLS_MAP } from "./toolsService.js";
+import { SymbolDef, ContextMessage } from "../types.js";
+import { domainService } from "./domainService.js";
 import { settingsService } from "./settingsService.js";
+import { loggerService, LogCategory } from './loggerService.js';
 import { contextService } from './contextService.js';
 import { symbolCacheService } from './symbolCacheService.js';
+import { tentativeLinkService } from './tentativeLinkService.js';
 import { contextWindowService } from './contextWindowService.js';
-import { loggerService, LogCategory } from './loggerService.js';
-import { domainService } from './domainService.js';
+import { sqliteService } from './sqliteService.js';
+import { mcpClientService } from './mcpClientService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 
 interface ChatSessionState {
@@ -24,17 +27,33 @@ interface ChatSessionState {
 }
 
 const MAX_TOOL_LOOPS = 15;
-const MAX_AUDIT_RETRIES = 3;
 
 export const getClient = async () => {
   const { endpoint, provider, apiKey } = await settingsService.getInferenceSettings();
 
+  let effectiveEndpoint = endpoint;
+  if (provider === 'openai') effectiveEndpoint = 'https://api.openai.com/v1';
+  if (provider === 'kimi2') effectiveEndpoint = 'https://api.moonshot.ai/v1';
+
+  loggerService.catInfo(LogCategory.INFERENCE, `getClient called`, {
+    provider,
+    effectiveEndpoint,
+    originalEndpoint: endpoint,
+    hasApiKey: !!apiKey
+  });
+
   if (provider === 'openai') {
-    return new OpenAI({ baseURL: 'https://api.openai.com/v1', apiKey: apiKey });
+    return new OpenAI({
+      baseURL: 'https://api.openai.com/v1',
+      apiKey: apiKey,
+    });
   }
 
   if (provider === 'kimi2') {
-    return new OpenAI({ baseURL: 'https://api.moonshot.ai/v1', apiKey: apiKey });
+    return new OpenAI({
+      baseURL: 'https://api.moonshot.ai/v1',
+      apiKey: apiKey ? apiKey.trim() : apiKey,
+    });
   }
 
   return new OpenAI({
@@ -79,6 +98,21 @@ const toGeminiTools = (tools: any[]) => {
 
 const getModel = async () => (await settingsService.getInferenceSettings()).model;
 
+const extractTextDelta = (delta: ChatCompletionChunk["choices"][number]["delta"]) => {
+  if (!delta?.content) return "";
+  if (typeof delta.content === "string") return delta.content;
+  if (Array.isArray(delta.content)) {
+    return (delta.content as any[])
+      .map((item: any) => {
+        if (typeof item === "string") return item;
+        if (item?.text) return item.text;
+        return "";
+      })
+      .join("");
+  }
+  return "";
+};
+
 const mergeToolCallDelta = (
   collected: Map<number, ChatCompletionMessageToolCall>,
   toolCalls?: any[]
@@ -110,31 +144,48 @@ const mergeToolCallDelta = (
 
 const parseToolArguments = (args: string): { data: any; error?: string } => {
   if (!args || args.trim() === "") return { data: {} };
-  try { return { data: JSON.parse(args) }; }
-  catch (error: any) {
-    return { data: {}, error: `JSON Parse Error: ${error.message}` };
+  try {
+    return { data: JSON.parse(args) };
+  } catch (error: any) {
+    const message = error.message || String(error);
+    loggerService.catWarn(LogCategory.INFERENCE, "Failed to parse tool arguments", { args, error: message });
+    return {
+      data: {},
+      error: `JSON Parse Error: ${message}. Ensure you are providing a valid JSON object matching the tool's schema.`
+    };
   }
 };
 
 const chatSessions = new Map<string, ChatSessionState>();
 
+const createChatSession = async (systemInstruction: string): Promise<ChatSessionState> => ({
+  messages: [{ role: "system", content: systemInstruction }],
+  systemInstruction,
+  model: await getModel(),
+});
+
 export const getChatSession = async (systemInstruction: string, contextSessionId?: string) => {
   const key = contextSessionId || "default";
-  let session = chatSessions.get(key);
-  if (!session || session.systemInstruction !== systemInstruction) {
-    session = { messages: [{ role: "system", content: systemInstruction }], systemInstruction, model: await getModel() };
-    chatSessions.set(key, session);
+  const existing = chatSessions.get(key);
+  if (!existing || existing.systemInstruction !== systemInstruction) {
+    const fresh = await createChatSession(systemInstruction);
+    chatSessions.set(key, fresh);
   }
-  session.model = await getModel();
-  return session;
+  const chat = chatSessions.get(key)!;
+  const currentModel = await getModel();
+  if (chat.model !== currentModel) chat.model = currentModel;
+  return chat;
 };
 
 export const normalizeMessages = (messages: ChatCompletionMessageParam[]): ChatCompletionMessageParam[] => {
+  if (messages.length === 0) return messages;
   const normalized: ChatCompletionMessageParam[] = [];
   let systemContent = "";
   const otherMessages = messages.filter(m => {
     if (m.role === 'system') {
-      systemContent += (systemContent ? "\n\n" : "") + m.content;
+      if (typeof m.content === 'string') {
+        systemContent += (systemContent ? "\n\n" : "") + m.content;
+      }
       return false;
     }
     return true;
@@ -142,9 +193,11 @@ export const normalizeMessages = (messages: ChatCompletionMessageParam[]): ChatC
   if (systemContent) normalized.push({ role: 'system', content: systemContent });
   for (const msg of otherMessages) {
     const last = normalized[normalized.length - 1];
-    if (last && last.role === msg.role && last.role !== 'tool' && !('tool_calls' in last) && !('tool_calls' in msg)) {
-      last.content = (String(last.content || "") + "\n\n" + String(msg.content || "")).trim();
-      continue;
+    if (last && last.role === msg.role && last.role !== 'tool' && !(last as any).tool_calls && !(msg as any).tool_calls) {
+      if (typeof last.content === 'string' && typeof msg.content === 'string') {
+        last.content += "\n\n" + msg.content;
+        continue;
+      }
     }
     normalized.push(msg);
   }
@@ -155,214 +208,226 @@ const streamAssistantResponse = async function* (
   messages: ChatCompletionMessageParam[],
   model: string,
   activeTools: ChatCompletionTool[] = PRIMARY_TOOLS
-): AsyncGenerator<{ text?: string; toolCalls?: ChatCompletionMessageToolCall[]; assistantMessage?: ChatCompletionMessageParam; }> {
+): AsyncGenerator<{
+  text?: string;
+  toolCalls?: ChatCompletionMessageToolCall[];
+  assistantMessage?: ChatCompletionMessageParam;
+}> {
+  try {
+    const normalized = normalizeMessages(messages);
+    for await (const chunk of _streamAssistantResponseInternal(normalized, model, activeTools)) {
+      yield chunk;
+    }
+  } catch (error: any) {
+    loggerService.catError(LogCategory.INFERENCE, "AI Provider Error (Stream)", {
+      model,
+      error: error.message || String(error)
+    });
+    throw error;
+  }
+};
+
+const _streamAssistantResponseInternal = async function* (
+  messages: ChatCompletionMessageParam[],
+  model: string,
+  activeTools: ChatCompletionTool[] = PRIMARY_TOOLS
+): AsyncGenerator<{
+  text?: string;
+  toolCalls?: ChatCompletionMessageToolCall[];
+  assistantMessage?: ChatCompletionMessageParam;
+}> {
   const settings = await settingsService.getInferenceSettings();
-  
+
   if (settings.provider === 'gemini') {
     const client = await getGeminiClient();
     const geminiTools = toGeminiTools(activeTools);
-    
-    // Gemini 3 Thinking Support
-    const isGemini3 = model.includes('gemini-3');
-    const geminiModel = client.getGenerativeModel({
-        model: model,
-        tools: geminiTools
-    }, {
-        ...(isGemini3 ? {
-            thinkingConfig: {
-                include_thought: false,
-                thinking_level: 'high'
-            }
-        } : {})
-    } as any);
+    const geminiModel = client.getGenerativeModel({ model: model, tools: geminiTools });
 
     const systemMessage = messages.find(m => m.role === 'system');
     const history: any[] = [];
-    const nonSystem = messages.filter(m => m.role !== 'system');
-    
-    for (let i = 0; i < nonSystem.length - 1; i++) {
-        const m = nonSystem[i];
-        if (m.role === 'user') {
-            history.push({ role: 'user', parts: [{ text: String(m.content) }] });
-        } else if (m.role === 'assistant') {
-            const parts: any[] = [];
-            if (m.content) parts.push({ text: String(m.content) });
-            if (m.tool_calls) {
-                parts.push(...m.tool_calls.map(tc => ({
-                    functionCall: {
-                        name: tc.function.name,
-                        args: JSON.parse(tc.function.arguments)
-                    }
-                })));
-            }
-            history.push({ role: 'model', parts });
-        } else if (m.role === 'tool') {
-            history.push({
-                role: 'user', 
-                parts: [{
-                    functionResponse: {
-                        name: (m as any).name || 'tool',
-                        response: { result: m.content }
-                    }
-                }]
-            });
+    let lastRole = '';
+
+    for (const m of messages) {
+      if (m.role === 'system') continue;
+      if (m.role === 'user') {
+        if (lastRole === 'user') {
+          const lastMsg = history[history.length - 1];
+          lastMsg.parts[0].text += `\n\n${typeof m.content === 'string' ? m.content : ''}`;
+        } else {
+          history.push({ role: 'user', parts: [{ text: typeof m.content === 'string' ? m.content : '' }] });
+          lastRole = 'user';
         }
-    }
-
-    const chat = geminiModel.startChat({ 
-        history, 
-        systemInstruction: systemMessage?.content ? String(systemMessage.content) : undefined 
-    });
-    
-    const lastMsg = nonSystem[nonSystem.length - 1];
-    let result;
-    if (lastMsg.role === 'user') {
-        result = await chat.sendMessageStream(String(lastMsg.content));
-    } else if (lastMsg.role === 'tool') {
-        result = await chat.sendMessageStream([{
-            functionResponse: {
-                name: (lastMsg as any).name || 'tool',
-                response: { result: lastMsg.content }
-            }
-        }]);
-    } else {
-        result = await chat.sendMessageStream("Continue");
-    }
-
-    let textAcc = "";
-    const toolCalls: ChatCompletionMessageToolCall[] = [];
-
-    let inThinkBlock = false;
-    let currentThinkTag = "";
-
-    for await (const chunk of result.stream) {
-      const parts = chunk.candidates?.[0]?.content?.parts;
-      if (parts) {
-          for (const part of parts) {
-              if (part.text) {
-                  let textToProcess = part.text;
-                  let processedText = "";
-                  
-                  let i = 0;
-                  while (i < textToProcess.length) {
-                    if (!inThinkBlock) {
-                      const remaining = textToProcess.slice(i);
-                      const thinkMatch = remaining.match(/^<(think|thought)>/i);
-                      if (thinkMatch) {
-                        inThinkBlock = true;
-                        currentThinkTag = thinkMatch[1].toLowerCase();
-                        i += thinkMatch[0].length;
-                        continue;
-                      }
-                      processedText += textToProcess[i];
-                      i++;
-                    } else {
-                      const remaining = textToProcess.slice(i);
-                      const endMatch = remaining.match(new RegExp(`^</${currentThinkTag}>`, "i"));
-                      if (endMatch) {
-                        inThinkBlock = false;
-                        currentThinkTag = "";
-                        i += endMatch[0].length;
-                        continue;
-                      }
-                      i++;
-                    }
-                  }
-
-                  if (processedText) {
-                    textAcc += processedText;
-                    yield { text: processedText };
-                  }
+      } else if (m.role === 'assistant') {
+        const parts: any[] = [];
+        if (m.content) parts.push({ text: m.content });
+        if (m.tool_calls) {
+          m.tool_calls.forEach(tc => {
+            parts.push({
+              functionCall: {
+                name: tc.function.name,
+                args: JSON.parse(tc.function.arguments)
               }
-              if (part.functionCall) {
-                  toolCalls.push({
-                      id: randomUUID(),
-                      type: 'function',
-                      function: {
-                          name: part.functionCall.name,
-                          arguments: JSON.stringify(part.functionCall.args)
-                      }
-                  } as any);
-              }
-          }
+            });
+          });
+        }
+        if (lastRole === 'model') {
+          const lastMsg = history[history.length - 1];
+          lastMsg.parts.push(...parts);
+        } else {
+          history.push({ role: 'model', parts });
+          lastRole = 'model';
+        }
+      } else if (m.role === 'tool') {
+        let toolName = "unknown_tool";
+        const assistantMsg = messages.find(msg =>
+          msg.role === 'assistant' &&
+          msg.tool_calls?.some(tc => tc.id === m.tool_call_id)
+        );
+        if (assistantMsg && assistantMsg.role === 'assistant' && assistantMsg.tool_calls) {
+          const tc = assistantMsg.tool_calls.find(c => c.id === m.tool_call_id);
+          if (tc) toolName = tc.function.name;
+        }
+        const part = { functionResponse: { name: toolName, response: { result: m.content } } };
+        if (lastRole === 'function') {
+          const lastMsg = history[history.length - 1];
+          lastMsg.parts.push(part);
+        } else {
+          history.push({ role: 'function', parts: [part] });
+          lastRole = 'function';
+        }
       }
     }
 
-    yield { 
-        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-        assistantMessage: { 
-            role: "assistant", 
-            content: textAcc,
-            tool_calls: toolCalls.length > 0 ? toolCalls : undefined
-        } 
+    if (history.length === 0) history.push({ role: 'user', parts: [{ text: 'Hello' }] });
+    let messageToSend = history.pop();
+    if (messageToSend?.role === 'model') {
+      history.push(messageToSend);
+      messageToSend = { role: 'user', parts: [{ text: 'Continue' }] };
+    }
+
+    const chatSession = geminiModel.startChat({
+      history: history,
+      systemInstruction: systemMessage?.content ? { role: 'system', parts: [{ text: systemMessage.content as string }] } : undefined
+    });
+
+    const result = await chatSession.sendMessageStream(messageToSend.parts);
+    let textAccumulator = "";
+    const collectedToolCalls: ChatCompletionMessageToolCall[] = [];
+
+    for await (const chunk of result.stream) {
+      let text = "";
+      try { text = chunk.text(); } catch (e) {}
+      if (text) {
+        textAccumulator += text;
+        yield { text };
+      }
+      const calls = chunk.functionCalls();
+      if (calls && calls.length > 0) {
+        calls.forEach((call: any) => {
+          const toolCallObj: any = {
+            id: 'gemini-' + randomUUID(),
+            type: 'function',
+            function: {
+              name: call.name,
+              arguments: JSON.stringify(call.args)
+            }
+          };
+          collectedToolCalls.push(toolCallObj);
+        });
+      }
+    }
+
+    if (collectedToolCalls.length > 0) yield { toolCalls: collectedToolCalls };
+    const assistantMessage: ChatCompletionMessageParam = {
+      role: "assistant",
+      content: textAccumulator,
+      ...(collectedToolCalls.length > 0 ? { tool_calls: collectedToolCalls } : {}),
     };
+    yield { assistantMessage };
     return;
   }
 
   const client = await getClient();
-  const stream = await client.chat.completions.create({ model, messages: normalizeMessages(messages), tools: activeTools, stream: true });
-  let textAcc = "";
-  const toolCalls = new Map<number, ChatCompletionMessageToolCall>();
-  
-  let inThinkBlock = false;
-  let currentThinkTag = "";
+  const stream = await client.chat.completions.create({
+    model,
+    messages,
+    tools: activeTools,
+    stream: true,
+    max_tokens: 4096
+  });
+
+  let textAccumulator = "";
+  const collectedToolCalls = new Map<number, ChatCompletionMessageToolCall>();
 
   for await (const part of stream) {
-    const delta = part.choices[0]?.delta;
-    if (delta?.content) {
-        let textToProcess = delta.content;
-        let processedText = "";
-        
-        let i = 0;
-        while (i < textToProcess.length) {
-          if (!inThinkBlock) {
-            const remaining = textToProcess.slice(i);
-            const thinkMatch = remaining.match(/^<(think|thought)>/i);
-            if (thinkMatch) {
-              inThinkBlock = true;
-              currentThinkTag = thinkMatch[1].toLowerCase();
-              i += thinkMatch[0].length;
-              continue;
-            }
-            processedText += textToProcess[i];
-            i++;
-          } else {
-            const remaining = textToProcess.slice(i);
-            const endMatch = remaining.match(new RegExp(`^</${currentThinkTag}>`, "i"));
-            if (endMatch) {
-              inThinkBlock = false;
-              currentThinkTag = "";
-              i += endMatch[0].length;
-              continue;
-            }
-            i++;
-          }
-        }
-
-        if (processedText) {
-            textAcc += processedText;
-            yield { text: processedText };
-        }
+    const delta = part.choices?.[0]?.delta;
+    if (!delta) continue;
+    const textChunk = extractTextDelta(delta);
+    if (textChunk) {
+      textAccumulator += textChunk;
+      yield { text: textChunk };
     }
-    if (delta?.tool_calls) mergeToolCallDelta(toolCalls, delta.tool_calls as any);
+    if (delta.tool_calls && delta.tool_calls.length > 0) {
+      mergeToolCallDelta(collectedToolCalls, delta.tool_calls as any);
+    }
   }
-  const completedCalls = Array.from(toolCalls.values());
-  yield { toolCalls: completedCalls.length > 0 ? completedCalls : undefined, assistantMessage: { role: "assistant", content: textAcc, tool_calls: completedCalls.length > 0 ? completedCalls : undefined } };
+
+  const completedToolCalls = Array.from(collectedToolCalls.values());
+  if (completedToolCalls.length > 0) yield { toolCalls: completedToolCalls };
+  const assistantMessage: ChatCompletionMessageParam = {
+    role: "assistant",
+    content: textAccumulator,
+    ...(completedToolCalls.length > 0 ? { tool_calls: completedToolCalls } : {}),
+  };
+  yield { assistantMessage };
+};
+
+const resolveAttachments = async (message: string): Promise<{ resolvedContent: string; attachments: any[] }> => {
+  const attachmentRegex = /<attachments>([\s\S]*?)<\/attachments>/;
+  const match = message.match(attachmentRegex);
+  if (!match) return { resolvedContent: message, attachments: [] };
+
+  try {
+    const jsonStr = match[1];
+    const attachments = JSON.parse(jsonStr);
+    if (!Array.isArray(attachments)) return { resolvedContent: message, attachments: [] };
+
+    let resolvedContentStr = "\n\n--- Attachments ---\n";
+    for (const att of attachments) {
+      if (att.id) {
+        const stored = await sqliteService.request(['GET', `attachment:${att.id}`]);
+        if (stored) {
+          try {
+            const parsedDoc = JSON.parse(stored);
+            resolvedContentStr += `\n[File: ${att.filename || 'unknown'} (${parsedDoc.type})]\n${parsedDoc.content}\n`;
+            if (parsedDoc.structured_data?.analysis_model) {
+              resolvedContentStr += `(Analysis by ${parsedDoc.structured_data.analysis_model})\n`;
+            }
+          } catch (e) {
+            resolvedContentStr += `\n[Error reading attachment ${att.id}]\n`;
+          }
+        } else {
+          resolvedContentStr += `\n[Attachment ${att.id} not found or expired]\n`;
+        }
+      }
+    }
+    return { resolvedContent: message.replace(match[0], resolvedContentStr), attachments };
+  } catch (e) {
+    loggerService.catWarn(LogCategory.INFERENCE, "Failed to parse attachment block", { error: e });
+    return { resolvedContent: message, attachments: [] };
+  }
 };
 
 export const stripThoughts = (text: string): string => {
+  if (!text) return "";
   return text
-    .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
-    .replace(/\s+/g, ' ')
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<think>[\s\S]*$/gi, '')
+    .replace(/<\/think>/gi, '')
+    .replace(/<\/thought>/gi, '')
+    .replace(/\[[\s\S]*?\]\(sz-think:thinking\)/g, '')
     .trim();
-};
-
-const isNarrativeText = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed || trimmed.startsWith('[System') || trimmed.includes('SYSTEM AUDIT FAILURE')) return false;
-    const withoutThoughts = stripThoughts(trimmed);
-    return withoutThoughts.length > 2;
 };
 
 export async function* sendMessageAndHandleTools(
@@ -370,309 +435,649 @@ export async function* sendMessageAndHandleTools(
   message: string,
   toolExecutor: (name: string, args: any) => Promise<any>,
   systemInstruction?: string,
-  contextSessionId?: string
-): AsyncGenerator<{ text?: string; toolCalls?: any[]; isComplete?: boolean }> {
-  const currentCorrelationId = randomUUID();
+  contextSessionId?: string,
+  userMessageId?: string,
+  anticipatedWebResults?: any[],
+  anticipatedWebBrief?: string
+): AsyncGenerator<
+  { text?: string; toolCalls?: any[]; isComplete?: boolean },
+  void,
+  unknown
+> {
+  const correlationId = userMessageId || randomUUID();
+  const { resolvedContent, attachments } = await resolveAttachments(message);
 
-  if (contextSessionId && message) {
-    const history = await contextService.getUnfilteredHistory(contextSessionId);
-    const lastUserMsg = [...history].reverse().find(m => m.role === 'user');
-    
-    if (!lastUserMsg || lastUserMsg.content !== message) {
-        await contextService.recordMessage(contextSessionId, { 
-            id: randomUUID(), 
-            role: "user", 
-            content: message, 
-            timestamp: new Date().toISOString(),
-            correlationId: currentCorrelationId
-        });
-        await symbolCacheService.incrementTurns(contextSessionId);
+  if (systemInstruction && chat.systemInstruction !== systemInstruction) {
+    chat.messages = [{ role: "system", content: systemInstruction }];
+    chat.systemInstruction = systemInstruction;
+  }
+
+  let traceNeeded = true;
+  if (contextSessionId) {
+    try {
+      const session = await contextService.getSession(contextSessionId);
+      if (session && session.metadata?.trace_needed !== undefined) {
+        traceNeeded = !!session.metadata.trace_needed;
+      }
+    } catch (error) {
+      loggerService.catWarn(LogCategory.INFERENCE, "Failed to load context metadata", { contextSessionId, error });
     }
   }
 
+  if (contextSessionId) {
+    await contextService.recordMessage(contextSessionId, {
+      id: correlationId,
+      role: "user",
+      content: resolvedContent,
+      timestamp: new Date().toISOString(),
+      metadata: {
+        kind: "user_prompt",
+        ...(attachments.length > 0 ? { attachments } : {})
+      },
+    } as any);
+    await symbolCacheService.incrementTurns(contextSessionId);
+    await tentativeLinkService.incrementTurns();
+  }
+
+  let loops = 0;
   let totalTextAccumulatedAcrossLoops = "";
   let previousTurnText = "";
   let hasLoggedTrace = false;
-  let loops = 0;
+  let hasCalledSpeak = false;
+  let isVoiceSource = false;
+
+  try {
+    const parsed = JSON.parse(message);
+    if (parsed.voice_message && parsed.route_output === 'speech tool') {
+      isVoiceSource = true;
+      loggerService.catInfo(LogCategory.INFERENCE, "Detected voice source message. Enforcing speak audit.", { contextSessionId });
+    }
+  } catch (e) {}
+
   let auditRetries = 0;
+  const ENABLE_SYSTEM_AUDIT = true;
+  const MAX_AUDIT_RETRIES = 3;
   const transientMessages: ChatCompletionMessageParam[] = [];
+  let yieldedToolCalls: ChatCompletionMessageToolCall[] | undefined;
 
-  while (loops < MAX_TOOL_LOOPS) {
-    const contextMessages = contextSessionId 
-        ? await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction)
-        : [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: message }] as ChatCompletionMessageParam[];
+  const isNarrativeText = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return false;
+    if (trimmed.startsWith('[System') || trimmed.startsWith('> *[System')) return false;
+    if (trimmed.includes('SYSTEM AUDIT FAILURE')) return false;
+    const withoutThoughts = stripThoughts(trimmed);
+    if (!withoutThoughts) return false;
+    if (withoutThoughts.startsWith('[Tool') || withoutThoughts.startsWith('{"status":')) return false;
+    return withoutThoughts.length > 2;
+  };
 
-    const finalMessages = [...contextMessages, ...transientMessages];
-    const stream = streamAssistantResponse(finalMessages, chat.model);
+  while (loops < MAX_TOOL_LOOPS && auditRetries < MAX_AUDIT_RETRIES + 1) {
+    yieldedToolCalls = undefined;
+    if (contextSessionId) {
+        const session = await contextService.getSession(contextSessionId);
+        if (!session || session.status === 'closed') {
+          loggerService.catInfo(LogCategory.INFERENCE, "Context closed during inference, aborting.", { contextSessionId });
+          yield { text: "\n[System] Context archived. Inference aborted." };
+          break;
+        }
+
+        const settings = await settingsService.getInferenceSettings();
+        if (settings.provider === 'gemini') {
+          const history = await contextService.getUnfilteredHistory(contextSessionId);
+          if (history.length >= 2) {
+            const lastMsg = history[history.length - 1];
+            const penultMsg = history[history.length - 2];
+            const hasNarrative = isNarrativeText(penultMsg.content || "");
+            const hasTrace = penultMsg.toolCalls?.some(tc => tc.name === 'log_trace');
+            const lastIsTool = lastMsg.role === 'tool';
+            if (penultMsg.role === 'assistant' && hasNarrative && hasTrace && lastIsTool) {
+              loggerService.catInfo(LogCategory.INFERENCE, "Gemini Termination: Detected narrative + trace followed by tool result.", { contextSessionId, loops });
+              break;
+            }
+          }
+        }
+    }
+
+    const MAX_RETRIES = 3;
+    let retries = 0;
+    let nextAssistant: ChatCompletionMessageParam | null = null;
     let textAccumulatedInTurn = "";
-    let turnToolCalls: ChatCompletionMessageToolCall[] | undefined;
-    let assistantMsg: ChatCompletionMessageParam | undefined;
 
-    for await (const chunk of stream) {
-      if (chunk.text) { 
-        textAccumulatedInTurn += chunk.text; 
-        yield { text: chunk.text }; 
-        if (contextSessionId) {
-            eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { 
-                sessionId: contextSessionId, 
-                text: chunk.text,
-                correlationId: currentCorrelationId
-            });
+    while (retries < MAX_RETRIES) {
+      let contextMessages = contextSessionId
+        ? await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction)
+        : [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: resolvedContent }] as ChatCompletionMessageParam[];
+
+      if (transientMessages.length > 0) contextMessages = [...contextMessages, ...transientMessages];
+
+      if (loops === 0) {
+        if (anticipatedWebBrief) {
+          contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH BRIEF]\n${anticipatedWebBrief}` });
+        } else if (anticipatedWebResults && anticipatedWebResults.length > 0) {
+          contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH RESULTS]\n${JSON.stringify(anticipatedWebResults, null, 2)}` });
         }
       }
-      if (chunk.toolCalls) turnToolCalls = chunk.toolCalls;
-      if (chunk.assistantMessage) assistantMsg = chunk.assistantMessage;
-    }
 
-    if (!assistantMsg) break;
-
-    // Turn Deduplication
-    if (loops > 0 && textAccumulatedInTurn.trim().length > 0 && textAccumulatedInTurn.trim() === previousTurnText.trim()) {
-        loggerService.catWarn(LogCategory.INFERENCE, "Detected duplicate text generation (echo). Suppressing from history.", { contextSessionId });
-        textAccumulatedInTurn = "";
-    } else if (textAccumulatedInTurn.trim().length > 0) {
-        previousTurnText = textAccumulatedInTurn;
-    }
-
-    // Sanitize tool arguments
-    if (assistantMsg.role === 'assistant' && (assistantMsg as ChatCompletionAssistantMessageParam).tool_calls) {
-        const assistant = assistantMsg as ChatCompletionAssistantMessageParam;
-        for (const call of assistant.tool_calls!) {
-            const { error } = parseToolArguments(call.function.arguments);
-            if (error) {
-                loggerService.catWarn(LogCategory.INFERENCE, "Detected malformed JSON in tool call. Sanitizing.", { callId: call.id, toolName: call.function.name });
-                call.function.arguments = "{}";
-            }
+      let activeToolList = [...PRIMARY_TOOLS];
+      if (contextSessionId) {
+        try {
+          const currentSession = await contextService.getSession(contextSessionId);
+          const requestedTools = currentSession?.metadata?.active_tools || [];
+          const secondaryTools = requestedTools.map((name: string) => SECONDARY_TOOLS_MAP[name]).filter(Boolean);
+          const remoteTools = await mcpClientService.getAllTools();
+          const activeRemoteTools = remoteTools.filter(rt => requestedTools.includes(rt.function.name));
+          activeToolList = [...PRIMARY_TOOLS, ...secondaryTools, ...activeRemoteTools];
+        } catch (e) {
+          loggerService.catWarn(LogCategory.INFERENCE, "Failed to fetch active tools", { error: e });
         }
+      }
+
+      const assistantMessage = streamAssistantResponse(contextMessages as ChatCompletionMessageParam[], chat.model, activeToolList);
+      textAccumulatedInTurn = "";
+      yieldedToolCalls = undefined;
+      nextAssistant = null;
+
+      let isFirstTextChunkInTurn = true;
+      let inThinkBlock = false;
+      let currentThinkTag = "";
+
+      for await (const chunk of assistantMessage) {
+        if (chunk.text) {
+          let textToProcess = chunk.text;
+          let processedText = "";
+          let i = 0;
+          while (i < textToProcess.length) {
+            if (!inThinkBlock) {
+              const remaining = textToProcess.slice(i);
+              const thinkMatch = remaining.match(/^<(think|thought)>/i);
+              if (thinkMatch) {
+                inThinkBlock = true;
+                currentThinkTag = thinkMatch[1].toLowerCase();
+                i += thinkMatch[0].length;
+                continue;
+              }
+              processedText += textToProcess[i];
+              i++;
+            } else {
+              const remaining = textToProcess.slice(i);
+              const endMatch = remaining.match(new RegExp(`^</${currentThinkTag}>`, "i"));
+              if (endMatch) {
+                inThinkBlock = false;
+                currentThinkTag = "";
+                i += endMatch[0].length;
+                continue;
+              }
+              i++;
+            }
+          }
+          if (processedText) {
+            let textToYield = processedText;
+            if (isFirstTextChunkInTurn && totalTextAccumulatedAcrossLoops.length > 0) textToYield = "\n\n" + textToYield;
+            textAccumulatedInTurn += textToYield;
+            yield { text: textToYield };
+            isFirstTextChunkInTurn = false;
+          }
+        }
+        if (chunk.toolCalls) {
+          yieldedToolCalls = chunk.toolCalls;
+          yield { toolCalls: chunk.toolCalls };
+        }
+        if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
+      }
+
+      if (textAccumulatedInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) break;
+      retries++;
+      loggerService.catWarn(LogCategory.INFERENCE, `Empty model response. Retry ${retries}/${MAX_RETRIES}...`, { contextSessionId });
+    }
+
+    if (!nextAssistant) {
+      yield { text: "Error: No assistant message returned." };
+      break;
     }
 
     totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
 
-    // --- AUDIT INTERCEPTOR ---
+    if (loops > 0 && textAccumulatedInTurn.trim().length > 0 && textAccumulatedInTurn.trim() === previousTurnText.trim()) {
+      loggerService.catWarn(LogCategory.INFERENCE, "Detected duplicate text generation (echo).", { contextSessionId });
+      textAccumulatedInTurn = "";
+    } else if (textAccumulatedInTurn.trim().length > 0) {
+      previousTurnText = textAccumulatedInTurn;
+    }
+
+    if ((nextAssistant as any).tool_calls) {
+      for (const call of (nextAssistant as any).tool_calls) {
+        const { error: parseError } = parseToolArguments(call.function.arguments || "");
+        if (parseError) {
+          loggerService.catWarn(LogCategory.INFERENCE, "Detected malformed JSON in tool call.", { callId: call.id, toolName: call.function.name });
+          call.function.arguments = "{}";
+        }
+      }
+    }
+
     let auditTriggered = false;
     let auditMessage = "";
-    const isEndingTurn = !turnToolCalls || turnToolCalls.length === 0;
-    const isCallingTraceThisTurn = turnToolCalls?.some(tc => tc.function.name === 'log_trace');
+    const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
+    const isEndingTurn = !yieldedToolCalls || yieldedToolCalls.length === 0;
+    const isCallingTraceThisTurn = currentToolNames.has('log_trace');
+    const isCallingSpeakThisTurn = currentToolNames.has('speak');
 
-    const session = contextSessionId ? await contextService.getSession(contextSessionId) : null;
-    const traceNeeded = session?.metadata?.trace_needed === true;
-
-    if (traceNeeded && isEndingTurn && !hasLoggedTrace && !isCallingTraceThisTurn) {
-        auditMessage = "⚠️ SYSTEM AUDIT FAILURE: This operation requires a trace, but you failed to call `log_trace`. Call `log_trace` now. Do not repeat previous info.";
+    if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
+      const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn) || isNarrativeText(totalTextAccumulatedAcrossLoops);
+      if (traceNeeded && isEndingTurn && !hasLoggedTrace && !isCallingTraceThisTurn) {
+        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
         auditTriggered = true;
+      }
+      if (isVoiceSource && !hasCalledSpeak && !isCallingSpeakThisTurn) {
+        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This request originated from a voice source. You MUST use the `speak` tool to provide your response in addition to any text output. Do not acknowledge this message.\n";
+        auditTriggered = true;
+      }
+      if (isEndingTurn && !isVoiceSource && !hasNarrativeOutput) {
+        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: You provided tool calls but failed to generate a narrative response for the user. Non-voice interactions require a text response. Please provide your narrative output now.  Do not acknowledge this message.\n";
+        auditTriggered = true;
+      }
     }
 
-    const hasNarrative = isNarrativeText(totalTextAccumulatedAcrossLoops);
-    if (isEndingTurn && !hasNarrative && !auditTriggered) {
-        auditMessage = "⚠️ SYSTEM AUDIT FAILURE: You provided tool calls but failed to generate a narrative response for the user. Please provide your narrative output now.";
-        auditTriggered = true;
-    }
+    if (auditTriggered) {
+      if (auditRetries < MAX_AUDIT_RETRIES) {
+        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Model missing required tool calls. Forcing retry.", { contextSessionId, auditRetries, hasLoggedTrace });
+        
+        const finalAuditMessage = auditMessage + "Retry immediately by calling the required tools.  Do not repeat tool calls that were previously successful in this turn. Do not acknowledge this message.";
 
-    if (auditTriggered && auditRetries < MAX_AUDIT_RETRIES) {
-        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Retrying", { contextSessionId });
-        transientMessages.push(assistantMsg!);
-        transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${auditMessage}` });
-        const retryText = "\n\n> *[System Audit: Enforcing Symbolic Integrity - Retrying]*\n\n";
-        yield { text: retryText };
-        if (contextSessionId) {
-            eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { 
-                sessionId: contextSessionId, 
-                text: retryText,
-                correlationId: currentCorrelationId
-            });
-        }
-        totalTextAccumulatedAcrossLoops = ""; // Reset failed narrative
+        transientMessages.push(nextAssistant!);
+        transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${finalAuditMessage}` });
+        yield { text: "\n\n> *[System Audit: Enforcing Symbolic Integrity - Retrying]*\n\n" };
+        totalTextAccumulatedAcrossLoops = "";
+        previousTurnText = "";
         auditRetries++;
         continue;
+      } else {
+        loggerService.catError(LogCategory.INFERENCE, "System Audit: Max retries reached. Proceeding despite violations.", { contextSessionId });
+        auditTriggered = false;
+      }
     }
 
-    // Persist this loop's assistant message
-    if (contextSessionId && assistantMsg) {
-        await contextService.recordMessage(contextSessionId, {
-            id: randomUUID(),
-            role: "assistant",
-            content: stripThoughts(textAccumulatedInTurn),
-            timestamp: new Date().toISOString(),
-            toolCalls: turnToolCalls?.map(tc => ({ id: tc.id, name: tc.function.name, arguments: tc.function.arguments })),
-            correlationId: currentCorrelationId
-        } as any);
-    }
+    if (contextSessionId) {
+      await contextService.recordMessage(contextSessionId, {
+        id: randomUUID(),
+        role: "assistant",
+        content: stripThoughts(textAccumulatedInTurn),
+        timestamp: new Date().toISOString(),
+        toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({
+          id: call.id,
+          name: call.function?.name,
+          arguments: call.function?.arguments
+        })),
+        metadata: { kind: "assistant_response" },
+        correlationId: correlationId
+      } as any);
 
-    if (isEndingTurn && !auditTriggered) break;
+      // --- Context Auto-Naming Logic ---
+      try {
+          const session = await contextService.getSession(contextSessionId);
+          // If the context name is still the default (e.g., "Context HH:MM:SS" or "New Context") 
+          // and we have at least one round, generate a proper name.
+          if (session && (!session.name || session.name.startsWith('Context '))) {
+              const history = await contextService.getUnfilteredHistory(contextSessionId);
+              // Only trigger after the first round (1 user, 1 assistant)
+              if (history.length >= 2 && history.length <= 4) {
+                  const settings = await settingsService.getInferenceSettings();
+                  const fastModel = settings.fastModel;
+                  if (fastModel) {
+                      const historyText = history
+                        .filter(m => m.role !== 'system')
+                        .map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`)
+                        .join('\n');
+                      
+                      const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+                      
+                      let newName = "";
+                      if (settings.provider === 'gemini') {
+                          const client = await getGeminiClient();
+                          const model = client.getGenerativeModel({ model: fastModel });
+                          const result = await model.generateContent(namingPrompt);
+                          newName = result.response.text().trim();
+                      } else {
+                          const client = await getClient();
+                          const result = await client.chat.completions.create({
+                              model: fastModel,
+                              messages: [{ role: "user", content: namingPrompt }],
+                              max_tokens: 20
+                          });
+                          newName = result.choices[0]?.message?.content?.trim() || "";
+                      }
 
-    transientMessages.length = 0; 
-
-    if (turnToolCalls) {
-        for (const call of turnToolCalls) {
-          if (call.function.name === 'log_trace') hasLoggedTrace = true;
-          const { data: args } = parseToolArguments(call.function.arguments);
-          try {
-              const result = await toolExecutor(call.function.name, args);
-              if (contextSessionId) {
-                  await contextService.recordMessage(contextSessionId, {
-                      id: randomUUID(),
-                      role: "tool",
-                      content: JSON.stringify(result),
-                      timestamp: new Date().toISOString(),
-                      toolCallId: call.id,
-                      toolName: call.function.name,
-                      correlationId: currentCorrelationId
-                  } as any);
-              }
-          } catch (error: any) {
-              const errorMsg = `Error executing tool ${call.function.name}: ${error.message}`;
-              if (contextSessionId) {
-                await contextService.recordMessage(contextSessionId, {
-                    id: randomUUID(),
-                    role: "tool",
-                    content: JSON.stringify({ error: errorMsg }),
-                    timestamp: new Date().toISOString(),
-                    toolCallId: call.id,
-                    toolName: call.function.name,
-                    correlationId: currentCorrelationId
-                } as any);
+                      if (newName) {
+                          // Clean up quotes if the model added them
+                          newName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                          loggerService.catInfo(LogCategory.INFERENCE, `Auto-renamed context ${contextSessionId} to: ${newName}`);
+                          await contextService.updateSession({ ...session, name: newName });
+                          
+                          // Emit event so the UI updates
+                          eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: newName });
+                      }
+                  }
               }
           }
-        }
+      } catch (namingError) {
+          loggerService.catWarn(LogCategory.INFERENCE, "Failed to auto-rename context", { error: namingError });
+      }
     }
+
+    transientMessages.length = 0;
+    const toolResponses: ChatCompletionMessageParam[] = [];
+    for (const call of yieldedToolCalls || []) {
+      if (!call.function?.name) continue;
+      let toolName = call.function.name;
+      if (toolName === 'log_trace') hasLoggedTrace = true;
+      if (toolName === 'speak') hasCalledSpeak = true;
+      const { data: args, error: parseError } = parseToolArguments(call.function.arguments || "");
+      if (parseError) {
+        const errorPayload = { status: "error", error: "Malformed JSON", details: parseError };
+        toolResponses.push({ role: "tool", content: JSON.stringify(errorPayload), tool_call_id: call.id });
+        if (contextSessionId) {
+          await contextService.recordMessage(contextSessionId, {
+            id: randomUUID(), role: "tool", content: JSON.stringify(errorPayload),
+            timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
+            metadata: { kind: "tool_error" }, correlationId: correlationId
+          } as any);
+        }
+        continue;
+      }
+      try {
+        const result = await toolExecutor(toolName, args);
+        toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: call.id });
+        if (contextSessionId) {
+          await contextService.recordMessage(contextSessionId, {
+            id: randomUUID(), role: "tool", content: JSON.stringify(result),
+            timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
+            metadata: { kind: "tool_result" }, correlationId: correlationId
+          } as any);
+        }
+      } catch (err) {
+        loggerService.catError(LogCategory.INFERENCE, `Error executing tool ${toolName}`, { err });
+        toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: call.id });
+        if (contextSessionId) {
+          await contextService.recordMessage(contextSessionId, {
+            id: randomUUID(), role: "tool", content: JSON.stringify({ error: String(err) }),
+            timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
+            metadata: { kind: "tool_error" }, correlationId: correlationId
+          } as any);
+        }
+      }
+    }
+    if (isEndingTurn && !auditTriggered) break;
+    if (auditRetries >= MAX_AUDIT_RETRIES) break;
+    yieldedToolCalls = undefined;
     loops++;
   }
 
-  // Periodic Summarization (Every 12 rounds for parity)
   if (contextSessionId) {
-      const history = await contextService.getUnfilteredHistory(contextSessionId);
+    try {
       const session = await contextService.getSession(contextSessionId);
+      const history = await contextService.getUnfilteredHistory(contextSessionId);
       const userMessageIndices = history.map((m, i) => m.role === 'user' ? i : -1).filter(i => i !== -1);
-      const lastSum = session?.metadata?.lastSummarizedRoundCount || 0;
-      
-      if (userMessageIndices.length >= lastSum + 12) {
-          const startIndex = lastSum === 0 ? 0 : userMessageIndices[lastSum];
-          const historySegment = history.slice(startIndex);
-          const summary = await summarizeHistory(historySegment, session?.summary);
-          await contextService.updateSession({
-              ...session!,
-              summary,
-              metadata: { ...session?.metadata, lastSummarizedRoundCount: userMessageIndices.length }
-          });
+      const totalRounds = userMessageIndices.length;
+      const lastSummarizedCount = session?.metadata?.lastSummarizedRoundCount || 0;
+      if (session && totalRounds >= lastSummarizedCount + 12) {
+        const roundsToSummarizeCount = 12;
+        const startIndex = lastSummarizedCount === 0 ? 0 : userMessageIndices[lastSummarizedCount];
+        const endIndex = userMessageIndices[lastSummarizedCount + roundsToSummarizeCount] || history.length;
+        const historySegment = history.slice(startIndex, endIndex);
+        const newSummary = await summarizeHistory(historySegment, session.summary);
+        if (newSummary !== session.summary) {
+          session.summary = newSummary;
+          session.metadata = { ...(session.metadata || {}), lastSummarizedRoundCount: lastSummarizedCount + roundsToSummarizeCount };
+          await contextService.updateSession(session);
+        }
       }
+    } catch (err) {}
   }
-
   yield { isComplete: true };
 }
 
-export const processMessageAsync = async (
-    contextSessionId: string,
-    message: string,
-    toolExecutor: (name: string, args: any) => Promise<any>,
-    systemInstruction: string,
-    messageId?: string
-) => {
-    try {
-        loggerService.catInfo(LogCategory.INFERENCE, "Starting async message processing", { contextSessionId, messageId });
-        await contextService.setActiveMessage(contextSessionId, messageId || randomUUID());
-        const { traceNeeded } = await primeSymbolicContext(message, contextSessionId);
-        const session = await contextService.getSession(contextSessionId);
-        if (session) {
-            await contextService.updateSession({
-                ...session,
-                metadata: { ...session.metadata, trace_needed: traceNeeded }
-            });
-        }
-        const chat = await getChatSession(systemInstruction, contextSessionId);
-        const stream = sendMessageAndHandleTools(chat, message, toolExecutor, systemInstruction, contextSessionId);
-        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
-        for await (const chunk of stream) {
-            if (chunk.isComplete) {
-                eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId });
-            }
-        }
-    } catch (error: any) {
-        loggerService.catError(LogCategory.INFERENCE, "Async Message Processing Failed", { contextSessionId, error: error.message });
-        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_ERROR, { sessionId: contextSessionId, messageId, error: error.message });
-        await contextService.recordMessage(contextSessionId, {
-            id: randomUUID(),
-            role: "system",
-            content: `Error processing message: ${error.message}`,
-            timestamp: new Date().toISOString()
-        } as any);
-    } finally {
-        await contextService.setActiveMessage(contextSessionId, null);
-    }
-};
-
 export const extractJson = (text: string): any => {
-    try { return JSON.parse(text); }
-    catch (e) {
-        const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (match) try { return JSON.parse(match[1].trim()); } catch (i) {}
-        const f = text.indexOf('{'); const l = text.lastIndexOf('}');
-        if (f !== -1 && l !== -1) try { return JSON.parse(text.substring(f, l + 1)); } catch (fi) {}
-        throw e;
+  try { return JSON.parse(text); } catch (e) {
+    loggerService.catDebug(LogCategory.INFERENCE, "Direct JSON.parse failed, attempting extraction...", { text: text.slice(0, 100) });
+    const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (match) { 
+        try { 
+            return JSON.parse(match[1].trim()); 
+        } catch (inner) {
+            loggerService.catDebug(LogCategory.INFERENCE, "JSON block extraction failed", { error: inner });
+        } 
     }
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      try { 
+          return JSON.parse(text.substring(firstBrace, lastBrace + 1)); 
+      } catch (final) {
+          loggerService.catDebug(LogCategory.INFERENCE, "Brace extraction failed", { error: final });
+      }
+    }
+    loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed", { text });
+    throw e;
+  }
 };
 
 export const summarizeHistory = async (history: ContextMessage[], currentSummary?: string): Promise<string> => {
-    const settings = await settingsService.getInferenceSettings();
-    const fastModel = settings.fastModel;
-    if (!fastModel) return currentSummary || "";
-
-    const cleanHistory = contextWindowService.stripTools(history);
-    const historyText = cleanHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 500)}`).join('\n');
-    const prompt = `Summarize this conversation history into a concise, information-dense paragraph. ${currentSummary ? `Previous Summary: ${currentSummary}` : ''}\n\nHistory:\n${historyText}\n\nSUMMARY:`;
-
-    try {
-        if (settings.provider === 'gemini') {
-            const client = await getGeminiClient();
-            const model = client.getGenerativeModel({ model: fastModel });
-            const result = await model.generateContent(prompt);
-            return result.response.text().trim();
-        }
-        const client = await getClient();
-        const response = await client.chat.completions.create({
-            model: fastModel,
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 800
-        });
-        return response.choices[0].message.content || currentSummary || "";
-    } catch (e) {
-        loggerService.catError(LogCategory.INFERENCE, "Summarization Error", { error: (e as any).message });
-        return currentSummary || "";
+  const settings = await settingsService.getInferenceSettings();
+  const fastModel = settings.fastModel;
+  if (!fastModel) return currentSummary || "";
+  const cleanHistory = contextWindowService.stripTools(history);
+  const historyText = cleanHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "")}`).join('\n');
+  const prompt = `Summarize the following conversation concisely: ${currentSummary ? `Previous: ${currentSummary}\n` : ''} History: ${historyText} SUMMARY:`;
+  try {
+    if (settings.provider === 'gemini') {
+      const client = await getGeminiClient();
+      const model = client.getGenerativeModel({ model: fastModel });
+      const result = await model.generateContent(prompt);
+      return result.response.text().trim();
     }
+    const client = await getClient();
+    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }], max_tokens: 800 });
+    return result.choices[0]?.message?.content?.trim() ?? (currentSummary || "");
+  } catch (error) { return currentSummary || ""; }
+};
+
+export const synthesizeWebResults = async (
+  queryResults: { query: string, results: { title: string, snippet: string, url: string }[] }[]
+): Promise<string> => {
+  const settings = await settingsService.getInferenceSettings();
+  const fastModel = settings.fastModel;
+  if (!fastModel || queryResults.length === 0) return "";
+  let resultsText = "";
+  queryResults.forEach(qr => {
+    resultsText += `\n[RESULTS FOR QUERY: "${qr.query}"]\n`;
+    qr.results.forEach((r, i) => {
+      resultsText += `${i + 1}. ${r.title}\n   Snippet: ${r.snippet}\n   URL: ${r.url}\n`;
+    });
+  });
+  const prompt = `Synthesize these research results into a dense Knowledge Brief: ${resultsText}`;
+  try {
+    if (settings.provider === 'gemini') {
+      const client = await getGeminiClient();
+      const model = client.getGenerativeModel({ model: fastModel });
+      const result = await model.generateContent(prompt);
+      return result.response.text().trim();
+    }
+    const client = await getClient();
+    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }], max_tokens: 800 });
+    return result.choices[0]?.message?.content?.trim() ?? "";
+  } catch (error) { return ""; }
 };
 
 export const primeSymbolicContext = async (
-    message: string,
-    contextSessionId: string
-): Promise<{ symbols: SymbolDef[], webResults: any[], traceNeeded: boolean }> => {
+  message: string,
+  contextSessionId: string
+): Promise<{ symbols: SymbolDef[], webResults: any[], webBrief?: string, traceNeeded: boolean, traceReason?: string }> => {
+  const foundSymbols: SymbolDef[] = [];
+  const webResults: any[] = [];
+  let traceNeeded = true;
+  let traceReason: string | undefined;
+  let webBrief: string | undefined;
+
+  try {
     const settings = await settingsService.getInferenceSettings();
     const fastModel = settings.fastModel;
-    if (!fastModel) return { symbols: [], webResults: [], traceNeeded: true };
-
-    const prompt = `Analyze: "${message}". SUGGEST symbolic queries and determine if log_trace is needed. Output JSON: { "queries": [], "trace_needed": boolean }`;
-
-    try {
-        const client = await getClient();
-        const res = await client.chat.completions.create({
-            model: fastModel,
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" }
-        });
-        const fastRes = extractJson(res.choices[0].message.content || "{}");
-        
-        const foundSymbols: SymbolDef[] = [];
-        if (fastRes.queries?.length > 0) {
-            for (const q of fastRes.queries) {
-                const s = await domainService.search(q, 5);
-                s.forEach(r => { if (!foundSymbols.find(fs => fs.id === r.id)) foundSymbols.push(r.metadata as SymbolDef); });
-            }
-            await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
-        }
-
-        return { symbols: foundSymbols, webResults: [], traceNeeded: !!fastRes.trace_needed };
-    } catch (e) {
-        loggerService.catError(LogCategory.INFERENCE, "Priming Error", { error: (e as any).message });
-        return { symbols: [], webResults: [], traceNeeded: true };
+    if (!fastModel) {
+        loggerService.catWarn(LogCategory.INFERENCE, "No fastModel configured, skipping symbolic priming.");
+        return { symbols: [], webResults: [], traceNeeded };
     }
+
+    const session = await contextService.getSession(contextSessionId);
+    const history = await contextService.getUnfilteredHistory(contextSessionId);
+    const recentHistory = history.slice(-10);
+    const historyContext = recentHistory.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+
+    // Identify previous web searches to avoid duplicates
+    const previousSearches = history
+      .flatMap(m => {
+        const searches: string[] = [];
+        // Handle tool calls in history
+        if (m.toolName === 'web_search' && (m as any).toolArgs?.query) searches.push((m as any).toolArgs.query);
+        // Handle recorded metadata
+        if (m.metadata?.kind === 'anticipated_web_search' && Array.isArray(m.metadata?.queries)) {
+          m.metadata.queries.forEach((q: string) => searches.push(q));
+        }
+        return searches;
+      })
+      .filter((q, i, self) => q && self.indexOf(q) === i);
+
+    const currentName = session?.name;
+    const userMessageCount = history.filter(m => m.role === 'user').length + 1;
+    const needsNaming = !currentName || currentName.startsWith('Context ') || (userMessageCount % 10 === 0);
+
+    loggerService.catInfo(LogCategory.INFERENCE, `Priming symbolic context with fastModel: ${fastModel}`, { 
+        contextSessionId, 
+        historyCount: recentHistory.length,
+        needsNaming 
+    });
+
+    const prompt = `Analyze the conversation history and the new user message to identify symbolic search queries and determine if web search grounding is needed.
+    
+    ${needsNaming ? 'CRITICAL: Based on the conversation context, suggest a descriptive and concise name for this context session in "suggested_name".' : ''}
+
+    CRITICAL: Only set "web_search_needed" to true if the message involves an external entity (person, company, place), a complex technical/scientific topic, or a current event that requires grounding in facts.
+
+    Conversation History:
+    ${historyContext || "No previous history."}
+
+    New User Message: "${message}"
+
+    Previous Web Searches (DO NOT REPEAT THESE):
+    ${previousSearches.length > 0 ? previousSearches.join(', ') : "None."}
+
+    Output valid JSON only:
+    {
+      "queries": ["symbolic query1", "symbolic query2", ...],
+      "web_search_needed": boolean,
+      "web_search_queries": ["search query1", "search query2", ...],
+      "trace_needed": boolean,
+      "trace_reason": "Brief explanation if trace_needed is true",
+      "suggested_name": string | null
+    }`;
+
+    loggerService.catDebug(LogCategory.INFERENCE, "Fast model priming prompt", { prompt });
+
+    let fastResponse: any = {};
+    if (settings.provider === 'gemini') {
+      const client = await getGeminiClient();
+      const model = client.getGenerativeModel({ model: fastModel, generationConfig: { responseMimeType: "application/json" } });
+      const result = await model.generateContent(prompt);
+      fastResponse = extractJson(result.response.text());
+    } else {
+      const client = await getClient();
+      const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }] });
+      fastResponse = extractJson(result.choices[0]?.message?.content || "{}");
+    }
+
+    loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
+
+    const symbolicQueries = fastResponse.queries || [];
+    const webSearchQueries = fastResponse.web_search_queries || [];
+    traceNeeded = !!fastResponse.trace_needed;
+    traceReason = fastResponse.trace_reason;
+
+    // Handle session naming if suggested
+    if (fastResponse.suggested_name && fastResponse.suggested_name !== currentName) {
+        loggerService.catInfo(LogCategory.INFERENCE, `Fast model suggested session name: ${fastResponse.suggested_name}`);
+        const cleanName = fastResponse.suggested_name.replace(/^["']|["']$/g, '').slice(0, 50);
+        await contextService.renameSession(contextSessionId, cleanName);
+        eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
+    }
+
+    if (symbolicQueries.length > 0) {
+      loggerService.catInfo(LogCategory.INFERENCE, `Executing ${symbolicQueries.length} symbolic search queries.`, { symbolicQueries });
+      for (const query of symbolicQueries) {
+        const res = await domainService.search(query, 5);
+        loggerService.catDebug(LogCategory.INFERENCE, `Search results for "${query}": ${res.length} symbols found.`);
+        res.forEach((r: any) => { if (!foundSymbols.find(s => s.id === r.id)) foundSymbols.push(r.metadata as SymbolDef); });
+      }
+      if (foundSymbols.length > 0) {
+          loggerService.catInfo(LogCategory.INFERENCE, `Symbolic Store returned ${foundSymbols.length} unique symbols for precache.`);
+          const { added, updated } = await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
+          loggerService.catInfo(LogCategory.INFERENCE, `Primed cache: ${added} new, ${updated} filtered/updated.`);
+          await symbolCacheService.emitCacheLoad(contextSessionId);
+      }
+    }
+
+    if (fastResponse.web_search_needed && webSearchQueries.length > 0) {
+      const serpSettings = await settingsService.getSerpApiSettings();
+      if (serpSettings.apiKey) {
+        for (const q of webSearchQueries) {
+            try {
+                const url = `https://serpapi.com/search?q=${encodeURIComponent(q)}&api_key=${serpSettings.apiKey}&engine=google`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                if (data.organic_results) {
+                    webResults.push({ query: q, results: data.organic_results.slice(0, 5).map((r: any) => ({ title: r.title, snippet: r.snippet, url: r.link })) });
+                }
+            } catch (e) {}
+        }
+        if (webResults.length > 0) {
+            webBrief = await synthesizeWebResults(webResults);
+            await contextService.recordMessage(contextSessionId, {
+              id: randomUUID(), role: "system", content: `[System] Executed ${webResults.length} anticipated web searches for grounding.`,
+              timestamp: new Date().toISOString(), metadata: { kind: "anticipated_web_search", queries: webSearchQueries, resultsCount: webResults.length }
+            } as any);
+        }
+      }
+    }
+  } catch (e) { loggerService.catError(LogCategory.INFERENCE, "Priming failed", { error: e }); }
+  return { symbols: foundSymbols, webResults, webBrief, traceNeeded, traceReason };
+};
+
+export const processMessageAsync = async (
+  contextSessionId: string,
+  message: string,
+  toolExecutor: (name: string, args: any) => Promise<any>,
+  systemInstruction: string,
+  messageId?: string
+) => {
+  try {
+    const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
+    const session = await contextService.getSession(contextSessionId);
+    if (session) {
+        await contextService.updateSession({ 
+            ...session, 
+            metadata: { 
+                ...session.metadata, 
+                trace_needed: traceNeeded,
+                trace_reason: traceReason 
+            } 
+        });
+    }
+    const chat = await getChatSession(systemInstruction, contextSessionId);
+    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, systemInstruction, contextSessionId, messageId, webResults, webBrief);
+    eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
+    for await (const chunk of stream) {
+        if (chunk.isComplete) eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId });
+    }
+  } catch (error: any) {
+    loggerService.catError(LogCategory.INFERENCE, "Async Message Processing Failed", { contextSessionId, error: error.message });
+    eventBusService.emitKernelEvent(KernelEventType.INFERENCE_ERROR, { sessionId: contextSessionId, messageId, error: error.message });
+  }
 };
 
 export const inferenceService = {

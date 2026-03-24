@@ -1,9 +1,10 @@
-
 import winston from 'winston';
 import 'winston-daily-rotate-file';
 import path from 'path';
+import fs from 'fs';
 import { app } from 'electron';
 import { eventBusService, KernelEventType } from './eventBusService.js';
+import { randomUUID } from 'crypto';
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
@@ -25,12 +26,16 @@ class LoggerService {
   private logger: winston.Logger;
   private categoryLevels: Map<LogCategory | string, LogLevel> = new Map();
   private defaultLevel: LogLevel = 'debug';
+  private logDir: string;
 
   constructor() {
-    const logDir = path.join(app.getPath('userData'), 'logs');
+    this.logDir = path.join(app.getPath('userData'), 'logs');
+    if (!fs.existsSync(this.logDir)) {
+      fs.mkdirSync(this.logDir, { recursive: true });
+    }
 
     const transport = new winston.transports.DailyRotateFile({
-      filename: path.join(logDir, 'application-%DATE%.log'),
+      filename: path.join(this.logDir, 'application-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '50m',
@@ -77,12 +82,46 @@ class LoggerService {
   }
 
   log(level: LogLevel, category: LogCategory | string, message: string, meta?: any) {
-    const logEntry = { timestamp: new Date().toISOString(), level, category, message, ...meta };
+    const logEntry = { 
+        id: randomUUID(),
+        timestamp: new Date().toISOString(), 
+        level, 
+        category, 
+        message, 
+        ...meta 
+    };
+    
     if (this.shouldLog(category, level)) {
       this.logger.log(level, message, { category, ...meta });
     }
+    
     // Always emit to bus for the UI log viewer
-    eventBusService.emitKernelEvent(KernelEventType.SYSTEM_LOG as any, logEntry);
+    eventBusService.emitKernelEvent(KernelEventType.SYSTEM_LOG, logEntry);
+  }
+
+  async getRecentLogs(limit: number = 100): Promise<any[]> {
+    try {
+        const files = fs.readdirSync(this.logDir)
+            .filter(f => f.startsWith('application-') && f.endsWith('.log'))
+            .sort((a, b) => b.localeCompare(a)); // Newest first
+
+        if (files.length === 0) return [];
+
+        const latestFile = path.join(this.logDir, files[0]);
+        const content = fs.readFileSync(latestFile, 'utf8');
+        const lines = content.trim().split('\n');
+        
+        return lines.slice(-limit).map(line => {
+            try {
+                return JSON.parse(line);
+            } catch (e) {
+                return { message: line, level: 'info', category: 'SYSTEM' };
+            }
+        });
+    } catch (error) {
+        console.error("Failed to read recent logs", error);
+        return [];
+    }
   }
 
   catInfo(category: LogCategory | string, message: string, meta?: any) {

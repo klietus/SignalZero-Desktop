@@ -257,7 +257,9 @@ export const createToolExecutor = (contextSessionId?: string) => {
         }
         if (contextSessionId && results.length > 0) {
             // Minimal mapping for cache
-            await symbolCacheService.batchUpsertSymbols(contextSessionId, results.map(r => r.metadata));
+            const { added, updated } = await symbolCacheService.batchUpsertSymbols(contextSessionId, results.map(r => r.metadata));
+            await symbolCacheService.emitCacheLoad(contextSessionId);
+            return { symbols: results, cache_stats: { added, updated } };
         }
         return { symbols: results };
       }

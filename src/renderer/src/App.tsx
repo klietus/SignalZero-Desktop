@@ -319,6 +319,11 @@ function App() {
         if (type === 'cache:load') {
             setCacheSize(data.symbolIds?.length || 0);
         }
+        if (type === 'context:updated') {
+            setContexts(prev => prev.map(c => 
+                c.id === data.sessionId ? { ...c, name: data.name } : c
+            ));
+        }
     });
 
     const removeNavListener = window.api.onNavigate((view: any) => {
@@ -330,6 +335,16 @@ function App() {
         if (typeof removeNavListener === 'function') removeNavListener();
     };
   }, [activeContextId, appState]);
+
+  useEffect(() => {
+    if (isTracePanelOpen && activeContextId) {
+        window.api.getTraces(activeContextId).then(traces => {
+            if (Array.isArray(traces)) {
+                setActiveTraces(traces.slice().reverse());
+            }
+        }).catch(e => console.error("Failed to fetch session traces", e));
+    }
+  }, [isTracePanelOpen, activeContextId]);
 
   const handleSendMessage = async (text: string) => {
       if (!activeContextId || isProcessing) return;
@@ -454,7 +469,7 @@ function App() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-950 font-sans text-gray-100 selection:bg-indigo-500/30">
-        {currentView !== 'monitor' && (
+        {currentView === 'chat' && (
             <>
                 <ContextListPanel 
                     contexts={contexts} activeContextId={activeContextId}

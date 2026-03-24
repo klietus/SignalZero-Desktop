@@ -16,9 +16,9 @@ const initDb = () => {
         loggerService.catInfo(LogCategory.SQLITE, 'Initializing In-Memory SQLite Database for Tests');
         db = new BetterSqlite3(':memory:');
     } else {
-        loggerService.catInfo(LogCategory.SQLITE, 'Initializing SQLite Database');
         const userDataPath = app.getPath('userData');
         const dbPath = join(userDataPath, 'signalzero.db');
+        loggerService.catInfo(LogCategory.SQLITE, 'Initializing SQLite Database', { dbPath });
         
         if (!fs.existsSync(userDataPath)) {
             fs.mkdirSync(userDataPath, { recursive: true });
@@ -149,6 +149,7 @@ const initDb = () => {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         `);
+        loggerService.catInfo(LogCategory.SQLITE, 'Database schema initialized');
         isInitialized = true;
     } catch (error) {
         loggerService.catError(LogCategory.SQLITE, 'Failed to initialize database', { error });
@@ -165,7 +166,7 @@ export const sqliteService = {
     // Entity-agnostic helpers
     run: (sql: string, params: any = []): BetterSqlite3.RunResult => {
         initDb();
-        loggerService.catDebug(LogCategory.SQLITE, 'SQL RUN', { sql, params });
+        // loggerService.catDebug(LogCategory.SQLITE, 'SQL RUN', { sql, params });
         try {
             return db.prepare(sql).run(params);
         } catch (error) {
@@ -176,9 +177,13 @@ export const sqliteService = {
 
     get: (sql: string, params: any = []): any => {
         initDb();
-        loggerService.catDebug(LogCategory.SQLITE, 'SQL GET', { sql, params });
+        // loggerService.catDebug(LogCategory.SQLITE, 'SQL GET', { sql, params });
         try {
-            return db.prepare(sql).get(params);
+            const result = db.prepare(sql).get(params);
+            if (!result) {
+                // loggerService.catDebug(LogCategory.SQLITE, 'SQL GET: No result found', { sql, params });
+            }
+            return result;
         } catch (error) {
             loggerService.catError(LogCategory.SQLITE, 'SQL GET ERROR', { sql, params, error });
             throw error;
@@ -187,9 +192,11 @@ export const sqliteService = {
 
     all: (sql: string, params: any = []): any[] => {
         initDb();
-        loggerService.catDebug(LogCategory.SQLITE, 'SQL ALL', { sql, params });
+        // loggerService.catDebug(LogCategory.SQLITE, 'SQL ALL', { sql, params });
         try {
-            return db.prepare(sql).all(params);
+            const results = db.prepare(sql).all(params);
+            // loggerService.catDebug(LogCategory.SQLITE, `SQL ALL: Returned ${results.length} rows`);
+            return results;
         } catch (error) {
             loggerService.catError(LogCategory.SQLITE, 'SQL ALL ERROR', { sql, params, error });
             throw error;
@@ -198,7 +205,7 @@ export const sqliteService = {
 
     transaction: <T extends (...args: any[]) => any>(fn: T): T => {
         initDb();
-        loggerService.catDebug(LogCategory.SQLITE, 'SQL TRANSACTION START');
+        // loggerService.catDebug(LogCategory.SQLITE, 'SQL TRANSACTION START');
         return db.transaction(fn) as any;
     },
 

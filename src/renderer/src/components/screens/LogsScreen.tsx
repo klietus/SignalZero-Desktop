@@ -23,6 +23,19 @@ export const LogsScreen: React.FC<LogsScreenProps> = ({ headerProps }) => {
     const [autoScroll, setAutoScroll] = useState(true);
 
     useEffect(() => {
+        // Initial load from file
+        const loadInitialLogs = async () => {
+            try {
+                const initialLogs = await window.api.getRecentLogs(200);
+                if (initialLogs && initialLogs.length > 0) {
+                    setLogs(initialLogs);
+                }
+            } catch (error) {
+                console.error("Failed to load initial logs", error);
+            }
+        };
+        loadInitialLogs();
+
         const removeListener = window.api.onKernelEvent((type, data) => {
             if (type === 'system:log') {
                 setLogs(prev => [...prev, data].slice(-500));
@@ -116,9 +129,9 @@ export const LogsScreen: React.FC<LogsScreenProps> = ({ headerProps }) => {
                             </div>
                             <div className="text-gray-300 break-all leading-relaxed flex-1">
                                 {log.message}
-                                {Object.keys(log).filter(k => !['timestamp', 'level', 'category', 'message'].includes(k)).length > 0 && (
+                                {Object.keys(log).filter(k => !['timestamp', 'level', 'category', 'message', 'id'].includes(k)).length > 0 && (
                                     <span className="text-[10px] text-gray-600 ml-2 italic">
-                                        {JSON.stringify(Object.fromEntries(Object.entries(log).filter(([k]) => !['timestamp', 'level', 'category', 'message'].includes(k))))}
+                                        {JSON.stringify(Object.fromEntries(Object.entries(log).filter(([k]) => !['timestamp', 'level', 'category', 'message', 'id'].includes(k))))}
                                     </span>
                                 )}
                             </div>

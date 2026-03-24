@@ -51,7 +51,7 @@ export class ContextWindowService {
 
         // 3. Mature Symbols (Cache Anchor Expansion)
         // Symbols that have survived decay (turnCount > 3) are stable.
-        const { mature, newSymbols } = await symbolCacheService.getPartitionedSymbols(contextSessionId);
+        const { mature } = await symbolCacheService.getPartitionedSymbols(contextSessionId);
         if (mature.length > 0) {
             messages.push({
                 role: 'system',
@@ -144,7 +144,7 @@ export class ContextWindowService {
 
         // 6. New Symbols (Volatile Tail)
         // Recently activated symbols (turnCount <= 3) change frequently.
-        const dynamicContext = await this.buildDynamicContext(contextSessionId, type, newSymbols);
+        const dynamicContext = await this.buildDynamicContext(contextSessionId, type);
         if (dynamicContext.trim().length > 0) {
             messages.push({
                 role: 'system',
@@ -397,8 +397,7 @@ export class ContextWindowService {
      */
     private async buildDynamicContext(
         contextSessionId: string, 
-        type: ContextKind = 'conversation', 
-        newSymbols: SymbolDef[] = []
+        type: ContextKind = 'conversation'
     ): Promise<string> {
         try {
             const results: string[] = [];
@@ -411,8 +410,11 @@ export class ContextWindowService {
 
                 const userSymbols = Array.from(userSet.values());
                 userCoreCount = userSymbols.length;
-                symbolCacheService.batchUpsertSymbols(contextSessionId, userSymbols, 4);
+                await symbolCacheService.batchUpsertSymbols(contextSessionId, userSymbols, 4);
             }
+
+            // After all possible population, get what's in the cache for the context window
+            const { newSymbols } = await symbolCacheService.getPartitionedSymbols(contextSessionId);
 
             // Symbol Cache Injection (New/Volatile Symbols)
             if (newSymbols.length > 0) {

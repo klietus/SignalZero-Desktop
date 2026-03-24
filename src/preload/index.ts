@@ -42,6 +42,10 @@ const api = {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   updateSettings: (settings: any) => ipcRenderer.invoke('settings:update', settings),
   isInitialized: () => ipcRenderer.invoke('settings:is-initialized'),
+
+  // System
+  getRecentLogs: (limit?: number) => ipcRenderer.invoke('system:get-recent-logs', limit),
+  getTraces: (sessionId: string) => ipcRenderer.invoke('trace:list', sessionId),
   
   // Agent Management
   listAgents: () => ipcRenderer.invoke('agent:list'),
