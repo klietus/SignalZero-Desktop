@@ -1,189 +1,308 @@
 
-import React, { useState } from 'react';
-import { Message, Sender } from '../types';
+import React, { useState, useMemo } from 'react';
+import { User, Terminal, Network, ChevronDown, ChevronRight, Copy, RotateCcw, Brain } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import { Bot, User, Brain, ChevronDown, ChevronUp, Terminal, CheckCircle2, Loader2 } from 'lucide-react';
+import { Sender } from '../types';
+import { ToolIndicator } from './ToolIndicator';
+
+interface Message {
+    id: string;
+    role: Sender;
+    content: string;
+    timestamp: Date;
+    isStreaming?: boolean;
+    toolCalls?: any[];
+    correlationId?: string;
+    toolCallId?: string | null;
+    metadata?: Record<string, any>;
+}
 
 interface ChatMessageProps {
   message: Message;
-  onSymbolClick?: (id: string) => void;
-  onTraceClick?: () => void;
+  onSymbolClick?: (id: string, data?: any) => void;
+  onDomainClick?: (domain: string) => void;
+  onTraceClick?: (id?: string) => void;
+  onRetry?: (text: string) => void;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick, onTraceClick }) => {
-  const isAssistant = message.role === Sender.MODEL;
-  const isSystem = message.role === Sender.SYSTEM;
-  const [showTools, setShowTools] = useState(false);
+// --- Helper for Unicode Decoding ---
+const decodeUnicode = (str: string) => {
+  if (!str) return str;
+  return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+};
 
-  const toolExecutions = message.toolCalls || [];
+// --- Shared UI Components ---
 
-  if (isSystem) {
-      return (
-          <div className="flex justify-center my-4">
-              <div className="bg-gray-900/30 border border-gray-800 rounded-full px-4 py-1 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-gray-600"></div>
-                  <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">{message.content}</span>
-              </div>
+interface SymbolTagProps {
+  id: string;
+  name?: string;
+  onClick?: (id: string) => void;
+}
+
+const SymbolTag: React.FC<SymbolTagProps> = ({ id, name, onClick }) => {
+  const displayId = typeof id === 'object' ? JSON.stringify(id) : String(id);
+  return (
+    <button 
+        onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (onClick) onClick(displayId);
+        }}
+        className="inline-flex items-center gap-1.5 px-1.5 py-0.5 mx-0.5 rounded-md text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors font-mono text-[10px] md:text-xs cursor-pointer select-none align-middle shadow-sm"
+        title={name ? `Symbol: ${name} (${displayId})` : `Symbol: ${displayId}`}
+    >
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+        <span className="font-semibold">{displayId}</span>
+        {name && (
+            <span className="opacity-75 inline-block border-l border-emerald-500/30 pl-1.5 ml-0.5 max-w-[200px] truncate">
+                {name}
+            </span>
+        )}
+    </button>
+  );
+};
+
+interface DomainTagProps {
+  id: string;
+  name?: string;
+  onClick?: (id: string) => void;
+}
+
+const DomainTag: React.FC<DomainTagProps> = ({ id, name, onClick }) => {
+  const displayName = name && name !== id ? `${name} (${id})` : id;
+  return (
+    <button 
+        onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (onClick) onClick(id);
+        }}
+        className="inline-flex items-center gap-1.5 px-1.5 py-0.5 mx-0.5 rounded-md text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors font-mono text-[10px] md:text-xs cursor-pointer select-none align-middle shadow-sm"
+        title={`Domain: ${displayName}`}
+    >
+        <span className="font-semibold">{displayName}</span>
+    </button>
+  );
+};
+
+const ThinkingBlock: React.FC<{ content: string }> = ({ content }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  return (
+    <div className="my-4 rounded-lg border border-purple-200 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/10 overflow-hidden">
+        <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center justify-between px-4 py-2 text-xs font-mono font-bold text-purple-700 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/20 transition-colors"
+        >
+            <div className="flex items-center gap-2">
+                <Brain size={14} />
+                <span>Thought Process</span>
+            </div>
+            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        </button>
+        {isExpanded && (
+            <div className="px-4 py-3 text-xs text-gray-600 dark:text-gray-300 font-mono whitespace-pre-wrap border-t border-purple-200 dark:border-purple-900/50 bg-white/50 dark:bg-black/20">
+                {content}
+            </div>
+        )}
+    </div>
+  );
+};
+
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick, onDomainClick, onTraceClick, onRetry }) => {
+  const isUser = message.role === Sender.USER;
+  const isAssistantResponse = message.role !== Sender.USER;
+  const [showToolList, setShowToolList] = useState(false);
+  const [copyLabel, setCopyLabel] = useState('Copy');
+
+  // Extract traces and clean content
+  const { contentWithoutTraces } = useMemo(() => {
+    let cleanContent = message.content.replace(/<sz_trace>([\s\S]*?)<\/sz_trace>/g, '');
+    
+    // Strip attachments marker and everything after it for user messages in UI
+    if (isUser) {
+        cleanContent = cleanContent.replace(/<attachments>[\s\S]*?<\/attachments>/g, '').trim();
+        const attachmentsMarker = "--- Attachments ---";
+        const markerIndex = cleanContent.indexOf(attachmentsMarker);
+        if (markerIndex !== -1) {
+            cleanContent = cleanContent.substring(0, markerIndex).trim();
+        }
+    }
+
+    return { contentWithoutTraces: cleanContent };
+  }, [message.content, isUser]);
+
+  const handleCopy = async () => {
+    try {
+      const textToCopy = contentWithoutTraces || message.content;
+      await navigator.clipboard.writeText(textToCopy);
+      setCopyLabel('Copied');
+      setTimeout(() => setCopyLabel('Copy'), 1500);
+    } catch (err) {
+      setCopyLabel('Copy failed');
+    }
+  };
+
+  const formatText = (text: string) => {
+    const parts = text.split(/(`{3}[\s\S]*?`{3})/g);
+    
+    return parts.map((part, i) => {
+      if (part.startsWith('```') && part.endsWith('```')) {
+        const content = part.slice(3, -3).replace(/^[a-z]+\n/, ''); 
+        return (
+          <div key={i} className="my-3 p-3 bg-gray-950 border border-gray-800 text-gray-300 rounded text-xs md:text-sm font-mono overflow-x-auto shadow-inner">
+            {content}
           </div>
-      );
-  }
-
-  // 1. Extract and process Thinking Blocks
-  let displayContent = message.content || '';
-  const thinkingBlocks: string[] = [];
-  displayContent = displayContent.replace(/<think>([\s\S]*?)<\/think>/gi, (_, p1) => {
-      thinkingBlocks.push(p1.trim());
-      return "";
-  });
-
-  // 2. Component for rendering text with symbol links
-  const TextWithSymbols = ({ text }: { text: string }) => {
-      const symbolRegex = /\b(SZ:[A-Z0-9_-]+)\b/g;
-      const segments: React.ReactNode[] = [];
-      let lastIdx = 0;
-      let match;
-
-      while ((match = symbolRegex.exec(text)) !== null) {
-          segments.push(text.substring(lastIdx, match.index));
-          const id = match[1];
-          segments.push(
-              <span 
-                  key={match.index}
-                  onClick={() => onSymbolClick?.(id)}
-                  className="text-emerald-400 font-mono font-bold cursor-pointer hover:underline decoration-emerald-500/50 underline-offset-4"
-              >
-                  {id}
-              </span>
-          );
-          lastIdx = match.index + match[0].length;
+        );
       }
-      segments.push(text.substring(lastIdx));
-      return <>{segments}</>;
+
+      let markdownContent = part;
+      markdownContent = markdownContent.replace(/<(?:seed:)?think>([\s\S]*?)<\/(?:seed:)?think>/g, (_, content) => {
+          return `[${content.trim()}](sz-think:thinking)`;
+      });
+      markdownContent = markdownContent.replace(/<sz_id>(.*?)<\/sz_id>/g, '[$1](sz:$1)');
+      markdownContent = markdownContent.replace(/<sz_symbol>([\s\S]*?)<\/sz_symbol>/g, (_, inner) => {
+          const cleanJson = inner.replace(/```json\n?|```/g, '').trim();
+          try {
+              const data = JSON.parse(cleanJson);
+              const label = data.name || data.id || "Symbol";
+              const payload = btoa(unescape(encodeURIComponent(cleanJson)));
+              return `[${label}](sz-symbol:${payload})`;
+          } catch (e) {
+              return `[Malformed Symbol](sz-error:invalid-json)`;
+          }
+      });
+      markdownContent = markdownContent.replace(/<sz_domain>([\s\S]*?)<\/sz_domain>/g, (_, inner) => {
+          const cleanJson = inner.replace(/```json\n?|```/g, '').trim();
+          try {
+              const data = JSON.parse(cleanJson);
+              const label = data.name || data.domain_id || "Domain";
+              const payload = btoa(unescape(encodeURIComponent(cleanJson)));
+              return `[${label}](sz-domain:${payload})`;
+          } catch (e) {
+              return `[Malformed Domain](sz-error:invalid-json)`;
+          }
+      });
+      
+      markdownContent = decodeUnicode(markdownContent);
+
+      return (
+        <div key={i} className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-gray-950 prose-pre:border prose-pre:border-gray-800">
+           <ReactMarkdown
+             remarkPlugins={[remarkGfm]}
+             components={{
+                a: ({href, children, ...props}: any) => {
+                    if (!href) return null;
+                    if (href.startsWith('sz-think:')) {
+                        return <ThinkingBlock content={String(children?.[0] || "")} />;
+                    }
+                    if (href.startsWith('sz-symbol:')) {
+                        try {
+                            const b64 = href.replace(/^sz-symbol:/, '');
+                            const jsonStr = decodeURIComponent(escape(atob(b64)));
+                            const data = JSON.parse(jsonStr);
+                            return <div className="block my-1"><SymbolTag id={data.id} name={data.name} onClick={(clickId) => onSymbolClick && onSymbolClick(clickId, data)} /></div>;
+                        } catch (e) { return <span className="text-red-500">[Invalid Symbol]</span>; }
+                    }
+                    if (href.startsWith('sz-domain:')) {
+                        try {
+                            const b64 = href.replace(/^sz-domain:/, '');
+                            const jsonStr = decodeURIComponent(escape(atob(b64)));
+                            const data = JSON.parse(jsonStr);
+                            return <div className="block my-1"><DomainTag id={data.domain_id} name={data.name} onClick={onDomainClick} /></div>;
+                        } catch (e) { return <span className="text-red-500">[Invalid Domain]</span>; }
+                    }
+                    if (href.startsWith('sz:')) {
+                        const id = href.replace(/^sz:/, '');
+                        return <div className="block my-1"><SymbolTag id={id} onClick={(clickId) => onSymbolClick && onSymbolClick(clickId)} /></div>;
+                    }
+                    return <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline" {...props}>{children}</a>;
+                },
+                code: ({node, className, children, ...props}: any) => {
+                    const isBlock = /language-/.test(className || '');
+                    return <code className={`${isBlock ? '' : 'bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded font-mono text-sm before:content-[""] after:content-[""]'}`} {...props}>{children}</code>;
+                },
+                p: ({children}: any) => <span className="inline whitespace-pre-wrap leading-relaxed">{children}</span>,
+                ul: ({children}: any) => <ul className="block p-0 m-0 ml-6 list-disc">{children}</ul>,
+                ol: ({children}: any) => <ol className="block p-0 m-0 ml-6 list-decimal">{children}</ol>,
+                li: ({children}: any) => <li className="mb-1 last:mb-0">{children}</li>,
+                hr: () => <hr className="my-2 border-gray-200 dark:border-gray-800" />
+             }}
+           >
+             {markdownContent}
+           </ReactMarkdown>
+       </div>
+      );
+    });
   };
 
   return (
-    <div className={`flex flex-col ${isAssistant ? 'items-start' : 'items-end'} w-full group animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-      <div className={`flex items-start gap-4 max-w-[85%] ${isAssistant ? 'flex-row' : 'flex-row-reverse'}`}>
-        {/* Avatar */}
-        <div className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all shadow-xl
-            ${isAssistant 
-                ? 'bg-indigo-600 text-white group-hover:scale-110' 
-                : 'bg-gray-800 text-gray-400 group-hover:scale-110 border border-gray-700'
-            }
-        `}>
-          {isAssistant ? <Bot size={18} /> : <User size={18} />}
+    <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={`flex max-w-[90%] md:max-w-[80%] gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+        
+        <div className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center shadow-sm border
+          ${isUser ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-gray-900 border-gray-700 text-emerald-500'}`}>
+          {isUser ? <User size={16} /> : <Terminal size={16} />}
         </div>
 
-        {/* Message Container */}
-        <div className="flex flex-col space-y-2 min-w-0">
-          {/* Tool Traces (TOP) */}
-          {isAssistant && toolExecutions.length > 0 && (
-              <div className="bg-gray-900/80 border border-gray-800 rounded-2xl overflow-hidden mb-2 shadow-lg">
-                  <button 
-                    onClick={() => setShowTools(!showTools)}
-                    className="w-full flex items-center justify-between px-4 py-2 hover:bg-gray-800/50 transition-colors"
-                  >
-                      <div className="flex items-center gap-2">
-                          <Terminal size={14} className="text-emerald-500" />
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
-                              Symbolic_Execution_Traces ({toolExecutions.length})
-                          </span>
-                      </div>
-                      {showTools ? <ChevronUp size={14} className="text-gray-600" /> : <ChevronDown size={14} className="text-gray-600" />}
-                  </button>
-                  
-                  {showTools && (
-                      <div className="p-3 border-t border-gray-800 bg-black/40 space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-                          {toolExecutions.map((call, i) => (
-                              <div key={i} className="space-y-1">
-                                  <div className="flex items-center justify-between gap-4">
-                                      <div className="flex items-center gap-2 text-[10px] font-mono text-emerald-400">
-                                          <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
-                                          {call.name}
-                                      </div>
-                                      {call.result ? <CheckCircle2 size={10} className="text-emerald-500" /> : <Loader2 size={10} className="animate-spin text-gray-600" />}
-                                  </div>
-                                  <div className="pl-3 border-l border-gray-800">
-                                      <pre className="text-[9px] text-gray-500 font-mono overflow-x-auto p-1 bg-gray-900/30 rounded">
-                                          {JSON.stringify(call.args, null, 2)}
-                                      </pre>
-                                      {call.result && (
-                                          <pre className="mt-1 text-[9px] text-gray-400 font-mono overflow-x-auto p-1 bg-gray-900/50 rounded max-h-24">
-                                              {typeof call.result === 'string' ? call.result : JSON.stringify(call.result, null, 2)}
-                                          </pre>
-                                      )}
-                                  </div>
-                              </div>
-                          ))}
-                      </div>
-                  )}
-              </div>
-          )}
-
-          {/* Bubble */}
-          <div className={`p-5 rounded-2xl shadow-2xl relative transition-all
-            ${isAssistant 
-                ? 'bg-gray-900 border border-gray-800 text-gray-200' 
-                : 'bg-indigo-600 text-white border border-indigo-500 shadow-indigo-500/10'
-            }
-          `}>
-            {/* Thinking Sections */}
-            {thinkingBlocks.length > 0 && (
-                <div className="bg-black/20 border-l-2 border-indigo-500/30 p-3 rounded-r-lg mb-4 space-y-1">
-                    <div className="flex items-center gap-2 text-[9px] font-bold text-indigo-400/70 uppercase tracking-widest">
-                        <Brain size={10} /> Thought_Process
+        <div className={`flex flex-col items-start ${isUser ? 'items-end' : 'items-start'} w-full min-w-0`}>
+          <div className={`relative px-4 py-3 rounded-lg shadow-sm text-base leading-relaxed w-full
+            ${isUser ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-800'}`}>
+            
+            {isAssistantResponse && (
+              <div className="flex items-center justify-between gap-4 mb-3 pb-2 border-b border-gray-100 dark:border-gray-800 w-full">
+                <div className="flex-1 min-w-0">
+                  {message.toolCalls && message.toolCalls.length > 0 && (
+                    <div 
+                        className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 transition-colors select-none truncate" 
+                        onClick={() => setShowToolList(prev => !prev)}
+                    >
+                        <Terminal size={10} className="flex-shrink-0" />
+                        <span>{message.toolCalls.length} Tool Execution{message.toolCalls.length !== 1 ? 's' : ''}</span>
+                        {showToolList ? <ChevronDown size={10} className="flex-shrink-0" /> : <ChevronRight size={10} className="flex-shrink-0" />}
                     </div>
-                    {thinkingBlocks.map((t, i) => (
-                        <div key={i} className="text-xs text-gray-500 font-mono italic leading-relaxed">
-                            {t}
-                        </div>
-                    ))}
+                  )}
                 </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {onTraceClick && (
+                    <button
+                      onClick={() => onTraceClick()}
+                      className="relative flex items-center justify-center w-6 h-6 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800"
+                      title="View reasoning traces"
+                    >
+                      <Network size={12} />
+                    </button>
+                  )}
+                  {!message.isStreaming && (
+                    <>
+                      <button onClick={() => onRetry && onRetry(message.content)} className="p-1 rounded-md text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"><RotateCcw size={14} /></button>
+                      <button onClick={handleCopy} className={`p-1 rounded-md transition-colors ${copyLabel === 'Copied' ? 'text-emerald-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}><Copy size={14} /></button>
+                    </>
+                  )}
+                </div>
+              </div>
             )}
 
-            <div className={`prose prose-invert max-w-none prose-sm leading-relaxed
-                prose-headings:font-light prose-headings:tracking-widest prose-headings:uppercase prose-headings:text-gray-100
-                prose-code:text-indigo-300 prose-code:bg-indigo-950/30 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
-                prose-strong:text-white prose-strong:font-bold
-                prose-a:text-indigo-400 hover:prose-a:text-indigo-300
-                prose-blockquote:border-l-indigo-500/50 prose-blockquote:bg-gray-900/30 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg
-            `}>
-                <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]} 
-                    rehypePlugins={[rehypeHighlight]}
-                    components={{
-                        // Custom renderer for text segments to catch symbol tags
-                        text: ({ children }) => {
-                            if (typeof children !== 'string') return <>{children}</>;
-                            return <TextWithSymbols text={children} />;
-                        }
-                    }}
-                >
-                    {displayContent}
-                </ReactMarkdown>
-            </div>
-            
-            {/* Model & Trace Metadata */}
-            {isAssistant && (message.metadata?.model || onTraceClick) && (
-                <div className="mt-4 pt-4 border-t border-gray-800/50 flex justify-between items-center">
-                    <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">
-                        {message.metadata?.model || 'Symbolic_Kernel'}
-                    </span>
-                    {onTraceClick && (
-                        <button 
-                            onClick={onTraceClick}
-                            className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-900/20 hover:bg-amber-900/40 text-amber-500 rounded text-[9px] font-mono font-bold uppercase tracking-widest transition-all"
-                        >
-                            <Brain size={10} /> View_Trace
-                        </button>
-                    )}
+            {isAssistantResponse && showToolList && message.toolCalls && message.toolCalls.length > 0 && (
+               <div className="mb-3 w-full border-b border-gray-100 dark:border-gray-800 pb-2">
+                 <ToolIndicator toolCalls={message.toolCalls} isFinished={!message.isStreaming || message.content.length > 0} />
+               </div>
+            )}
+
+            {isAssistantResponse && message.isStreaming && !message.content ? (
+                <div className="flex items-center gap-2 py-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-75"></span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-150"></span>
+                </div>
+            ) : (
+                <div className={`w-full break-words`}>
+                    {formatText(contentWithoutTraces)}
+                    {message.isStreaming && <span className="inline-block w-2 h-4 ml-1 align-middle bg-emerald-500 opacity-75 animate-pulse" />}
                 </div>
             )}
           </div>
-
-          <div className={`flex items-center gap-2 text-[9px] font-mono text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity ${isAssistant ? 'justify-start' : 'justify-end'}`}>
+          <div className="text-[10px] text-gray-400 dark:text-gray-600 mt-1 px-1 font-mono">
             {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>

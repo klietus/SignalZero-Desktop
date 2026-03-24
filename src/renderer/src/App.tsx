@@ -87,6 +87,7 @@ const mapSingleMessage = (item: ContextMessage): Message => {
         timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
         toolCalls: mapToolCalls(item),
         correlationId: item.correlationId,
+        toolCallId: item.toolCallId,
         metadata: item.metadata
     };
 };
@@ -94,38 +95,64 @@ const mapSingleMessage = (item: ContextMessage): Message => {
 const groupHistoryByCorrelation = (history: ContextMessage[]): Message[] => {
     if (!Array.isArray(history)) return [];
     
-    const grouped: Message[] = [];
-    const groups = new Map<string, Message>();
+    // Group raw messages by correlationId
+    const groups = new Map<string, { user?: Message, assistants: Message[] }>();
+    const order: string[] = [];
 
     for (const item of history) {
         if (!item || item.role === 'system') continue;
+        
+        const corrId = item.correlationId || (item.role === 'user' ? item.id : null) || 'orphan';
+        
+        if (!groups.has(corrId)) {
+            groups.set(corrId, { assistants: [] });
+            order.push(corrId);
+        }
+        
+        const group = groups.get(corrId)!;
+        const msg = mapSingleMessage(item);
 
         if (item.role === 'user') {
-            grouped.push(mapSingleMessage(item));
-            continue;
+            group.user = msg;
+        } else {
+            group.assistants.push(msg);
+        }
+    }
+
+    const grouped: Message[] = [];
+
+    for (const corrId of order) {
+        const group = groups.get(corrId)!;
+        
+        if (group.user) {
+            grouped.push(group.user);
         }
 
-        const corrId = item.correlationId || item.id || `${item.timestamp || Date.now()}`;
-        let existing = groups.get(corrId);
+        if (group.assistants.length > 0) {
+            // Merge assistant messages for this correlation group
+            const first = group.assistants[0];
+            const allToolCalls = group.assistants.flatMap(m => m.toolCalls || []);
+            
+            // Map tool results back to their calls
+            group.assistants.forEach(m => {
+                if (m.toolCallId) {
+                    const call = allToolCalls.find(tc => tc.id === m.toolCallId);
+                    if (call) call.result = m.content;
+                }
+            });
 
-        if (!existing) {
-            existing = mapSingleMessage(item);
-            groups.set(corrId, existing);
-            grouped.push(existing);
-        } else {
-            if (item.role === 'assistant' || item.role === 'model') {
-                existing.content += item.content || '';
-                if (item.toolCalls) {
-                    existing.toolCalls = [...(existing.toolCalls || []), ...mapToolCalls(item)];
-                }
-            } else if (item.role === 'tool') {
-                const toolCallId = item.toolCallId;
-                if (toolCallId && existing.toolCalls) {
-                    const tc = existing.toolCalls.find((t: any) => t.id === toolCallId);
-                    if (tc) tc.result = item.content;
-                    else existing.toolCalls.push(...mapToolCalls(item));
-                }
-            }
+            // Combine non-tool content
+            const combinedContent = group.assistants
+                .filter(m => !m.toolCallId && m.content && m.content.trim())
+                .map(m => m.content)
+                .join('\n\n');
+
+            grouped.push({
+                ...first,
+                content: combinedContent,
+                toolCalls: allToolCalls,
+                isStreaming: group.assistants.some(m => m.isStreaming)
+            });
         }
     }
 
@@ -352,7 +379,7 @@ function App() {
                 <div className="flex flex-col h-full relative">
                     <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
                     <div className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/50">
-                        <div className="w-full max-w-7xl mx-auto space-y-10 pb-12">
+                        <div className="w-full max-w-full mx-auto space-y-10 pb-12">
                             {messages.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center">
                                     <MessageSquare size={64} className="mb-4 mx-auto" />
@@ -367,7 +394,7 @@ function App() {
                         </div>
                     </div>
                     <div className="p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent">
-                        <div className="w-full max-w-7xl mx-auto">
+                        <div className="w-full max-w-full mx-auto">
                             <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
                         </div>
                     </div>
