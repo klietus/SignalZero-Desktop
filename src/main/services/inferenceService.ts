@@ -427,7 +427,7 @@ export const stripThoughts = (text: string): string => {
     .replace(/<\/think>/gi, '')
     .replace(/<\/thought>/gi, '')
     .replace(/\[[\s\S]*?\]\(sz-think:thinking\)/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/ +/g, ' ')
     .trim();
 };
 
