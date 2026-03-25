@@ -83,6 +83,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
       }
   };
 
+  const handleEmojiClick = () => {
+    if (window.api.platform === 'darwin') {
+      window.api.showEmojiPicker();
+    } else {
+      setShowEmojiPicker(prev => !prev);
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (!files?.length) return;
@@ -131,7 +139,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
 
             <button
                 type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                onClick={handleEmojiClick}
                 disabled={disabled}
                 className={`p-2 transition-colors ${showEmojiPicker ? 'text-indigo-400' : 'text-gray-500 hover:text-gray-300'} disabled:opacity-40`}
                 title="Emoji palette"

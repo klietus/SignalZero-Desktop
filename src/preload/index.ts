@@ -46,6 +46,7 @@ const api = {
   // System
   getRecentLogs: (limit?: number) => ipcRenderer.invoke('system:get-recent-logs', limit),
   getTraces: (sessionId: string) => ipcRenderer.invoke('trace:list', sessionId),
+  showEmojiPicker: () => ipcRenderer.invoke('system:show-emoji-picker'),
   
   // Agent Management
   listAgents: () => ipcRenderer.invoke('agent:list'),
@@ -82,7 +83,8 @@ const api = {
     ipcRenderer.removeAllListeners('inference:completed');
     ipcRenderer.removeAllListeners('trace:logged');
     ipcRenderer.removeAllListeners('kernel:event');
-  }
+  },
+  platform: process.platform
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

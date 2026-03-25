@@ -43,6 +43,7 @@ declare global {
       isInitialized: () => Promise<boolean>;
       getRecentLogs: (limit?: number) => Promise<any[]>;
       getTraces: (sessionId: string) => Promise<any[]>;
+      showEmojiPicker: () => Promise<void>;
       listAgents: () => Promise<any[]>;
       upsertAgent: (id: string, prompt: string, enabled: boolean, schedule?: string) => Promise<any>;
       deleteAgent: (id: string) => Promise<boolean>;
@@ -57,6 +58,7 @@ declare global {
       onKernelEvent: (callback: (type: string, data: any) => void) => () => void;
       onNavigate: (callback: (view: string) => void) => () => void;
       removeInferenceListeners: () => void;
+      platform: string;
     }
   }
 }

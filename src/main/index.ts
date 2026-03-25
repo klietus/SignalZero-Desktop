@@ -397,8 +397,14 @@ ipcMain.handle('settings:update', async (_, settings) => {
   return await settingsService.update(settings);
 });
 
-ipcMain.handle('settings:is-initialized', () => {
+ipcMain.handle('system:is-initialized', () => {
   return settingsService.isInitialized();
+});
+
+ipcMain.handle('system:show-emoji-picker', () => {
+    if (process.platform === 'darwin') {
+        app.showEmojiPanel();
+    }
 });
 
 ipcMain.handle('agent:list', async () => {
