@@ -126,10 +126,10 @@ export const settingsService = {
       provider: (saved.provider as any) || 'local',
       apiKey: decrypt(saved.apiKey || ''),
       endpoint: saved.endpoint || 'http://localhost:1234/v1',
-      model: saved.model || 'openai/gpt-oss-120b',
-      agentModel: saved.agentModel || saved.model || 'openai/gpt-oss-120b',
+      model: saved.model || 'qwen3.5-122b-a10b',
+      agentModel: saved.agentModel || saved.model || 'qwen3.5-122b-a10b',
       visionModel: saved.visionModel || 'zai-org/glm-4.6v-flash',
-      fastModel: saved.fastModel || 'qwen/qwen3.5-0.8b',
+      fastModel: saved.fastModel || 'qwen3.5-0.8b',
       savedConfigs: saved.savedConfigs ? Object.fromEntries(
           Object.entries(saved.savedConfigs).map(([k, v]) => [k, { ...v, apiKey: decrypt(v.apiKey) }])
       ) : {},
@@ -234,21 +234,28 @@ export const settingsService = {
   },
 
   update: async (settings: Partial<SystemSettings>) => {
+    const current = loadFromFile();
+    
     if (settings.inference) {
-        await settingsService.setInferenceSettings(settings.inference as InferenceSettings);
+        current.inference = {
+            ...current.inference,
+            ...settings.inference,
+            apiKey: encrypt(settings.inference.apiKey || '')
+        };
     }
+    
     if (settings.serpApi) {
-        await settingsService.setSerpApiSettings(settings.serpApi);
+        current.serpApi = {
+            ...current.serpApi,
+            ...settings.serpApi,
+            apiKey: encrypt(settings.serpApi.apiKey || '')
+        };
     }
     
-    // For non-encrypted fields, merge directly
-    const updated = { ...loadFromFile(), ...settings };
-    delete updated.inference; // Already handled
-    delete updated.serpApi;  // Already handled
-    
-    saveToFile({
-        ...loadFromFile(),
-        ...updated
-    });
+    const otherSettings = { ...settings };
+    delete otherSettings.inference;
+    delete otherSettings.serpApi;
+
+    saveToFile({ ...current, ...otherSettings });
   }
 };
