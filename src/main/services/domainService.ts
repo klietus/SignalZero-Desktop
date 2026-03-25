@@ -137,8 +137,8 @@ export const domainService = {
     return symbol;
   },
 
-  async bulkUpsert(domainId: string, symbols: SymbolDef[]): Promise<void> {
-      await this.bulkUpsertSymbols(symbols, domainId);
+  async bulkUpsert(domainId: string, symbols: SymbolDef[], skipIndexing: boolean = false): Promise<void> {
+      await this.bulkUpsertSymbols(symbols, domainId, skipIndexing);
   },
 
   /**

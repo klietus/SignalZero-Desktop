@@ -130,7 +130,7 @@ export const projectService = {
 
             emitStatus(`Establishing relational integrity for ${allSymbolsToUpsert.length} symbols...`, 30);
             await yieldToEventLoop();
-            await domainService.bulkUpsertSymbols(allSymbolsToUpsert, undefined, true); // skipIndexing=true
+            await domainService.bulkUpsert('', allSymbolsToUpsert, true); // skipIndexing=true
 
             emitStatus(`Vectorizing ${allSymbolsToUpsert.length} symbols (this may take a while)...`, 40);
             await lancedbService.indexBatch(allSymbolsToUpsert, async (indexed, total) => {

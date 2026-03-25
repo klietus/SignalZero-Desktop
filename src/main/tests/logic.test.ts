@@ -82,6 +82,7 @@ describe('Project Service Parity', () => {
         
         expect(domainService.clearAll).toHaveBeenCalled();
         expect(domainService.createDomain).toHaveBeenCalledWith('test-domain', expect.anything());
-        expect(domainService.bulkUpsert).toHaveBeenCalledWith('test-domain', expect.any(Array));
+        // bulkUpsert is called with '' for cross-domain symbols in project import
+        expect(domainService.bulkUpsert).toHaveBeenCalledWith('', expect.any(Array), true);
     });
 });

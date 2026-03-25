@@ -62,8 +62,8 @@ export const TracePanel: React.FC<TracePanelProps> = ({
     <>
       {/* Slide-out Panel (Left Side) */}
       <div
-        className={`fixed inset-y-0 left-0 w-full md:w-[600px] bg-gray-50 dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[60] flex flex-col ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 right-0 w-full md:w-[800px] bg-gray-50 dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[100] flex flex-col pointer-events-auto ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MessageSquare, Loader2, GitMerge } from 'lucide-react';
+import { MessageSquare, Loader2 } from 'lucide-react';
 import { Message, Sender, UserProfile, ContextSession, ContextMessage, ProjectMeta } from './types';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
@@ -13,7 +13,7 @@ import { LogsScreen } from './components/screens/LogsScreen';
 import { Header, HeaderProps } from './components/Header';
 import { ContextListPanel } from './components/panels/ContextListPanel';
 import { SetupScreen } from './components/screens/SetupScreen';
-import { TraceVisualizer } from './components/TraceVisualizer';
+import { TracePanel } from './components/panels/TracePanel';
 import { StatusBar } from './components/StatusBar';
 
 import { ACTIVATION_PROMPT } from './symbolic_system/activation_prompt';
@@ -176,6 +176,7 @@ function App() {
 
     const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);
     const [activeTraces, setActiveTraces] = useState<any[]>([]);
+    const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
 
     // Status Bar State
     const [modelName, setModelName] = useState('');
@@ -444,14 +445,14 @@ function App() {
                             <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/40 pointer-events-none">
                             <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-none">
                                 {messages.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center pointer-events-auto">
+                                    <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center pointer-events-none">
                                         <MessageSquare size={64} className="mb-4 mx-auto" />
                                         <p className="text-xl font-light tracking-widest uppercase">SignalZero Kernel</p>
                                         <p className="text-sm mt-2 font-mono">Ready for symbolic execution</p>
                                     </div>
                                 ) : (
                                     messages.map((msg) => (
-                                        <div key={msg.id} className="pointer-events-auto">
+                                        <div key={msg.id} className="pointer-events-none">
                                             <ChatMessage message={msg} onSymbolClick={() => setCurrentView('dev')} onTraceClick={() => setIsTracePanelOpen(true)} />
                                         </div>
                                     ))
@@ -540,29 +541,15 @@ function App() {
                 <div className={`flex-1 flex flex-col min-w-0 bg-transparent relative z-10 ${currentView === 'chat' ? 'pointer-events-none' : ''}`}>
                     {renderCurrentView()}
 
-                    {/* Popout Trace Panel Overlay */}
-                    {isTracePanelOpen && (
-                        <div className="absolute inset-y-0 right-0 w-[500px] bg-gray-900 border-l border-gray-800 shadow-2xl z-[100] flex flex-col transition-all animate-in slide-in-from-right pointer-events-auto">
-                            <div className="h-14 border-b border-gray-800 flex items-center justify-between px-6 bg-gray-950/50">
-                                <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-amber-500 flex items-center gap-2">
-                                    <GitMerge size={14} /> Reasoning_Graph
-                                </h3>
-                                <button onClick={() => setIsTracePanelOpen(false)} className="text-gray-500 hover:text-white uppercase text-[10px] font-mono">Close</button>
-                            </div>
-                            <div className="flex-1 overflow-hidden p-4 overflow-y-auto">
-                                {activeTraces.length > 0 ? (
-                                    <TraceVisualizer
-                                        trace={activeTraces[0]}
-                                        onSymbolClick={() => { setCurrentView('dev'); setIsTracePanelOpen(false); }}
-                                    />
-                                ) : (
-                                    <div className="h-full flex-1 flex items-center justify-center text-gray-700 font-mono text-[10px] uppercase tracking-widest">
-                                        No_Active_Traces
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    {/* Popout Trace Panel */}
+                    <TracePanel
+                        isOpen={isTracePanelOpen}
+                        onClose={() => setIsTracePanelOpen(false)}
+                        traces={activeTraces}
+                        selectedTraceId={selectedTraceId}
+                        onSelectTrace={setSelectedTraceId}
+                        onSymbolClick={() => { setCurrentView('dev'); setIsTracePanelOpen(false); }}
+                    />
                 </div>
             </div>
             

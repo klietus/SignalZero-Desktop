@@ -256,6 +256,7 @@ export type SymbolKind = 'pattern' | 'lattice' | 'persona' | 'data';
 export interface SymbolLatticeDef {
     topology: 'inductive' | 'deductive' | 'bidirectional' | 'invariant' | 'energy';
     closure: 'agent' | 'branch' | 'collapse' | 'constellation' | 'synthesis';
+    activation_conditions?: string[];
 }
 
 export interface SymbolPersonaDef {
@@ -263,6 +264,7 @@ export interface SymbolPersonaDef {
     function: string;
     fallback_behavior: string[];
     linked_personas: string[];
+    activation_conditions?: string[];
 }
 
 export interface SymbolDataDef {
@@ -270,6 +272,7 @@ export interface SymbolDataDef {
     verification: string;
     status: string;
     payload: Record<string, any>;
+    activation_conditions?: string[];
 }
 
 export interface SymbolLink {

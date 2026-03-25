@@ -357,7 +357,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
 
   return (
     <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex max-w-[90%] md:max-w-[80%] gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`pointer-events-auto flex max-w-[90%] md:max-w-[80%] gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
         
         {/* Avatar */}
         <div className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center shadow-sm border

@@ -35,7 +35,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
   // Close emoji picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as unknown as Node)) {
         setShowEmojiPicker(false);
       }
     };
@@ -181,10 +181,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
               </button>
             )}
           </div>
-        </div>
-        
-        <div className="text-center mt-3 text-[9px] text-gray-600 font-mono uppercase tracking-[0.3em] opacity-50">
-            SignalZero Kernel • Relational Persistence Active
         </div>
     </div>
   );
