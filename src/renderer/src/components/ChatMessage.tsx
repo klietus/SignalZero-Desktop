@@ -332,7 +332,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
                     );
                 },
                 p: ({children}: any) => (
-                    <span className="inline whitespace-pre-wrap leading-relaxed">{children}</span>
+                    <div className="block whitespace-pre-wrap leading-relaxed mb-4 last:mb-0">{children}</div>
                 ),
                 ul: ({children}: any) => (
                     <ul className="block p-0 m-0 ml-6 list-disc">{children}</ul>

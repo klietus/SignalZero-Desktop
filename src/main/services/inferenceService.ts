@@ -503,6 +503,11 @@ export async function* sendMessageAndHandleTools(
   };
 
   while (loops < MAX_TOOL_LOOPS && auditRetries < MAX_AUDIT_RETRIES + 1) {
+    loggerService.catDebug(LogCategory.INFERENCE, `Starting turn loop ${loops}/${MAX_TOOL_LOOPS}`, { 
+      contextSessionId, 
+      previousTurnTextLength: previousTurnText.length,
+      totalTextAccumulatedAcrossLoopsLength: totalTextAccumulatedAcrossLoops.length 
+    });
     yieldedToolCalls = undefined;
     if (contextSessionId) {
         const session = await contextService.getSession(contextSessionId);
@@ -604,6 +609,13 @@ export async function* sendMessageAndHandleTools(
           if (processedText) {
             let textToYield = processedText;
             if (isFirstTextChunkInTurn && totalTextAccumulatedAcrossLoops.length > 0) textToYield = "\n\n" + textToYield;
+            
+            loggerService.catDebug(LogCategory.INFERENCE, "Streaming chunk", { 
+              text: textToYield, 
+              isFirst: isFirstTextChunkInTurn,
+              loop: loops
+            });
+
             textAccumulatedInTurn += textToYield;
             yield { text: textToYield };
             isFirstTextChunkInTurn = false;
@@ -626,10 +638,18 @@ export async function* sendMessageAndHandleTools(
       break;
     }
 
+    loggerService.catDebug(LogCategory.INFERENCE, "Turn accumulation complete", { 
+      textAccumulatedInTurn, 
+      previousTurnText 
+    });
+
     totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
 
     if (loops > 0 && textAccumulatedInTurn.trim().length > 0 && textAccumulatedInTurn.trim() === previousTurnText.trim()) {
-      loggerService.catWarn(LogCategory.INFERENCE, "Detected duplicate text generation (echo).", { contextSessionId });
+      loggerService.catWarn(LogCategory.INFERENCE, "Detected duplicate text generation (echo).", { 
+        contextSessionId, 
+        duplicateText: textAccumulatedInTurn.trim() 
+      });
       textAccumulatedInTurn = "";
     } else if (textAccumulatedInTurn.trim().length > 0) {
       previousTurnText = textAccumulatedInTurn;
@@ -686,7 +706,7 @@ export async function* sendMessageAndHandleTools(
       await contextService.recordMessage(contextSessionId, {
         id: randomUUID(),
         role: "assistant",
-        content: stripThoughts(textAccumulatedInTurn),
+        content: stripThoughts(totalTextAccumulatedAcrossLoops),
         timestamp: new Date().toISOString(),
         toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({
           id: call.id,
