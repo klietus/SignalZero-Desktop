@@ -643,16 +643,17 @@ export async function* sendMessageAndHandleTools(
       previousTurnText 
     });
 
-    totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
-
     if (loops > 0 && textAccumulatedInTurn.trim().length > 0 && textAccumulatedInTurn.trim() === previousTurnText.trim()) {
       loggerService.catWarn(LogCategory.INFERENCE, "Detected duplicate text generation (echo).", { 
         contextSessionId, 
         duplicateText: textAccumulatedInTurn.trim() 
       });
       textAccumulatedInTurn = "";
-    } else if (textAccumulatedInTurn.trim().length > 0) {
-      previousTurnText = textAccumulatedInTurn;
+    } else {
+      if (textAccumulatedInTurn.trim().length > 0) {
+        previousTurnText = textAccumulatedInTurn;
+      }
+      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
     }
 
     if ((nextAssistant as any).tool_calls) {
@@ -692,8 +693,6 @@ export async function* sendMessageAndHandleTools(
         transientMessages.push(nextAssistant!);
         transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${finalAuditMessage}` });
         yield { text: "\n\n> *[System Audit: Enforcing Symbolic Integrity - Retrying]*\n\n" };
-        totalTextAccumulatedAcrossLoops = "";
-        previousTurnText = "";
         auditRetries++;
         continue;
       } else {
