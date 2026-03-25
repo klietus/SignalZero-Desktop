@@ -651,7 +651,8 @@ export async function* sendMessageAndHandleTools(
       textAccumulatedInTurn = "";
     } else {
       if (textAccumulatedInTurn.trim().length > 0) {
-        previousTurnText = textAccumulatedInTurn;
+        previousTurnText = textAccumulatedInTurn.trim();
+        totalTextAccumulatedAcrossLoops += (totalTextAccumulatedAcrossLoops ? "\n\n" : "") + textAccumulatedInTurn.trim();
       }
     }
 
@@ -672,7 +673,7 @@ export async function* sendMessageAndHandleTools(
     const isCallingTraceThisTurn = currentToolNames.has('log_trace');
 
     if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
-      const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn) || isNarrativeText(totalTextAccumulatedAcrossLoops);
+      const hasNarrativeOutput = isNarrativeText(totalTextAccumulatedAcrossLoops);
       if (traceNeeded && isEndingTurn && !hasLoggedTrace && !isCallingTraceThisTurn) {
         auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
         auditTriggered = true;
@@ -700,122 +701,117 @@ export async function* sendMessageAndHandleTools(
       }
     }
 
-    if (contextSessionId) {
-      await contextService.recordMessage(contextSessionId, {
-        id: randomUUID(),
-        role: "assistant",
-        content: stripThoughts(totalTextAccumulatedAcrossLoops),
-        timestamp: new Date().toISOString(),
-        toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({
-          id: call.id,
-          name: call.function?.name,
-          arguments: call.function?.arguments
-        })),
-        metadata: { kind: "assistant_response" },
-        correlationId: correlationId
-      } as any);
+    // --- Tool Execution ---
+    const toolResponses: ChatCompletionMessageParam[] = [];
+    if (yieldedToolCalls && yieldedToolCalls.length > 0) {
+      for (const call of yieldedToolCalls) {
+        if (!call.function?.name) continue;
+        let toolName = call.function.name;
+        if (toolName === 'log_trace') hasLoggedTrace = true;
+        const { data: args, error: parseError } = parseToolArguments(call.function.arguments || "");
+        
+        if (parseError) {
+          const errorPayload = { status: "error", error: "Malformed JSON", details: parseError };
+          toolResponses.push({ role: "tool", content: JSON.stringify(errorPayload), tool_call_id: call.id });
+          if (contextSessionId) {
+            await contextService.recordMessage(contextSessionId, {
+              id: randomUUID(), role: "tool", content: JSON.stringify(errorPayload),
+              timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
+              metadata: { kind: "tool_error" }, correlationId: correlationId
+            } as any);
+          }
+          continue;
+        }
 
-      // --- Context Auto-Naming Logic ---
-      try {
-        const session = await contextService.getSession(contextSessionId);
-        // If the context name is still the default (e.g., "Context HH:MM:SS" or "New Context") 
-        // and we have at least one round, generate a proper name.
-        if (session && (!session.name || session.name.startsWith('Context '))) {
-          const history = await contextService.getUnfilteredHistory(contextSessionId);
-          // Only trigger after the first round (1 user, 1 assistant)
-          if (history.length >= 2 && history.length <= 4) {
-            const settings = await settingsService.getInferenceSettings();
-            const fastModel = settings.fastModel;
-            if (fastModel) {
-              const historyText = history
-                .filter(m => m.role !== 'system')
-                .map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`)
-                .join('\n');
+        try {
+          const result = await toolExecutor(toolName, args);
+          toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: call.id });
+          if (contextSessionId) {
+            await contextService.recordMessage(contextSessionId, {
+              id: randomUUID(), role: "tool", content: JSON.stringify(result),
+              timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
+              metadata: { kind: "tool_result" }, correlationId: correlationId
+            } as any);
+          }
+        } catch (err) {
+          loggerService.catError(LogCategory.INFERENCE, `Error executing tool ${toolName}`, { err });
+          toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: call.id });
+          if (contextSessionId) {
+            await contextService.recordMessage(contextSessionId, {
+              id: randomUUID(), role: "tool", content: JSON.stringify({ error: String(err) }),
+              timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
+              metadata: { kind: "tool_error" }, correlationId: correlationId
+            } as any);
+          }
+        }
+      }
+    }
 
-              const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+    // Update transient messages for the next loop
+    transientMessages.push(nextAssistant!);
+    if (toolResponses.length > 0) {
+      transientMessages.push(...toolResponses);
+    }
 
-              let newName = "";
-              if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel });
-                const result = await model.generateContent(namingPrompt);
-                newName = result.response.text().trim();
-              } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                  model: fastModel,
-                  messages: [{ role: "user", content: namingPrompt }],
-                  max_tokens: 20
-                });
-                newName = result.choices[0]?.message?.content?.trim() || "";
-              }
+    if (isEndingTurn) {
+      // Record final assistant message to database
+      if (contextSessionId) {
+        await contextService.recordMessage(contextSessionId, {
+          id: randomUUID(),
+          role: "assistant",
+          content: stripThoughts(totalTextAccumulatedAcrossLoops),
+          timestamp: new Date().toISOString(),
+          toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({
+            id: call.id,
+            name: call.function?.name,
+            arguments: call.function?.arguments
+          })),
+          metadata: { kind: "assistant_response" },
+          correlationId: correlationId
+        } as any);
 
-              if (newName) {
-                // Clean up quotes if the model added them
-                newName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                loggerService.catInfo(LogCategory.INFERENCE, `Auto-renamed context ${contextSessionId} to: ${newName}`);
-                await contextService.updateSession({ ...session, name: newName });
-
-                // Emit event so the UI updates
-                eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: newName });
+        // --- Context Auto-Naming Logic ---
+        try {
+          const session = await contextService.getSession(contextSessionId);
+          if (session && (!session.name || session.name.startsWith('Context '))) {
+            const history = await contextService.getUnfilteredHistory(contextSessionId);
+            if (history.length >= 2 && history.length <= 4) {
+              const settings = await settingsService.getInferenceSettings();
+              const fastModel = settings.fastModel;
+              if (fastModel) {
+                const historyText = history
+                  .filter(m => m.role !== 'system')
+                  .map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`)
+                  .join('\n');
+                const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+                let newName = "";
+                if (settings.provider === 'gemini') {
+                  const client = await getGeminiClient();
+                  const model = client.getGenerativeModel({ model: fastModel });
+                  const result = await model.generateContent(namingPrompt);
+                  newName = result.response.text().trim();
+                } else {
+                  const client = await getClient();
+                  const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: namingPrompt }], max_tokens: 20 });
+                  newName = result.choices[0]?.message?.content?.trim() || "";
+                }
+                if (newName) {
+                  newName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                  await contextService.updateSession({ ...session, name: newName });
+                  eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: newName });
+                }
               }
             }
           }
-        }
-      } catch (namingError) {
-        loggerService.catWarn(LogCategory.INFERENCE, "Failed to auto-rename context", { error: namingError });
+        } catch (namingError) { }
       }
+      break;
     }
 
-    transientMessages.length = 0;
-    const toolResponses: ChatCompletionMessageParam[] = [];
-    for (const call of yieldedToolCalls || []) {
-      if (!call.function?.name) continue;
-      let toolName = call.function.name;
-      if (toolName === 'log_trace') hasLoggedTrace = true;
-      const { data: args, error: parseError } = parseToolArguments(call.function.arguments || "");
-      if (parseError) {
-        const errorPayload = { status: "error", error: "Malformed JSON", details: parseError };
-        toolResponses.push({ role: "tool", content: JSON.stringify(errorPayload), tool_call_id: call.id });
-        if (contextSessionId) {
-          await contextService.recordMessage(contextSessionId, {
-            id: randomUUID(), role: "tool", content: JSON.stringify(errorPayload),
-            timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
-            metadata: { kind: "tool_error" }, correlationId: correlationId
-          } as any);
-        }
-        continue;
-      }
-      try {
-        const result = await toolExecutor(toolName, args);
-        toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: call.id });
-        if (contextSessionId) {
-          await contextService.recordMessage(contextSessionId, {
-            id: randomUUID(), role: "tool", content: JSON.stringify(result),
-            timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
-            metadata: { kind: "tool_result" }, correlationId: correlationId
-          } as any);
-        }
-      } catch (err) {
-        loggerService.catError(LogCategory.INFERENCE, `Error executing tool ${toolName}`, { err });
-        toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: call.id });
-        if (contextSessionId) {
-          await contextService.recordMessage(contextSessionId, {
-            id: randomUUID(), role: "tool", content: JSON.stringify({ error: String(err) }),
-            timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
-            metadata: { kind: "tool_error" }, correlationId: correlationId
-          } as any);
-        }
-      }
-    }
-    if (isEndingTurn && !auditTriggered) {
-      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
-      break;
-    }
     if (auditRetries >= MAX_AUDIT_RETRIES) {
-      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
       break;
     }
+    
     yieldedToolCalls = undefined;
     loops++;
   }
