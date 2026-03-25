@@ -442,8 +442,8 @@ function App() {
                         <div className="pointer-events-auto w-full">
                             <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
                         </div>
-                            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/40 pointer-events-none">
-                            <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-none">
+                            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/40 pointer-events-auto">
+                            <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-auto">
                                 {messages.length === 0 ? (
                                     <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center pointer-events-none">
                                         <MessageSquare size={64} className="mb-4 mx-auto" />
@@ -452,8 +452,16 @@ function App() {
                                     </div>
                                 ) : (
                                     messages.map((msg) => (
-                                        <div key={msg.id} className="pointer-events-none">
-                                            <ChatMessage message={msg} onSymbolClick={() => setCurrentView('dev')} onTraceClick={() => setIsTracePanelOpen(true)} />
+                                        <div key={msg.id} className="pointer-events-auto">
+                                            <ChatMessage 
+                                                message={msg} 
+                                                onSymbolClick={() => setCurrentView('dev')} 
+                                                onTraceClick={(id) => {
+                                                    if (id) setSelectedTraceId(id);
+                                                    setIsTracePanelOpen(true);
+                                                }}
+                                                onRetry={handleSendMessage}
+                                            />
                                         </div>
                                     ))
                                 )}

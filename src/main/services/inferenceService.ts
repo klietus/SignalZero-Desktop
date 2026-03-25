@@ -316,7 +316,7 @@ const _streamAssistantResponseInternal = async function* (
 
     for await (const chunk of result.stream) {
       let text = "";
-      try { text = chunk.text(); } catch (e) {}
+      try { text = chunk.text(); } catch (e) { }
       if (text) {
         textAccumulator += text;
         yield { text };
@@ -503,35 +503,35 @@ export async function* sendMessageAndHandleTools(
   };
 
   while (loops < MAX_TOOL_LOOPS && auditRetries < MAX_AUDIT_RETRIES + 1) {
-    loggerService.catDebug(LogCategory.INFERENCE, `Starting turn loop ${loops}/${MAX_TOOL_LOOPS}`, { 
-      contextSessionId, 
+    loggerService.catDebug(LogCategory.INFERENCE, `Starting turn loop ${loops}/${MAX_TOOL_LOOPS}`, {
+      contextSessionId,
       previousTurnTextLength: previousTurnText.length,
-      totalTextAccumulatedAcrossLoopsLength: totalTextAccumulatedAcrossLoops.length 
+      totalTextAccumulatedAcrossLoopsLength: totalTextAccumulatedAcrossLoops.length
     });
     yieldedToolCalls = undefined;
     if (contextSessionId) {
-        const session = await contextService.getSession(contextSessionId);
-        if (!session || session.status === 'closed') {
-          loggerService.catInfo(LogCategory.INFERENCE, "Context closed during inference, aborting.", { contextSessionId });
-          yield { text: "\n[System] Context archived. Inference aborted." };
-          break;
-        }
+      const session = await contextService.getSession(contextSessionId);
+      if (!session || session.status === 'closed') {
+        loggerService.catInfo(LogCategory.INFERENCE, "Context closed during inference, aborting.", { contextSessionId });
+        yield { text: "\n[System] Context archived. Inference aborted." };
+        break;
+      }
 
-        const settings = await settingsService.getInferenceSettings();
-        if (settings.provider === 'gemini') {
-          const history = await contextService.getUnfilteredHistory(contextSessionId);
-          if (history.length >= 2) {
-            const lastMsg = history[history.length - 1];
-            const penultMsg = history[history.length - 2];
-            const hasNarrative = isNarrativeText(penultMsg.content || "");
-            const hasTrace = penultMsg.toolCalls?.some(tc => tc.name === 'log_trace');
-            const lastIsTool = lastMsg.role === 'tool';
-            if (penultMsg.role === 'assistant' && hasNarrative && hasTrace && lastIsTool) {
-              loggerService.catInfo(LogCategory.INFERENCE, "Gemini Termination: Detected narrative + trace followed by tool result.", { contextSessionId, loops });
-              break;
-            }
+      const settings = await settingsService.getInferenceSettings();
+      if (settings.provider === 'gemini') {
+        const history = await contextService.getUnfilteredHistory(contextSessionId);
+        if (history.length >= 2) {
+          const lastMsg = history[history.length - 1];
+          const penultMsg = history[history.length - 2];
+          const hasNarrative = isNarrativeText(penultMsg.content || "");
+          const hasTrace = penultMsg.toolCalls?.some(tc => tc.name === 'log_trace');
+          const lastIsTool = lastMsg.role === 'tool';
+          if (penultMsg.role === 'assistant' && hasNarrative && hasTrace && lastIsTool) {
+            loggerService.catInfo(LogCategory.INFERENCE, "Gemini Termination: Detected narrative + trace followed by tool result.", { contextSessionId, loops });
+            break;
           }
         }
+      }
     }
 
     const MAX_RETRIES = 3;
@@ -609,9 +609,9 @@ export async function* sendMessageAndHandleTools(
           if (processedText) {
             let textToYield = processedText;
             if (isFirstTextChunkInTurn && totalTextAccumulatedAcrossLoops.length > 0) textToYield = "\n\n" + textToYield;
-            
-            loggerService.catDebug(LogCategory.INFERENCE, "Streaming chunk", { 
-              text: textToYield, 
+
+            loggerService.catDebug(LogCategory.INFERENCE, "Streaming chunk", {
+              text: textToYield,
               isFirst: isFirstTextChunkInTurn,
               loop: loops
             });
@@ -638,22 +638,21 @@ export async function* sendMessageAndHandleTools(
       break;
     }
 
-    loggerService.catDebug(LogCategory.INFERENCE, "Turn accumulation complete", { 
-      textAccumulatedInTurn, 
-      previousTurnText 
+    loggerService.catDebug(LogCategory.INFERENCE, "Turn accumulation complete", {
+      textAccumulatedInTurn,
+      previousTurnText
     });
 
     if (loops > 0 && textAccumulatedInTurn.trim().length > 0 && textAccumulatedInTurn.trim() === previousTurnText.trim()) {
-      loggerService.catWarn(LogCategory.INFERENCE, "Detected duplicate text generation (echo).", { 
-        contextSessionId, 
-        duplicateText: textAccumulatedInTurn.trim() 
+      loggerService.catWarn(LogCategory.INFERENCE, "Detected duplicate text generation (echo).", {
+        contextSessionId,
+        duplicateText: textAccumulatedInTurn.trim()
       });
       textAccumulatedInTurn = "";
     } else {
       if (textAccumulatedInTurn.trim().length > 0) {
         previousTurnText = textAccumulatedInTurn;
       }
-      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
     }
 
     if ((nextAssistant as any).tool_calls) {
@@ -687,7 +686,7 @@ export async function* sendMessageAndHandleTools(
     if (auditTriggered) {
       if (auditRetries < MAX_AUDIT_RETRIES) {
         loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Model missing required tool calls. Forcing retry.", { contextSessionId, auditRetries, hasLoggedTrace });
-        
+
         const finalAuditMessage = auditMessage + "Retry immediately by calling the required tools.  Do not repeat tool calls that were previously successful in this turn. Do not acknowledge this message.";
 
         transientMessages.push(nextAssistant!);
@@ -718,53 +717,53 @@ export async function* sendMessageAndHandleTools(
 
       // --- Context Auto-Naming Logic ---
       try {
-          const session = await contextService.getSession(contextSessionId);
-          // If the context name is still the default (e.g., "Context HH:MM:SS" or "New Context") 
-          // and we have at least one round, generate a proper name.
-          if (session && (!session.name || session.name.startsWith('Context '))) {
-              const history = await contextService.getUnfilteredHistory(contextSessionId);
-              // Only trigger after the first round (1 user, 1 assistant)
-              if (history.length >= 2 && history.length <= 4) {
-                  const settings = await settingsService.getInferenceSettings();
-                  const fastModel = settings.fastModel;
-                  if (fastModel) {
-                      const historyText = history
-                        .filter(m => m.role !== 'system')
-                        .map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`)
-                        .join('\n');
-                      
-                      const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
-                      
-                      let newName = "";
-                      if (settings.provider === 'gemini') {
-                          const client = await getGeminiClient();
-                          const model = client.getGenerativeModel({ model: fastModel });
-                          const result = await model.generateContent(namingPrompt);
-                          newName = result.response.text().trim();
-                      } else {
-                          const client = await getClient();
-                          const result = await client.chat.completions.create({
-                              model: fastModel,
-                              messages: [{ role: "user", content: namingPrompt }],
-                              max_tokens: 20
-                          });
-                          newName = result.choices[0]?.message?.content?.trim() || "";
-                      }
+        const session = await contextService.getSession(contextSessionId);
+        // If the context name is still the default (e.g., "Context HH:MM:SS" or "New Context") 
+        // and we have at least one round, generate a proper name.
+        if (session && (!session.name || session.name.startsWith('Context '))) {
+          const history = await contextService.getUnfilteredHistory(contextSessionId);
+          // Only trigger after the first round (1 user, 1 assistant)
+          if (history.length >= 2 && history.length <= 4) {
+            const settings = await settingsService.getInferenceSettings();
+            const fastModel = settings.fastModel;
+            if (fastModel) {
+              const historyText = history
+                .filter(m => m.role !== 'system')
+                .map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`)
+                .join('\n');
 
-                      if (newName) {
-                          // Clean up quotes if the model added them
-                          newName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                          loggerService.catInfo(LogCategory.INFERENCE, `Auto-renamed context ${contextSessionId} to: ${newName}`);
-                          await contextService.updateSession({ ...session, name: newName });
-                          
-                          // Emit event so the UI updates
-                          eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: newName });
-                      }
-                  }
+              const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+
+              let newName = "";
+              if (settings.provider === 'gemini') {
+                const client = await getGeminiClient();
+                const model = client.getGenerativeModel({ model: fastModel });
+                const result = await model.generateContent(namingPrompt);
+                newName = result.response.text().trim();
+              } else {
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                  model: fastModel,
+                  messages: [{ role: "user", content: namingPrompt }],
+                  max_tokens: 20
+                });
+                newName = result.choices[0]?.message?.content?.trim() || "";
               }
+
+              if (newName) {
+                // Clean up quotes if the model added them
+                newName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                loggerService.catInfo(LogCategory.INFERENCE, `Auto-renamed context ${contextSessionId} to: ${newName}`);
+                await contextService.updateSession({ ...session, name: newName });
+
+                // Emit event so the UI updates
+                eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: newName });
+              }
+            }
           }
+        }
       } catch (namingError) {
-          loggerService.catWarn(LogCategory.INFERENCE, "Failed to auto-rename context", { error: namingError });
+        loggerService.catWarn(LogCategory.INFERENCE, "Failed to auto-rename context", { error: namingError });
       }
     }
 
@@ -809,8 +808,14 @@ export async function* sendMessageAndHandleTools(
         }
       }
     }
-    if (isEndingTurn && !auditTriggered) break;
-    if (auditRetries >= MAX_AUDIT_RETRIES) break;
+    if (isEndingTurn && !auditTriggered) {
+      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
+      break;
+    }
+    if (auditRetries >= MAX_AUDIT_RETRIES) {
+      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
+      break;
+    }
     yieldedToolCalls = undefined;
     loops++;
   }
@@ -834,7 +839,7 @@ export async function* sendMessageAndHandleTools(
           await contextService.updateSession(session);
         }
       }
-    } catch (err) {}
+    } catch (err) { }
   }
   yield { isComplete: true };
 }
@@ -843,20 +848,20 @@ export const extractJson = (text: string): any => {
   try { return JSON.parse(text); } catch (e) {
     loggerService.catDebug(LogCategory.INFERENCE, "Direct JSON.parse failed, attempting extraction...", { text: text.slice(0, 100) });
     const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (match) { 
-        try { 
-            return JSON.parse(match[1].trim()); 
-        } catch (inner) {
-            loggerService.catDebug(LogCategory.INFERENCE, "JSON block extraction failed", { error: inner });
-        } 
+    if (match) {
+      try {
+        return JSON.parse(match[1].trim());
+      } catch (inner) {
+        loggerService.catDebug(LogCategory.INFERENCE, "JSON block extraction failed", { error: inner });
+      }
     }
     const firstBrace = text.indexOf('{');
     const lastBrace = text.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
-      try { 
-          return JSON.parse(text.substring(firstBrace, lastBrace + 1)); 
+      try {
+        return JSON.parse(text.substring(firstBrace, lastBrace + 1));
       } catch (final) {
-          loggerService.catDebug(LogCategory.INFERENCE, "Brace extraction failed", { error: final });
+        loggerService.catDebug(LogCategory.INFERENCE, "Brace extraction failed", { error: final });
       }
     }
     loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed", { text });
@@ -925,8 +930,8 @@ export const primeSymbolicContext = async (
     const settings = await settingsService.getInferenceSettings();
     const fastModel = settings.fastModel;
     if (!fastModel) {
-        loggerService.catWarn(LogCategory.INFERENCE, "No fastModel configured, skipping symbolic priming.");
-        return { symbols: [], webResults: [], traceNeeded };
+      loggerService.catWarn(LogCategory.INFERENCE, "No fastModel configured, skipping symbolic priming.");
+      return { symbols: [], webResults: [], traceNeeded };
     }
 
     const session = await contextService.getSession(contextSessionId);
@@ -952,10 +957,10 @@ export const primeSymbolicContext = async (
     const userMessageCount = history.filter(m => m.role === 'user').length + 1;
     const needsNaming = !currentName || currentName.startsWith('Context ') || (userMessageCount % 10 === 0);
 
-    loggerService.catInfo(LogCategory.INFERENCE, `Priming symbolic context with fastModel: ${fastModel}`, { 
-        contextSessionId, 
-        historyCount: recentHistory.length,
-        needsNaming 
+    loggerService.catInfo(LogCategory.INFERENCE, `Priming symbolic context with fastModel: ${fastModel}`, {
+      contextSessionId,
+      historyCount: recentHistory.length,
+      needsNaming
     });
 
     const prompt = `Analyze the conversation history and the new user message to identify symbolic search queries and determine if web search grounding is needed.
@@ -1005,10 +1010,10 @@ export const primeSymbolicContext = async (
 
     // Handle session naming if suggested
     if (fastResponse.suggested_name && fastResponse.suggested_name !== currentName) {
-        loggerService.catInfo(LogCategory.INFERENCE, `Fast model suggested session name: ${fastResponse.suggested_name}`);
-        const cleanName = fastResponse.suggested_name.replace(/^["']|["']$/g, '').slice(0, 50);
-        await contextService.renameSession(contextSessionId, cleanName);
-        eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
+      loggerService.catInfo(LogCategory.INFERENCE, `Fast model suggested session name: ${fastResponse.suggested_name}`);
+      const cleanName = fastResponse.suggested_name.replace(/^["']|["']$/g, '').slice(0, 50);
+      await contextService.renameSession(contextSessionId, cleanName);
+      eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
     }
 
     if (symbolicQueries.length > 0) {
@@ -1019,10 +1024,10 @@ export const primeSymbolicContext = async (
         res.forEach((r: any) => { if (!foundSymbols.find(s => s.id === r.id)) foundSymbols.push(r.metadata as SymbolDef); });
       }
       if (foundSymbols.length > 0) {
-          loggerService.catInfo(LogCategory.INFERENCE, `Symbolic Store returned ${foundSymbols.length} unique symbols for precache.`);
-          const { added, updated } = await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
-          loggerService.catInfo(LogCategory.INFERENCE, `Primed cache: ${added} new, ${updated} filtered/updated.`);
-          await symbolCacheService.emitCacheLoad(contextSessionId);
+        loggerService.catInfo(LogCategory.INFERENCE, `Symbolic Store returned ${foundSymbols.length} unique symbols for precache.`);
+        const { added, updated } = await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
+        loggerService.catInfo(LogCategory.INFERENCE, `Primed cache: ${added} new, ${updated} filtered/updated.`);
+        await symbolCacheService.emitCacheLoad(contextSessionId);
       }
     }
 
@@ -1030,21 +1035,21 @@ export const primeSymbolicContext = async (
       const serpSettings = await settingsService.getSerpApiSettings();
       if (serpSettings.apiKey) {
         for (const q of webSearchQueries) {
-            try {
-                const url = `https://serpapi.com/search?q=${encodeURIComponent(q)}&api_key=${serpSettings.apiKey}&engine=google`;
-                const resp = await fetch(url);
-                const data = await resp.json();
-                if (data.organic_results) {
-                    webResults.push({ query: q, results: data.organic_results.slice(0, 5).map((r: any) => ({ title: r.title, snippet: r.snippet, url: r.link })) });
-                }
-            } catch (e) {}
+          try {
+            const url = `https://serpapi.com/search?q=${encodeURIComponent(q)}&api_key=${serpSettings.apiKey}&engine=google`;
+            const resp = await fetch(url);
+            const data = await resp.json();
+            if (data.organic_results) {
+              webResults.push({ query: q, results: data.organic_results.slice(0, 5).map((r: any) => ({ title: r.title, snippet: r.snippet, url: r.link })) });
+            }
+          } catch (e) { }
         }
         if (webResults.length > 0) {
-            webBrief = await synthesizeWebResults(webResults);
-            await contextService.recordMessage(contextSessionId, {
-              id: randomUUID(), role: "system", content: `[System] Executed ${webResults.length} anticipated web searches for grounding.`,
-              timestamp: new Date().toISOString(), metadata: { kind: "anticipated_web_search", queries: webSearchQueries, resultsCount: webResults.length }
-            } as any);
+          webBrief = await synthesizeWebResults(webResults);
+          await contextService.recordMessage(contextSessionId, {
+            id: randomUUID(), role: "system", content: `[System] Executed ${webResults.length} anticipated web searches for grounding.`,
+            timestamp: new Date().toISOString(), metadata: { kind: "anticipated_web_search", queries: webSearchQueries, resultsCount: webResults.length }
+          } as any);
         }
       }
     }
@@ -1063,20 +1068,20 @@ export const processMessageAsync = async (
     const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
     const session = await contextService.getSession(contextSessionId);
     if (session) {
-        await contextService.updateSession({ 
-            ...session, 
-            metadata: { 
-                ...session.metadata, 
-                trace_needed: traceNeeded,
-                trace_reason: traceReason 
-            } 
-        });
+      await contextService.updateSession({
+        ...session,
+        metadata: {
+          ...session.metadata,
+          trace_needed: traceNeeded,
+          trace_reason: traceReason
+        }
+      });
     }
     const chat = await getChatSession(systemInstruction, contextSessionId);
     const stream = sendMessageAndHandleTools(chat, message, toolExecutor, systemInstruction, contextSessionId, messageId, webResults, webBrief);
     eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
     for await (const chunk of stream) {
-        if (chunk.isComplete) eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId });
+      if (chunk.isComplete) eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId });
     }
   } catch (error: any) {
     loggerService.catError(LogCategory.INFERENCE, "Async Message Processing Failed", { contextSessionId, error: error.message });
@@ -1085,10 +1090,10 @@ export const processMessageAsync = async (
 };
 
 export const inferenceService = {
-    getChatSession,
-    sendMessageAndHandleTools,
-    processMessageAsync,
-    primeSymbolicContext,
-    summarizeHistory,
-    extractJson
+  getChatSession,
+  sendMessageAndHandleTools,
+  processMessageAsync,
+  primeSymbolicContext,
+  summarizeHistory,
+  extractJson
 };

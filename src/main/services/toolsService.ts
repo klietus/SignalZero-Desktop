@@ -9,81 +9,82 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
+import { loggerService } from "./loggerService.js";
 
 const execAsync = promisify(exec);
 
 const SYMBOL_DATA_SCHEMA = {
-    type: 'object',
-    properties: {
-        id: { type: 'string' },
-        kind: { type: 'string' },
-        triad: { type: 'string' },
-        macro: { type: 'string' },
-        role: { type: 'string' },
-        name: { type: 'string' },
-        activation_conditions: { type: 'array', items: { type: 'string' } },
-        facets: {
-            type: 'object',
-            properties: {
-                function: { type: 'string' },
-                topology: { type: 'string' },
-                commit: { type: 'string' },
-                gate: { type: 'array', items: { type: 'string' } },
-                substrate: { type: 'array', items: { type: 'string' } },
-                temporal: { type: 'string' },
-                invariants: { type: 'array', items: { type: 'string' } }
-            },
-            required: ['function', 'topology', 'commit', 'gate', 'substrate', 'temporal', 'invariants']
-        },
-        symbol_domain: { type: 'string' },
-        symbol_tag: { type: 'string' },
-        failure_mode: { type: 'string' },
-        linked_patterns: {
-            type: 'array',
-            items: {
-                type: 'object',
-                properties: {
-                    id: { type: 'string' },
-                    link_type: { type: 'string' },
-                    bidirectional: { type: 'boolean' }
-                },
-                required: ['id', 'link_type', 'bidirectional']
-            }
-        }
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    kind: { type: 'string' },
+    triad: { type: 'string' },
+    macro: { type: 'string' },
+    role: { type: 'string' },
+    name: { type: 'string' },
+    activation_conditions: { type: 'array', items: { type: 'string' } },
+    facets: {
+      type: 'object',
+      properties: {
+        function: { type: 'string' },
+        topology: { type: 'string' },
+        commit: { type: 'string' },
+        gate: { type: 'array', items: { type: 'string' } },
+        substrate: { type: 'array', items: { type: 'string' } },
+        temporal: { type: 'string' },
+        invariants: { type: 'array', items: { type: 'string' } }
+      },
+      required: ['function', 'topology', 'commit', 'gate', 'substrate', 'temporal', 'invariants']
     },
-    required: ['id', 'kind', 'triad', 'macro', 'role', 'name', 'activation_conditions', 'facets', 'symbol_domain', 'failure_mode', 'linked_patterns']
+    symbol_domain: { type: 'string' },
+    symbol_tag: { type: 'string' },
+    failure_mode: { type: 'string' },
+    linked_patterns: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          link_type: { type: 'string' },
+          bidirectional: { type: 'boolean' }
+        },
+        required: ['id', 'link_type', 'bidirectional']
+      }
+    }
+  },
+  required: ['id', 'kind', 'triad', 'macro', 'role', 'name', 'activation_conditions', 'facets', 'symbol_domain', 'failure_mode', 'linked_patterns']
 };
 
 const TRACE_DATA_SCHEMA = {
-    type: 'object',
-    properties: {
-        id: { type: 'string' },
-        entry_node: { type: 'string' },
-        activated_by: { type: 'string' },
-        activation_path: {
-            type: 'array',
-            items: {
-                type: 'object',
-                properties: {
-                    symbol_id: { type: 'string' },
-                    reason: { type: 'string' },
-                    link_type: { type: 'string' }
-                },
-                required: ['symbol_id', 'reason', 'link_type']
-            }
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    entry_node: { type: 'string' },
+    activated_by: { type: 'string' },
+    activation_path: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          symbol_id: { type: 'string' },
+          reason: { type: 'string' },
+          link_type: { type: 'string' }
         },
-        source_context: {
-            type: 'object',
-            properties: {
-                symbol_domain: { type: 'string' },
-                trigger_vector: { type: 'string' }
-            },
-            required: ['symbol_domain', 'trigger_vector']
-        },
-        output_node: { type: 'string' },
-        status: { type: 'string' }
+        required: ['symbol_id', 'reason', 'link_type']
+      }
     },
-    required: ['entry_node', 'activated_by', 'activation_path', 'source_context', 'output_node', 'status']
+    source_context: {
+      type: 'object',
+      properties: {
+        symbol_domain: { type: 'string' },
+        trigger_vector: { type: 'string' }
+      },
+      required: ['symbol_domain', 'trigger_vector']
+    },
+    output_node: { type: 'string' },
+    status: { type: 'string' }
+  },
+  required: ['entry_node', 'activated_by', 'activation_path', 'source_context', 'output_node', 'status']
 };
 
 export const SECONDARY_TOOLS_MAP: Record<string, ChatCompletionTool> = {
@@ -246,7 +247,7 @@ export const PRIMARY_TOOLS: ChatCompletionTool[] = [
 
 export const createToolExecutor = (contextSessionId?: string) => {
   const executor = async (name: string, args: any): Promise<any> => {
-    console.log(`[ToolExecutor] ${name}`, args);
+    loggerService.info(`[ToolExecutor] ${name}`, args);
 
     switch (name) {
       case 'find_symbols': {
@@ -256,10 +257,10 @@ export const createToolExecutor = (contextSessionId?: string) => {
           results.push(...res);
         }
         if (contextSessionId && results.length > 0) {
-            // Minimal mapping for cache
-            const { added, updated } = await symbolCacheService.batchUpsertSymbols(contextSessionId, results.map(r => r.metadata));
-            await symbolCacheService.emitCacheLoad(contextSessionId);
-            return { symbols: results, cache_stats: { added, updated } };
+          // Minimal mapping for cache
+          const { added, updated } = await symbolCacheService.batchUpsertSymbols(contextSessionId, results.map(r => r.metadata));
+          await symbolCacheService.emitCacheLoad(contextSessionId);
+          return { symbols: results, cache_stats: { added, updated } };
         }
         return { symbols: results };
       }
@@ -324,20 +325,20 @@ export const createToolExecutor = (contextSessionId?: string) => {
       }
 
       case 'web_search': {
-          const settings = await settingsService.getSerpApiSettings();
-          if (!settings.apiKey) return { error: "SerpApi key not configured" };
-          const url = `https://serpapi.com/search?q=${encodeURIComponent(args.query)}&api_key=${settings.apiKey}&engine=google`;
-          const resp = await fetch(url);
-          const data = await resp.json();
-          return { results: data.organic_results };
+        const settings = await settingsService.getSerpApiSettings();
+        if (!settings.apiKey) return { error: "SerpApi key not configured" };
+        const url = `https://serpapi.com/search?q=${encodeURIComponent(args.query)}&api_key=${settings.apiKey}&engine=google`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        return { results: data.organic_results };
       }
 
       default:
         if (name.startsWith('mcp_')) {
-            const parts = name.split('_');
-            const mcpId = parts[1];
-            const originalName = parts.slice(2).join('_');
-            return await mcpClientService.executeTool(mcpId, originalName, args);
+          const parts = name.split('_');
+          const mcpId = parts[1];
+          const originalName = parts.slice(2).join('_');
+          return await mcpClientService.executeTool(mcpId, originalName, args);
         }
         return { error: `Tool ${name} not found` };
     }

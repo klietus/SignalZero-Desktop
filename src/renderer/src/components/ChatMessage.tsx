@@ -193,14 +193,33 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
   }, [message.content, isUser]);
 
   const handleCopy = async () => {
+    const textToCopy = contentWithoutTraces || message.content;
+    if (!textToCopy) return;
+
     try {
-      const textToCopy = contentWithoutTraces || message.content;
-      await navigator.clipboard.writeText(textToCopy);
-      setCopyLabel('Copied');
-      setTimeout(() => setCopyLabel('Copy'), 1500);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(textToCopy);
+        setCopyLabel('Copied');
+        setTimeout(() => setCopyLabel('Copy'), 1500);
+      } else {
+        throw new Error('Clipboard API not available');
+      }
     } catch (err) {
-      setCopyLabel('Copy failed');
-      setTimeout(() => setCopyLabel('Copy'), 2000);
+      console.error('Copy failed:', err);
+      // Fallback to execCommand
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = textToCopy;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopyLabel('Copied');
+        setTimeout(() => setCopyLabel('Copy'), 1500);
+      } catch (fallbackErr) {
+        setCopyLabel('Copy failed');
+        setTimeout(() => setCopyLabel('Copy'), 2000);
+      }
     }
   };
 
