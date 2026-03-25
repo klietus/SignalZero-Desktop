@@ -615,21 +615,9 @@ export const CinematicView: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black z-[100] flex flex-col font-mono text-white overflow-hidden">
-            <div className="h-12 border-b border-white/10 flex items-center justify-between px-6 bg-black/80 backdrop-blur-md">
-                <div className="flex items-center gap-3">
-                    <Activity className={`${isLoading ? 'text-amber-500' : 'text-emerald-500'} animate-pulse`} size={20} />
-                    <span className="font-bold tracking-tighter text-sm uppercase">
-                        SignalZero Kernel Monitor 
-                        <span className="ml-4 text-gray-500 font-normal normal-case">
-                            {stats.nodes} Symbols • {stats.links} Links
-                        </span>
-                    </span>
-                </div>
-                <button onClick={() => window.close()} className="p-1 hover:text-white transition-colors">
-                    <X size={16} />
-                </button>
-            </div>
+        <div className="h-full w-full relative flex flex-col font-mono text-white overflow-hidden bg-black">
+            {/* The header is removed when embedded, but you could add a prop to show it if needed */}
+            {/* <div className="h-12 border-b border-white/10 flex items-center justify-between px-6 bg-black/80 backdrop-blur-md"> ... </div> */}
 
             <div className="flex-1 w-full relative">
                 <div ref={containerRef} className="absolute inset-0 z-10" />
@@ -640,16 +628,8 @@ export const CinematicView: React.FC = () => {
                 )}
             </div>
 
-            <div className="h-16 flex items-center justify-center pointer-events-none relative">
-                {transientMessage && (
-                    <div className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-emerald-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                            {transientMessage.text}
-                        </span>
-                    </div>
-                )}
-            </div>
+            {/* The status message area is also removed for the embedded view, but can be re-added via props if desired */}
+            {/* <div className="h-16 flex items-center justify-center pointer-events-none relative"> ... </div> */}
 
             <style>{`
                 .symbol-tooltip {

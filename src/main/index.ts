@@ -82,9 +82,9 @@ function createMonitorWindow(): void {
   });
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      monitorWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}?view=monitor`)
+    if (mainWindow) mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-      monitorWindow.loadFile(join(__dirname, '../renderer/index.html'), { query: { view: 'monitor' } })
+    if (mainWindow) mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
@@ -230,9 +230,9 @@ function createWindow(): void {
 
   // HMR for renderer base on electron-vite cli.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    if (mainWindow) mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    if (mainWindow) mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MessageSquare, Loader2, GitMerge } from 'lucide-react';
+import { MessageSquare, Loader2, GitMerge, Maximize2 } from 'lucide-react';
 import { Message, Sender, UserProfile, ContextSession, ContextMessage, ProjectMeta } from './types';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
@@ -191,6 +191,8 @@ function App() {
 
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const isResizing = useRef(false);
+  const [graphHeight, setGraphHeight] = useState(250);
+  const isGraphResizing = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -239,6 +241,28 @@ function App() {
       setSidebarWidth(newWidth);
     }
   }, []);
+  
+  const startGraphResize = useCallback(() => {
+    isGraphResizing.current = true;
+    document.addEventListener('mousemove', handleGraphResize);
+    document.addEventListener('mouseup', stopGraphResize);
+    document.body.style.cursor = 'row-resize';
+  }, []);
+
+  const stopGraphResize = useCallback(() => {
+    isGraphResizing.current = false;
+    document.removeEventListener('mousemove', handleGraphResize);
+    document.removeEventListener('mouseup', stopGraphResize);
+    document.body.style.cursor = 'default';
+  }, []);
+  
+  const handleGraphResize = useCallback((e: MouseEvent) => {
+    if (!isGraphResizing.current) return;
+    const newHeight = window.innerHeight - e.clientY;
+    if (newHeight > 100 && newHeight < window.innerHeight - 200) {
+      setGraphHeight(newHeight);
+    }
+  }, []);
 
   const refreshSystemStats = async () => {
       try {
@@ -255,7 +279,10 @@ function App() {
     const checkInit = async () => {
         try {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('view') === 'monitor') { 
+            const viewParam = urlParams.get('view');
+            console.log(`[Debug] Initializing App. URL view param: '${viewParam}'`);
+            
+            if (viewParam === 'monitor') { 
                 setCurrentView('monitor'); 
                 setAppState('app'); 
                 return; 
@@ -411,7 +438,6 @@ function App() {
       onNavigate: (v) => setCurrentView(v),
       onToggleTrace: () => setIsTracePanelOpen(prev => !prev),
       isTraceOpen: isTracePanelOpen,
-      onMonitor: () => window.api.openMonitor(),
       projectName: projectMeta.name
   });
 
@@ -437,6 +463,25 @@ function App() {
                                 ))
                             )}
                         </div>
+                    </div>
+                    <div 
+                        className="h-1.5 hover:h-2 bg-transparent hover:bg-indigo-500/30 cursor-row-resize transition-all z-20"
+                        onMouseDown={startGraphResize}
+                    />
+                    <div 
+                        style={{ height: `${graphHeight}px` }} 
+                        className="relative group bg-black/50"
+                    >
+                        <CinematicView />
+                        <button
+                            onClick={() => window.api.openMonitor()}
+                            className="absolute top-3 right-3 z-50 p-2 rounded-full bg-black/30 text-white/50
+                                       opacity-0 group-hover:opacity-100 transition-opacity
+                                       hover:bg-black/50 hover:text-white"
+                            title="Open in new window"
+                        >
+                            <Maximize2 size={16} />
+                        </button>
                     </div>
                     <div className="p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent">
                         <div className="w-full max-w-full mx-auto">

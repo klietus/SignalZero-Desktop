@@ -41,7 +41,7 @@ const api = {
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
   updateSettings: (settings: any) => ipcRenderer.invoke('settings:update', settings),
-  isInitialized: () => ipcRenderer.invoke('settings:is-initialized'),
+  isInitialized: () => ipcRenderer.invoke('system:is-initialized'),
 
   // System
   getRecentLogs: (limit?: number) => ipcRenderer.invoke('system:get-recent-logs', limit),
