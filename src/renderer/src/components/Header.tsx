@@ -1,7 +1,7 @@
 
 import React from 'react';
 import {
-  Network, ShieldCheck, Activity, MessageSquare
+  Network, ShieldCheck, Activity, MessageSquare, Brain
 } from 'lucide-react';
 
 export interface HeaderProps {
@@ -16,6 +16,8 @@ export interface HeaderProps {
   onToggleTrace?: () => void;
   isTraceOpen?: boolean;
   onMonitor?: () => void;
+  onToggleGraphView?: () => void;
+  isGraphView?: boolean;
 
   projectName?: string;
 }
@@ -30,6 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTrace,
   isTraceOpen,
   onMonitor,
+  onToggleGraphView,
+  isGraphView,
   projectName
 }) => {
   return (
@@ -54,13 +58,26 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-4 shrink-0">
-        <button 
-          onClick={() => onNavigate('chat')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition-all ${currentView === 'chat' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-900 text-gray-400 hover:bg-gray-800'}`}
-        >
-          <MessageSquare size={14} />
-          {currentView === 'chat' ? 'Kernel_Active' : 'Kernel_Chat'}
-        </button>
+        {currentView === 'chat' && onToggleGraphView && (
+           <button 
+              onClick={onToggleGraphView}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition-all ${isGraphView ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-900 text-gray-400 hover:bg-gray-800'}`}
+              title={isGraphView ? "Back to Chat" : "Symbolic Graph View"}
+            >
+              {isGraphView ? <MessageSquare size={14} /> : <Brain size={14} />}
+              {isGraphView ? 'Chat' : 'Graph'}
+            </button>
+        )}
+
+        {currentView !== 'chat' && (
+          <button 
+            onClick={() => onNavigate('chat')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition-all ${currentView === 'chat' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-900 text-gray-400 hover:bg-gray-800'}`}
+          >
+            <MessageSquare size={14} />
+            Chat
+          </button>
+        )}
 
         {children && (
           <div className="flex items-center gap-2 border-r border-gray-800 pr-4 mr-2">

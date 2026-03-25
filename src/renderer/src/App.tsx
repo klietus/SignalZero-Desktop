@@ -173,6 +173,7 @@ function App() {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor'>('chat');
+    const [isGraphView, setIsGraphView] = useState(false);
 
     const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);
     const [activeTraces, setActiveTraces] = useState<any[]>([]);
@@ -184,6 +185,7 @@ function App() {
     const [domainCount, setDomainCount] = useState(0);
     const [cacheSize, setCacheSize] = useState(0);
     const [lastRequestTokens, setLastRequestTokens] = useState<number>(0);
+    const [focusedSymbolName, setFocusedSymbolName] = useState<string | null>(null);
 
     // Project Info
     const [projectMeta, setProjectMeta] = useState<ProjectMeta>({ name: 'SignalZero Desktop', version: '1.0', author: 'klietus', created_at: '', updated_at: '' });
@@ -380,6 +382,11 @@ function App() {
                     c.id === data.sessionId ? { ...c, name: data.name } : c
                 ));
             }
+            if (type === 'symbol:focused') {
+                setFocusedSymbolName(data.name || data.id);
+                // Clear after 3 seconds
+                setTimeout(() => setFocusedSymbolName(null), 3000);
+            }
         });
 
         const removeNavListener = window.api.onNavigate((view: any) => {
@@ -445,14 +452,16 @@ function App() {
 
     const getHeaderProps = (title: string, icon?: React.ReactNode): HeaderProps => ({
         title, icon, currentView,
-        onNavigate: (v) => setCurrentView(v),
+        onNavigate: (v) => { setCurrentView(v); if (v !== 'chat') setIsGraphView(false); },
         onToggleTrace: () => setIsTracePanelOpen(prev => !prev),
+        onToggleGraphView: () => setIsGraphView(prev => !prev),
+        isGraphView,
         isTraceOpen: isTracePanelOpen,
         projectName: projectMeta.name
     });
 
     const renderCurrentView = () => {
-        if (currentView === 'monitor') return <CinematicView />;
+        if (currentView === 'monitor') return <CinematicView onSymbolFocus={setFocusedSymbolName} />;
 
         switch (currentView) {
             case 'chat':
@@ -461,36 +470,39 @@ function App() {
                         <div className="pointer-events-auto w-full">
                             <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
                         </div>
+                        
+                        <div className={`flex-1 flex flex-col min-h-0 transition-opacity duration-300 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                             <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/40 pointer-events-auto">
-                            <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-auto">
-                                {messages.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center pointer-events-none">
-                                        <MessageSquare size={64} className="mb-4 mx-auto" />
-                                        <p className="text-xl font-light tracking-widest uppercase">SignalZero Kernel</p>
-                                        <p className="text-sm mt-2 font-mono">Ready for symbolic execution</p>
-                                    </div>
-                                ) : (
-                                    messages.map((msg) => (
-                                        <div key={msg.id} className="pointer-events-auto">
-                                            <ChatMessage 
-                                                message={msg} 
-                                                onSymbolClick={() => setCurrentView('dev')} 
-                                                onTraceClick={(id) => {
-                                                    if (id) setSelectedTraceId(id);
-                                                    setIsTracePanelOpen(true);
-                                                }}
-                                                onRetry={handleSendMessage}
-                                            />
+                                <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-auto">
+                                    {messages.length === 0 ? (
+                                        <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center pointer-events-none">
+                                            <MessageSquare size={64} className="mb-4 mx-auto" />
+                                            <p className="text-xl font-light tracking-widest uppercase">SignalZero Kernel</p>
+                                            <p className="text-sm mt-2 font-mono">Ready for symbolic execution</p>
                                         </div>
-                                    ))
-                                )}
+                                    ) : (
+                                        messages.map((msg) => (
+                                            <div key={msg.id} className="pointer-events-auto">
+                                                <ChatMessage 
+                                                    message={msg} 
+                                                    onSymbolClick={() => setCurrentView('dev')} 
+                                                    onTraceClick={(id) => {
+                                                        if (id) setSelectedTraceId(id);
+                                                        setIsTracePanelOpen(true);
+                                                    }}
+                                                    onRetry={handleSendMessage}
+                                                />
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
-                        </div>
 
 
-                        <div className="p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pointer-events-none">
-                            <div className="w-full max-w-full mx-auto pointer-events-auto">
-                                <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
+                            <div className="p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pointer-events-none">
+                                <div className="w-full max-w-full mx-auto pointer-events-auto">
+                                    <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -544,8 +556,8 @@ function App() {
     return (
         <div className="relative flex flex-col h-screen overflow-hidden bg-gray-950 font-sans text-gray-100 selection:bg-indigo-500/30">
             {currentView === 'chat' && showGraphviz && (
-                <div className="absolute inset-0 z-0 opacity-20 overflow-hidden mix-blend-screen pointer-events-auto">
-                    <CinematicView />
+                <div className={`absolute inset-0 z-0 overflow-hidden mix-blend-screen transition-opacity duration-700 ${isGraphView ? 'opacity-100' : 'opacity-20'} pointer-events-auto`}>
+                    <CinematicView onSymbolFocus={setFocusedSymbolName} />
                 </div>
             )}
             <div className={`flex-1 flex min-h-0 relative z-10 ${currentView === 'chat' ? 'pointer-events-none' : ''}`}>
@@ -587,6 +599,7 @@ function App() {
                         symbolCount={symbolCount} domainCount={domainCount}
                         cacheSize={cacheSize}
                         lastRequestTokens={lastRequestTokens}
+                        focusedSymbolName={focusedSymbolName}
                     />
                 </div>
             )}

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Cpu, Database, Layout, Zap, Loader2, Coins } from 'lucide-react';
+import { Cpu, Database, Layout, Zap, Loader2, Coins, Activity } from 'lucide-react';
 
 interface StatusBarProps {
     modelName: string;
@@ -9,6 +9,7 @@ interface StatusBarProps {
     domainCount: number;
     cacheSize: number;
     lastRequestTokens?: number;
+    focusedSymbolName?: string | null;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -17,7 +18,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     symbolCount,
     domainCount,
     cacheSize,
-    lastRequestTokens
+    lastRequestTokens,
+    focusedSymbolName
 }) => {
     return (
         <div className="h-8 bg-gray-950 border-t border-gray-800 flex items-center justify-between px-6 shrink-0 z-50 overflow-hidden select-none">
@@ -55,6 +57,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({
                         <Coins size={12} className="text-gray-600" />
                         <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
                             Last_Request: <span className="text-indigo-300 font-bold">{lastRequestTokens} tokens</span>
+                        </span>
+                    </div>
+                )}
+
+                {focusedSymbolName && (
+                     <div className="flex items-center gap-2 border-l border-gray-800 pl-6 animate-in fade-in slide-in-from-left-2 duration-300">
+                        <Activity size={12} className="text-emerald-400 animate-pulse" />
+                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                            Focusing: <span className="text-emerald-400 font-bold">{focusedSymbolName}</span>
                         </span>
                     </div>
                 )}

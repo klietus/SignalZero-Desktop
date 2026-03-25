@@ -27,7 +27,11 @@ interface GraphLink {
     width?: number;
 }
 
-export const CinematicView: React.FC = () => {
+interface CinematicViewProps {
+    onSymbolFocus?: (name: string | null) => void;
+}
+
+export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const graphRef = useRef<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -271,6 +275,10 @@ export const CinematicView: React.FC = () => {
             eventQueue.current.push({ type, data });
         });
 
+        window.api.onTraceLogged((trace) => {
+            eventQueue.current.push({ type: 'trace:visualize', data: trace });
+        });
+
         return () => {
             isMounted = false;
             window.removeEventListener('resize', handleResize);
@@ -366,6 +374,10 @@ export const CinematicView: React.FC = () => {
         const node = graphData.current.nodes.find(n => n.id === nodeId);
         if (node && graphRef.current) {
             const scene = graphRef.current.scene();
+
+            if (onSymbolFocus) {
+                onSymbolFocus(node.name || node.id);
+            }
 
             if (!skipCameraMove) {
                 const distance = 80;
@@ -596,14 +608,28 @@ export const CinematicView: React.FC = () => {
                 graphRef.current.graphData(graphData.current);
                 break;
             }
+            case 'trace:visualize': {
+                const trace = data;
+                if (trace.activation_path) {
+                    for (const step of trace.activation_path) {
+                        if (step.symbol_id) {
+                            await ensureNodeExists(step.symbol_id);
+                            await pulseNode(step.symbol_id);
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+                    }
+                }
+                if (trace.output_node) {
+                    await ensureNodeExists(trace.output_node);
+                    await pulseNode(trace.output_node);
+                }
+                break;
+            }
         }
     };
 
     return (
         <div className="h-full w-full relative flex flex-col font-mono text-white overflow-hidden bg-black">
-            {/* The header is removed when embedded, but you could add a prop to show it if needed */}
-            {/* <div className="h-12 border-b border-white/10 flex items-center justify-between px-6 bg-black/80 backdrop-blur-md"> ... </div> */}
-
             <div className="flex-1 w-full relative">
                 <div ref={containerRef} className="absolute inset-0 z-10" />
                 {isLoading && (
@@ -612,9 +638,6 @@ export const CinematicView: React.FC = () => {
                     </div>
                 )}
             </div>
-
-            {/* The status message area is also removed for the embedded view, but can be re-added via props if desired */}
-            {/* <div className="h-16 flex items-center justify-center pointer-events-none relative"> ... </div> */}
 
             <style>{`
                 .symbol-tooltip {
