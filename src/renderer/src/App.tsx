@@ -41,6 +41,8 @@ declare global {
       getSettings: () => Promise<any>;
       updateSettings: (settings: any) => Promise<void>;
       isInitialized: () => Promise<boolean>;
+      getRecentLogs: (limit?: number) => Promise<any[]>;
+      getTraces: (sessionId: string) => Promise<any[]>;
       listAgents: () => Promise<any[]>;
       upsertAgent: (id: string, prompt: string, enabled: boolean, schedule?: string) => Promise<any>;
       deleteAgent: (id: string) => Promise<boolean>;
@@ -187,6 +189,32 @@ function App() {
 
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const isResizing = useRef(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = useCallback(() => {
+    if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentView === 'chat' && messages.length > 0) {
+        scrollToBottom();
+    }
+  }, [messages, currentView, scrollToBottom]);
+
+  useEffect(() => {
+    if (currentView === 'chat' && activeContextId) {
+        // Give a small timeout to ensure DOM is ready after context switch
+        setTimeout(scrollToBottom, 100);
+    }
+  }, [activeContextId, currentView, scrollToBottom]);
+
+  useEffect(() => {
+    if (currentView === 'chat' && !activeContextId && contexts.length > 0) {
+        setActiveContextId(contexts[0].id);
+    }
+  }, [currentView, activeContextId, contexts]);
 
   const startResizing = useCallback(() => {
     isResizing.current = true;
@@ -393,7 +421,7 @@ function App() {
               return (
                 <div className="flex flex-col h-full relative">
                     <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
-                    <div className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/50">
+                    <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/50">
                         <div className="w-full max-w-full mx-auto space-y-10 pb-12">
                             {messages.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center">

@@ -16,6 +16,7 @@ import { systemPromptService } from './services/systemPromptService.js'
 import { ACTIVATION_PROMPT } from './symbolic_system/activation_prompt.js'
 import { projectService } from './services/projectService.js'
 import { mcpPromptService } from './services/mcpPromptService.js'
+import { traceService } from './services/traceService.js'
 import fs from 'fs'
 import { dialog } from 'electron'
 
@@ -443,15 +444,9 @@ ipcMain.handle('project:import', async () => {
 
   if (filePaths && filePaths.length > 0) {
       const buffer = fs.readFileSync(filePaths[0]);
-      const result = await projectService.import(buffer);
-      if (result.systemPrompt) {
-          await systemPromptService.setPrompt(result.systemPrompt);
-          activeSystemPrompt = result.systemPrompt;
-      }
-      if (result.mcpPrompt) await mcpPromptService.setPrompt(result.mcpPrompt);
-      return result.stats;
+      return await projectService.import(buffer);
   }
-  return null;
+  return { success: false };
 });
 
 ipcMain.handle('project:import-sample', async () => {
@@ -460,13 +455,7 @@ ipcMain.handle('project:import-sample', async () => {
   
   if (fs.existsSync(samplePath)) {
       const buffer = fs.readFileSync(samplePath);
-      const result = await projectService.import(buffer);
-      if (result.systemPrompt) {
-          await systemPromptService.setPrompt(result.systemPrompt);
-          activeSystemPrompt = result.systemPrompt;
-      }
-      if (result.mcpPrompt) await mcpPromptService.setPrompt(result.mcpPrompt);
-      return result.stats;
+      return await projectService.import(buffer);
   }
   throw new Error("Sample project not found at: " + samplePath);
 });

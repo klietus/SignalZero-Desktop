@@ -24,13 +24,24 @@ const normalizeTestCase = (test: TestCase | string, idx: number, setId: string):
 };
 
 const mapRowToTestSet = (row: any): TestSet => {
+    let tests = [];
+    if (Array.isArray(row.tests)) {
+        tests = row.tests;
+    } else if (typeof row.tests === 'string') {
+        try {
+            tests = JSON.parse(row.tests);
+        } catch (e) {
+            console.error(`Failed to parse tests for set ${row.id}`, e);
+        }
+    }
+
     return {
         id: row.id,
         name: row.name,
         description: row.description || '',
-        tests: row.tests ? JSON.parse(row.tests) : [],
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
+        tests: tests,
+        createdAt: row.createdAt || row.created_at,
+        updatedAt: row.updatedAt || row.updated_at
     };
 };
 

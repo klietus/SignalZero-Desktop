@@ -483,16 +483,6 @@ export async function* sendMessageAndHandleTools(
   let totalTextAccumulatedAcrossLoops = "";
   let previousTurnText = "";
   let hasLoggedTrace = false;
-  let hasCalledSpeak = false;
-  let isVoiceSource = false;
-
-  try {
-    const parsed = JSON.parse(message);
-    if (parsed.voice_message && parsed.route_output === 'speech tool') {
-      isVoiceSource = true;
-      loggerService.catInfo(LogCategory.INFERENCE, "Detected voice source message. Enforcing speak audit.", { contextSessionId });
-    }
-  } catch (e) {}
 
   let auditRetries = 0;
   const ENABLE_SYSTEM_AUDIT = true;
@@ -659,7 +649,6 @@ export async function* sendMessageAndHandleTools(
     const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
     const isEndingTurn = !yieldedToolCalls || yieldedToolCalls.length === 0;
     const isCallingTraceThisTurn = currentToolNames.has('log_trace');
-    const isCallingSpeakThisTurn = currentToolNames.has('speak');
 
     if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
       const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn) || isNarrativeText(totalTextAccumulatedAcrossLoops);
@@ -667,11 +656,7 @@ export async function* sendMessageAndHandleTools(
         auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
         auditTriggered = true;
       }
-      if (isVoiceSource && !hasCalledSpeak && !isCallingSpeakThisTurn) {
-        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This request originated from a voice source. You MUST use the `speak` tool to provide your response in addition to any text output. Do not acknowledge this message.\n";
-        auditTriggered = true;
-      }
-      if (isEndingTurn && !isVoiceSource && !hasNarrativeOutput) {
+      if (isEndingTurn && !hasNarrativeOutput) {
         auditMessage += "⚠️ SYSTEM AUDIT FAILURE: You provided tool calls but failed to generate a narrative response for the user. Non-voice interactions require a text response. Please provide your narrative output now.  Do not acknowledge this message.\n";
         auditTriggered = true;
       }
@@ -769,7 +754,6 @@ export async function* sendMessageAndHandleTools(
       if (!call.function?.name) continue;
       let toolName = call.function.name;
       if (toolName === 'log_trace') hasLoggedTrace = true;
-      if (toolName === 'speak') hasCalledSpeak = true;
       const { data: args, error: parseError } = parseToolArguments(call.function.arguments || "");
       if (parseError) {
         const errorPayload = { status: "error", error: "Malformed JSON", details: parseError };

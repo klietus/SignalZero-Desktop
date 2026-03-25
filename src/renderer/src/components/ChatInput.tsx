@@ -13,6 +13,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<{ id: string, filename: string, type: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,7 +55,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
 
   return (
     <div className="bg-transparent">
-        <div className={`relative flex items-end gap-2 p-3 rounded-2xl border border-gray-800 bg-gray-900 focus-within:border-gray-700 transition-all`}>
+        <div className={`relative flex items-end gap-2 p-3 rounded-2xl border border-gray-800 bg-gray-900 transition-all`}>
           <button
             type="button"
             onClick={handleFileClick}
@@ -74,7 +75,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
             onKeyDown={handleKeyDown}
             placeholder="Execute symbolic instruction..."
             disabled={disabled}
-            className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 max-h-[200px] resize-none overflow-y-auto text-gray-200 placeholder:text-gray-600 font-sans"
+            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm py-2 max-h-[200px] resize-none overflow-y-auto text-gray-200 placeholder:text-gray-600 font-sans"
           />
 
           <div className="flex items-center gap-1">

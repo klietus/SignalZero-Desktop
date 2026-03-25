@@ -42,12 +42,22 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
       const removeListener = window.api.onKernelEvent((type, data) => {
           if (type === 'project:import-status') {
               setImportStatus({ message: data.status, progress: data.progress });
+              if (data.status === 'COMPLETE') {
+                  setTimeout(() => {
+                      setIsImporting(false);
+                      onNewProject();
+                  }, 1500);
+              }
+              if (data.status === 'FAILED') {
+                  alert("Import failed: " + data.error);
+                  setIsImporting(false);
+              }
           }
       });
       return () => {
           if (typeof removeListener === 'function') removeListener();
       };
-  }, []);
+  }, [onNewProject]);
 
   const handleSavePrompt = async () => {
       await window.api.updateSettings({ systemPrompt: promptText, mcpPrompt: mcpPromptText });
@@ -67,16 +77,11 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
   };
 
   const handleImportClick = async () => {
-      // DO NOT set isImporting here, wait for file selection result
       try {
-          const stats = await (window.api as any).importProject();
-          if (stats) {
-              setIsImporting(true); // Trigger overlay ONLY after file selected and processing starts
-              setImportStatus({ message: 'Establishing relational integrity...', progress: 100 });
-              setTimeout(() => {
-                  setIsImporting(false);
-                  onNewProject();
-              }, 1500);
+          const result = await (window.api as any).importProject();
+          if (result && result.success) {
+              setIsImporting(true);
+              setImportStatus({ message: 'Initializing import...', progress: 0 });
           }
       } catch (err) {
           console.error("Import failed:", err);
@@ -85,17 +90,11 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
   };
 
   const handleLoadSample = async () => {
-      setIsImporting(true);
-      setImportStatus({ message: 'Locating sample project...', progress: 0 });
       try {
-          const stats = await (window.api as any).importSampleProject();
-          if (stats) {
-              setTimeout(() => {
-                  setIsImporting(false);
-                  onNewProject();
-              }, 1500);
-          } else {
-              setIsImporting(false);
+          const result = await (window.api as any).importSampleProject();
+          if (result && result.success) {
+              setIsImporting(true);
+              setImportStatus({ message: 'Locating sample project...', progress: 0 });
           }
       } catch (e) {
           console.error("Sample load failed", e);
