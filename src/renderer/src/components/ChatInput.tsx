@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SendHorizontal, Loader2, Square, Plus } from 'lucide-react';
+import { SendHorizontal, Loader2, Square, Plus, Smile } from 'lucide-react';
 
 interface ChatInputProps {
   onSend: (message: string, options?: { viaVoice?: boolean, attachments?: { id: string, filename: string, type: string }[] }) => void;
@@ -9,13 +9,21 @@ interface ChatInputProps {
   isProcessing?: boolean;
 }
 
+const COMMON_EMOJIS = [
+    '😊', '😂', '🤣', '❤️', '👍', '🙏', '🔥', '✨', 
+    '🤔', '👀', '🚀', '✅', '❌', '⚠️', '💡', '🧠',
+    '💻', '📱', '🔒', '🌐', '📊', '⚡', '🛠️', '⚙️'
+];
+
 export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, isProcessing }) => {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<{ id: string, filename: string, type: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -24,11 +32,25 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
     }
   }, [text]);
 
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEmojiPicker]);
+
   const handleSubmit = () => {
     if (text.trim() || attachments.length > 0) {
       onSend(text, { attachments });
       setText('');
       setAttachments([]);
+      setShowEmojiPicker(false);
     }
   };
 
@@ -40,6 +62,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
   };
 
   const handleFileClick = () => fileInputRef.current?.click();
+
+  const handleEmojiSelect = (emoji: string) => {
+      if (textareaRef.current) {
+          const start = textareaRef.current.selectionStart;
+          const end = textareaRef.current.selectionEnd;
+          const newText = text.substring(0, start) + emoji + text.substring(end);
+          setText(newText);
+          
+          // Focus back to textarea and set cursor after emoji
+          setTimeout(() => {
+              if (textareaRef.current) {
+                  textareaRef.current.focus();
+                  const newCursorPos = start + emoji.length;
+                  textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+              }
+          }, 0);
+      } else {
+          setText(prev => prev + emoji);
+      }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
@@ -54,16 +96,49 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
   };
 
   return (
-    <div className="bg-transparent">
-        <div className={`relative flex items-end gap-2 p-3 rounded-2xl border border-gray-800 bg-gray-900 transition-all`}>
-          <button
-            type="button"
-            onClick={handleFileClick}
-            disabled={disabled || isUploading}
-            className="p-2 text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
-          >
-            {isUploading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
-          </button>
+    <div className="bg-transparent relative">
+        {/* Emoji Picker Overlay */}
+        {showEmojiPicker && (
+            <div 
+                ref={emojiPickerRef}
+                className="absolute bottom-full left-0 mb-4 p-2 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-200"
+            >
+                <div className="grid grid-cols-6 gap-1">
+                    {COMMON_EMOJIS.map(emoji => (
+                        <button
+                            key={emoji}
+                            onClick={() => handleEmojiSelect(emoji)}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-800 rounded-lg transition-colors text-lg"
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        )}
+
+        <div className={`relative flex items-end gap-1 p-3 rounded-2xl border border-gray-800 bg-gray-900 transition-all`}>
+          <div className="flex items-center">
+            <button
+                type="button"
+                onClick={handleFileClick}
+                disabled={disabled || isUploading}
+                className="p-2 text-gray-500 hover:text-gray-300 disabled:opacity-40 transition-colors"
+                title="Attach file"
+            >
+                {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+            </button>
+
+            <button
+                type="button"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                disabled={disabled}
+                className={`p-2 transition-colors ${showEmojiPicker ? 'text-indigo-400' : 'text-gray-500 hover:text-gray-300'} disabled:opacity-40`}
+                title="Emoji palette"
+            >
+                <Smile size={18} />
+            </button>
+          </div>
           
           <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple />
 
@@ -78,7 +153,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, disabled, 
             className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm py-2 max-h-[200px] resize-none overflow-y-auto text-gray-200 placeholder:text-gray-600 font-sans"
           />
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 pl-2">
             {isProcessing ? (
               <button
                 type="button"
