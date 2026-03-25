@@ -204,7 +204,7 @@ export const normalizeMessages = (messages: ChatCompletionMessageParam[]): ChatC
   return normalized;
 };
 
-const streamAssistantResponse = async function* (
+export const streamAssistantResponse = async function* (
   messages: ChatCompletionMessageParam[],
   model: string,
   activeTools: ChatCompletionTool[] = PRIMARY_TOOLS
@@ -382,7 +382,7 @@ const _streamAssistantResponseInternal = async function* (
   yield { assistantMessage };
 };
 
-const resolveAttachments = async (message: string): Promise<{ resolvedContent: string; attachments: any[] }> => {
+export const resolveAttachments = async (message: string): Promise<{ resolvedContent: string; attachments: any[] }> => {
   const attachmentRegex = /<attachments>([\s\S]*?)<\/attachments>/;
   const match = message.match(attachmentRegex);
   if (!match) return { resolvedContent: message, attachments: [] };
@@ -446,7 +446,7 @@ export async function* sendMessageAndHandleTools(
   unknown
 > {
   const correlationId = userMessageId || randomUUID();
-  const { resolvedContent, attachments } = await resolveAttachments(message);
+  const { resolvedContent, attachments } = await inferenceService.resolveAttachments(message);
 
   if (systemInstruction && chat.systemInstruction !== systemInstruction) {
     chat.messages = [{ role: "system", content: systemInstruction }];
@@ -568,7 +568,7 @@ export async function* sendMessageAndHandleTools(
         }
       }
 
-      const assistantMessage = streamAssistantResponse(contextMessages as ChatCompletionMessageParam[], chat.model, activeToolList);
+      const assistantMessage = inferenceService.streamAssistantResponse(contextMessages as ChatCompletionMessageParam[], chat.model, activeToolList);
       textAccumulatedInTurn = "";
       yieldedToolCalls = undefined;
       nextAssistant = null;
@@ -617,7 +617,6 @@ export async function* sendMessageAndHandleTools(
             });
 
             textAccumulatedInTurn += textToYield;
-            yield { text: textToYield };
             isFirstTextChunkInTurn = false;
           }
         }
@@ -670,6 +669,12 @@ export async function* sendMessageAndHandleTools(
     let auditMessage = "";
     const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
     const isEndingTurn = !yieldedToolCalls || yieldedToolCalls.length === 0;
+
+    // YIELD NARRATIVE ONLY ON FINAL TURN
+    if (isEndingTurn && textAccumulatedInTurn.trim().length > 0) {
+      yield { text: textAccumulatedInTurn.trim() };
+    }
+
     const isCallingTraceThisTurn = currentToolNames.has('log_trace');
 
     if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
@@ -709,7 +714,7 @@ export async function* sendMessageAndHandleTools(
         let toolName = call.function.name;
         if (toolName === 'log_trace') hasLoggedTrace = true;
         const { data: args, error: parseError } = parseToolArguments(call.function.arguments || "");
-        
+
         if (parseError) {
           const errorPayload = { status: "error", error: "Malformed JSON", details: parseError };
           toolResponses.push({ role: "tool", content: JSON.stringify(errorPayload), tool_call_id: call.id });
@@ -783,7 +788,7 @@ export async function* sendMessageAndHandleTools(
                   .filter(m => m.role !== 'system')
                   .map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`)
                   .join('\n');
-                const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+                const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
                 let newName = "";
                 if (settings.provider === 'gemini') {
                   const client = await getGeminiClient();
@@ -811,7 +816,7 @@ export async function* sendMessageAndHandleTools(
     if (auditRetries >= MAX_AUDIT_RETRIES) {
       break;
     }
-    
+
     yieldedToolCalls = undefined;
     loops++;
   }
@@ -960,8 +965,6 @@ export const primeSymbolicContext = async (
     });
 
     const prompt = `Analyze the conversation history and the new user message to identify symbolic search queries and determine if web search grounding is needed.
-    
-    ${needsNaming ? 'CRITICAL: Based on the conversation context, suggest a descriptive and concise name for this context session in "suggested_name".' : ''}
 
     CRITICAL: Only set "web_search_needed" to true if the message involves an external entity (person, company, place), a complex technical/scientific topic, or a current event that requires grounding in facts.
 
@@ -979,8 +982,7 @@ export const primeSymbolicContext = async (
       "web_search_needed": boolean,
       "web_search_queries": ["search query1", "search query2", ...],
       "trace_needed": boolean,
-      "trace_reason": "Brief explanation if trace_needed is true",
-      "suggested_name": string | null
+      "trace_reason": "Brief explanation if trace_needed is true"
     }`;
 
     loggerService.catDebug(LogCategory.INFERENCE, "Fast model priming prompt", { prompt });
@@ -1091,5 +1093,7 @@ export const inferenceService = {
   processMessageAsync,
   primeSymbolicContext,
   summarizeHistory,
-  extractJson
+  extractJson,
+  streamAssistantResponse,
+  resolveAttachments
 };

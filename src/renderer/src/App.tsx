@@ -309,12 +309,30 @@ function App() {
     useEffect(() => {
         if (appState !== 'app') return;
 
-        window.api.onInferenceChunk((text) => {
+        window.api.onInferenceChunk((chunk: any) => {
+            const text = typeof chunk === 'string' ? chunk : (chunk.text || '');
+            const rawToolCalls = typeof chunk === 'object' ? (chunk.toolCalls || []) : [];
+            
+            const mappedToolCalls = rawToolCalls.map((tc: any, tcIdx: number) => {
+                let args = {};
+                try { args = typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments) : (tc.function.arguments || {}); }
+                catch (e) { args = { parseError: true, raw: tc.function.arguments }; }
+                return { 
+                    id: tc.id || `streaming-${Date.now()}-${tcIdx}`, 
+                    name: tc.function.name || 'tool', 
+                    args 
+                };
+            });
+
             setMessages(prev => {
                 const last = prev[prev.length - 1];
                 if (last && last.role === Sender.MODEL && last.isStreaming) {
                     const updated = [...prev];
-                    updated[updated.length - 1] = { ...last, content: last.content + text };
+                    updated[updated.length - 1] = { 
+                        ...last, 
+                        content: last.content + text,
+                        toolCalls: mappedToolCalls.length > 0 ? [...(last.toolCalls || []), ...mappedToolCalls] : (last.toolCalls || [])
+                    };
                     return updated;
                 } else {
                     return [...prev, {
@@ -322,7 +340,8 @@ function App() {
                         role: Sender.MODEL,
                         content: text,
                         timestamp: new Date(),
-                        isStreaming: true
+                        isStreaming: true,
+                        toolCalls: mappedToolCalls
                     }];
                 }
             });

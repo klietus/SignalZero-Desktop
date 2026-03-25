@@ -328,8 +328,8 @@ ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruc
     const stream = sendMessageAndHandleTools(chat, message, toolExecutor, systemInstruction || activeSystemPrompt, sessionId, undefined, webResults, webBrief);
 
     for await (const chunk of stream) {
-      if (chunk.text) {
-        event.sender.send('inference:chunk', chunk.text);
+      if (chunk.text || chunk.toolCalls) {
+        event.sender.send('inference:chunk', chunk);
       }
     }
     
