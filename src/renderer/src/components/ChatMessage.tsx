@@ -214,7 +214,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
       if (part.startsWith('```') && part.endsWith('```')) {
         const content = part.slice(3, -3).replace(/^[a-z]+\n/, ''); // remove lang tag
         return (
-          <div key={i} className="my-3 p-3 bg-gray-950 border border-gray-800 text-gray-300 rounded text-xs md:text-sm font-mono overflow-x-auto shadow-inner">
+          <div key={i} className="my-3 p-3 bg-gray-950/80 backdrop-blur-sm border border-gray-800/50 text-gray-300 rounded text-xs md:text-sm font-mono overflow-x-auto shadow-inner">
             {content}
           </div>
         );
@@ -261,7 +261,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
       markdownContent = decodeUnicode(markdownContent);
 
       return (
-        <div key={i} className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-gray-950 prose-pre:border prose-pre:border-gray-800">
+        <div key={i} className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-gray-950/80 prose-pre:backdrop-blur-sm prose-pre:border prose-pre:border-gray-800/50">
            <ReactMarkdown
              remarkPlugins={[remarkGfm]}
              components={{
@@ -372,8 +372,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
         <div className={`flex flex-col items-start ${isUser ? 'items-end' : 'items-start'} w-full min-w-0`}>
           <div className={`relative px-4 py-3 rounded-lg shadow-sm text-base leading-relaxed w-full
             ${isUser 
-              ? 'bg-indigo-600 text-white' 
-              : 'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-800'
+              ? 'bg-indigo-600/80 backdrop-blur-md border border-indigo-500/30 text-white' 
+              : 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md text-gray-800 dark:text-gray-300 border border-gray-200/50 dark:border-gray-800/50'
             }`}>
             
             {/* Header / Meta Controls */}

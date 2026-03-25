@@ -6,7 +6,7 @@ import * as THREE from 'three';
 // @ts-ignore
 import SpriteText from 'three-spritetext';
 import { SymbolDef } from '../../types';
-import { Activity, X } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
 interface GraphNode {
     id: string;
@@ -31,8 +31,6 @@ export const CinematicView: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const graphRef = useRef<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [stats, setStats] = useState({ nodes: 0, links: 0 });
-    const [transientMessage, setTransientMessage] = useState<{ text: string, type?: string } | null>(null);
     const eventQueue = useRef<any[]>([]);
     const lastEventTime = useRef<number>(Date.now());
     const graphData = useRef<{ nodes: GraphNode[], links: GraphLink[] }>({ nodes: [], links: [] });
@@ -58,7 +56,7 @@ export const CinematicView: React.FC = () => {
             const t = typeof l.target === 'string' ? l.target : (l.target as any).id;
             return s === nodeId || t === nodeId;
         }).length;
-        
+
         const baseSize = isCached ? 6 : 3;
         return baseSize + (Math.log10(linkCount + 1) * 8);
     };
@@ -66,7 +64,8 @@ export const CinematicView: React.FC = () => {
     // Initial Load
     useEffect(() => {
         let isMounted = true;
-        
+        let resizeObserver: ResizeObserver | null = null;
+
         const handleResize = () => {
             if (graphRef.current && containerRef.current) {
                 graphRef.current.width(containerRef.current.clientWidth);
@@ -80,7 +79,7 @@ export const CinematicView: React.FC = () => {
                 setIsLoading(false);
                 return;
             }
-            
+
             setIsLoading(true);
             await new Promise(resolve => setTimeout(resolve, 500));
             if (!isMounted) return;
@@ -126,11 +125,9 @@ export const CinematicView: React.FC = () => {
                     node.val = calculateNodeSize(node.id, node.isCached);
                 });
 
-                setStats({ nodes: nodes.length, links: links.length });
-
                 if (containerRef.current && !graphRef.current) {
                     containerRef.current.innerHTML = '';
-                    
+
                     graphRef.current = (ForceGraph3D as any)()(containerRef.current)
                         .graphData(graphData.current)
                         .nodeLabel((node: any) => `
@@ -143,7 +140,7 @@ export const CinematicView: React.FC = () => {
                         .nodeThreeObject((node: any) => {
                             const group = new THREE.Group();
                             const size = node.val || 3;
-                            
+
                             // Core Sphere
                             const geometry = new THREE.SphereGeometry(size, 16, 16);
                             const color = new THREE.Color(node.color);
@@ -173,7 +170,7 @@ export const CinematicView: React.FC = () => {
                                 glow.name = 'glow';
                                 group.add(glow);
                             }
-                            
+
                             group.userData = { isCached: node.isCached, baseEmissive: node.isCached ? 2 : 0.5 };
                             return group;
                         })
@@ -183,7 +180,7 @@ export const CinematicView: React.FC = () => {
                             const baseWidth = link.width || 1;
                             if (sNode && tNode) {
                                 const avgSize = ((sNode.val || 2) + (tNode.val || 2)) / 2;
-                                return baseWidth * (avgSize / 8); 
+                                return baseWidth * (avgSize / 8);
                             }
                             return baseWidth;
                         })
@@ -205,14 +202,18 @@ export const CinematicView: React.FC = () => {
                         .showNavInfo(false);
 
                     window.addEventListener('resize', handleResize);
+                    if (containerRef.current) {
+                        resizeObserver = new ResizeObserver(() => handleResize());
+                        resizeObserver.observe(containerRef.current);
+                    }
 
                     const animate = () => {
                         if (!graphRef.current) return;
-                        
+
                         const time = Date.now();
                         const timeSeconds = time * 0.002;
                         const pulse = (Math.sin(timeSeconds) + 1) * 0.5;
-                        
+
                         const camera = graphRef.current.camera();
                         const controls = graphRef.current.controls();
                         const isIdle = (time - lastEventTime.current) > 10000;
@@ -223,7 +224,7 @@ export const CinematicView: React.FC = () => {
                             const z = camera.position.z;
                             camera.position.x = x * Math.cos(angle) - z * Math.sin(angle);
                             camera.position.z = x * Math.sin(angle) + z * Math.cos(angle);
-                            
+
                             const targetDist = 1600;
                             const currentDist = Math.hypot(camera.position.x, camera.position.y, camera.position.z);
                             const distDiff = targetDist - currentDist;
@@ -248,7 +249,7 @@ export const CinematicView: React.FC = () => {
                                 }
                             }
                         });
-                        
+
                         requestAnimationFrame(animate);
                     };
                     animate();
@@ -273,6 +274,9 @@ export const CinematicView: React.FC = () => {
         return () => {
             isMounted = false;
             window.removeEventListener('resize', handleResize);
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
             if (graphRef.current) {
                 if (graphRef.current._destructor) graphRef.current._destructor();
                 graphRef.current = null;
@@ -303,17 +307,17 @@ export const CinematicView: React.FC = () => {
     const createParticleBurst = (x: number, y: number, z: number, color: string, intensity: 'normal' | 'high' = 'normal') => {
         if (!graphRef.current) return;
         const scene = graphRef.current.scene();
-        
-        const count = intensity === 'high' ? 400 : 50; 
+
+        const count = intensity === 'high' ? 400 : 50;
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(count * 3);
         const velocities: THREE.Vector3[] = [];
-        
+
         for (let i = 0; i < count; i++) {
             positions[i * 3] = x;
             positions[i * 3 + 1] = y;
             positions[i * 3 + 2] = z;
-            
+
             const speed = intensity === 'high' ? 5 : 2;
             velocities.push(new THREE.Vector3(
                 (Math.random() - 0.5) * speed,
@@ -321,7 +325,7 @@ export const CinematicView: React.FC = () => {
                 (Math.random() - 0.5) * speed
             ));
         }
-        
+
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         const material = new THREE.PointsMaterial({
             color: new THREE.Color(color),
@@ -330,10 +334,10 @@ export const CinematicView: React.FC = () => {
             opacity: 1,
             blending: THREE.AdditiveBlending
         });
-        
+
         const points = new THREE.Points(geometry, material);
         scene.add(points);
-        
+
         let opacity = 1;
         const animateBurst = () => {
             if (opacity <= 0) {
@@ -342,7 +346,7 @@ export const CinematicView: React.FC = () => {
                 material.dispose();
                 return;
             }
-            
+
             const pos = geometry.attributes.position.array as Float32Array;
             for (let i = 0; i < count; i++) {
                 pos[i * 3] += velocities[i].x;
@@ -350,7 +354,7 @@ export const CinematicView: React.FC = () => {
                 pos[i * 3 + 2] += velocities[i].z;
             }
             geometry.attributes.position.needsUpdate = true;
-            
+
             opacity -= 0.015;
             material.opacity = opacity;
             requestAnimationFrame(animateBurst);
@@ -361,9 +365,8 @@ export const CinematicView: React.FC = () => {
     const pulseNode = async (nodeId: string, skipCameraMove = false) => {
         const node = graphData.current.nodes.find(n => n.id === nodeId);
         if (node && graphRef.current) {
-            setTransientMessage({ text: node.name, type: 'FOCUS' });
             const scene = graphRef.current.scene();
-            
+
             if (!skipCameraMove) {
                 const distance = 80;
                 const nodeX = node.x || 0;
@@ -372,8 +375,8 @@ export const CinematicView: React.FC = () => {
                 const distRatio = 1 + distance / Math.hypot(nodeX, nodeY, nodeZ);
 
                 graphRef.current.cameraPosition(
-                    { x: nodeX * distRatio, y: nodeY * distRatio, z: nodeZ * distRatio }, 
-                    node, 
+                    { x: nodeX * distRatio, y: nodeY * distRatio, z: nodeZ * distRatio },
+                    node,
                     2000
                 );
                 await new Promise(resolve => setTimeout(resolve, 1500));
@@ -399,7 +402,7 @@ export const CinematicView: React.FC = () => {
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 nodeObj.scale.set(originalScale, originalScale, originalScale);
             }
-            
+
             let labelOpacity = 1;
             const fadeLabel = () => {
                 if (labelOpacity <= 0) {
@@ -413,19 +416,18 @@ export const CinematicView: React.FC = () => {
             fadeLabel();
 
             await new Promise(resolve => setTimeout(resolve, 500));
-            setTransientMessage(null);
         }
     };
-    
+
     const triggerSupernova = async (nodeIds: string[]) => {
         if (!graphRef.current) return;
-        
+
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         const affectedNodes = graphData.current.nodes.filter(n => nodeIds.includes(n.id));
         affectedNodes.forEach(node => {
             node.val = 20;
-            createParticleBurst(node.x || 0, node.y || 0, node.z || 0, '#ffffff', 'high'); 
+            createParticleBurst(node.x || 0, node.y || 0, node.z || 0, '#ffffff', 'high');
             createParticleBurst(node.x || 0, node.y || 0, node.z || 0, node.color, 'normal');
         });
         graphRef.current.graphData(graphData.current);
@@ -433,7 +435,7 @@ export const CinematicView: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         affectedNodes.forEach(node => {
-            node.val = 6; 
+            node.val = 6;
         });
         graphRef.current.graphData(graphData.current);
     };
@@ -441,7 +443,7 @@ export const CinematicView: React.FC = () => {
     const ensureNodeExists = async (symbolId: string) => {
         if (!symbolId || symbolId === 'undefined') return false;
         if (graphData.current.nodes.find(n => n.id === symbolId)) return true;
-        
+
         try {
             const s = await window.api.getSymbolById(symbolId);
             if (s) {
@@ -461,27 +463,10 @@ export const CinematicView: React.FC = () => {
         }
         return false;
     };
-    
+
     const handleVisualEvent = async (event: any) => {
         const { type, data } = event;
         lastEventTime.current = Date.now();
-        let logMsg = "";
-
-        switch (type) {
-            case 'symbol:upserted': logMsg = `Upserted Symbol: ${data.symbolId}`; break;
-            case 'cache:load': logMsg = `Cache Load: ${data.symbolIds?.length || 1} symbols`; break;
-            case 'cache:evict': logMsg = `Cache Evict: ${data.symbolIds?.length || 0} symbols`; break;
-            case 'link:created': logMsg = `Linked: ${data.sourceId} -> ${data.targetId}`; break;
-            case 'link:deleted': logMsg = `Link Deleted: ${data.sourceId} -> ${data.targetId}`; break;
-            case 'trace:generated': logMsg = `Trace Generated: ${data.traceId}`; break;
-        }
-
-        if (logMsg) {
-            setTransientMessage({ text: logMsg, type });
-            if (type !== 'FOCUS') {
-                setTimeout(() => setTransientMessage(prev => prev?.text === logMsg ? null : prev), 3000);
-            }
-        }
 
         switch (type) {
             case 'symbol:upserted': {
@@ -489,7 +474,7 @@ export const CinematicView: React.FC = () => {
                 if (s) {
                     let isNew = false;
                     const existingNode = graphData.current.nodes.find(n => n.id === s.id);
-                    
+
                     if (!existingNode) {
                         graphData.current.nodes.push({
                             id: s.id,
@@ -527,7 +512,7 @@ export const CinematicView: React.FC = () => {
                     const node = graphData.current.nodes.find(n => n.id === s.id);
                     if (node) node.val = calculateNodeSize(s.id, node.isCached);
                     graphRef.current.graphData(graphData.current);
-                    
+
                     if (isNew) {
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         await pulseNode(s.id);
@@ -569,22 +554,22 @@ export const CinematicView: React.FC = () => {
                 const { sourceId, targetId } = data;
                 const sExists = await ensureNodeExists(sourceId);
                 const tExists = await ensureNodeExists(targetId);
-                
+
                 if (sExists && tExists) {
                     await pulseNode(sourceId);
                     graphData.current.links.push({ source: sourceId, target: targetId, color: '#00f0ff', width: 6 });
-                    
+
                     const sNode = graphData.current.nodes.find(n => n.id === sourceId);
                     const tNode = graphData.current.nodes.find(n => n.id === targetId);
                     if (sNode) sNode.val = calculateNodeSize(sourceId, sNode.isCached);
                     if (tNode) tNode.val = calculateNodeSize(targetId, tNode.isCached);
                     graphRef.current.graphData(graphData.current);
-                    
+
                     await pulseNode(targetId);
 
                     setTimeout(() => {
-                        const link = graphData.current.links.find(l => 
-                            (typeof l.source === 'string' ? l.source : (l.source as any).id) === sourceId && 
+                        const link = graphData.current.links.find(l =>
+                            (typeof l.source === 'string' ? l.source : (l.source as any).id) === sourceId &&
                             (typeof l.target === 'string' ? l.target : (l.target as any).id) === targetId
                         );
                         if (link) {
@@ -603,7 +588,7 @@ export const CinematicView: React.FC = () => {
                     const t = typeof l.target === 'string' ? l.target : (l.target as any).id;
                     return !(s === sourceId && t === targetId);
                 });
-                
+
                 const sNode = graphData.current.nodes.find(n => n.id === sourceId);
                 const tNode = graphData.current.nodes.find(n => n.id === targetId);
                 if (sNode) sNode.val = calculateNodeSize(sourceId, sNode.isCached);
@@ -639,9 +624,19 @@ export const CinematicView: React.FC = () => {
                     padding: 8px 12px;
                     color: white;
                 }
-                .tooltip-domain { font-size: 9px; text-transform: uppercase; opacity: 0.5; }
-                .tooltip-id { font-size: 12px; font-weight: bold; color: #00f0ff; }
-                .tooltip-name { font-size: 11px; }
+                .tooltip-domain { 
+                    font-size: 9px; 
+                    text-transform: uppercase; 
+                    opacity: 0.5; 
+                }
+                .tooltip-id { 
+                    font-size: 12px; 
+                    font-weight: bold; 
+                    color: #00f0ff; 
+                }
+                .tooltip-name { 
+                    font-size: 11px; 
+                }
             `}</style>
         </div>
     );

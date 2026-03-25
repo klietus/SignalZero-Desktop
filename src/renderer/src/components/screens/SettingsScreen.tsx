@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Save, Database, Network, Cpu, Cloud, 
-    Search, AlertCircle, Mic
+    Search, AlertCircle, Mic, Layout
 } from 'lucide-react';
 import { UserProfile, GraphHygieneSettings, McpConfiguration } from '../../types';
 import { Header, HeaderProps } from '../Header';
@@ -39,6 +39,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     deadLinkCleanup: false,
     orphanAnalysis: false
   });
+
+  // UI Settings
+  const [showGraphviz, setShowGraphviz] = useState(true);
 
   // Voice Server State
   const [pulseServer, setPulseServer] = useState('');
@@ -93,6 +96,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setWakeWord(voice.wakeWord || 'axiom');
     setSelectedVoice(voice.voice || 'af_sarah');
     setMcpConfigs(settings.mcpConfigs || []);
+
+    setShowGraphviz(settings.ui?.showGraphviz ?? true);
 
     const provider = inference.provider || 'local';
     setInferenceProvider(provider);
@@ -160,6 +165,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         const finalConfigs = { ...storedConfigs, [inferenceProvider]: currentConfig };
 
         await window.api.updateSettings({
+            ui: { showGraphviz },
             serpApi: { apiKey: serpApiKey },
             voice: { pulseServer, wakeWord, voice: selectedVoice },
             hygiene: hygieneSettings,
@@ -184,6 +190,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   const tabs = [
+      { id: 'appearance', label: 'Appearance', icon: Layout },
       { id: 'inference', label: 'Inference', icon: Cpu },
       { id: 'services', label: 'Services', icon: Cloud },
       { id: 'mcp', label: 'MCP Clients', icon: Network },
@@ -260,6 +267,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                               <div className="space-y-4">
                                   <div className="flex items-center gap-2 font-bold border-b pb-2"><Search size={16} className="text-emerald-500" /> SerpApi Key</div>
                                   <input type="password" value={serpApiKey} onChange={(e) => setSerpApiKey(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
+                              </div>
+                          </div>
+                      </section>
+                  )}
+
+                  {activeTab === 'appearance' && (
+                      <section className="space-y-6">
+                          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-6">
+                              <div className="flex items-center justify-between">
+                                  <div>
+                                      <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100">3D Reasoning Graph</h4>
+                                      <p className="text-xs text-gray-500">Show the animated graphviz background in the chat view</p>
+                                  </div>
+                                  <label className="relative inline-flex items-center cursor-pointer">
+                                      <input type="checkbox" className="sr-only peer" checked={showGraphviz} onChange={(e) => setShowGraphviz(e.target.checked)} />
+                                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                                  </label>
                               </div>
                           </div>
                       </section>
