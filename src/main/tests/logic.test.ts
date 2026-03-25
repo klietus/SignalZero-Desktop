@@ -49,6 +49,12 @@ describe('Inference Logic Parity', () => {
         expect(stripThoughts(text)).toBe("Hello world !");
     });
 
+    it('should preserve newlines in stripThoughts', () => {
+        const text = "Line 1\n<think>reasoning</think>\nLine 2\n\nLine 3";
+        const result = stripThoughts(text);
+        expect(result).toBe("Line 1\n\nLine 2\n\nLine 3");
+    });
+
     it('should extract JSON from markdown or raw strings', () => {
         const raw = '{"key": "value"}';
         const markdown = 'Here is the data:\n```json\n{"key": "value"}\n```';
