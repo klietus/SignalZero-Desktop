@@ -16,6 +16,13 @@ export interface TopologyStats {
     redundantSymbolsFound: number;
 }
 
+interface PredictedLink {
+    sourceId: string;
+    targetId: string;
+    linkType: string;
+    confidence: number;
+}
+
 class TopologyService {
     private readonly CONFIDENCE_THRESHOLD = 0.85;
     private readonly REDUNDANCY_THRESHOLD = 0.98;
@@ -179,21 +186,15 @@ class TopologyService {
             }
 
             if (redundantGroups.length > 0) {
-                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Found ${redundantGroups.length} potential redundant groups`);
-                const validated = [];
-                for (const group of redundantGroups) {
-                    if (await this.validateCompression(group, symbols)) validated.push(group);
-                }
-                if (validated.length > 0) {
-                    await this.mergeRedundantSymbols(validated);
-                    redundantCount = validated.reduce((acc, g) => acc + g.length - 1, 0);
-                }
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Merging ${redundantGroups.length} potential redundant groups`);
+                await this.mergeRedundantSymbols(redundantGroups);
+                redundantCount = redundantGroups.reduce((acc, g) => acc + g.length - 1, 0);
             }
         }
 
         if (hygiene.semantic.autoLink) {
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Checking for semantic link opportunities");
-            const predicted = [];
+            const predicted: PredictedLink[] = [];
             for (let i = 0; i < N; i++) {
                 for (let j = i + 1; j < N; j++) {
                     const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
@@ -244,19 +245,13 @@ class TopologyService {
             const redundantGroups = Array.from(triadicGroups.values()).filter(g => g.length > 1);
 
             if (redundantGroups.length > 0) {
-                const validated = [];
-                for (const group of redundantGroups) {
-                    if (await this.validateCompression(group, symbols)) validated.push(group);
-                }
-                if (validated.length > 0) {
-                    await this.mergeRedundantSymbols(validated);
-                    redundantCount = validated.reduce((acc, g) => acc + g.length - 1, 0);
-                }
+                await this.mergeRedundantSymbols(redundantGroups);
+                redundantCount = redundantGroups.reduce((acc, g) => acc + g.length - 1, 0);
             }
         }
 
         if (hygiene.triadic.autoLink) {
-            const predicted = [];
+            const predicted: PredictedLink[] = [];
             for (let i = 0; i < symbols.length; i++) {
                 const triadI = symbols[i].triad;
                 if (!triadI) continue;
@@ -338,7 +333,7 @@ class TopologyService {
                     const candidates = await domainService.search(searchQuery, 5);
 
                     const validCandidates = candidates.filter(c => c.id !== orphan.id);
-                    const predictedLinks = [];
+                    const predictedLinks: PredictedLink[] = [];
 
                     for (const cand of validCandidates) {
                         const candSym = await domainService.findById(cand.id);
@@ -392,61 +387,6 @@ class TopologyService {
             if (updated) {
                 await domainService.addSymbol(s.symbol_domain, s);
             }
-        }
-    }
-
-    private async validateCompression(groupIds: string[], allSymbols: SymbolDef[]): Promise<boolean> {
-        try {
-            const settings = await settingsService.getInferenceSettings();
-            const fastModel = settings.fastModel;
-            if (!fastModel) return true;
-
-            const groupSymbols = groupIds.map(id => allSymbols.find(s => s.id === id)).filter(Boolean) as SymbolDef[];
-            if (groupSymbols.length < 2) return false;
-
-            const symbolInfo = groupSymbols.map(s => {
-                return `ID: ${s.id}\nName: ${s.name}\nRole: ${s.role}\nMacro: ${s.macro}\nTriad Group: ${s.triad || 'None'}\nActivation Conditions: ${JSON.stringify(s.activation_conditions || [])}`;
-            }).join('\n\n---\n\n');
-
-            const prompt = `Analyze the following symbols from a symbolic knowledge graph. Determine if they represent the EXACT SAME concept, belong to compatible triad groups, have compatible activation conditions, and can be safely merged into a single canonical symbol.
-            
-            Symbols to compare:
-            ${symbolInfo}
-            
-            Are these the same concept? Output valid JSON only:
-            {
-              "isSame": true/false,
-              "reason": "Brief explanation"
-            }`;
-
-            let isSame = false;
-
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ 
-                    model: fastModel,
-                    generationConfig: { responseMimeType: "application/json" }
-                });
-                const result = await model.generateContent(prompt);
-                const response = result.response.text();
-                isSame = !!extractJson(response).isSame;
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 800
-                });
-                const response = result.choices[0]?.message?.content || "{}";
-                isSame = !!extractJson(response).isSame;
-            }
-
-            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: LLM Validation for ${groupIds[0]}: ${isSame}`);
-            return isSame;
-
-        } catch (error) {
-            loggerService.catError(LogCategory.KERNEL, "TopologyService: LLM Validation failed", { error });
-            return false;
         }
     }
 

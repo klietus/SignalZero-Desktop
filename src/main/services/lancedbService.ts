@@ -61,7 +61,7 @@ const getTable = async () => {
     return null;
 };
 
-const symbolToContent = (symbol: SymbolDef) => {
+export const symbolToContent = (symbol: SymbolDef) => {
     return `
         Symbol: ${symbol.name} (${symbol.id})
         Triad: ${symbol.triad}
@@ -122,7 +122,8 @@ export const lancedbService = {
                         symbol_tag: symbol.symbol_tag,
                         role: symbol.role,
                         macro: symbol.macro,
-                        kind: symbol.kind || 'pattern'
+                        kind: symbol.kind || 'pattern',
+                        updated_at: symbol.updated_at || new Date().toISOString()
                     });
                 }
                 
@@ -240,5 +241,57 @@ export const lancedbService = {
 
     async removeSymbol(symbolId: string): Promise<boolean> {
         return this.deleteSymbol(symbolId);
+    },
+
+    async syncLanceDB(allSqlSymbols: SymbolDef[]): Promise<{ deleted: number, updated: number }> {
+        const stats = { deleted: 0, updated: 0 };
+        try {
+            const table = await getTable();
+            if (!table) {
+                if (allSqlSymbols.length > 0) {
+                    stats.updated = await this.indexBatch(allSqlSymbols);
+                }
+                return stats;
+            }
+
+            // 1. Identify and delete entries in LanceDB that are no longer in SQLite
+            const sqlIds = new Set(allSqlSymbols.map(s => s.id));
+            const lanceEntries = await table.query().select(['id', 'updated_at']).toArray();
+            const obsoleteIds = lanceEntries.filter(r => !sqlIds.has(r.id)).map(r => r.id);
+            
+            if (obsoleteIds.length > 0) {
+                // Delete in chunks to avoid query length limits
+                const CHUNK_SIZE = 50;
+                for (let i = 0; i < obsoleteIds.length; i += CHUNK_SIZE) {
+                    const chunk = obsoleteIds.slice(i, i + CHUNK_SIZE);
+                    const idsStr = chunk.map(id => `'${id}'`).join(',');
+                    await table.delete(`id IN (${idsStr})`);
+                    stats.deleted += chunk.length;
+                }
+            }
+
+            // 2. Identify missing or outdated entries
+            const lanceIdMap = new Map(lanceEntries.map(r => [r.id, r.updated_at]));
+            const symbolsToUpdate = allSqlSymbols.filter(s => {
+                const lanceUpdate = lanceIdMap.get(s.id);
+                if (!lanceUpdate) return true; // Missing
+                
+                // Compare timestamps
+                try {
+                    return new Date(s.updated_at).getTime() > new Date(lanceUpdate).getTime();
+                } catch (e) {
+                    return true; // If comparison fails, assume outdated
+                }
+            });
+            
+            if (symbolsToUpdate.length > 0) {
+                stats.updated = await this.indexBatch(symbolsToUpdate);
+            }
+
+            return stats;
+        } catch (e) {
+            console.error("[LanceDB] Sync failed", e);
+            return stats;
+        }
     }
 };

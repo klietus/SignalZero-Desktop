@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageSquare, Loader2 } from 'lucide-react';
-import { Message, Sender, UserProfile, ContextSession, ContextMessage, ProjectMeta } from './types';
+import { Message, Sender, UserProfile, ContextSession, ContextMessage, ProjectMeta, SymbolDef } from './types';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { SettingsScreen } from './components/screens/SettingsScreen';
@@ -504,7 +504,7 @@ function App() {
                                                 <ChatMessage
                                                     message={msg}
                                                     isVisible={!isGraphView}
-                                                    onSymbolClick={(id, data) => { 
+                                                    onSymbolClick={(_id, data) => { 
                                                         if (data) setSelectedSymbol(data);
                                                         setSelectedDomainId(data?.symbol_domain || null);
                                                         setCurrentView('dev'); 
@@ -613,7 +613,7 @@ function App() {
                         traces={activeTraces}
                         selectedTraceId={selectedTraceId}
                         onSelectTrace={setSelectedTraceId}
-                        onSymbolClick={(id, data) => { 
+                        onSymbolClick={(_id, data) => { 
                             if (data) setSelectedSymbol(data);
                             setSelectedDomainId(data?.symbol_domain || null);
                             setCurrentView('dev'); 

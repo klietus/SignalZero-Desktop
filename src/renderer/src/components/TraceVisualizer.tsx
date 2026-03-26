@@ -1,14 +1,22 @@
 import React from 'react';
 import { Cpu, Layers, ArrowRight, GitCommit } from 'lucide-react';
-import { TraceData } from '../types';
+import { TraceData, SymbolDef } from '../types';
 import { formatTimestamp } from './utils/formatTimestamp';
 
 interface TraceVisualizerProps {
   trace: TraceData;
-  onSymbolClick: (id: string) => void;
+  onSymbolClick: (id: string, data?: SymbolDef) => void;
 }
 
 export const TraceVisualizer: React.FC<TraceVisualizerProps> = ({ trace, onSymbolClick }) => {
+  const handleNodeClick = async (id: string) => {
+      try {
+          const data = await window.api.getSymbolById(id);
+          onSymbolClick(id, data);
+      } catch (e) {
+          onSymbolClick(id);
+      }
+  };
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
         
@@ -45,7 +53,7 @@ export const TraceVisualizer: React.FC<TraceVisualizerProps> = ({ trace, onSymbo
                 </div>
                 <div className="flex gap-2">
                     <span className="text-gray-400 w-24">Entry:</span> 
-                    <button onClick={() => trace.entry_node && onSymbolClick(trace.entry_node)} className="text-indigo-500 hover:underline">
+                    <button onClick={() => trace.entry_node && handleNodeClick(trace.entry_node)} className="text-indigo-500 hover:underline">
                         {trace.entry_node || 'N/A'}
                     </button>
                 </div>
@@ -89,7 +97,7 @@ export const TraceVisualizer: React.FC<TraceVisualizerProps> = ({ trace, onSymbo
 
                         {/* Symbol Node */}
                         <button 
-                            onClick={() => step?.symbol_id && onSymbolClick(step.symbol_id)}
+                            onClick={() => step?.symbol_id && handleNodeClick(step.symbol_id)}
                             className="w-full text-left p-3 bg-white dark:bg-gray-900 rounded-lg border-l-4 border-indigo-500 shadow-sm border-y border-r border-gray-200 dark:border-gray-800 hover:border-r-indigo-500 hover:shadow-md transition-all group"
                         >
                             <div className="flex items-center justify-between">
@@ -111,7 +119,7 @@ export const TraceVisualizer: React.FC<TraceVisualizerProps> = ({ trace, onSymbo
                 <div className="flex-1">
                     <div className="text-[10px] uppercase text-gray-400 font-mono mb-1">Output Convergence</div>
                     <button 
-                        onClick={() => trace.output_node && onSymbolClick(trace.output_node)}
+                        onClick={() => trace.output_node && handleNodeClick(trace.output_node)}
                         className="inline-block px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded text-xs font-bold font-mono text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
                     >
                         {trace.output_node || 'N/A'}

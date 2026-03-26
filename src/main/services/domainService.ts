@@ -3,6 +3,8 @@ import { lancedbService } from './lancedbService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
+import { settingsService } from './settingsService.js';
+import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
 
 const mapRowToDomain = (row: any): any => ({
@@ -242,25 +244,74 @@ export const domainService = {
       throw new Error(`Symbol not found: ${!canonical ? canonicalId : redundantId}`);
     }
 
-    // 1. Move links from redundant to canonical
+    // 1. Synthesis via Complex Model
+    let synthesized = { ...canonical };
+    try {
+        const settings = await settingsService.getInferenceSettings();
+        const complexModel = settings.model;
+        
+        if (complexModel) {
+            const prompt = `Synthesize these two symbolic definitions into one canonical symbol. 
+            The new symbol should incorporate all the knowledge, role, and macro logic of both, while prioritizing the identity of the canonical symbol (${canonicalId}).
+            You MUST preserve all activation conditions from both symbols.
+            
+            Canonical Symbol (${canonicalId}):
+            ${JSON.stringify(canonical, null, 2)}
+            
+            Redundant Symbol (${redundantId}):
+            ${JSON.stringify(redundant, null, 2)}
+            
+            Determine if a merge is sensible. If it is, output the synthesized JSON object for the canonical symbol.
+            If a merge does not make sense (e.g. they are fundamentally different concepts), output { "canMerge": false }.
+            If merging, output: { "canMerge": true, "synthesized": <updated_canonical_symbol_object> }
+            
+            Valid JSON only.`;
+
+            let response: any = {};
+            if (settings.provider === 'gemini') {
+                const client = await getGeminiClient();
+                const model = client.getGenerativeModel({ model: complexModel, generationConfig: { responseMimeType: "application/json" } });
+                const result = await model.generateContent(prompt);
+                response = extractJson(result.response.text());
+            } else {
+                const client = await getClient();
+                const result = await client.chat.completions.create({ model: complexModel, messages: [{ role: "user", content: prompt }] });
+                response = extractJson(result.choices[0]?.message?.content || "{}");
+            }
+
+            if (response.canMerge === false) {
+                loggerService.catWarn(LogCategory.DOMAIN, `Merge rejected by model: ${canonicalId} and ${redundantId} are fundamentally different.`);
+                return;
+            }
+
+            if (response.canMerge === true && response.synthesized) {
+                synthesized = { ...response.synthesized, id: canonicalId }; // Ensure ID remains canonical
+                loggerService.catInfo(LogCategory.DOMAIN, `Model-assisted synthesis complete for ${canonicalId}`);
+            }
+        }
+    } catch (err) {
+        loggerService.catError(LogCategory.DOMAIN, `Synthesis failed, falling back to basic merge`, { error: err });
+    }
+
+    // 2. Move links from redundant to synthesized
     if (redundant.linked_patterns) {
-      if (!canonical.linked_patterns) canonical.linked_patterns = [];
+      if (!synthesized.linked_patterns) synthesized.linked_patterns = [];
 
       for (const link of redundant.linked_patterns) {
         const targetId = typeof link === 'string' ? link : link.id;
-        if (targetId !== canonicalId && !canonical.linked_patterns.some(l => (typeof l === 'string' ? l : l.id) === targetId)) {
-          canonical.linked_patterns.push(link);
+        if (targetId !== canonicalId && !synthesized.linked_patterns.some(l => (typeof l === 'string' ? l : l.id) === targetId)) {
+          synthesized.linked_patterns.push(link);
         }
       }
     }
 
-    // 2. Save canonical
-    await this.addSymbol(canonical.symbol_domain, canonical);
+    // 3. Save synthesized symbol
+    await this.addSymbol(synthesized.symbol_domain, synthesized);
 
-    // 3. Update all global links pointing to redundant to point to canonical
+    // 4. Update all global links pointing to redundant to point to canonical
     sqliteService.run(`UPDATE symbol_links SET target_id = ? WHERE target_id = ?`, [canonicalId, redundantId]);
 
-    // 4. Delete redundant symbol
+    // 5. Delete redundant symbol
     await this.deleteSymbol(redundant.symbol_domain, redundantId);
   },
 
@@ -338,21 +389,10 @@ export const domainService = {
   },
 
   async ensureVectorIndex(): Promise<void> {
-    const vectorCount = await lancedbService.countCollection();
-    const sqlCount = await this.getSymbolCount();
-
-    if (vectorCount === 0 && sqlCount > 0) {
-        loggerService.catInfo(LogCategory.KERNEL, `Vector index is empty. Indexing all ${sqlCount} symbols...`);
-        const allSymbols = await this.getAllSymbols();
-        await lancedbService.indexBatch(allSymbols, (indexed, total) => {
-            if (indexed % 100 === 0 || indexed === total) {
-                loggerService.catInfo(LogCategory.KERNEL, `Indexing progress: ${indexed}/${total}`);
-            }
-        });
-        loggerService.catInfo(LogCategory.KERNEL, `Vector index sync complete.`);
-    } else {
-        loggerService.catInfo(LogCategory.KERNEL, `Vector index check: ${vectorCount} vectors, ${sqlCount} sql symbols.`);
-    }
+    loggerService.catInfo(LogCategory.KERNEL, `Ensuring vector index integrity...`);
+    const allSymbols = await this.getAllSymbols();
+    const stats = await lancedbService.syncLanceDB(allSymbols);
+    loggerService.catInfo(LogCategory.KERNEL, `Vector index sync complete.`, stats);
   },
 
   async search(query: string, limit: number = 10, filter?: any): Promise<VectorSearchResult[]> {

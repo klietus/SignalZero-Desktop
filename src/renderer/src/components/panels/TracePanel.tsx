@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Network, Download, ChevronDown, Activity } from 'lucide-react';
-import { TraceData } from '../../types';
+import { TraceData, SymbolDef } from '../../types';
 import { TraceVisualizer } from '../TraceVisualizer';
 
 interface TracePanelProps {
@@ -10,7 +10,7 @@ interface TracePanelProps {
   traces: TraceData[];
   selectedTraceId: string | null;
   onSelectTrace: (id: string) => void;
-  onSymbolClick: (id: string) => void;
+  onSymbolClick: (id: string, data?: SymbolDef) => void;
 }
 
 export const TracePanel: React.FC<TracePanelProps> = ({ 
@@ -34,8 +34,8 @@ export const TracePanel: React.FC<TracePanelProps> = ({
     }
   }, [selectedTraceId, traces, activeTrace]);
 
-  const handleSymbolClick = (id: string) => {
-    onSymbolClick(id);
+  const handleSymbolClick = (id: string, data?: SymbolDef) => {
+    onSymbolClick(id, data);
   };
 
   const downloadJson = (data: any, filenamePrefix: string) => {

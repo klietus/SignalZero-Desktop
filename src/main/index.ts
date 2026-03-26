@@ -259,6 +259,14 @@ app.whenReady().then(async () => {
       loggerService.catError(LogCategory.KERNEL, "Failed to ensure vector index", { error });
   }
 
+  // Background sync: iteratively clean up desyncs every 5 minutes
+  setInterval(async () => {
+      try {
+          await domainService.ensureVectorIndex();
+      } catch (error) {
+          loggerService.catError(LogCategory.KERNEL, "Background vector index sync failed", { error });
+      }
+  }, 5 * 60 * 1000);
   electronApp.setAppUserModelId('com.signalzero.desktop')
 
   app.on('browser-window-created', (_, window) => {
