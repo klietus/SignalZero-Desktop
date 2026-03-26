@@ -45,6 +45,7 @@ const api = {
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
   updateSettings: (settings: any) => ipcRenderer.invoke('settings:update', settings),
+  validateMcp: (endpoint: string, token?: string) => ipcRenderer.invoke('system:validate-mcp', endpoint, token),
   runHygiene: (strategy?: string) => ipcRenderer.invoke('system:run-hygiene', strategy),
   isInitialized: () => ipcRenderer.invoke('system:is-initialized'),
 

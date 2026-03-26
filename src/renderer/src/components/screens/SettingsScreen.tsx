@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Save, Database, Network, Cpu, Cloud, 
-    Search, AlertCircle, Layout, RefreshCw, Plus
+    Search, AlertCircle, Layout, RefreshCw, Plus,
+    Trash2, CheckCircle2, XCircle, Server
 } from 'lucide-react';
 import { UserProfile, GraphHygieneSettings, McpConfiguration } from '../../types';
 import { Header, HeaderProps } from '../Header';
@@ -52,6 +53,49 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // New MCP Modal State
+  const [isMcpModalOpen, setIsMcpModalOpen] = useState(false);
+  const [newMcpName, setNewMcpName] = useState('');
+  const [newMcpEndpoint, setNewMcpEndpoint] = useState('');
+  const [newMcpToken, setNewMcpToken] = useState('');
+  const [isValidatingMcp, setIsValidatingMcp] = useState(false);
+  const [validationResult, setValidationResult] = useState<{ success?: boolean, toolCount?: number, error?: string } | null>(null);
+
+  const handleValidateMcp = async () => {
+      if (!newMcpEndpoint) return;
+      setIsValidatingMcp(true);
+      setValidationResult(null);
+      try {
+          const res = await window.api.validateMcp(newMcpEndpoint, newMcpToken);
+          setValidationResult(res);
+      } catch (err: any) {
+          setValidationResult({ success: false, error: err.message });
+      } finally {
+          setIsValidatingMcp(false);
+      }
+  };
+
+  const handleAddMcp = () => {
+      const id = newMcpName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const newConfig: McpConfiguration = {
+          id,
+          name: newMcpName,
+          endpoint: newMcpEndpoint,
+          token: newMcpToken,
+          enabled: true
+      };
+      setMcpConfigs(prev => [...prev, newConfig]);
+      setIsMcpModalOpen(false);
+      setNewMcpName('');
+      setNewMcpEndpoint('');
+      setNewMcpToken('');
+      setValidationResult(null);
+  };
+
+  const handleRemoveMcp = (id: string) => {
+      setMcpConfigs(prev => prev.filter(c => c.id !== id));
+  };
 
   const hydrateSettings = (settings: any) => {
     const inference = settings.inference || {};
@@ -298,6 +342,66 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </section>
                   )}
 
+                  {activeTab === 'mcp' && (
+                      <section className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                          <div className="flex items-center justify-between">
+                              <div>
+                                  <h2 className="text-lg font-bold mb-1">MCP Servers</h2>
+                                  <p className="text-sm text-gray-500">Extend AI capabilities with Model Context Protocol servers.</p>
+                              </div>
+                              <button 
+                                  onClick={() => setIsMcpModalOpen(true)}
+                                  className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold transition-colors"
+                              >
+                                  <Plus size={14} /> Add Server
+                              </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-4">
+                              {mcpConfigs.length === 0 ? (
+                                  <div className="p-12 text-center border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+                                      <Network size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-700" />
+                                      <p className="text-gray-500 text-sm">No MCP servers configured.</p>
+                                  </div>
+                              ) : (
+                                  mcpConfigs.map(config => (
+                                      <div key={config.id} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center justify-between group">
+                                          <div className="flex items-center gap-4">
+                                              <div className={`p-2 rounded-lg ${config.enabled ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600'}`}>
+                                                  <Server size={20} />
+                                              </div>
+                                              <div>
+                                                  <div className="flex items-center gap-2">
+                                                      <span className="font-bold text-sm">{config.name}</span>
+                                                      {!config.enabled && <span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 text-[9px] uppercase font-bold">Disabled</span>}
+                                                  </div>
+                                                  <div className="text-xs text-gray-500 font-mono truncate max-w-md">{config.endpoint}</div>
+                                              </div>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                              <button 
+                                                  onClick={() => {
+                                                      const updated = mcpConfigs.map(c => c.id === config.id ? { ...c, enabled: !c.enabled } : c);
+                                                      setMcpConfigs(updated);
+                                                  }}
+                                                  className={`px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${config.enabled ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-500/20' : 'bg-gray-100 text-gray-500 dark:bg-gray-800'}`}
+                                              >
+                                                  {config.enabled ? 'Enabled' : 'Enable'}
+                                              </button>
+                                              <button 
+                                                  onClick={() => handleRemoveMcp(config.id)}
+                                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                              >
+                                                  <Trash2 size={16} />
+                                              </button>
+                                          </div>
+                                      </div>
+                                  ))
+                              )}
+                          </div>
+                      </section>
+                  )}
+
                   {activeTab === 'hygiene' && (
                       <section className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                           <div>
@@ -418,6 +522,79 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
           </main>
       </div>
+
+      {isMcpModalOpen && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-800 flex flex-col max-h-[90vh] overflow-hidden">
+                  <div className="flex items-center justify-between mb-6">
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2"><Plus size={18} className="text-emerald-500" /> Add MCP Server</h3>
+                      <button onClick={() => { setIsMcpModalOpen(false); setValidationResult(null); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><XCircle size={20} /></button>
+                  </div>
+
+                  <div className="overflow-y-auto space-y-4 pr-2">
+                      <div className="space-y-1">
+                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Server Name</label>
+                          <input 
+                              placeholder="e.g. Memory Server"
+                              className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" 
+                              value={newMcpName} 
+                              onChange={e => setNewMcpName(e.target.value)} 
+                          />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Endpoint (URL)</label>
+                          <input 
+                              placeholder="http://localhost:3000/mcp"
+                              className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" 
+                              value={newMcpEndpoint} 
+                              onChange={e => setNewMcpEndpoint(e.target.value)} 
+                          />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Authorization Token (Optional)</label>
+                          <input 
+                              type="password"
+                              placeholder="Bearer token or API key"
+                              className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" 
+                              value={newMcpToken} 
+                              onChange={e => setNewMcpToken(e.target.value)} 
+                          />
+                      </div>
+
+                      {validationResult && (
+                          <div className={`p-3 rounded-lg border text-xs flex items-start gap-3 ${validationResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800'}`}>
+                              {validationResult.success ? <CheckCircle2 size={16} className="shrink-0" /> : <XCircle size={16} className="shrink-0" />}
+                              <div className="space-y-1">
+                                  <div className="font-bold">{validationResult.success ? 'Validation Successful' : 'Validation Failed'}</div>
+                                  <p>{validationResult.success ? `Found ${validationResult.toolCount} tools available on this server.` : validationResult.error}</p>
+                              </div>
+                          </div>
+                      )}
+                  </div>
+
+                  <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <button 
+                          onClick={handleValidateMcp}
+                          disabled={!newMcpEndpoint || isValidatingMcp}
+                          className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 disabled:text-gray-400 transition-colors"
+                      >
+                          {isValidatingMcp ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+                          Validate Server
+                      </button>
+                      <div className="flex gap-2">
+                          <button onClick={() => { setIsMcpModalOpen(false); setValidationResult(null); }} className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700">Cancel</button>
+                          <button 
+                              onClick={handleAddMcp} 
+                              disabled={!newMcpName || !newMcpEndpoint || !validationResult?.success} 
+                              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-gray-800 text-white rounded-lg text-xs font-bold transition-all shadow-md"
+                          >
+                              Add Server
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };

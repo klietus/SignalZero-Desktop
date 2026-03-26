@@ -43,6 +43,7 @@ declare global {
             getDomainCount: () => Promise<number>;
             getSettings: () => Promise<any>;
             updateSettings: (settings: any) => Promise<void>;
+            validateMcp: (endpoint: string, token?: string) => Promise<any>;
             runHygiene: (strategy?: string) => Promise<any>;
             isInitialized: () => Promise<boolean>;
             getRecentLogs: (limit?: number) => Promise<any[]>;

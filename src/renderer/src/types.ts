@@ -116,25 +116,23 @@ export interface GraphHygieneSettings {
 }
 
 export interface SystemSettings {
-  redis?: RedisSettings;
-  chroma?: ChromaSettings;
   inference?: InferenceSettings;
   serpApi?: SerpApiSettings;
-  voice?: VoiceSettings;
   hygiene?: GraphHygieneSettings;
-  geminiKey?: string;
   mcpConfigs?: McpConfiguration[];
+  ui?: {
+    showGraphviz?: boolean;
+  };
 }
 
 export interface SystemSettingsUpdate {
-  redis?: Partial<RedisSettings>;
-  chroma?: Partial<ChromaSettings>;
   inference?: InferenceSettingsUpdate;
   serpApi?: SerpApiSettings;
-  voice?: VoiceSettings;
   hygiene?: Partial<GraphHygieneSettings>;
-  geminiKey?: string;
   mcpConfigs?: McpConfiguration[];
+  ui?: {
+    showGraphviz?: boolean;
+  };
 }
 
 export type ContextType = 'conversation' | 'agent';

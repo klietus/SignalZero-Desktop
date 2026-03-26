@@ -18,6 +18,7 @@ import { projectService } from './services/projectService.js'
 import { mcpPromptService } from './services/mcpPromptService.js'
 import { traceService } from './services/traceService.js'
 import { topologyService } from './services/topologyService.js'
+import { mcpClientService } from './services/mcpClientService.js'
 import fs from 'fs'
 import { dialog } from 'electron'
 
@@ -26,60 +27,60 @@ let mainWindow: BrowserWindow | null = null;
 let monitorWindow: BrowserWindow | null = null;
 
 const broadcast = (channel: string, ...args: any[]) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(channel, ...args);
-    }
-    if (monitorWindow && !monitorWindow.isDestroyed()) {
-        monitorWindow.webContents.send(channel, ...args);
-    }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(channel, ...args);
+  }
+  if (monitorWindow && !monitorWindow.isDestroyed()) {
+    monitorWindow.webContents.send(channel, ...args);
+  }
 };
 
 async function performRecovery() {
-    try {
-        loggerService.catInfo(LogCategory.SYSTEM, "Checking for interrupted contexts requiring recovery...");
-        const contexts = await contextService.listSessions();
-        const pendingContexts = contexts.filter(c => c.activeMessageId && c.status === 'open');
-        
-        for (const ctx of pendingContexts) {
-            const history = await contextService.getUnfilteredHistory(ctx.id);
-            const lastUserMsg = [...history].reverse().find(m => m.role === 'user');
-            
-            if (lastUserMsg) {
-                loggerService.catInfo(LogCategory.SYSTEM, `Recovering context ${ctx.id}. Retrying message ${ctx.activeMessageId}`);
-                const toolExecutor = createToolExecutor(ctx.id);
-                processMessageAsync(ctx.id, lastUserMsg.content, toolExecutor, activeSystemPrompt, ctx.activeMessageId || undefined)
-                    .catch(err => loggerService.catError(LogCategory.SYSTEM, `Recovery failed for context ${ctx.id}`, { error: err.message }));
-            } else {
-                loggerService.catWarn(LogCategory.SYSTEM, `Context ${ctx.id} has activeMessageId but no user prompt in history. Clearing stale lock.`);
-                await contextService.setActiveMessage(ctx.id, null);
-            }
-        }
-    } catch (error: any) {
-        loggerService.catError(LogCategory.SYSTEM, "Recovery process failed", { error: error.message });
+  try {
+    loggerService.catInfo(LogCategory.SYSTEM, "Checking for interrupted contexts requiring recovery...");
+    const contexts = await contextService.listSessions();
+    const pendingContexts = contexts.filter(c => c.activeMessageId && c.status === 'open');
+
+    for (const ctx of pendingContexts) {
+      const history = await contextService.getUnfilteredHistory(ctx.id);
+      const lastUserMsg = [...history].reverse().find(m => m.role === 'user');
+
+      if (lastUserMsg) {
+        loggerService.catInfo(LogCategory.SYSTEM, `Recovering context ${ctx.id}. Retrying message ${ctx.activeMessageId}`);
+        const toolExecutor = createToolExecutor(ctx.id);
+        processMessageAsync(ctx.id, lastUserMsg.content, toolExecutor, activeSystemPrompt, ctx.activeMessageId || undefined)
+          .catch(err => loggerService.catError(LogCategory.SYSTEM, `Recovery failed for context ${ctx.id}`, { error: err.message }));
+      } else {
+        loggerService.catWarn(LogCategory.SYSTEM, `Context ${ctx.id} has activeMessageId but no user prompt in history. Clearing stale lock.`);
+        await contextService.setActiveMessage(ctx.id, null);
+      }
     }
+  } catch (error: any) {
+    loggerService.catError(LogCategory.SYSTEM, "Recovery process failed", { error: error.message });
+  }
 }
 
 function createMonitorWindow(): void {
   if (monitorWindow && !monitorWindow.isDestroyed()) {
-      monitorWindow.focus();
-      return;
+    monitorWindow.focus();
+    return;
   }
 
   monitorWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      show: false,
-      autoHideMenuBar: true,
-      backgroundColor: '#000000',
-      title: 'SignalZero Monitor',
-      webPreferences: {
-        preload: join(__dirname, '../preload/index.js'),
-        sandbox: false
-      }
+    width: 1200,
+    height: 800,
+    show: false,
+    autoHideMenuBar: true,
+    backgroundColor: '#000000',
+    title: 'SignalZero Monitor',
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false
+    }
   });
 
   monitorWindow.on('ready-to-show', () => {
-      monitorWindow?.show();
+    monitorWindow?.show();
   });
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -90,96 +91,96 @@ function createMonitorWindow(): void {
 }
 
 function setupNativeMenu() {
-    const template: any[] = [
+  const template: any[] = [
+    {
+      label: 'SignalZero',
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
         {
-            label: 'SignalZero',
-            submenu: [
-                { role: 'about' },
-                { type: 'separator' },
-                {
-                    label: 'Settings...',
-                    accelerator: 'CmdOrCtrl+,',
-                    click: () => broadcast('navigate', 'settings')
-                },
-                { type: 'separator' },
-                { role: 'services' },
-                { type: 'separator' },
-                { role: 'hide' },
-                { role: 'hideOthers' },
-                { role: 'unhide' },
-                { type: 'separator' },
-                { role: 'quit' }
-            ]
+          label: 'Settings...',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => broadcast('navigate', 'settings')
+        },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Kernel Chat',
+          accelerator: 'CmdOrCtrl+1',
+          click: () => broadcast('navigate', 'chat')
         },
         {
-            label: 'View',
-            submenu: [
-                {
-                    label: 'Kernel Chat',
-                    accelerator: 'CmdOrCtrl+1',
-                    click: () => broadcast('navigate', 'chat')
-                },
-                {
-                    label: 'Symbol Domains',
-                    accelerator: 'CmdOrCtrl+2',
-                    click: () => broadcast('navigate', 'store')
-                },
-                {
-                    label: 'Symbol Forge',
-                    accelerator: 'CmdOrCtrl+3',
-                    click: () => broadcast('navigate', 'dev')
-                },
-                {
-                    label: 'Project Config',
-                    accelerator: 'CmdOrCtrl+4',
-                    click: () => broadcast('navigate', 'project')
-                },
-                {
-                    label: 'System Logs',
-                    accelerator: 'CmdOrCtrl+5',
-                    click: () => broadcast('navigate', 'logs')
-                },
-                { type: 'separator' },
-                {
-                    label: 'Launch Monitor',
-                    accelerator: 'CmdOrCtrl+M',
-                    click: () => createMonitorWindow()
-                },
-                { type: 'separator' },
-                { role: 'reload' },
-                { role: 'forceReload' },
-                { role: 'toggleDevTools' },
-                { type: 'separator' },
-                { role: 'togglefullscreen' }
-            ]
+          label: 'Symbol Domains',
+          accelerator: 'CmdOrCtrl+2',
+          click: () => broadcast('navigate', 'store')
         },
         {
-            label: 'Edit',
-            submenu: [
-                { role: 'undo' },
-                { role: 'redo' },
-                { type: 'separator' },
-                { role: 'cut' },
-                { role: 'copy' },
-                { role: 'paste' },
-                { role: 'selectAll' }
-            ]
+          label: 'Symbol Forge',
+          accelerator: 'CmdOrCtrl+3',
+          click: () => broadcast('navigate', 'dev')
         },
         {
-            label: 'Window',
-            submenu: [
-                { role: 'minimize' },
-                { role: 'zoom' },
-                { type: 'separator' },
-                { role: 'front' },
-                { type: 'separator' },
-                { role: 'window' }
-            ]
-        }
-    ];
+          label: 'Project Config',
+          accelerator: 'CmdOrCtrl+4',
+          click: () => broadcast('navigate', 'project')
+        },
+        {
+          label: 'System Logs',
+          accelerator: 'CmdOrCtrl+5',
+          click: () => broadcast('navigate', 'logs')
+        },
+        { type: 'separator' },
+        {
+          label: 'Launch Monitor',
+          accelerator: 'CmdOrCtrl+M',
+          click: () => createMonitorWindow()
+        },
+        { type: 'separator' },
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        { type: 'separator' },
+        { role: 'front' },
+        { type: 'separator' },
+        { role: 'window' }
+      ]
+    }
+  ];
 
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 function createWindow(): void {
@@ -198,26 +199,26 @@ function createWindow(): void {
 
   // Global Event Forwarding
   Object.values(KernelEventType).forEach(type => {
-      eventBusService.onKernelEvent(type, (data) => {
-          // Skip ultra-high frequency events from the main monitor stream
-          if (type !== KernelEventType.INFERENCE_CHUNK) {
-              broadcast('kernel:event', { type, data });
-          }
-          
-          // Legacy/Specific forwards
-          if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', data);
-          if (type === KernelEventType.INFERENCE_CHUNK) {
-              broadcast(`inference:chunk:${data.sessionId}`, data.text);
-              broadcast('inference:chunk', data.text);
-          }
-          if (type === KernelEventType.INFERENCE_COMPLETED) {
-              broadcast(`inference:completed:${data.sessionId}`);
-              broadcast('inference:completed');
-          }
-          if (type === KernelEventType.INFERENCE_ERROR) {
-              broadcast(`inference:error:${data.sessionId}`, data.error);
-          }
-      });
+    eventBusService.onKernelEvent(type, (data) => {
+      // Skip ultra-high frequency events from the main monitor stream
+      if (type !== KernelEventType.INFERENCE_CHUNK) {
+        broadcast('kernel:event', { type, data });
+      }
+
+      // Legacy/Specific forwards
+      if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', data);
+      if (type === KernelEventType.INFERENCE_CHUNK) {
+        broadcast(`inference:chunk:${data.sessionId}`, data.text);
+        broadcast('inference:chunk', data.text);
+      }
+      if (type === KernelEventType.INFERENCE_COMPLETED) {
+        broadcast(`inference:completed:${data.sessionId}`);
+        broadcast('inference:completed');
+      }
+      if (type === KernelEventType.INFERENCE_ERROR) {
+        broadcast(`inference:error:${data.sessionId}`, data.error);
+      }
+    });
   });
 
   mainWindow.on('ready-to-show', () => {
@@ -240,12 +241,12 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   setupNativeMenu();
   await settingsService.initialize();
-  
+
   try {
-      activeSystemPrompt = await systemPromptService.loadPrompt(ACTIVATION_PROMPT);
-      loggerService.catInfo(LogCategory.SYSTEM, "System Prompt loaded");
+    activeSystemPrompt = await systemPromptService.loadPrompt(ACTIVATION_PROMPT);
+    loggerService.catInfo(LogCategory.SYSTEM, "System Prompt loaded");
   } catch (error) {
-      loggerService.catError(LogCategory.SYSTEM, "Failed to load system prompt", { error });
+    loggerService.catError(LogCategory.SYSTEM, "Failed to load system prompt", { error });
   }
 
   await domainService.init('root', 'Root Domain');
@@ -254,18 +255,18 @@ app.whenReady().then(async () => {
 
   // Ensure Vector Index is populated
   try {
-      await domainService.ensureVectorIndex();
+    await domainService.ensureVectorIndex();
   } catch (error) {
-      loggerService.catError(LogCategory.KERNEL, "Failed to ensure vector index", { error });
+    loggerService.catError(LogCategory.KERNEL, "Failed to ensure vector index", { error });
   }
 
   // Background sync: iteratively clean up desyncs every 5 minutes
   setInterval(async () => {
-      try {
-          await domainService.ensureVectorIndex();
-      } catch (error) {
-          loggerService.catError(LogCategory.KERNEL, "Background vector index sync failed", { error });
-      }
+    try {
+      await domainService.ensureVectorIndex();
+    } catch (error) {
+      loggerService.catError(LogCategory.KERNEL, "Background vector index sync failed", { error });
+    }
   }, 5 * 60 * 1000);
   electronApp.setAppUserModelId('com.signalzero.desktop')
 
@@ -321,27 +322,27 @@ ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruc
     const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, sessionId);
     const session = await contextService.getSession(sessionId);
     if (session) {
-        await contextService.updateSession({
-            ...session,
-            metadata: { 
-                ...session.metadata, 
-                trace_needed: traceNeeded,
-                trace_reason: traceReason
-            }
-        });
+      await contextService.updateSession({
+        ...session,
+        metadata: {
+          ...session.metadata,
+          trace_needed: traceNeeded,
+          trace_reason: traceReason
+        }
+      });
     }
 
     const chat = await getChatSession(systemInstruction || activeSystemPrompt, sessionId);
     const toolExecutor = createToolExecutor(sessionId);
-  
-    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, systemInstruction || activeSystemPrompt, sessionId, undefined, webResults, webBrief);
+
+    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, traceNeeded, systemInstruction || activeSystemPrompt, sessionId, undefined, webResults, webBrief);
 
     for await (const chunk of stream) {
       if (chunk.text || chunk.toolCalls) {
         event.sender.send('inference:chunk', chunk);
       }
     }
-    
+
     event.sender.send('inference:completed');
     return { success: true };
   } catch (error: any) {
@@ -418,6 +419,10 @@ ipcMain.handle('settings:update', async (_, settings) => {
   return await settingsService.update(settings);
 });
 
+ipcMain.handle('system:validate-mcp', async (_, endpoint, token) => {
+  return await mcpClientService.validateConfig(endpoint, token);
+});
+
 ipcMain.handle('system:run-hygiene', async (_, strategy) => {
   return await topologyService.analyze(strategy);
 });
@@ -427,9 +432,9 @@ ipcMain.handle('system:is-initialized', () => {
 });
 
 ipcMain.handle('system:show-emoji-picker', () => {
-    if (process.platform === 'darwin') {
-        app.showEmojiPanel();
-    }
+  if (process.platform === 'darwin') {
+    app.showEmojiPanel();
+  }
 });
 
 ipcMain.handle('agent:list', async () => {
@@ -452,30 +457,30 @@ ipcMain.handle('project:export', async (_, meta) => {
   const sysPrompt = await systemPromptService.loadPrompt(ACTIVATION_PROMPT);
   const mcpPrompt = await mcpPromptService.loadPrompt("");
   const buffer = await projectService.export(meta, sysPrompt, mcpPrompt);
-  
+
   const { filePath } = await dialog.showSaveDialog({
-      title: 'Export Project',
-      defaultPath: `${meta.name || 'project'}.szproject`,
-      filters: [{ name: 'SignalZero Project', extensions: ['szproject'] }]
+    title: 'Export Project',
+    defaultPath: `${meta.name || 'project'}.szproject`,
+    filters: [{ name: 'SignalZero Project', extensions: ['szproject'] }]
   });
 
   if (filePath) {
-      fs.writeFileSync(filePath, Buffer.from(buffer));
-      return { success: true };
+    fs.writeFileSync(filePath, Buffer.from(buffer));
+    return { success: true };
   }
   return { success: false };
 });
 
 ipcMain.handle('project:import', async () => {
   const { filePaths } = await dialog.showOpenDialog({
-      title: 'Import Project',
-      filters: [{ name: 'SignalZero Project', extensions: ['szproject'] }],
-      properties: ['openFile']
+    title: 'Import Project',
+    filters: [{ name: 'SignalZero Project', extensions: ['szproject'] }],
+    properties: ['openFile']
   });
 
   if (filePaths && filePaths.length > 0) {
-      const buffer = fs.readFileSync(filePaths[0]);
-      return await projectService.import(buffer);
+    const buffer = fs.readFileSync(filePaths[0]);
+    return await projectService.import(buffer);
   }
   return { success: false };
 });
@@ -483,10 +488,10 @@ ipcMain.handle('project:import', async () => {
 ipcMain.handle('project:import-sample', async () => {
   const workspaceRoot = join(app.getAppPath(), is.dev ? '../..' : '../../..');
   const samplePath = join(workspaceRoot, 'signalzero_sample.szproject');
-  
+
   if (fs.existsSync(samplePath)) {
-      const buffer = fs.readFileSync(samplePath);
-      return await projectService.import(buffer);
+    const buffer = fs.readFileSync(samplePath);
+    return await projectService.import(buffer);
   }
   throw new Error("Sample project not found at: " + samplePath);
 });

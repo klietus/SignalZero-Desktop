@@ -52,6 +52,14 @@ export interface UserProfile {
   picture: string;
 }
 
+export interface McpConfiguration {
+  id: string;
+  name: string;
+  endpoint: string;
+  token?: string;
+  enabled: boolean;
+}
+
 export interface TraceStep {
   symbol_id: string;
   reason: string;

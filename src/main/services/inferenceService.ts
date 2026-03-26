@@ -435,11 +435,13 @@ export async function* sendMessageAndHandleTools(
   chat: ChatSessionState,
   message: string,
   toolExecutor: (name: string, args: any) => Promise<any>,
+  traceNeeded: boolean,
   systemInstruction?: string,
   contextSessionId?: string,
   userMessageId?: string,
   anticipatedWebResults?: any[],
-  anticipatedWebBrief?: string
+  anticipatedWebBrief?: string,
+
 ): AsyncGenerator<
   { text?: string; toolCalls?: any[]; isComplete?: boolean },
   void,
@@ -451,18 +453,6 @@ export async function* sendMessageAndHandleTools(
   if (systemInstruction && chat.systemInstruction !== systemInstruction) {
     chat.messages = [{ role: "system", content: systemInstruction }];
     chat.systemInstruction = systemInstruction;
-  }
-
-  let traceNeeded = true;
-  if (contextSessionId) {
-    try {
-      const session = await contextService.getSession(contextSessionId);
-      if (session && session.metadata?.trace_needed !== undefined) {
-        traceNeeded = !!session.metadata.trace_needed;
-      }
-    } catch (error) {
-      loggerService.catWarn(LogCategory.INFERENCE, "Failed to load context metadata", { contextSessionId, error });
-    }
   }
 
   if (contextSessionId) {
@@ -506,7 +496,8 @@ export async function* sendMessageAndHandleTools(
     loggerService.catDebug(LogCategory.INFERENCE, `Starting turn loop ${loops}/${MAX_TOOL_LOOPS}`, {
       contextSessionId,
       previousTurnTextLength: previousTurnText.length,
-      totalTextAccumulatedAcrossLoopsLength: totalTextAccumulatedAcrossLoops.length
+      totalTextAccumulatedAcrossLoopsLength: totalTextAccumulatedAcrossLoops.length,
+      traceNeeded
     });
     yieldedToolCalls = undefined;
     if (contextSessionId) {
@@ -560,9 +551,11 @@ export async function* sendMessageAndHandleTools(
           const currentSession = await contextService.getSession(contextSessionId);
           const requestedTools = currentSession?.metadata?.active_tools || [];
           const secondaryTools = requestedTools.map((name: string) => SECONDARY_TOOLS_MAP[name]).filter(Boolean);
+
+          // MCP Tools are dynamically fetched and included if enabled in settings
           const remoteTools = await mcpClientService.getAllTools();
-          const activeRemoteTools = remoteTools.filter(rt => requestedTools.includes(rt.function.name));
-          activeToolList = [...PRIMARY_TOOLS, ...secondaryTools, ...activeRemoteTools];
+
+          activeToolList = [...PRIMARY_TOOLS, ...secondaryTools, ...remoteTools];
         } catch (e) {
           loggerService.catWarn(LogCategory.INFERENCE, "Failed to fetch active tools", { error: e });
         }
@@ -637,24 +630,6 @@ export async function* sendMessageAndHandleTools(
       break;
     }
 
-    loggerService.catDebug(LogCategory.INFERENCE, "Turn accumulation complete", {
-      textAccumulatedInTurn,
-      previousTurnText
-    });
-
-    if (loops > 0 && textAccumulatedInTurn.trim().length > 0 && textAccumulatedInTurn.trim() === previousTurnText.trim()) {
-      loggerService.catWarn(LogCategory.INFERENCE, "Detected duplicate text generation (echo).", {
-        contextSessionId,
-        duplicateText: textAccumulatedInTurn.trim()
-      });
-      textAccumulatedInTurn = "";
-    } else {
-      if (textAccumulatedInTurn.trim().length > 0) {
-        previousTurnText = textAccumulatedInTurn.trim();
-        totalTextAccumulatedAcrossLoops += (totalTextAccumulatedAcrossLoops ? "\n\n" : "") + textAccumulatedInTurn.trim();
-      }
-    }
-
     if ((nextAssistant as any).tool_calls) {
       for (const call of (nextAssistant as any).tool_calls) {
         const { error: parseError } = parseToolArguments(call.function.arguments || "");
@@ -665,39 +640,38 @@ export async function* sendMessageAndHandleTools(
       }
     }
 
+    totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
+
     let auditTriggered = false;
     let auditMessage = "";
     const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
-    const isEndingTurn = !yieldedToolCalls || yieldedToolCalls.length === 0;
+    const isCallingTraceThisTurn = currentToolNames.has('log_trace');
+    const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
+    const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
+    const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
+    const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
+    loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
 
     // YIELD NARRATIVE ONLY ON FINAL TURN
-    if (isEndingTurn && textAccumulatedInTurn.trim().length > 0) {
-      yield { text: textAccumulatedInTurn.trim() };
+    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
+      yield { text: totalTextAccumulatedAcrossLoops.trim() };
     }
 
-    const isCallingTraceThisTurn = currentToolNames.has('log_trace');
-
     if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
-      const hasNarrativeOutput = isNarrativeText(totalTextAccumulatedAcrossLoops);
-      if (traceNeeded && isEndingTurn && !hasLoggedTrace && !isCallingTraceThisTurn) {
+      if (!traceSatisfied) {
         auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
-        auditTriggered = true;
-      }
-      if (isEndingTurn && !hasNarrativeOutput) {
-        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: You provided tool calls but failed to generate a narrative response for the user. Non-voice interactions require a text response. Please provide your narrative output now.  Do not acknowledge this message.\n";
         auditTriggered = true;
       }
     }
 
     if (auditTriggered) {
       if (auditRetries < MAX_AUDIT_RETRIES) {
-        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Model missing required tool calls. Forcing retry.", { contextSessionId, auditRetries, hasLoggedTrace });
+        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Missing required check.", { contextSessionId, auditRetries, hasLoggedTrace });
 
-        const finalAuditMessage = auditMessage + "Retry immediately by calling the required tools.  Do not repeat tool calls that were previously successful in this turn. Do not acknowledge this message.";
+        const finalAuditMessage = auditMessage + "Retry immediately to satisfy the audit message. Do not acknowledge this message.";
 
         transientMessages.push(nextAssistant!);
         transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${finalAuditMessage}` });
-        yield { text: "\n\n> *[System Audit: Enforcing Symbolic Integrity - Retrying]*\n\n" };
         auditRetries++;
         continue;
       } else {
@@ -817,10 +791,12 @@ export async function* sendMessageAndHandleTools(
       break;
     }
 
+    // Setup for next loop
     yieldedToolCalls = undefined;
     loops++;
   }
 
+  // Summarization compression
   if (contextSessionId) {
     try {
       const session = await contextService.getSession(contextSessionId);
@@ -842,6 +818,7 @@ export async function* sendMessageAndHandleTools(
       }
     } catch (err) { }
   }
+
   yield { isComplete: true };
 }
 
@@ -1065,10 +1042,14 @@ export const processMessageAsync = async (
   systemInstruction: string,
   messageId?: string
 ) => {
+  let messageTraceNeeded = false;
   try {
     const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
     const session = await contextService.getSession(contextSessionId);
     if (session) {
+      if (traceNeeded === undefined) {
+        messageTraceNeeded = true;
+      }
       await contextService.updateSession({
         ...session,
         metadata: {
@@ -1079,7 +1060,7 @@ export const processMessageAsync = async (
       });
     }
     const chat = await getChatSession(systemInstruction, contextSessionId);
-    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, systemInstruction, contextSessionId, messageId, webResults, webBrief);
+    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, messageTraceNeeded, systemInstruction, contextSessionId, messageId, webResults, webBrief);
     eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
     for await (const chunk of stream) {
       if (chunk.isComplete) eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId });

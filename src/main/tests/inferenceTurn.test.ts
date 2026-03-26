@@ -64,7 +64,7 @@ describe('sendMessageAndHandleTools Turn Logic', () => {
 
   it('should only emit narrative text from the final loop if previous loops had tool calls', async () => {
     const toolExecutor = vi.fn().mockResolvedValue({ status: 'success' });
-    
+
     // Loop 0: Returns text and a tool call
     const loop0 = [
       { text: 'I am thinking...' },
@@ -91,6 +91,7 @@ describe('sendMessageAndHandleTools Turn Logic', () => {
       { model: 'test-model', messages: [], systemInstruction: '' },
       'user message',
       toolExecutor,
+      false,
       'system instruction',
       'sess-1'
     );
@@ -101,7 +102,7 @@ describe('sendMessageAndHandleTools Turn Logic', () => {
     }
 
     const textChunks = emittedChunks.filter(c => c.text).map(c => c.text);
-    
+
     // We expect ONLY 'Final answer.' to be emitted if we implement the "only last turn" rule.
     // Currently, it emits BOTH.
     expect(textChunks).not.toContain('I am thinking...');
