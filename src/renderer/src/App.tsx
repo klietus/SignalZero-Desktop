@@ -185,6 +185,7 @@ function App() {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor'>('chat');
+    const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
     const [isGraphView, setIsGraphView] = useState(false);
 
     const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);
@@ -526,7 +527,7 @@ function App() {
             case 'settings':
                 return <SettingsScreen headerProps={getHeaderProps('Settings')} user={defaultUser} onLogout={() => { }} />;
             case 'store':
-                return <DomainScreen headerProps={getHeaderProps('Domains')} onNavigateToForge={() => setCurrentView('dev')} />;
+                return <DomainScreen headerProps={getHeaderProps('Domains')} onNavigateToForge={(id) => { setSelectedDomainId(id); setCurrentView('dev'); }} />;
             case 'project':
                 return (
                     <ProjectScreen
@@ -542,7 +543,7 @@ function App() {
                     />
                 );
             case 'dev':
-                return <SymbolForgeScreen headerProps={getHeaderProps('Symbol Forge')} />;
+                return <SymbolForgeScreen headerProps={getHeaderProps('Symbol Forge')} initialDomain={selectedDomainId} />;
             case 'logs':
                 return <LogsScreen headerProps={getHeaderProps('System Logs')} />;
             default:
