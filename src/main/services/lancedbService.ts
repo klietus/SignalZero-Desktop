@@ -138,12 +138,20 @@ export const lancedbService = {
             if (!table) {
                 await conn.createTable(COLLECTION_NAME, allRecords);
             } else {
-                // Large batches require robust delete/add
-                // We split IDs into chunks for the delete query if necessary, but 
-                // for standard imports, a single IN clause is usually fine.
-                const ids = symbols.map(s => `'${s.id}'`).join(',');
-                await table.delete(`id IN (${ids})`);
-                await table.add(allRecords);
+                try {
+                    const ids = symbols.map(s => `'${s.id}'`).join(',');
+                    await table.delete(`id IN (${ids})`);
+                    await table.add(allRecords);
+                } catch (addErr: any) {
+                    // Check if this is a schema mismatch error
+                    if (addErr.message?.includes('schema') || addErr.message?.includes('field')) {
+                        console.warn("[LanceDB] Schema mismatch detected during indexing. Resetting collection for migration...");
+                        await conn.dropTable(COLLECTION_NAME);
+                        await conn.createTable(COLLECTION_NAME, allRecords);
+                    } else {
+                        throw addErr;
+                    }
+                }
             }
 
             return symbols.length;
@@ -246,7 +254,7 @@ export const lancedbService = {
     async syncLanceDB(allSqlSymbols: SymbolDef[]): Promise<{ deleted: number, updated: number }> {
         const stats = { deleted: 0, updated: 0 };
         try {
-            const table = await getTable();
+            let table = await getTable();
             if (!table) {
                 if (allSqlSymbols.length > 0) {
                     stats.updated = await this.indexBatch(allSqlSymbols);
@@ -256,7 +264,18 @@ export const lancedbService = {
 
             // 1. Identify and delete entries in LanceDB that are no longer in SQLite
             const sqlIds = new Set(allSqlSymbols.map(s => s.id));
-            const lanceEntries = await table.query().select(['id', 'updated_at']).toArray();
+            let lanceEntries: any[] = [];
+            try {
+                lanceEntries = await table.query().select(['id', 'updated_at']).toArray();
+            } catch (queryErr: any) {
+                // If query fails due to missing field, trigger full re-index via indexBatch (which handles reset)
+                if (queryErr.message?.includes('updated_at') || queryErr.message?.includes('schema')) {
+                    console.warn("[LanceDB] Schema mismatch detected during sync query. Triggering full re-index...");
+                    stats.updated = await this.indexBatch(allSqlSymbols);
+                    return stats;
+                }
+                throw queryErr;
+            }
             const obsoleteIds = lanceEntries.filter(r => !sqlIds.has(r.id)).map(r => r.id);
             
             if (obsoleteIds.length > 0) {
