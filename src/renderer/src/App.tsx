@@ -186,6 +186,7 @@ function App() {
 
     const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor'>('chat');
     const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
+    const [selectedSymbol, setSelectedSymbol] = useState<SymbolDef | null>(null);
     const [isGraphView, setIsGraphView] = useState(false);
 
     const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);
@@ -499,17 +500,24 @@ function App() {
                                     ) : (
                                         messages.map((msg) => (
                                             <div key={msg.id} className={isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}>
-                                                <ChatMessage 
-                                                    message={msg} 
+                                                <ChatMessage
+                                                    message={msg}
                                                     isVisible={!isGraphView}
-                                                    onSymbolClick={() => setCurrentView('dev')} 
+                                                    onSymbolClick={(id, data) => { 
+                                                        if (data) setSelectedSymbol(data);
+                                                        setSelectedDomainId(data?.symbol_domain || null);
+                                                        setCurrentView('dev'); 
+                                                    }}
+                                                    onDomainClick={(domain) => {
+                                                        setSelectedDomainId(domain);
+                                                        setCurrentView('dev');
+                                                    }}
                                                     onTraceClick={(id) => {
                                                         if (id) setSelectedTraceId(id);
                                                         setIsTracePanelOpen(true);
                                                     }}
                                                     onRetry={handleSendMessage}
-                                                />
-                                            </div>
+                                                />                                            </div>
                                         ))
                                     )}
                                 </div>
@@ -543,7 +551,7 @@ function App() {
                     />
                 );
             case 'dev':
-                return <SymbolForgeScreen headerProps={getHeaderProps('Symbol Forge')} initialDomain={selectedDomainId} />;
+                return <SymbolForgeScreen headerProps={getHeaderProps('Symbol Forge')} initialDomain={selectedDomainId} initialSymbol={selectedSymbol} />;
             case 'logs':
                 return <LogsScreen headerProps={getHeaderProps('System Logs')} />;
             default:
@@ -604,7 +612,12 @@ function App() {
                         traces={activeTraces}
                         selectedTraceId={selectedTraceId}
                         onSelectTrace={setSelectedTraceId}
-                        onSymbolClick={() => { setCurrentView('dev'); setIsTracePanelOpen(false); }}
+                        onSymbolClick={(id, data) => { 
+                            if (data) setSelectedSymbol(data);
+                            setSelectedDomainId(data?.symbol_domain || null);
+                            setCurrentView('dev'); 
+                            setIsTracePanelOpen(false); 
+                        }}
                     />
                 </div>
             </div>
