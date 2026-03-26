@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ToggleLeft, ToggleRight, Plus, Edit3, Loader2, Trash2, Settings, User as UserIcon, Globe, RefreshCcw } from 'lucide-react';
+import { ToggleLeft, ToggleRight, Plus, Edit3, Loader2, Trash2, Settings, User as UserIcon, Globe, RefreshCcw, X } from 'lucide-react';
 import { Header, HeaderProps } from '../Header';
 
 interface DomainScreenProps {
@@ -16,6 +16,15 @@ export const DomainScreen: React.FC<DomainScreenProps> = ({ onNavigateToForge, h
   const [newDomainId, setNewDomainId] = useState('');
   const [newDomainName, setNewDomainName] = useState('');
   const [newDomainDesc, setNewDomainDesc] = useState('');
+  const [newDomainInvariants, setNewDomainInvariants] = useState<string[]>([]);
+  const [newInvariantInputCreate, setNewInvariantInputCreate] = useState('');
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editDomainId, setEditDomainId] = useState('');
+  const [editDomainName, setEditDomainName] = useState('');
+  const [editDomainDesc, setEditDomainDesc] = useState('');
+  const [editDomainInvariants, setEditDomainInvariants] = useState<string[]>([]);
+  const [newInvariantInputEdit, setNewInvariantInputEdit] = useState('');
 
   const loadData = async () => {
     setLoading(true);
@@ -39,10 +48,34 @@ export const DomainScreen: React.FC<DomainScreenProps> = ({ onNavigateToForge, h
   const handleCreateDomain = async () => {
       if (!newDomainId.trim()) return;
       const id = newDomainId.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+      // Create the domain first with metadata
+      await window.api.upsertDomain(id, { name: newDomainName || id, description: newDomainDesc, invariants: newDomainInvariants });
+      // Then add the INIT symbol
       await window.api.upsertSymbol(id, { id: 'INIT', name: 'Domain Initialization', triad: '⟐⟐⟐', symbol_domain: id, role: 'Init' });
+      
       loadData();
       setIsCreateModalOpen(false);
       onNavigateToForge(id);
+  };
+
+  const handleEditClick = (item: any) => {
+      setEditDomainId(item.id);
+      setEditDomainName(item.name || item.id);
+      setEditDomainDesc(item.description || '');
+      setEditDomainInvariants(item.invariants || []);
+      setIsEditModalOpen(true);
+  };
+
+  const handleUpdateDomain = async () => {
+      if (!editDomainId) return;
+      await window.api.updateDomain(editDomainId, { name: editDomainName || editDomainId, description: editDomainDesc, invariants: editDomainInvariants });
+      await loadData();
+      setIsEditModalOpen(false);
+  };
+
+  const handleToggleEnable = async (id: string, currentEnabled: boolean) => {
+      await window.api.updateDomain(id, { enabled: !currentEnabled });
+      loadData();
   };
 
   const handleDeleteDomain = async (id: string) => {
@@ -50,7 +83,7 @@ export const DomainScreen: React.FC<DomainScreenProps> = ({ onNavigateToForge, h
       if (!confirmed) return;
       setLoading(true);
       try {
-          await window.api.deleteSymbol(id, ''); 
+          await window.api.deleteDomain(id); 
           loadData();
       } catch (e: any) {
           console.error(e);
@@ -58,6 +91,12 @@ export const DomainScreen: React.FC<DomainScreenProps> = ({ onNavigateToForge, h
           setLoading(false);
       }
   };
+
+  const handleAddInvariantCreate = () => { if (newInvariantInputCreate.trim()) { setNewDomainInvariants(p => [...p, newInvariantInputCreate.trim()]); setNewInvariantInputCreate(''); } };
+  const handleRemoveInvariantCreate = (i: number) => { setNewDomainInvariants(p => p.filter((_, idx) => idx !== i)); };
+  
+  const handleAddInvariantEdit = () => { if (newInvariantInputEdit.trim()) { setEditDomainInvariants(p => [...p, newInvariantInputEdit.trim()]); setNewInvariantInputEdit(''); } };
+  const handleRemoveInvariantEdit = (i: number) => { setEditDomainInvariants(p => p.filter((_, idx) => idx !== i)); };
 
   return (
     <div className="flex flex-col h-full bg-gray-950 font-sans">
@@ -102,12 +141,13 @@ export const DomainScreen: React.FC<DomainScreenProps> = ({ onNavigateToForge, h
                                         </button>
                                     )}
                                     <button
+                                        onClick={() => handleEditClick(item)}
                                         className="p-2 text-gray-500 hover:text-gray-200 transition-colors"
                                         title="Edit domain metadata"
                                     >
                                         <Settings size={16} />
                                     </button>
-                                    <button className={`transition-colors p-1 ${item.enabled ? 'text-emerald-500 hover:text-emerald-600' : 'text-gray-400 hover:text-gray-600'}`}>{item.enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}</button>
+                                    <button onClick={() => handleToggleEnable(item.id, item.enabled)} className={`transition-colors p-1 ${item.enabled ? 'text-emerald-500 hover:text-emerald-600' : 'text-gray-400 hover:text-gray-600'}`}>{item.enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}</button>
                                 </div>
                             </div>
 
@@ -149,8 +189,42 @@ export const DomainScreen: React.FC<DomainScreenProps> = ({ onNavigateToForge, h
                       <div className="space-y-1"><label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Domain ID (Slug)</label><input className="w-full bg-black border border-gray-800 rounded p-2 font-mono text-sm text-gray-100" value={newDomainId} onChange={e => setNewDomainId(e.target.value)} /></div>
                       <div className="space-y-1"><label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Display Name</label><input className="w-full bg-black border border-gray-800 rounded p-2 text-sm text-gray-100" value={newDomainName} onChange={e => setNewDomainName(e.target.value)} /></div>
                       <div className="space-y-1"><label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Description</label><textarea value={newDomainDesc} onChange={e => setNewDomainDesc(e.target.value)} className="w-full bg-black border border-gray-800 rounded p-2 text-sm text-gray-100" /></div>
+                      <div className="space-y-1">
+                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Invariants</label>
+                          <div className="flex gap-2">
+                              <input value={newInvariantInputCreate} onChange={e => setNewInvariantInputCreate(e.target.value)} className="flex-1 bg-black border border-gray-800 rounded p-2 text-xs font-mono text-gray-100" />
+                              <button onClick={handleAddInvariantCreate} className="px-3 bg-emerald-600 text-white rounded text-xs font-bold">Add</button>
+                          </div>
+                          <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+                              {newDomainInvariants.map((inv, i) => <div key={i} className="flex justify-between bg-black p-1 rounded text-xs font-mono text-gray-400 border border-gray-800"><span>{inv}</span><button onClick={() => handleRemoveInvariantCreate(i)} className="text-gray-500 hover:text-red-400"><X size={12}/></button></div>)}
+                          </div>
+                      </div>
                   </div>
                   <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-800"><button onClick={() => setIsCreateModalOpen(false)} className="px-4 py-2 text-xs font-mono text-gray-400">Cancel</button><button onClick={handleCreateDomain} disabled={!newDomainId} className="px-4 py-2 bg-emerald-600 text-white rounded text-xs font-mono font-bold uppercase tracking-widest transition-all">Create</button></div>
+              </div>
+          </div>
+      )}
+
+      {isEditModalOpen && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-gray-900 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-800 flex flex-col max-h-[90vh] overflow-hidden">
+                  <h3 className="font-bold font-mono mb-4 text-gray-100 flex items-center gap-2"><Settings size={18} /> Edit Domain</h3>
+                  <div className="overflow-y-auto space-y-4 pr-2">
+                      <div className="space-y-1"><label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Domain ID</label><input disabled className="w-full bg-black border border-gray-800 rounded p-2 font-mono text-sm text-gray-500 opacity-50" value={editDomainId} /></div>
+                      <div className="space-y-1"><label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Display Name</label><input className="w-full bg-black border border-gray-800 rounded p-2 text-sm text-gray-100" value={editDomainName} onChange={e => setEditDomainName(e.target.value)} /></div>
+                      <div className="space-y-1"><label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Description</label><textarea value={editDomainDesc} onChange={e => setEditDomainDesc(e.target.value)} className="w-full bg-black border border-gray-800 rounded p-2 text-sm text-gray-100" /></div>
+                      <div className="space-y-1">
+                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Invariants</label>
+                          <div className="flex gap-2">
+                              <input value={newInvariantInputEdit} onChange={e => setNewInvariantInputEdit(e.target.value)} className="flex-1 bg-black border border-gray-800 rounded p-2 text-xs font-mono text-gray-100" />
+                              <button onClick={handleAddInvariantEdit} className="px-3 bg-gray-800 text-gray-300 rounded text-xs font-bold">Add</button>
+                          </div>
+                          <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+                              {editDomainInvariants.map((inv, i) => <div key={i} className="flex justify-between bg-black p-1 rounded text-xs font-mono text-gray-400 border border-gray-800"><span>{inv}</span><button onClick={() => handleRemoveInvariantEdit(i)} className="text-gray-500 hover:text-red-400"><X size={12}/></button></div>)}
+                          </div>
+                      </div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-800"><button onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 text-xs font-mono text-gray-400">Cancel</button><button onClick={handleUpdateDomain} className="px-4 py-2 bg-emerald-600 text-white rounded text-xs font-mono font-bold uppercase tracking-widest transition-all">Update</button></div>
               </div>
           </div>
       )}

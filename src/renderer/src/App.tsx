@@ -30,12 +30,15 @@ declare global {
             sendMessage: (sessionId: string, message: string, systemInstruction?: string) => Promise<any>;
             listDomains: () => Promise<string[]>;
             getDomain: (id: string) => Promise<any>;
+            upsertDomain: (id: string, data: any) => Promise<any>;
+            updateDomain: (id: string, data: any) => Promise<any>;
             getMetadata: () => Promise<any[]>;
             searchSymbols: (query: string, limit?: number, options?: any) => Promise<any[]>;
             upsertSymbol: (domainId: string, symbol: any) => Promise<any>;
             getSymbolsByDomain: (domainId: string) => Promise<any[]>;
             getSymbolById: (id: string) => Promise<any>;
             deleteSymbol: (domainId: string, symbolId: string) => Promise<boolean>;
+            deleteDomain: (domainId: string) => Promise<boolean>;
             getSymbolCount: () => Promise<number>;
             getDomainCount: () => Promise<number>;
             getSettings: () => Promise<any>;

@@ -126,8 +126,22 @@ export const domainService = {
   },
 
   async deleteDomain(domainId: string): Promise<boolean> {
+    const domain = await this.get(domainId);
+    if (domain?.readOnly) {
+        loggerService.catWarn(LogCategory.DOMAIN, `Attempted to delete read-only domain: ${domainId}`);
+        throw new Error(`Domain '${domainId}' is read-only.`);
+    }
+
+    loggerService.catInfo(LogCategory.DOMAIN, `Deleting domain: ${domainId}`);
     const result = sqliteService.run(`DELETE FROM domains WHERE id = ?`, [domainId]);
-    return result.changes > 0;
+    
+    if (result.changes > 0) {
+        loggerService.catInfo(LogCategory.DOMAIN, `Successfully deleted domain: ${domainId}`);
+        return true;
+    }
+    
+    loggerService.catWarn(LogCategory.DOMAIN, `Failed to delete domain: ${domainId} (not found)`);
+    return false;
   },
 
   // --- Symbol Management ---
@@ -253,7 +267,11 @@ export const domainService = {
   async findSymbolsByTags(tags: string[]): Promise<SymbolDef[]> {
     if (tags.length === 0) return [];
     const placeholders = tags.map(() => '?').join(',');
-    const rows = sqliteService.all(`SELECT * FROM symbols WHERE symbol_tag IN (${placeholders})`, tags) as any[];
+    const rows = sqliteService.all(`
+        SELECT s.* FROM symbols s
+        JOIN domains d ON s.domain_id = d.id
+        WHERE d.enabled = 1 AND s.symbol_tag IN (${placeholders})
+    `, tags) as any[];
     const symbols: SymbolDef[] = [];
     for (const row of rows) {
         const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
@@ -263,7 +281,12 @@ export const domainService = {
   },
 
   async getRecentSymbols(limit: number = 50): Promise<SymbolDef[]> {
-    const rows = sqliteService.all(`SELECT * FROM symbols ORDER BY updated_at DESC LIMIT ?`, [limit]) as any[];
+    const rows = sqliteService.all(`
+        SELECT s.* FROM symbols s
+        JOIN domains d ON s.domain_id = d.id
+        WHERE d.enabled = 1
+        ORDER BY s.updated_at DESC LIMIT ?
+    `, [limit]) as any[];
     const symbols: SymbolDef[] = [];
     for (const row of rows) {
         const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
@@ -301,6 +324,16 @@ export const domainService = {
   },
 
   async search(query: string, limit: number = 10, filter?: any): Promise<VectorSearchResult[]> {
+    if (!filter || (!filter.symbol_domain && !filter.domain)) {
+        // Automatically filter by enabled domains
+        const enabledDomains = (sqliteService.all(`SELECT id FROM domains WHERE enabled = 1`) as any[]).map(r => r.id);
+        if (enabledDomains.length > 0) {
+            filter = { ...filter, symbol_domain: enabledDomains };
+        } else {
+            // If no domains are enabled, return nothing
+            return [];
+        }
+    }
     return await lancedbService.search(query, limit, filter);
   },
 

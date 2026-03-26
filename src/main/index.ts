@@ -353,6 +353,14 @@ ipcMain.handle('domain:get', async (_, id) => {
   return await domainService.get(id);
 });
 
+ipcMain.handle('domain:upsert', async (_, id, data) => {
+  return await domainService.upsertDomain(id, data);
+});
+
+ipcMain.handle('domain:update', async (_, id, data) => {
+  return await domainService.updateDomain(id, data);
+});
+
 ipcMain.handle('domain:search', async (_, query, limit, options) => {
   return await domainService.search(query, limit, options);
 });
@@ -375,6 +383,10 @@ ipcMain.handle('domain:all-symbols', async () => {
 
 ipcMain.handle('domain:delete-symbol', async (_, domainId, symbolId) => {
   return await domainService.deleteSymbol(domainId, symbolId);
+});
+
+ipcMain.handle('domain:delete', async (_, domainId) => {
+  return await domainService.deleteDomain(domainId);
 });
 
 ipcMain.handle('domain:get-symbol-count', async () => {

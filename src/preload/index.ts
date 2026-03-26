@@ -18,6 +18,8 @@ const api = {
   // Symbol/Domain Management
   listDomains: () => ipcRenderer.invoke('domain:list'),
   getDomain: (id: string) => ipcRenderer.invoke('domain:get', id),
+  upsertDomain: (id: string, data: any) => ipcRenderer.invoke('domain:upsert', id, data),
+  updateDomain: (id: string, data: any) => ipcRenderer.invoke('domain:update', id, data),
   getMetadata: () => ipcRenderer.invoke('domain:metadata'),
   searchSymbols: (query: string, limit?: number, options?: any) => 
     ipcRenderer.invoke('domain:search', query, limit, options),
@@ -29,6 +31,8 @@ const api = {
     ipcRenderer.invoke('domain:get-symbol', id),
   deleteSymbol: (domainId: string, symbolId: string) => 
     ipcRenderer.invoke('domain:delete-symbol', domainId, symbolId),
+  deleteDomain: (domainId: string) =>
+    ipcRenderer.invoke('domain:delete', domainId),
   getSymbolCount: () => ipcRenderer.invoke('domain:get-symbol-count'),
   getDomainCount: () => ipcRenderer.invoke('domain:get-domain-count'),
   

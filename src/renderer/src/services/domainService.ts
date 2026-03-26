@@ -28,8 +28,8 @@ export const domainService = {
     // Desktop placeholder
   },
 
-  async deleteDomain(_domainId: string): Promise<void> {
-    // Desktop placeholder
+  async deleteDomain(domainId: string): Promise<void> {
+    await window.api.deleteDomain(domainId);
   },
 
   async clearAll(): Promise<void> {
