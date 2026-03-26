@@ -57,14 +57,23 @@ const api = {
     ipcRenderer.invoke('agent:logs', agentId, limit, includeTraces),
   
   // Events (Streaming)
-  onInferenceChunk: (callback: (chunk: any) => void) => 
-    ipcRenderer.on('inference:chunk', (_event, chunk) => callback(chunk)),
-  onInferenceCompleted: (callback: () => void) => 
-    ipcRenderer.on('inference:completed', () => callback()),
+  onInferenceChunk: (callback: (chunk: any) => void) => {
+    const subscription = (_event, chunk) => callback(chunk);
+    ipcRenderer.on('inference:chunk', subscription);
+    return () => ipcRenderer.removeListener('inference:chunk', subscription);
+  },
+  onInferenceCompleted: (callback: () => void) => {
+    const subscription = () => callback();
+    ipcRenderer.on('inference:completed', subscription);
+    return () => ipcRenderer.removeListener('inference:completed', subscription);
+  },
   
   // Trace Events
-  onTraceLogged: (callback: (trace: any) => void) => 
-    ipcRenderer.on('trace:logged', (_event, trace) => callback(trace)),
+  onTraceLogged: (callback: (trace: any) => void) => {
+    const subscription = (_event, trace) => callback(trace);
+    ipcRenderer.on('trace:logged', subscription);
+    return () => ipcRenderer.removeListener('trace:logged', subscription);
+  },
   
   onKernelEvent: (callback: (type: string, data: any) => void) => {
     const subscription = (_event, { type, data }) => callback(type, data);

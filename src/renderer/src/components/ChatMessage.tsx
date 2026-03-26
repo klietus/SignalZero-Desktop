@@ -24,6 +24,7 @@ interface ChatMessageProps {
   onDomainClick?: (domain: string) => void;
   onTraceClick?: (id?: string) => void;
   onRetry?: (text: string) => void;
+  isVisible?: boolean;
 }
 
 // --- Helper for Unicode Decoding ---
@@ -155,10 +156,10 @@ const ThinkingBlock: React.FC<{ content: string }> = ({ content }) => {
   );
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick, onDomainClick, onTraceClick, onRetry }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick, onDomainClick, onTraceClick, onRetry, isVisible = true }) => {
   const isUser = message.role === Sender.USER;
   const isAssistantResponse = message.role !== Sender.USER;
-  const [showToolList, setShowToolList] = useState(false);
+  const [showToolList, setShowToolList] = useState(message.toolCalls && message.toolCalls.length > 0);
   const [showTraceList, setShowTraceList] = useState(false);
   const [copyLabel, setCopyLabel] = useState('Copy');
 
@@ -375,11 +376,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
   };
 
   return (
-    <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`pointer-events-auto flex max-w-[90%] md:max-w-[80%] gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`flex w-full mb-6 pointer-events-none ${isUser ? 'justify-end' : 'justify-start'} ${!isVisible ? 'opacity-0' : ''}`}>
+      <div className={`flex max-w-[90%] md:max-w-[80%] gap-3 pointer-events-none ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
         
         {/* Avatar */}
         <div className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center shadow-sm border
+          ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}
           ${isUser 
             ? 'bg-indigo-600 border-indigo-500 text-white' 
             : 'bg-gray-900 border-gray-700 text-emerald-500'
@@ -388,8 +390,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
         </div>
 
         {/* Bubble */}
-        <div className={`flex flex-col items-start ${isUser ? 'items-end' : 'items-start'} w-full min-w-0`}>
-          <div className={`relative px-4 py-3 rounded-lg shadow-sm text-base leading-relaxed w-full
+        <div className={`flex flex-col items-start ${isUser ? 'items-end' : 'items-start'} w-fit min-w-0 pointer-events-none`}>
+          <div className={`relative px-4 py-3 rounded-lg shadow-sm text-base leading-relaxed w-fit
+            ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}
             ${isUser 
               ? 'bg-indigo-600/80 backdrop-blur-md border border-indigo-500/30 text-white' 
               : 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md text-gray-800 dark:text-gray-300 border border-gray-200/50 dark:border-gray-800/50'
@@ -498,7 +501,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-150"></span>
                 </div>
             ) : (
-                <div className={`w-full break-words`}>
+                <div className={`max-w-full break-words`}>
                     {formatText(contentWithoutTraces)}
                     {message.isStreaming && (
                         <span className="inline-block w-2 h-4 ml-1 align-middle bg-emerald-500 opacity-75 animate-pulse" />
@@ -507,7 +510,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
             )}
           </div>
           
-          <div className="text-[10px] text-gray-400 dark:text-gray-600 mt-1 px-1 font-mono">
+          <div className={`text-[10px] text-gray-400 dark:text-gray-600 mt-1 px-1 font-mono ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>

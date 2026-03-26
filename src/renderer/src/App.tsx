@@ -52,9 +52,9 @@ declare global {
             importProject: () => Promise<any>;
             importSampleProject: () => Promise<any>;
             openMonitor: () => Promise<void>;
-            onInferenceChunk: (callback: (chunk: string) => void) => void;
-            onInferenceCompleted: (callback: () => void) => void;
-            onTraceLogged: (callback: (trace: any) => void) => void;
+            onInferenceChunk: (callback: (chunk: string) => void) => () => void;
+            onInferenceCompleted: (callback: () => void) => () => void;
+            onTraceLogged: (callback: (trace: any) => void) => () => void;
             onKernelEvent: (callback: (type: string, data: any) => void) => () => void;
             onNavigate: (callback: (view: string) => void) => () => void;
             removeInferenceListeners: () => void;
@@ -67,9 +67,18 @@ const mapToolCalls = (item: ContextMessage) => {
     if (!item || !item.toolCalls) return [];
     return item.toolCalls.map((tc: any, tcIdx: number) => {
         let args = {};
-        try { args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : (tc.arguments || {}); }
-        catch (e) { args = { parseError: true, raw: tc.arguments }; }
-        return { id: tc.id || `${item.timestamp || Date.now()}-${tcIdx}`, name: tc.name || item.toolName || 'tool', args, result: item.role === 'tool' ? item.content : undefined };
+        const rawArgs = tc.arguments || tc.args;
+        try { 
+            args = typeof rawArgs === 'string' ? JSON.parse(rawArgs) : (rawArgs || {}); 
+        } catch (e) { 
+            args = { parseError: true, raw: rawArgs }; 
+        }
+        return { 
+            id: tc.id || `${item.timestamp || Date.now()}-${tcIdx}`, 
+            name: tc.name || item.toolName || 'tool', 
+            args, 
+            result: item.role === 'tool' ? item.content : undefined 
+        };
     });
 };
 
@@ -311,7 +320,7 @@ function App() {
     useEffect(() => {
         if (appState !== 'app') return;
 
-        window.api.onInferenceChunk((chunk: any) => {
+        const unbindChunk = window.api.onInferenceChunk((chunk: any) => {
             const text = typeof chunk === 'string' ? chunk : (chunk.text || '');
             const rawToolCalls = typeof chunk === 'object' ? (chunk.toolCalls || []) : [];
             
@@ -349,7 +358,7 @@ function App() {
             });
         });
 
-        window.api.onInferenceCompleted(() => {
+        const unbindCompleted = window.api.onInferenceCompleted(() => {
             setIsProcessing(false);
             if (activeContextId) {
                 window.api.getHistory(activeContextId).then(history => {
@@ -369,11 +378,11 @@ function App() {
             refreshSystemStats();
         });
 
-        window.api.onTraceLogged((trace) => {
+        const unbindTrace = window.api.onTraceLogged((trace) => {
             setActiveTraces(prev => [trace, ...prev].slice(0, 50));
         });
 
-        window.api.onKernelEvent((type, data) => {
+        const unbindKernel = window.api.onKernelEvent((type, data) => {
             if (type === 'cache:load') {
                 setCacheSize(data.symbolIds?.length || 0);
             }
@@ -394,7 +403,10 @@ function App() {
         });
 
         return () => {
-            window.api.removeInferenceListeners();
+            if (typeof unbindChunk === 'function') unbindChunk();
+            if (typeof unbindCompleted === 'function') unbindCompleted();
+            if (typeof unbindTrace === 'function') unbindTrace();
+            if (typeof unbindKernel === 'function') unbindKernel();
             if (typeof removeNavListener === 'function') removeNavListener();
         };
     }, [activeContextId, appState]);
@@ -467,13 +479,13 @@ function App() {
             case 'chat':
                 return (
                     <div className="relative z-10 flex flex-col h-full w-full pointer-events-none">
-                        <div className="pointer-events-auto w-full">
+                        <div className="pointer-events-auto w-full z-30">
                             <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
                         </div>
                         
                         <div className={`flex-1 flex flex-col min-h-0 transition-opacity duration-300 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-gray-950/40 pointer-events-auto">
-                                <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-auto">
+                            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-transparent pointer-events-none">
+                                <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-none">
                                     {messages.length === 0 ? (
                                         <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center pointer-events-none">
                                             <MessageSquare size={64} className="mb-4 mx-auto" />
@@ -482,9 +494,10 @@ function App() {
                                         </div>
                                     ) : (
                                         messages.map((msg) => (
-                                            <div key={msg.id} className="pointer-events-auto">
+                                            <div key={msg.id} className={isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}>
                                                 <ChatMessage 
                                                     message={msg} 
+                                                    isVisible={!isGraphView}
                                                     onSymbolClick={() => setCurrentView('dev')} 
                                                     onTraceClick={(id) => {
                                                         if (id) setSelectedTraceId(id);
@@ -499,8 +512,8 @@ function App() {
                             </div>
 
 
-                            <div className="p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pointer-events-none">
-                                <div className="w-full max-w-full mx-auto pointer-events-auto">
+                            <div className={`p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pointer-events-none transition-opacity duration-300 ${isGraphView ? 'opacity-0' : 'opacity-100'}`}>
+                                <div className={`w-full max-w-full mx-auto ${isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}`}>
                                     <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
                                 </div>
                             </div>
@@ -556,14 +569,14 @@ function App() {
     return (
         <div className="relative flex flex-col h-screen overflow-hidden bg-gray-950 font-sans text-gray-100 selection:bg-indigo-500/30">
             {currentView === 'chat' && showGraphviz && (
-                <div className={`absolute inset-0 z-0 overflow-hidden mix-blend-screen transition-opacity duration-700 ${isGraphView ? 'opacity-100' : 'opacity-20'} pointer-events-auto`}>
+                <div className={`absolute inset-0 transition-opacity duration-700 ${isGraphView ? 'opacity-100 z-20 pointer-events-auto' : 'opacity-20 z-0 pointer-events-none'}`}>
                     <CinematicView onSymbolFocus={setFocusedSymbolName} />
                 </div>
             )}
-            <div className={`flex-1 flex min-h-0 relative z-10 ${currentView === 'chat' ? 'pointer-events-none' : ''}`}>
+            <div className={`flex-1 flex min-h-0 relative z-30 ${currentView === 'chat' ? 'pointer-events-none' : ''}`}>
                 {currentView === 'chat' && (
                     <>
-                        <div className="pointer-events-auto h-full flex-shrink-0 flex" style={{ width: sidebarWidth }}>
+                        <div className={`pointer-events-auto h-full flex-shrink-0 flex transition-all duration-700 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ width: sidebarWidth }}>
                             <ContextListPanel
                                 contexts={contexts} activeContextId={activeContextId}
                                 onSelectContext={setActiveContextId} onCreateContext={handleCreateContext}
@@ -572,7 +585,7 @@ function App() {
                         </div>
 
                         <div
-                            className="pointer-events-auto w-1 hover:w-1.5 bg-transparent hover:bg-indigo-500/30 cursor-col-resize transition-all z-10 flex-shrink-0"
+                            className={`pointer-events-auto w-1 hover:w-1.5 bg-transparent hover:bg-indigo-500/30 cursor-col-resize transition-all z-10 flex-shrink-0 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                             onMouseDown={startResizing}
                         />
                     </>
@@ -593,7 +606,7 @@ function App() {
             </div>
             
             {currentView === 'chat' && (
-                <div className="pointer-events-auto z-20 relative">
+                <div className="pointer-events-auto z-30 relative">
                     <StatusBar
                         modelName={modelName} isBusy={isProcessing}
                         symbolCount={symbolCount} domainCount={domainCount}

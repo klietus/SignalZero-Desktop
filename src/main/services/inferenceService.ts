@@ -965,6 +965,8 @@ export const primeSymbolicContext = async (
     });
 
     const prompt = `Analyze the conversation history and the new user message to identify symbolic search queries and determine if web search grounding is needed.
+    
+    ${needsNaming ? 'CRITICAL: Based on the conversation context, suggest a descriptive and concise name for this context session in "suggested_name".' : ''}
 
     CRITICAL: Only set "web_search_needed" to true if the message involves an external entity (person, company, place), a complex technical/scientific topic, or a current event that requires grounding in facts.
 
@@ -982,7 +984,8 @@ export const primeSymbolicContext = async (
       "web_search_needed": boolean,
       "web_search_queries": ["search query1", "search query2", ...],
       "trace_needed": boolean,
-      "trace_reason": "Brief explanation if trace_needed is true"
+      "trace_reason": "Brief explanation if trace_needed is true",
+      "suggested_name": string | null
     }`;
 
     loggerService.catDebug(LogCategory.INFERENCE, "Fast model priming prompt", { prompt });
