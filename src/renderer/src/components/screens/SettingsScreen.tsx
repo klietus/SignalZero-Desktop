@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Save, Database, Network, Cpu, Cloud, 
-    Search, AlertCircle, Mic, Layout
+    Search, AlertCircle, Layout, RefreshCw, Plus, Server
 } from 'lucide-react';
 import { UserProfile, GraphHygieneSettings, McpConfiguration } from '../../types';
 import { Header, HeaderProps } from '../Header';
@@ -43,33 +43,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   // UI Settings
   const [showGraphviz, setShowGraphviz] = useState(true);
 
-  // Voice Server State
-  const [pulseServer, setPulseServer] = useState('');
-  const [wakeWord, setWakeWord] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState('af_sarah');
-
-  const VOICES = [
-    { id: 'af_sarah', name: 'American Female Sarah' },
-    { id: 'af_heart', name: 'American Female Heart' },
-    { id: 'af_alloy', name: 'American Female Alloy' },
-    { id: 'af_aoede', name: 'American Female Aoede' },
-    { id: 'af_bella', name: 'American Female Bella' },
-    { id: 'af_jessica', name: 'American Female Jessica' },
-    { id: 'af_kore', name: 'American Female Kore' },
-    { id: 'af_nicole', name: 'American Female Nicole' },
-    { id: 'af_nova', name: 'American Female Nova' },
-    { id: 'af_river', name: 'American Female River' },
-    { id: 'af_sky', name: 'American Female Sky' },
-    { id: 'am_adam', name: 'American Male Adam' },
-    { id: 'am_echo', name: 'American Male Echo' },
-    { id: 'am_eric', name: 'American Male Eric' },
-    { id: 'am_fenrir', name: 'American Male Fenrir' },
-    { id: 'am_liam', name: 'American Male Liam' },
-    { id: 'am_michael', name: 'American Male Michael' },
-    { id: 'am_onyx', name: 'American Male Onyx' },
-    { id: 'am_puck', name: 'American Male Puck' },
-    { id: 'am_santa', name: 'American Male Santa' }
-  ];
+  const [isRunningHygiene, setIsRunningHygiene] = useState<string | null>(null);
 
   // MCP State
   const [mcpConfigs, setMcpConfigs] = useState<McpConfiguration[]>([]);
@@ -82,7 +56,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const hydrateSettings = (settings: any) => {
     const inference = settings.inference || {};
     const serpApi = settings.serpApi || {};
-    const voice = settings.voice || {};
     const hygiene = settings.hygiene || {
         positional: { autoCompress: false, autoLink: false },
         semantic: { autoCompress: false, autoLink: false },
@@ -92,9 +65,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     };
 
     setSerpApiKey(serpApi.apiKey || '');
-    setPulseServer(voice.pulseServer || '');
-    setWakeWord(voice.wakeWord || 'axiom');
-    setSelectedVoice(voice.voice || 'af_sarah');
     setMcpConfigs(settings.mcpConfigs || []);
 
     setShowGraphviz(settings.ui?.showGraphviz ?? true);
@@ -194,7 +164,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         await window.api.updateSettings({
             ui: { showGraphviz },
             serpApi: { apiKey: serpApiKey },
-            voice: { pulseServer, wakeWord, voice: selectedVoice },
             hygiene: hygieneSettings,
             inference: {
                 provider: inferenceProvider,
@@ -216,13 +185,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
+  const handleRunHygiene = async (strategy: string) => {
+    setIsRunningHygiene(strategy);
+    try {
+        const stats = await window.api.runHygiene(strategy);
+        alert(`Hygiene run complete: ${JSON.stringify(stats)}`);
+    } catch (err: any) {
+        alert(`Error running hygiene: ${err.message}`);
+    } finally {
+        setIsRunningHygiene(null);
+    }
+  };
+
   const tabs = [
       { id: 'appearance', label: 'Appearance', icon: Layout },
       { id: 'inference', label: 'Inference', icon: Cpu },
       { id: 'services', label: 'Services', icon: Cloud },
       { id: 'mcp', label: 'MCP Clients', icon: Network },
       { id: 'hygiene', label: 'Graph Hygiene', icon: Database },
-      { id: 'voice', label: 'Voice Server', icon: Mic },
   ];
 
   return (
@@ -318,18 +298,119 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </section>
                   )}
 
-                  {activeTab === 'voice' && (
-                      <section className="space-y-6">
-                          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-6">
-                              <div className="space-y-2">
-                                  <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Wake Word</label>
-                                  <input type="text" value={wakeWord} onChange={(e) => setWakeWord(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
+                  {activeTab === 'hygiene' && (
+                      <section className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                          <div>
+                              <h2 className="text-lg font-bold mb-1">Graph Hygiene</h2>
+                              <p className="text-sm text-gray-500">Maintain the integrity and coherence of the symbolic graph.</p>
+                          </div>
+
+                          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-8">
+                              {/* Analysis Strategies */}
+                              <div className="space-y-6">
+                                  {[
+                                      { id: 'semantic', label: 'Semantic Similarity (Vector)', desc: 'Uses embeddings to find symbols representing similar concepts.' },
+                                      { id: 'triadic', label: 'Triadic Similarity (Emoji)', desc: 'Matches symbols based on emoji triads and resonant patterns.' }
+                                  ].map(strat => (
+                                      <div key={strat.id} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 space-y-4">
+                                          <div className="flex items-center justify-between">
+                                              <div>
+                                                  <div className="font-bold text-sm text-gray-900 dark:text-gray-100">{strat.label}</div>
+                                                  <div className="text-xs text-gray-500">{strat.desc}</div>
+                                              </div>
+                                              <button
+                                                  onClick={() => handleRunHygiene(strat.id)}
+                                                  disabled={isRunningHygiene !== null}
+                                                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-md text-xs font-bold transition-colors"
+                                              >
+                                                  {isRunningHygiene === strat.id ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
+                                                  Run Now
+                                              </button>
+                                          </div>
+                                          
+                                          <div className="flex gap-6 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                              <label className="flex items-center gap-2 cursor-pointer group">
+                                                  <input
+                                                      type="checkbox"
+                                                      checked={(hygieneSettings as any)[strat.id].autoCompress}
+                                                      onChange={(e) => setHygieneSettings({
+                                                          ...hygieneSettings,
+                                                          [strat.id]: { ...(hygieneSettings as any)[strat.id], autoCompress: e.target.checked }
+                                                      })}
+                                                      className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                  />
+                                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">Auto-Compression</span>
+                                              </label>
+                                              <label className="flex items-center gap-2 cursor-pointer group">
+                                                  <input
+                                                      type="checkbox"
+                                                      checked={(hygieneSettings as any)[strat.id].autoLink}
+                                                      onChange={(e) => setHygieneSettings({
+                                                          ...hygieneSettings,
+                                                          [strat.id]: { ...(hygieneSettings as any)[strat.id], autoLink: e.target.checked }
+                                                      })}
+                                                      className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                  />
+                                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">Auto-Linking</span>
+                                              </label>
+                                          </div>
+                                      </div>
+                                  ))}
                               </div>
-                              <div className="space-y-2">
-                                  <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Voice</label>
-                                  <select value={selectedVoice} onChange={(e) => setSelectedVoice(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm">
-                                      {VOICES.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                                  </select>
+
+                              {/* Cleanup Tasks */}
+                              <div className="pt-6 border-t border-gray-100 dark:border-gray-800 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 space-y-4">
+                                      <div className="flex items-center justify-between">
+                                          <div className="space-y-1">
+                                              <div className="font-bold text-xs uppercase tracking-wider text-gray-500">Dead Link Cleanup</div>
+                                              <div className="text-[10px] text-gray-400">Removes links pointing to non-existent symbols.</div>
+                                          </div>
+                                          <label className="relative inline-flex items-center cursor-pointer">
+                                              <input 
+                                                  type="checkbox" 
+                                                  checked={hygieneSettings.deadLinkCleanup}
+                                                  onChange={(e) => setHygieneSettings({...hygieneSettings, deadLinkCleanup: e.target.checked})}
+                                                  className="sr-only peer" 
+                                              />
+                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+                                          </label>
+                                      </div>
+                                      <button
+                                          onClick={() => handleRunHygiene('deadLinkCleanup')}
+                                          disabled={isRunningHygiene !== null}
+                                          className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:bg-gray-400 text-gray-700 dark:text-gray-200 rounded-md text-[10px] font-bold transition-colors"
+                                      >
+                                          {isRunningHygiene === 'deadLinkCleanup' ? <RefreshCw size={10} className="animate-spin" /> : <RefreshCw size={10} />}
+                                          Run Cleanup Now
+                                      </button>
+                                  </div>
+
+                                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 space-y-4">
+                                      <div className="flex items-center justify-between">
+                                          <div className="space-y-1">
+                                              <div className="font-bold text-xs uppercase tracking-wider text-gray-500">Orphan Analysis</div>
+                                              <div className="text-[10px] text-gray-400">Identifies symbols with no incoming or outgoing links.</div>
+                                          </div>
+                                          <label className="relative inline-flex items-center cursor-pointer">
+                                              <input 
+                                                  type="checkbox" 
+                                                  checked={hygieneSettings.orphanAnalysis}
+                                                  onChange={(e) => setHygieneSettings({...hygieneSettings, orphanAnalysis: e.target.checked})}
+                                                  className="sr-only peer" 
+                                              />
+                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+                                          </label>
+                                      </div>
+                                      <button
+                                          onClick={() => handleRunHygiene('orphanAnalysis')}
+                                          disabled={isRunningHygiene !== null}
+                                          className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:bg-gray-400 text-gray-700 dark:text-gray-200 rounded-md text-[10px] font-bold transition-colors"
+                                      >
+                                          {isRunningHygiene === 'orphanAnalysis' ? <RefreshCw size={10} className="animate-spin" /> : <Search size={10} />}
+                                          Run Analysis Now
+                                      </button>
+                                  </div>
                               </div>
                           </div>
                       </section>

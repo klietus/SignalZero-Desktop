@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { SendHorizontal, Loader2, Square, Plus, Smile } from 'lucide-react';
 
 interface ChatInputProps {
-  onSend: (message: string, options?: { viaVoice?: boolean, attachments?: { id: string, filename: string, type: string }[] }) => void;
+  onSend: (message: string, options?: { attachments?: { id: string, filename: string, type: string }[] }) => void;
   onStop?: () => void;
   disabled?: boolean;
   isProcessing?: boolean;

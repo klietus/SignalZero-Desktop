@@ -1,0 +1,555 @@
+import { domainService } from './domainService.js';
+import { tentativeLinkService } from './tentativeLinkService.js';
+import { loggerService, LogCategory } from './loggerService.js';
+import { settingsService } from './settingsService.js';
+import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
+import { eventBusService, KernelEventType } from './eventBusService.js';
+import { SymbolDef, GraphHygieneSettings } from '../types.js';
+import { embedTexts } from './embeddingService.js';
+
+export interface TopologyStats {
+    symbolCount: number;
+    linkCount: number;
+    linkTypes: string[];
+    reconstructionError: number;
+    newLinksPredicted: number;
+    redundantSymbolsFound: number;
+}
+
+class TopologyService {
+    private readonly CONFIDENCE_THRESHOLD = 0.85;
+    private readonly REDUNDANCY_THRESHOLD = 0.98;
+    private isAnalyzing = false;
+
+    constructor() {}
+
+    /**
+     * Executes the global topology analysis loop.
+     * If specificStrategy is provided, it runs only that one.
+     * If overrideSettings is provided, it uses those instead of saved settings.
+     */
+    async analyze(specificStrategy?: string, overrideSettings?: GraphHygieneSettings): Promise<TopologyStats | null> {
+        if (this.isAnalyzing) {
+            loggerService.catWarn(LogCategory.KERNEL, "TopologyService: Analysis already in progress, skipping request");
+            return null;
+        }
+
+        try {
+            this.isAnalyzing = true;
+            const hygiene = overrideSettings || await settingsService.getHygieneSettings();
+
+            loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting topology analysis", { 
+                strategy: specificStrategy || 'full', 
+                hygiene,
+                isOverride: !!overrideSettings 
+            });
+            
+            // 1. Fetch all symbols
+            const allDomains = await domainService.listDomains();
+            const symbols: SymbolDef[] = [];
+            for (const dId of allDomains) {
+                const domainSymbols = await domainService.getSymbols(dId);
+                symbols.push(...domainSymbols);
+            }
+
+            if (symbols.length === 0) {
+                loggerService.catInfo(LogCategory.KERNEL, "TopologyService: No symbols found for analysis");
+                return null;
+            }
+
+            // Calculate global link stats
+            const linkTypes = new Set<string>();
+            let linkCount = 0;
+            symbols.forEach(s => {
+                (s.linked_patterns || []).forEach(l => {
+                    linkTypes.add(l.link_type || 'emergent');
+                    linkCount++;
+                });
+            });
+
+            let newLinksPredicted = 0;
+            let redundantSymbolsFound = 0;
+
+            // Relational analysis requires at least 2 symbols
+            const canRunRelational = symbols.length >= 2;
+
+            // --- STRATEGY: Dead Link Cleanup ---
+            if (specificStrategy === 'deadLinkCleanup' || (specificStrategy === undefined && hygiene.deadLinkCleanup)) {
+                await this.cleanupDeadLinks(symbols);
+            }
+
+            // --- STRATEGY: Semantic (Vector) Analysis ---
+            if (canRunRelational && (specificStrategy === 'semantic' || (specificStrategy === undefined && (hygiene.semantic.autoCompress || hygiene.semantic.autoLink)))) {
+                const semanticResults = await this.runSemanticAnalysis(symbols, hygiene);
+                newLinksPredicted += semanticResults.newLinks;
+                redundantSymbolsFound += semanticResults.redundantCount;
+            }
+
+            // --- STRATEGY: Triadic Analysis ---
+            if (canRunRelational && (specificStrategy === 'triadic' || (specificStrategy === undefined && (hygiene.triadic.autoCompress || hygiene.triadic.autoLink)))) {
+                const triadicResults = await this.runTriadicAnalysis(symbols, hygiene);
+                newLinksPredicted += triadicResults.newLinks;
+                redundantSymbolsFound += triadicResults.redundantCount;
+            }
+
+            // --- STRATEGY: Orphan Analysis ---
+            if (specificStrategy === 'orphanAnalysis' || (specificStrategy === undefined && hygiene.orphanAnalysis)) {
+                await this.analyzeOrphans(symbols);
+            }
+
+            // --- STRATEGY: Link Promotion ---
+            if (canRunRelational && (specificStrategy === 'promotion' || specificStrategy === undefined)) {
+                await this.promoteRelatesToLinks(symbols);
+            }
+
+            const stats: TopologyStats = {
+                symbolCount: symbols.length,
+                linkCount,
+                linkTypes: Array.from(linkTypes), 
+                reconstructionError: 0,
+                newLinksPredicted,
+                redundantSymbolsFound
+            };
+
+            loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Analysis complete", stats);
+            return stats;
+
+        } catch (error: any) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Analysis failed", { 
+                error: error?.message || String(error),
+                stack: error?.stack
+            });
+            return null;
+        } finally {
+            this.isAnalyzing = false;
+        }
+    }
+
+    private async runSemanticAnalysis(symbols: SymbolDef[], hygiene: GraphHygieneSettings) {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting semantic analysis", { symbolCount: symbols.length });
+        let newLinksCount = 0;
+        let redundantCount = 0;
+
+        const texts = symbols.map(s => `${s.name}: ${s.role}`);
+        
+        let embeddings: number[][] = [];
+        try {
+            embeddings = await embedTexts(texts);
+        } catch (embErr) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Embedding failed", { error: embErr });
+            return { newLinks: 0, redundantCount: 0 };
+        }
+
+        const N = symbols.length;
+        if (embeddings.length !== N) return { newLinks: 0, redundantCount: 0 };
+
+        // Normalize all embeddings first for cosine similarity
+        const normalizedEmbeddings: number[][] = [];
+        for (let i = 0; i < N; i++) {
+            const emb = embeddings[i];
+            const norm = Math.sqrt(emb.reduce((sum, val) => sum + val * val, 0));
+            normalizedEmbeddings.push(emb.map(val => val / (norm + 1e-9)));
+        }
+
+        const computeSimilarity = (v1: number[], v2: number[]) => {
+            return v1.reduce((sum, val, idx) => sum + val * v2[idx], 0);
+        };
+        
+        if (hygiene.semantic.autoCompress) {
+            loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Checking for semantic redundancy");
+            const redundantGroups: string[][] = [];
+            const visited = new Set<number>();
+
+            for (let i = 0; i < N; i++) {
+                if (visited.has(i)) continue;
+                
+                const group = [symbols[i].id];
+                for (let j = i + 1; j < N; j++) {
+                    if (visited.has(j)) continue;
+                    const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
+                    if (sim > this.REDUNDANCY_THRESHOLD) {
+                        group.push(symbols[j].id);
+                        visited.add(j);
+                    }
+                }
+                if (group.length > 1) {
+                    redundantGroups.push(group);
+                    visited.add(i);
+                }
+            }
+
+            if (redundantGroups.length > 0) {
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Found ${redundantGroups.length} potential redundant groups`);
+                const validated = [];
+                for (const group of redundantGroups) {
+                    if (await this.validateCompression(group, symbols)) validated.push(group);
+                }
+                if (validated.length > 0) {
+                    await this.mergeRedundantSymbols(validated);
+                    redundantCount = validated.reduce((acc, g) => acc + g.length - 1, 0);
+                }
+            }
+        }
+
+        if (hygiene.semantic.autoLink) {
+            loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Checking for semantic link opportunities");
+            const predicted = [];
+            for (let i = 0; i < N; i++) {
+                for (let j = i + 1; j < N; j++) {
+                    const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
+                    // Use a slightly lower threshold for potential links than for redundancy
+                    if (sim > this.CONFIDENCE_THRESHOLD && sim <= this.REDUNDANCY_THRESHOLD) {
+                        const hasLink = symbols[i].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[j].id) ||
+                                        symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
+                        
+                        if (!hasLink) {
+                            // LLM Validation for link
+                            const validation = await this.validateLink(symbols[i], symbols[j]);
+                            if (validation.shouldLink) {
+                                predicted.push({
+                                    sourceId: symbols[i].id,
+                                    targetId: symbols[j].id,
+                                    linkType: validation.linkType || 'semantic_inference',
+                                    confidence: sim
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (predicted.length > 0) {
+                await this.promoteToTentative(predicted);
+                newLinksCount = predicted.length;
+            }
+        }
+
+        return { newLinks: newLinksCount, redundantCount };
+    }
+
+    private async runTriadicAnalysis(symbols: SymbolDef[], hygiene: GraphHygieneSettings) {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting triadic analysis", { symbolCount: symbols.length });
+        let redundantCount = 0;
+        let newLinksCount = 0;
+
+        if (hygiene.triadic.autoCompress) {
+            const triadicGroups = new Map<string, string[]>();
+            symbols.forEach(s => {
+                if (!s.triad) return;
+                const existing = triadicGroups.get(s.triad) || [];
+                existing.push(s.id);
+                triadicGroups.set(s.triad, existing);
+            });
+
+            const redundantGroups = Array.from(triadicGroups.values()).filter(g => g.length > 1);
+
+            if (redundantGroups.length > 0) {
+                const validated = [];
+                for (const group of redundantGroups) {
+                    if (await this.validateCompression(group, symbols)) validated.push(group);
+                }
+                if (validated.length > 0) {
+                    await this.mergeRedundantSymbols(validated);
+                    redundantCount = validated.reduce((acc, g) => acc + g.length - 1, 0);
+                }
+            }
+        }
+
+        if (hygiene.triadic.autoLink) {
+            const predicted = [];
+            for (let i = 0; i < symbols.length; i++) {
+                const triadI = symbols[i].triad;
+                if (!triadI) continue;
+
+                for (let j = i + 1; j < symbols.length; j++) {
+                    const triadJ = symbols[j].triad;
+                    if (triadI === triadJ) {
+                        const hasLink = symbols[i].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[j].id) ||
+                                        symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
+                        
+                        if (!hasLink) {
+                            predicted.push({
+                                sourceId: symbols[i].id,
+                                targetId: symbols[j].id,
+                                linkType: 'triadic_resonance',
+                                confidence: 1.0
+                            });
+                        }
+                    }
+                }
+            }
+            if (predicted.length > 0) {
+                await this.promoteToTentative(predicted);
+                newLinksCount = predicted.length;
+            }
+        }
+
+        return { newLinks: newLinksCount, redundantCount };
+    }
+
+    private async cleanupDeadLinks(symbols: SymbolDef[]) {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting dead link cleanup");
+        const symbolIds = new Set(symbols.map(s => s.id));
+        let deadLinksCount = 0;
+
+        for (const s of symbols) {
+            if (!s.linked_patterns) continue;
+            
+            const initialCount = s.linked_patterns.length;
+            const validLinks = s.linked_patterns.filter(link => {
+                const targetId = typeof link === 'string' ? link : link.id;
+                return symbolIds.has(targetId);
+            });
+            
+            if (validLinks.length < initialCount) {
+                deadLinksCount += (initialCount - validLinks.length);
+                s.linked_patterns = validLinks;
+                await domainService.addSymbol(s.symbol_domain, s);
+            }
+        }
+
+        if (deadLinksCount > 0) {
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Cleaned up ${deadLinksCount} dead links`);
+        }
+    }
+
+    private async analyzeOrphans(symbols: SymbolDef[]) {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting orphan analysis");
+        const incomingLinks = new Set<string>();
+        symbols.forEach(s => {
+            (s.linked_patterns || []).forEach(l => incomingLinks.add(typeof l === 'string' ? l : l.id));
+        });
+
+        const orphans = symbols.filter(s => {
+            const hasOutgoing = s.linked_patterns && s.linked_patterns.length > 0;
+            const hasIncoming = incomingLinks.has(s.id);
+            return !hasOutgoing && !hasIncoming;
+        });
+
+        if (orphans.length > 0) {
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Found ${orphans.length} orphan symbols`);
+            
+            for (const orphan of orphans) {
+                eventBusService.emitKernelEvent(KernelEventType.ORPHAN_DETECTED, { symbolId: orphan.id, domainId: orphan.symbol_domain });
+                
+                // --- Semantic Healing for Orphans ---
+                const searchQuery = `${orphan.name} ${orphan.role}`;
+                try {
+                    const candidates = await domainService.search(searchQuery, 5);
+
+                    const validCandidates = candidates.filter(c => c.id !== orphan.id);
+                    const predictedLinks = [];
+
+                    for (const cand of validCandidates) {
+                        const candSym = await domainService.findById(cand.id);
+                        if (!candSym) continue;
+
+                        const validation = await this.validateLink(orphan, candSym);
+                        if (validation.shouldLink) {
+                            predictedLinks.push({
+                                sourceId: orphan.id,
+                                targetId: cand.id,
+                                linkType: validation.linkType || 'relates_to',
+                                confidence: 0.85
+                            });
+                        }
+                    }
+
+                    if (predictedLinks.length > 0) {
+                        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Found ${predictedLinks.length} healing links for orphan ${orphan.id}`);
+                        await this.promoteToTentative(predictedLinks);
+                    }
+                } catch (searchErr) {
+                    loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed semantic healing for orphan ${orphan.id}`, { error: searchErr });
+                }
+            }
+        }
+    }
+
+    private async promoteRelatesToLinks(symbols: SymbolDef[]) {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting link promotion analysis");
+        const idToSymbol = new Map<string, SymbolDef>();
+        symbols.forEach(s => idToSymbol.set(s.id, s));
+
+        for (const s of symbols) {
+            if (!s.linked_patterns) continue;
+
+            let updated = false;
+            for (const link of s.linked_patterns) {
+                if (link.link_type === 'relates_to') {
+                    const target = idToSymbol.get(link.id);
+                    if (target) {
+                        const validation = await this.validateLink(s, target);
+                        if (validation.shouldLink && validation.linkType && validation.linkType !== 'relates_to') {
+                            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting link ${s.id} -> ${target.id} to ${validation.linkType}`);
+                            link.link_type = validation.linkType;
+                            updated = true;
+                        }
+                    }
+                }
+            }
+
+            if (updated) {
+                await domainService.addSymbol(s.symbol_domain, s);
+            }
+        }
+    }
+
+    private async validateCompression(groupIds: string[], allSymbols: SymbolDef[]): Promise<boolean> {
+        try {
+            const settings = await settingsService.getInferenceSettings();
+            const fastModel = settings.fastModel;
+            if (!fastModel) return true;
+
+            const groupSymbols = groupIds.map(id => allSymbols.find(s => s.id === id)).filter(Boolean) as SymbolDef[];
+            if (groupSymbols.length < 2) return false;
+
+            const symbolInfo = groupSymbols.map(s => {
+                return `ID: ${s.id}\nName: ${s.name}\nRole: ${s.role}\nMacro: ${s.macro}\nTriad Group: ${s.triad || 'None'}\nActivation Conditions: ${JSON.stringify(s.activation_conditions || [])}`;
+            }).join('\n\n---\n\n');
+
+            const prompt = `Analyze the following symbols from a symbolic knowledge graph. Determine if they represent the EXACT SAME concept, belong to compatible triad groups, have compatible activation conditions, and can be safely merged into a single canonical symbol.
+            
+            Symbols to compare:
+            ${symbolInfo}
+            
+            Are these the same concept? Output valid JSON only:
+            {
+              "isSame": true/false,
+              "reason": "Brief explanation"
+            }`;
+
+            let isSame = false;
+
+            if (settings.provider === 'gemini') {
+                const client = await getGeminiClient();
+                const model = client.getGenerativeModel({ 
+                    model: fastModel,
+                    generationConfig: { responseMimeType: "application/json" }
+                });
+                const result = await model.generateContent(prompt);
+                const response = result.response.text();
+                isSame = !!extractJson(response).isSame;
+            } else {
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                    model: fastModel,
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 800
+                });
+                const response = result.choices[0]?.message?.content || "{}";
+                isSame = !!extractJson(response).isSame;
+            }
+
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: LLM Validation for ${groupIds[0]}: ${isSame}`);
+            return isSame;
+
+        } catch (error) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: LLM Validation failed", { error });
+            return false;
+        }
+    }
+
+    private async validateLink(s1: SymbolDef, s2: SymbolDef): Promise<{ shouldLink: boolean, linkType?: string }> {
+        try {
+            const settings = await settingsService.getInferenceSettings();
+            const fastModel = settings.fastModel;
+            if (!fastModel) return { shouldLink: true, linkType: 'relates_to' };
+
+            const prompt = `Analyze the two symbols from a symbolic knowledge graph. Determine if there is a STRONG and MEANINGFUL semantic relationship between them that justifies an automated link.
+            
+            Symbol 1:
+            Name: ${s1.name}
+            Role: ${s1.role}
+            Macro: ${s1.macro}
+            Triad Group: ${s1.triad || 'None'}
+            Activation Conditions: ${JSON.stringify(s1.activation_conditions || [])}
+            
+            Symbol 2:
+            Name: ${s2.name}
+            Role: ${s2.role}
+            Macro: ${s2.macro}
+            Triad Group: ${s2.triad || 'None'}
+            Activation Conditions: ${JSON.stringify(s2.activation_conditions || [])}
+            
+            Should these symbols be linked? Output valid JSON only.
+            If "shouldLink" is true, you MUST choose the most appropriate "linkType" from this list:
+            - relates_to: General association
+            - depends_on: Symbol 1 requires Symbol 2 for its definition or function
+            - instance_of: Symbol 1 is a specific example of the class/concept Symbol 2
+            - part_of: Symbol 1 is a component of the aggregate Symbol 2
+            - informs: Symbol 1 provides context or data to Symbol 2
+            - constrained_by: Symbol 1 is limited or governed by the rule/invariant Symbol 2
+
+            {
+              "shouldLink": true/false,
+              "reason": "Brief explanation",
+              "linkType": "chosen_link_type"
+            }`;
+
+            let resultJson: any = {};
+
+            if (settings.provider === 'gemini') {
+                const client = await getGeminiClient();
+                const model = client.getGenerativeModel({ 
+                    model: fastModel,
+                    generationConfig: { responseMimeType: "application/json" }
+                });
+                const result = await model.generateContent(prompt);
+                const response = result.response.text();
+                resultJson = extractJson(response);
+            } else {
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                    model: fastModel,
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 800
+                });
+                const response = result.choices[0]?.message?.content || "{}";
+                resultJson = extractJson(response);
+            }
+
+            return { 
+                shouldLink: !!resultJson.shouldLink, 
+                linkType: resultJson.linkType || 'relates_to' 
+            };
+        } catch (error) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Link validation failed", { error });
+            return { shouldLink: false };
+        }
+    }
+
+    private async promoteToTentative(links: { sourceId: string, targetId: string, linkType: string, confidence: number }[]) {
+        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting ${links.length} predicted links to tentative store`);
+        for (const link of links) {
+            const tracePath = [
+                { symbol_id: link.sourceId }, 
+                { symbol_id: link.targetId, link_type: link.linkType, reason: 'Topology-based automated link prediction' }
+            ];
+            await tentativeLinkService.processTrace(tracePath);
+        }
+    }
+
+    private async mergeRedundantSymbols(groups: string[][]) {
+        for (const group of groups) {
+            const canonicalId = group[0];
+            const redundantIds = group.slice(1);
+            
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Merging redundant symbols into ${canonicalId}`, { redundantIds });
+            
+            for (const oldId of redundantIds) {
+                try {
+                    await domainService.mergeSymbols(canonicalId, oldId);
+                    eventBusService.emitKernelEvent(KernelEventType.SYMBOL_COMPRESSION, { 
+                        canonicalId, 
+                        redundantId: oldId 
+                    });
+                } catch (error) {
+                    loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed to merge ${oldId} into ${canonicalId}`, { error });
+                }
+            }
+        }
+    }
+}
+
+export const topologyService = new TopologyService();

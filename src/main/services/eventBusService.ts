@@ -16,7 +16,11 @@ export enum KernelEventType {
     CACHE_LOAD = 'cache:load',
     AGENT_HEARTBEAT = 'agent:heartbeat',
     PROJECT_IMPORT_STATUS = 'project:import-status',
-    SYSTEM_LOG = 'system:log'
+    SYSTEM_LOG = 'system:log',
+    SYMBOL_COMPRESSION = 'symbol:compression',
+    ORPHAN_DETECTED = 'orphan:detected',
+    TENTATIVE_LINK_CREATE = 'tentative:create',
+    TENTATIVE_LINK_DELETE = 'tentative:delete'
 }
 
 class EventBusService extends EventEmitter {

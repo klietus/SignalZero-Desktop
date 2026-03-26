@@ -17,6 +17,7 @@ import { ACTIVATION_PROMPT } from './symbolic_system/activation_prompt.js'
 import { projectService } from './services/projectService.js'
 import { mcpPromptService } from './services/mcpPromptService.js'
 import { traceService } from './services/traceService.js'
+import { topologyService } from './services/topologyService.js'
 import fs from 'fs'
 import { dialog } from 'electron'
 
@@ -407,6 +408,10 @@ ipcMain.handle('settings:get', async () => {
 
 ipcMain.handle('settings:update', async (_, settings) => {
   return await settingsService.update(settings);
+});
+
+ipcMain.handle('system:run-hygiene', async (_, strategy) => {
+  return await topologyService.analyze(strategy);
 });
 
 ipcMain.handle('system:is-initialized', () => {

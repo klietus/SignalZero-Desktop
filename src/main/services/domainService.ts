@@ -232,6 +232,38 @@ export const domainService = {
     return mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional })));
   },
 
+  async mergeSymbols(canonicalId: string, redundantId: string): Promise<void> {
+    loggerService.catInfo(LogCategory.DOMAIN, `Merging symbol ${redundantId} into ${canonicalId}`);
+
+    const canonical = await this.findById(canonicalId);
+    const redundant = await this.findById(redundantId);
+
+    if (!canonical || !redundant) {
+      throw new Error(`Symbol not found: ${!canonical ? canonicalId : redundantId}`);
+    }
+
+    // 1. Move links from redundant to canonical
+    if (redundant.linked_patterns) {
+      if (!canonical.linked_patterns) canonical.linked_patterns = [];
+
+      for (const link of redundant.linked_patterns) {
+        const targetId = typeof link === 'string' ? link : link.id;
+        if (targetId !== canonicalId && !canonical.linked_patterns.some(l => (typeof l === 'string' ? l : l.id) === targetId)) {
+          canonical.linked_patterns.push(link);
+        }
+      }
+    }
+
+    // 2. Save canonical
+    await this.addSymbol(canonical.symbol_domain, canonical);
+
+    // 3. Update all global links pointing to redundant to point to canonical
+    sqliteService.run(`UPDATE symbol_links SET target_id = ? WHERE target_id = ?`, [canonicalId, redundantId]);
+
+    // 4. Delete redundant symbol
+    await this.deleteSymbol(redundant.symbol_domain, redundantId);
+  },
+
   async deleteSymbol(domainId: string, symbolId: string): Promise<boolean> {
     const domain = await this.get(domainId);
     if (domain?.readOnly) throw new Error(`Domain '${domainId}' is read-only.`);

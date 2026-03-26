@@ -7,12 +7,6 @@ import { loggerService } from './loggerService.js';
 // In Electron, settings are stored in the user data directory
 const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
 
-export interface VoiceSettings {
-  pulseServer?: string;
-  wakeWord?: string;
-  voice?: string;
-}
-
 export interface McpConfiguration {
   id: string;
   name: string;
@@ -43,7 +37,6 @@ export interface InferenceConfiguration {
 
 export interface SystemSettings {
   inference?: Partial<InferenceSettings>;
-  voice?: VoiceSettings;
   serpApi?: {
     apiKey?: string;
   };
@@ -164,21 +157,6 @@ export const settingsService = {
     current.serpApi = {
       apiKey: encrypt(settings.apiKey ?? ''),
     };
-    saveToFile(current);
-  },
-
-  getVoiceSettings: async (): Promise<VoiceSettings> => {
-    const settings = loadFromFile();
-    return {
-      pulseServer: settings.voice?.pulseServer || '',
-      wakeWord: settings.voice?.wakeWord || 'axiom',
-      voice: settings.voice?.voice || 'af_sarah',
-    };
-  },
-
-  setVoiceSettings: async (settings: VoiceSettings) => {
-    const current = loadFromFile();
-    current.voice = settings;
     saveToFile(current);
   },
 
