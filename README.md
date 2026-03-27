@@ -17,6 +17,12 @@ SignalZero Desktop is a sophisticated recursive symbolic reasoning engine built 
 
 ## Installation
 
+### Via Homebrew (macOS)
+```bash
+brew install --cask ./signalzero-desktop.rb
+```
+
+### From Source
 Ensure you have [Node.js](https://nodejs.org/) installed on your system.
 
 1. Clone the repository:
