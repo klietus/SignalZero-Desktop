@@ -2,7 +2,6 @@ import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { domainService } from "./domainService.js";
 import { traceService } from "./traceService.js";
 import { SymbolDef, VectorSearchResult } from "../types.js";
-import { settingsService } from "./settingsService.js";
 import { symbolCacheService } from "./symbolCacheService.js";
 import { mcpClientService } from "./mcpClientService.js";
 import fs from 'fs';

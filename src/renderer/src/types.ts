@@ -85,6 +85,31 @@ export interface WebSearchProviderSettings {
   enabled: boolean;
 }
 
+export interface McpConfiguration {
+  id: string;
+  name: string;
+  endpoint: string;
+  token?: string;
+  enabled: boolean;
+}
+
+export interface GraphHygieneSettings {
+  positional: {
+    autoCompress: boolean;
+    autoLink: boolean;
+  };
+  semantic: {
+    autoCompress: boolean;
+    autoLink: boolean;
+  };
+  triadic: {
+    autoCompress: boolean;
+    autoLink: boolean;
+  };
+  deadLinkCleanup: boolean;
+  orphanAnalysis: boolean;
+}
+
 export interface SystemSettings {
   inference?: InferenceSettings;
   serpApi?: WebSearchProviderSettings;

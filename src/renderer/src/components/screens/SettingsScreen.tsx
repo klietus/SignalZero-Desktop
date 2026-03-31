@@ -335,7 +335,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                               <div className="space-y-6">
                                   <div className="flex items-center justify-between border-b pb-2">
                                       <div className="flex items-center gap-2 font-bold"><Search size={16} className="text-emerald-500" /> Web Search Providers</div>
-                                      <p className="text-[10px] text-gray-500 font-mono uppercase tracking-tighter">Failover Priority: SerpApi > Brave > Tavily</p>
+                                      <p className="text-[10px] text-gray-500 font-mono uppercase tracking-tighter">Failover Priority: SerpApi &gt; Brave &gt; Tavily</p>
                                   </div>
 
                                   {/* SerpApi */}
