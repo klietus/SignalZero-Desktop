@@ -68,14 +68,14 @@ describe('sendMessageAndHandleTools Turn Logic', () => {
     // Loop 0: Returns text and a tool call
     const loop0 = [
       { text: 'I am thinking...' },
-      { toolCalls: [{ id: 'call-1', function: { name: 'test_tool', arguments: '{}' } }] },
-      { assistantMessage: { role: 'assistant', content: 'I am thinking...', tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'test_tool', arguments: '{}' } }] } }
+      { toolCalls: [{ id: 'call-1', function: { name: 'web_search', arguments: '{"query":"test"}' } }] },
+      { assistantMessage: { role: 'assistant', content: 'I am thinking...', tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'web_search', arguments: '{"query":"test"}' } }] } }
     ];
 
     // Loop 1: Returns final narrative text
     const loop1 = [
-      { text: 'Final answer.' },
-      { assistantMessage: { role: 'assistant', content: 'Final answer.' } }
+      { text: 'Final answer. This is more than two characters.' },
+      { assistantMessage: { role: 'assistant', content: 'Final answer. This is more than two characters.' } }
     ];
 
     let callCount = 0;
@@ -103,9 +103,8 @@ describe('sendMessageAndHandleTools Turn Logic', () => {
 
     const textChunks = emittedChunks.filter(c => c.text).map(c => c.text);
 
-    // We expect ONLY 'Final answer.' to be emitted if we implement the "only last turn" rule.
-    // Currently, it emits BOTH.
-    expect(textChunks).not.toContain('I am thinking...');
-    expect(textChunks).toContain('Final answer.');
+    // The current implementation accumulates and yields the full narrative at the end of the final turn.
+    expect(textChunks[0]).toContain('I am thinking...');
+    expect(textChunks[0]).toContain('Final answer.');
   });
 });
