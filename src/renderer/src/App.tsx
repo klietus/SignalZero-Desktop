@@ -319,10 +319,15 @@ function App() {
             setMessages([]);
             return;
         }
+        
+        // Don't fetch history if we are currently processing a message, 
+        // as it would overwrite the active streaming state.
+        if (isProcessing) return;
+
         window.api.getHistory(activeContextId).then(history => {
             if (history) setMessages(groupHistoryByCorrelation(history));
         }).catch(e => console.error("History fetch failed", e));
-    }, [activeContextId, appState, currentView]);
+    }, [activeContextId, appState, currentView, isProcessing]);
 
     useEffect(() => {
         if (appState !== 'app') return;

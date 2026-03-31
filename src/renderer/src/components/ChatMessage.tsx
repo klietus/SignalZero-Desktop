@@ -159,9 +159,16 @@ const ThinkingBlock: React.FC<{ content: string }> = ({ content }) => {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick, onDomainClick, onTraceClick, onRetry, isVisible = true }) => {
   const isUser = message.role === Sender.USER;
   const isAssistantResponse = message.role !== Sender.USER;
-  const [showToolList, setShowToolList] = useState(false);
+  const [showToolList, setShowToolList] = useState(message.isStreaming && (message.toolCalls?.length ?? 0) > 0);
   const [showTraceList, setShowTraceList] = useState(false);
   const [copyLabel, setCopyLabel] = useState('Copy');
+
+  // Auto-expand tool list when streaming starts with tool calls
+  React.useEffect(() => {
+    if (message.isStreaming && (message.toolCalls?.length ?? 0) > 0) {
+      setShowToolList(true);
+    }
+  }, [message.isStreaming, message.toolCalls?.length]);
 
   // Extract traces and clean content
   const { traces, contentWithoutTraces } = useMemo(() => {
