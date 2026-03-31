@@ -35,11 +35,16 @@ export interface InferenceConfiguration {
   fastModel: string;
 }
 
+export interface WebSearchProviderSettings {
+  apiKey?: string;
+  enabled: boolean;
+}
+
 export interface SystemSettings {
   inference?: Partial<InferenceSettings>;
-  serpApi?: {
-    apiKey?: string;
-  };
+  serpApi?: WebSearchProviderSettings;
+  braveSearch?: WebSearchProviderSettings;
+  tavily?: WebSearchProviderSettings;
   hygiene?: GraphHygieneSettings;
   mcpConfigs?: McpConfiguration[];
 }
@@ -145,17 +150,53 @@ export const settingsService = {
     saveToFile(current);
   },
 
-  getSerpApiSettings: async (): Promise<{ apiKey: string }> => {
+  getSerpApiSettings: async (): Promise<WebSearchProviderSettings> => {
     const settings = loadFromFile();
     return {
       apiKey: decrypt(settings.serpApi?.apiKey || ''),
+      enabled: settings.serpApi?.enabled ?? false,
     };
   },
 
-  setSerpApiSettings: async (settings: { apiKey?: string }) => {
+  setSerpApiSettings: async (settings: WebSearchProviderSettings) => {
     const current = loadFromFile();
     current.serpApi = {
       apiKey: encrypt(settings.apiKey ?? ''),
+      enabled: settings.enabled,
+    };
+    saveToFile(current);
+  },
+
+  getBraveSearchSettings: async (): Promise<WebSearchProviderSettings> => {
+    const settings = loadFromFile();
+    return {
+      apiKey: decrypt(settings.braveSearch?.apiKey || ''),
+      enabled: settings.braveSearch?.enabled ?? false,
+    };
+  },
+
+  setBraveSearchSettings: async (settings: WebSearchProviderSettings) => {
+    const current = loadFromFile();
+    current.braveSearch = {
+      apiKey: encrypt(settings.apiKey ?? ''),
+      enabled: settings.enabled,
+    };
+    saveToFile(current);
+  },
+
+  getTavilySettings: async (): Promise<WebSearchProviderSettings> => {
+    const settings = loadFromFile();
+    return {
+      apiKey: decrypt(settings.tavily?.apiKey || ''),
+      enabled: settings.tavily?.enabled ?? false,
+    };
+  },
+
+  setTavilySettings: async (settings: WebSearchProviderSettings) => {
+    const current = loadFromFile();
+    current.tavily = {
+      apiKey: encrypt(settings.apiKey ?? ''),
+      enabled: settings.enabled,
     };
     saveToFile(current);
   },
@@ -204,10 +245,14 @@ export const settingsService = {
     // Return decrypted view for UI/Runtime use
     const inference = await settingsService.getInferenceSettings();
     const serpApi = await settingsService.getSerpApiSettings();
+    const braveSearch = await settingsService.getBraveSearchSettings();
+    const tavily = await settingsService.getTavilySettings();
     return {
         ...settings,
         inference,
-        serpApi
+        serpApi,
+        braveSearch,
+        tavily
     };
   },
 
@@ -229,10 +274,28 @@ export const settingsService = {
             apiKey: encrypt(settings.serpApi.apiKey || '')
         };
     }
+
+    if (settings.braveSearch) {
+        current.braveSearch = {
+            ...current.braveSearch,
+            ...settings.braveSearch,
+            apiKey: encrypt(settings.braveSearch.apiKey || '')
+        };
+    }
+
+    if (settings.tavily) {
+        current.tavily = {
+            ...current.tavily,
+            ...settings.tavily,
+            apiKey: encrypt(settings.tavily.apiKey || '')
+        };
+    }
     
     const otherSettings = { ...settings };
     delete otherSettings.inference;
     delete otherSettings.serpApi;
+    delete otherSettings.braveSearch;
+    delete otherSettings.tavily;
 
     saveToFile({ ...current, ...otherSettings });
   }

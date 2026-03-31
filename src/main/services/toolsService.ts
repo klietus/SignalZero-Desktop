@@ -11,6 +11,8 @@ import { promisify } from 'util';
 import os from 'os';
 import { loggerService } from "./loggerService.js";
 
+import { webSearchService } from "./webSearchService.js";
+
 const execAsync = promisify(exec);
 
 const SYMBOL_DATA_SCHEMA = {
@@ -325,12 +327,12 @@ export const createToolExecutor = (contextSessionId?: string) => {
       }
 
       case 'web_search': {
-        const settings = await settingsService.getSerpApiSettings();
-        if (!settings.apiKey) return { error: "SerpApi key not configured" };
-        const url = `https://serpapi.com/search?q=${encodeURIComponent(args.query)}&api_key=${settings.apiKey}&engine=google`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-        return { results: data.organic_results };
+        try {
+          const { results, provider } = await webSearchService.search(args.query);
+          return { results, provider };
+        } catch (e: any) {
+          return { error: e.message };
+        }
       }
 
       default:

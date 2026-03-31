@@ -80,44 +80,16 @@ export interface InferenceSettingsUpdate {
   fastModel?: string;
 }
 
-export interface SerpApiSettings {
+export interface WebSearchProviderSettings {
   apiKey?: string;
-}
-
-export interface VoiceSettings {
-  pulseServer?: string;
-  wakeWord?: string;
-  voice?: string;
-}
-
-export interface McpConfiguration {
-  id: string;
-  name: string;
-  endpoint: string;
-  token?: string;
   enabled: boolean;
-}
-
-export interface GraphHygieneSettings {
-  positional: {
-    autoCompress: boolean;
-    autoLink: boolean;
-  };
-  semantic: {
-    autoCompress: boolean;
-    autoLink: boolean;
-  };
-  triadic: {
-    autoCompress: boolean;
-    autoLink: boolean;
-  };
-  deadLinkCleanup: boolean;
-  orphanAnalysis: boolean;
 }
 
 export interface SystemSettings {
   inference?: InferenceSettings;
-  serpApi?: SerpApiSettings;
+  serpApi?: WebSearchProviderSettings;
+  braveSearch?: WebSearchProviderSettings;
+  tavily?: WebSearchProviderSettings;
   hygiene?: GraphHygieneSettings;
   mcpConfigs?: McpConfiguration[];
   ui?: {
@@ -127,7 +99,9 @@ export interface SystemSettings {
 
 export interface SystemSettingsUpdate {
   inference?: InferenceSettingsUpdate;
-  serpApi?: SerpApiSettings;
+  serpApi?: WebSearchProviderSettings;
+  braveSearch?: WebSearchProviderSettings;
+  tavily?: WebSearchProviderSettings;
   hygiene?: Partial<GraphHygieneSettings>;
   mcpConfigs?: McpConfiguration[];
   ui?: {

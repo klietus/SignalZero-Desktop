@@ -19,6 +19,7 @@ import { contextWindowService } from './contextWindowService.js';
 import { sqliteService } from './sqliteService.js';
 import { mcpClientService } from './mcpClientService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
+import { webSearchService } from './webSearchService.js';
 
 interface ChatSessionState {
   messages: ChatCompletionMessageParam[];
@@ -480,6 +481,7 @@ export async function* sendMessageAndHandleTools(
   const MAX_AUDIT_RETRIES = 3;
   const transientMessages: ChatCompletionMessageParam[] = [];
   let yieldedToolCalls: ChatCompletionMessageToolCall[] | undefined;
+  const accumulatedToolCalls: any[] = [];
 
   const isNarrativeText = (text: string) => {
     const trimmed = text.trim();
@@ -615,7 +617,13 @@ export async function* sendMessageAndHandleTools(
         }
         if (chunk.toolCalls) {
           yieldedToolCalls = chunk.toolCalls;
-          yield { toolCalls: chunk.toolCalls };
+          // Normalize for UI: use 'args' instead of 'arguments' to match ToolIndicator expectation
+          const normalizedCalls = chunk.toolCalls.map(tc => ({
+            id: tc.id,
+            name: tc.function?.name,
+            args: parseToolArguments(tc.function?.arguments || "").data
+          }));
+          yield { toolCalls: normalizedCalls as any };
         }
         if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
       }
@@ -640,8 +648,6 @@ export async function* sendMessageAndHandleTools(
       }
     }
 
-    totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
-
     let auditTriggered = false;
     let auditMessage = "";
     const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
@@ -651,11 +657,6 @@ export async function* sendMessageAndHandleTools(
     const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
     const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
     loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
-
-    // YIELD NARRATIVE ONLY ON FINAL TURN
-    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
-      yield { text: totalTextAccumulatedAcrossLoops.trim() };
-    }
 
     if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
       if (!traceSatisfied) {
@@ -678,6 +679,29 @@ export async function* sendMessageAndHandleTools(
         loggerService.catError(LogCategory.INFERENCE, "System Audit: Max retries reached. Proceeding despite violations.", { contextSessionId });
         auditTriggered = false;
       }
+    }
+
+    // --- SUCCESSFUL TURN ACCUMULATION ---
+    // Only accumulate narrative and tool calls if the turn passed audit
+    totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
+
+    if (yieldedToolCalls && yieldedToolCalls.length > 0) {
+      for (const call of yieldedToolCalls) {
+        // Avoid duplicate calls in the final history record (e.g. if assistant repeats them on retry)
+        if (!accumulatedToolCalls.some(tc => tc.id === call.id)) {
+          accumulatedToolCalls.push({
+            id: call.id,
+            name: call.function?.name,
+            args: parseToolArguments(call.function?.arguments || "").data,
+            result: null
+          });
+        }
+      }
+    }
+
+    // YIELD NARRATIVE ONLY ON FINAL TURN
+    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
+      yield { text: totalTextAccumulatedAcrossLoops.trim() };
     }
 
     // --- Tool Execution ---
@@ -704,6 +728,13 @@ export async function* sendMessageAndHandleTools(
 
         try {
           const result = await toolExecutor(toolName, args);
+          const toolCallIdx = accumulatedToolCalls.findIndex(tc => tc.id === call.id);
+          if (toolCallIdx !== -1) {
+            accumulatedToolCalls[toolCallIdx].result = result;
+          } else {
+            loggerService.catWarn(LogCategory.INFERENCE, "Result for untracked tool call", { toolName, callId: call.id });
+            accumulatedToolCalls.push({ id: call.id, name: toolName, args, result });
+          }
           toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: call.id });
           if (contextSessionId) {
             await contextService.recordMessage(contextSessionId, {
@@ -714,6 +745,10 @@ export async function* sendMessageAndHandleTools(
           }
         } catch (err) {
           loggerService.catError(LogCategory.INFERENCE, `Error executing tool ${toolName}`, { err });
+          const toolCallIdx = accumulatedToolCalls.findIndex(tc => tc.id === call.id);
+          if (toolCallIdx !== -1) {
+            accumulatedToolCalls[toolCallIdx].result = { error: String(err) };
+          }
           toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: call.id });
           if (contextSessionId) {
             await contextService.recordMessage(contextSessionId, {
@@ -740,11 +775,7 @@ export async function* sendMessageAndHandleTools(
           role: "assistant",
           content: stripThoughts(totalTextAccumulatedAcrossLoops),
           timestamp: new Date().toISOString(),
-          toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({
-            id: call.id,
-            name: call.function?.name,
-            arguments: call.function?.arguments
-          })),
+          toolCalls: accumulatedToolCalls,
           metadata: { kind: "assistant_response" },
           correlationId: correlationId
         } as any);
@@ -965,8 +996,6 @@ export const primeSymbolicContext = async (
       "suggested_name": string | null
     }`;
 
-    loggerService.catDebug(LogCategory.INFERENCE, "Fast model priming prompt", { prompt });
-
     let fastResponse: any = {};
     if (settings.provider === 'gemini') {
       const client = await getGeminiClient();
@@ -1010,25 +1039,22 @@ export const primeSymbolicContext = async (
     }
 
     if (fastResponse.web_search_needed && webSearchQueries.length > 0) {
-      const serpSettings = await settingsService.getSerpApiSettings();
-      if (serpSettings.apiKey) {
-        for (const q of webSearchQueries) {
-          try {
-            const url = `https://serpapi.com/search?q=${encodeURIComponent(q)}&api_key=${serpSettings.apiKey}&engine=google`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data.organic_results) {
-              webResults.push({ query: q, results: data.organic_results.slice(0, 5).map((r: any) => ({ title: r.title, snippet: r.snippet, url: r.link })) });
-            }
-          } catch (e) { }
+      for (const q of webSearchQueries) {
+        try {
+          const { results, provider } = await webSearchService.search(q);
+          if (results.length > 0) {
+            webResults.push({ query: q, results: results.slice(0, 5), provider });
+          }
+        } catch (e) {
+          loggerService.catError(LogCategory.INFERENCE, "Anticipated web search failed", { query: q, error: e });
         }
-        if (webResults.length > 0) {
-          webBrief = await synthesizeWebResults(webResults);
-          await contextService.recordMessage(contextSessionId, {
-            id: randomUUID(), role: "system", content: `[System] Executed ${webResults.length} anticipated web searches for grounding.`,
-            timestamp: new Date().toISOString(), metadata: { kind: "anticipated_web_search", queries: webSearchQueries, resultsCount: webResults.length }
-          } as any);
-        }
+      }
+      if (webResults.length > 0) {
+        webBrief = await synthesizeWebResults(webResults);
+        await contextService.recordMessage(contextSessionId, {
+          id: randomUUID(), role: "system", content: `[System] Executed ${webResults.length} anticipated web searches for grounding.`,
+          timestamp: new Date().toISOString(), metadata: { kind: "anticipated_web_search", queries: webSearchQueries, resultsCount: webResults.length }
+        } as any);
       }
     }
   } catch (e) { loggerService.catError(LogCategory.INFERENCE, "Priming failed", { error: e }); }

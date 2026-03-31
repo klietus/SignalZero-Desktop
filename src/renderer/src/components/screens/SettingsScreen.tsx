@@ -20,9 +20,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   
-  // SerpApi State
+  // Web Search State
   const [serpApiKey, setSerpApiKey] = useState('');
-  
+  const [serpApiEnabled, setSerpApiEnabled] = useState(false);
+  const [braveApiKey, setBraveApiKey] = useState('');
+  const [braveEnabled, setBraveEnabled] = useState(false);
+  const [tavilyApiKey, setTavilyApiKey] = useState('');
+  const [tavilyEnabled, setTavilyEnabled] = useState(false);
+
   // Inference State
   const [inferenceProvider, setInferenceProvider] = useState<'local' | 'openai' | 'gemini' | 'kimi2'>('local');
   const [inferenceApiKey, setInferenceApiKey] = useState('');
@@ -100,6 +105,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const hydrateSettings = (settings: any) => {
     const inference = settings.inference || {};
     const serpApi = settings.serpApi || {};
+    const braveSearch = settings.braveSearch || {};
+    const tavily = settings.tavily || {};
     const hygiene = settings.hygiene || {
         positional: { autoCompress: false, autoLink: false },
         semantic: { autoCompress: false, autoLink: false },
@@ -109,6 +116,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     };
 
     setSerpApiKey(serpApi.apiKey || '');
+    setSerpApiEnabled(serpApi.enabled ?? false);
+    setBraveApiKey(braveSearch.apiKey || '');
+    setBraveEnabled(braveSearch.enabled ?? false);
+    setTavilyApiKey(tavily.apiKey || '');
+    setTavilyEnabled(tavily.enabled ?? false);
+
     setMcpConfigs(settings.mcpConfigs || []);
 
     setShowGraphviz(settings.ui?.showGraphviz ?? true);
@@ -207,7 +220,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
         await window.api.updateSettings({
             ui: { showGraphviz },
-            serpApi: { apiKey: serpApiKey },
+            serpApi: { apiKey: serpApiKey, enabled: serpApiEnabled },
+            braveSearch: { apiKey: braveApiKey, enabled: braveEnabled },
+            tavily: { apiKey: tavilyApiKey, enabled: tavilyEnabled },
             hygiene: hygieneSettings,
             inference: {
                 provider: inferenceProvider,
@@ -316,10 +331,57 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
                   {activeTab === 'services' && (
                       <section className="space-y-6">
-                          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-6">
-                              <div className="space-y-4">
-                                  <div className="flex items-center gap-2 font-bold border-b pb-2"><Search size={16} className="text-emerald-500" /> SerpApi Key</div>
-                                  <input type="password" value={serpApiKey} onChange={(e) => setSerpApiKey(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
+                          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-8">
+                              <div className="space-y-6">
+                                  <div className="flex items-center justify-between border-b pb-2">
+                                      <div className="flex items-center gap-2 font-bold"><Search size={16} className="text-emerald-500" /> Web Search Providers</div>
+                                      <p className="text-[10px] text-gray-500 font-mono uppercase tracking-tighter">Failover Priority: SerpApi > Brave > Tavily</p>
+                                  </div>
+
+                                  {/* SerpApi */}
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="flex items-center justify-between">
+                                          <div className="font-bold text-sm">SerpApi (Google)</div>
+                                          <label className="relative inline-flex items-center cursor-pointer">
+                                              <input type="checkbox" className="sr-only peer" checked={serpApiEnabled} onChange={(e) => setSerpApiEnabled(e.target.checked)} />
+                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                                          </label>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 font-mono">API Key</label>
+                                          <input type="password" value={serpApiKey} onChange={(e) => setSerpApiKey(e.target.value)} className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" placeholder="Enter SerpApi Key" />
+                                      </div>
+                                  </div>
+
+                                  {/* Brave Search */}
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="flex items-center justify-between">
+                                          <div className="font-bold text-sm">Brave Search</div>
+                                          <label className="relative inline-flex items-center cursor-pointer">
+                                              <input type="checkbox" className="sr-only peer" checked={braveEnabled} onChange={(e) => setBraveEnabled(e.target.checked)} />
+                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                                          </label>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 font-mono">API Key</label>
+                                          <input type="password" value={braveApiKey} onChange={(e) => setBraveApiKey(e.target.value)} className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" placeholder="Enter Brave Search API Key" />
+                                      </div>
+                                  </div>
+
+                                  {/* Tavily */}
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="flex items-center justify-between">
+                                          <div className="font-bold text-sm">Tavily Search</div>
+                                          <label className="relative inline-flex items-center cursor-pointer">
+                                              <input type="checkbox" className="sr-only peer" checked={tavilyEnabled} onChange={(e) => setTavilyEnabled(e.target.checked)} />
+                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                                          </label>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 font-mono">API Key</label>
+                                          <input type="password" value={tavilyApiKey} onChange={(e) => setTavilyApiKey(e.target.value)} className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" placeholder="Enter Tavily API Key" />
+                                      </div>
+                                  </div>
                               </div>
                           </div>
                       </section>

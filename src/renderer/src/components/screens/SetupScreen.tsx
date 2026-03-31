@@ -15,8 +15,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onComplete }) => {
     const [inferenceModel, setInferenceModel] = useState('openai/gpt-oss-120b');
     const [inferenceFastModel, setInferenceFastModel] = useState('qwen/qwen3.5-0.8b');
 
-    // SerpApi
+    // Web Search
     const [serpApiKey, setSerpApiKey] = useState('');
+    const [braveApiKey, setBraveApiKey] = useState('');
+    const [tavilyApiKey, setTavilyApiKey] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,9 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onComplete }) => {
 
         try {
             await window.api.updateSettings({
-                serpApi: { apiKey: serpApiKey },
+                serpApi: { apiKey: serpApiKey, enabled: !!serpApiKey },
+                braveSearch: { apiKey: braveApiKey, enabled: !!braveApiKey },
+                tavily: { apiKey: tavilyApiKey, enabled: !!tavilyApiKey },
                 inference: {
                     provider: inferenceProvider,
                     apiKey: inferenceApiKey,
@@ -177,15 +181,37 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onComplete }) => {
                         {/* Search Section */}
                         <section className="space-y-4">
                             <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 font-mono">3. Grounding (Optional)</h3>
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-600 dark:text-gray-400 font-mono block">SerpApi Key</label>
-                                <input 
-                                    type="password" 
-                                    value={serpApiKey}
-                                    onChange={(e) => setSerpApiKey(e.target.value)}
-                                    placeholder="Optional: Used for real-time web search grounding"
-                                    className="w-full bg-gray-100 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                                />
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400 font-mono block">SerpApi Key</label>
+                                    <input 
+                                        type="password" 
+                                        value={serpApiKey}
+                                        onChange={(e) => setSerpApiKey(e.target.value)}
+                                        placeholder="Optional: Google Search grounding"
+                                        className="w-full bg-gray-100 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400 font-mono block">Brave Search Key</label>
+                                    <input 
+                                        type="password" 
+                                        value={braveApiKey}
+                                        onChange={(e) => setBraveApiKey(e.target.value)}
+                                        placeholder="Optional: Brave Search grounding"
+                                        className="w-full bg-gray-100 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400 font-mono block">Tavily API Key</label>
+                                    <input 
+                                        type="password" 
+                                        value={tavilyApiKey}
+                                        onChange={(e) => setTavilyApiKey(e.target.value)}
+                                        placeholder="Optional: Tavily Search grounding"
+                                        className="w-full bg-gray-100 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                    />
+                                </div>
                             </div>
                         </section>
 

@@ -54,12 +54,35 @@ describe('SettingsService with safeStorage', () => {
     });
 
     it('should handle SerpApi encryption', async () => {
-        await settingsService.setSerpApiSettings({ apiKey: 'serp-secret' });
+        await settingsService.setSerpApiSettings({ apiKey: 'serp-secret', enabled: true });
         
         const retrieved = await settingsService.getSerpApiSettings();
         expect(retrieved.apiKey).toBe('serp-secret');
+        expect(retrieved.enabled).toBe(true);
         
         const onDisk = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'settings.json'), 'utf8'));
         expect(onDisk.serpApi.apiKey).not.toBe('serp-secret');
+    });
+
+    it('should handle Brave Search encryption', async () => {
+        await settingsService.setBraveSearchSettings({ apiKey: 'brave-secret', enabled: true });
+        
+        const retrieved = await settingsService.getBraveSearchSettings();
+        expect(retrieved.apiKey).toBe('brave-secret');
+        expect(retrieved.enabled).toBe(true);
+        
+        const onDisk = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'settings.json'), 'utf8'));
+        expect(onDisk.braveSearch.apiKey).not.toBe('brave-secret');
+    });
+
+    it('should handle Tavily encryption', async () => {
+        await settingsService.setTavilySettings({ apiKey: 'tavily-secret', enabled: false });
+        
+        const retrieved = await settingsService.getTavilySettings();
+        expect(retrieved.apiKey).toBe('tavily-secret');
+        expect(retrieved.enabled).toBe(false);
+        
+        const onDisk = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'settings.json'), 'utf8'));
+        expect(onDisk.tavily.apiKey).not.toBe('tavily-secret');
     });
 });
