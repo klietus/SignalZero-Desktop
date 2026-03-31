@@ -562,15 +562,16 @@ function App() {
                     />
                 )}
 
-                <div className={`flex-1 flex flex-col min-w-0 bg-transparent relative z-10 ${isChatActive ? 'pointer-events-none' : ''}`}>
+                <div className={`flex-1 flex flex-col min-w-0 bg-transparent relative z-10`}>
                     {/* Persistent Chat View */}
-                    <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${isChatActive ? 'opacity-100' : 'opacity-0 pointer-events-none'} ${isChatActive && isGraphView ? 'z-0 pointer-events-none' : 'z-20 pointer-events-auto'}`}>
+                    <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 
+                        ${isChatActive && !isGraphView ? 'opacity-100 z-30 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}>
                         <div className="flex flex-col h-full w-full">
                             <div className="pointer-events-auto w-full z-50">
                                 <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
                             </div>
                             
-                            <div className={`flex-1 flex flex-col min-h-0 transition-opacity duration-300 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}`}>
+                            <div className={`flex-1 flex flex-col min-h-0`}>
                                 <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-transparent pointer-events-none">
                                     <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-none">
                                         {messages.length === 0 ? (
@@ -581,10 +582,10 @@ function App() {
                                             </div>
                                         ) : (
                                             messages.map((msg) => (
-                                                <div key={msg.id} className={isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}>
+                                                <div key={msg.id} className="pointer-events-auto">
                                                     <ChatMessage
                                                         message={msg}
-                                                        isVisible={!isGraphView && isChatActive}
+                                                        isVisible={isChatActive && !isGraphView}
                                                         onSymbolClick={(_id, data) => { 
                                                             if (data) setSelectedSymbol(data);
                                                             setSelectedDomainId(data?.symbol_domain || null);
@@ -599,15 +600,15 @@ function App() {
                                                             setIsTracePanelOpen(true);
                                                         }}
                                                         onRetry={handleSendMessage}
-                                                    />                                            </div>
+                                                    />
+                                                </div>
                                             ))
                                         )}
                                     </div>
                                 </div>
 
-
-                                <div className={`p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pointer-events-none transition-opacity duration-300 ${isGraphView ? 'opacity-0' : 'opacity-100'}`}>
-                                    <div className={`w-full max-w-full mx-auto ${isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}`}>
+                                <div className={`p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pointer-events-none`}>
+                                    <div className="w-full max-w-full mx-auto pointer-events-auto">
                                         <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
                                     </div>
                                 </div>
@@ -615,8 +616,9 @@ function App() {
                         </div>
                     </div>
 
-                    {/* Other Views */}
-                    <div className={`flex-1 flex flex-col min-h-0 ${!isChatActive ? 'opacity-100 pointer-events-auto z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+                    {/* Other Views (Settings, Store, etc) */}
+                    <div className={`flex-1 flex flex-col min-h-0 transition-opacity duration-300
+                        ${!isChatActive ? 'opacity-100 z-30 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}>
                         {renderCurrentView()}
                     </div>
 
