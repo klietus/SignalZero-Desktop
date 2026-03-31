@@ -481,7 +481,6 @@ export async function* sendMessageAndHandleTools(
   const MAX_AUDIT_RETRIES = 3;
   const transientMessages: ChatCompletionMessageParam[] = [];
   let yieldedToolCalls: ChatCompletionMessageToolCall[] | undefined;
-  const accumulatedToolCalls: any[] = [];
 
   const isNarrativeText = (text: string) => {
     const trimmed = text.trim();
@@ -617,13 +616,7 @@ export async function* sendMessageAndHandleTools(
         }
         if (chunk.toolCalls) {
           yieldedToolCalls = chunk.toolCalls;
-          // Normalize for UI: use 'args' instead of 'arguments' to match ToolIndicator expectation
-          const normalizedCalls = chunk.toolCalls.map(tc => ({
-            id: tc.id,
-            name: tc.function?.name,
-            args: parseToolArguments(tc.function?.arguments || "").data
-          }));
-          yield { toolCalls: normalizedCalls as any };
+          yield { toolCalls: chunk.toolCalls };
         }
         if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
       }
@@ -645,6 +638,46 @@ export async function* sendMessageAndHandleTools(
           loggerService.catWarn(LogCategory.INFERENCE, "Detected malformed JSON in tool call.", { callId: call.id, toolName: call.function.name });
           call.function.arguments = "{}";
         }
+      }
+    }
+
+    totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
+
+    let auditTriggered = false;
+    let auditMessage = "";
+    const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
+    const isCallingTraceThisTurn = currentToolNames.has('log_trace');
+    const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
+    const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
+    const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
+    const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
+    loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
+
+    // YIELD NARRATIVE ONLY ON FINAL TURN
+    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
+      yield { text: totalTextAccumulatedAcrossLoops.trim() };
+    }
+
+    if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
+      if (!traceSatisfied) {
+        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
+        auditTriggered = true;
+      }
+    }
+
+    if (auditTriggered) {
+      if (auditRetries < MAX_AUDIT_RETRIES) {
+        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Missing required check.", { contextSessionId, auditRetries, hasLoggedTrace });
+
+        const finalAuditMessage = auditMessage + "Retry immediately to satisfy the audit message. Do not acknowledge this message.";
+
+        transientMessages.push(nextAssistant!);
+        transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${finalAuditMessage}` });
+        auditRetries++;
+        continue;
+      } else {
+        loggerService.catError(LogCategory.INFERENCE, "System Audit: Max retries reached. Proceeding despite violations.", { contextSessionId });
+        auditTriggered = false;
       }
     }
 
@@ -672,13 +705,6 @@ export async function* sendMessageAndHandleTools(
 
         try {
           const result = await toolExecutor(toolName, args);
-          const toolCallIdx = accumulatedToolCalls.findIndex(tc => tc.id === call.id);
-          if (toolCallIdx !== -1) {
-            accumulatedToolCalls[toolCallIdx].result = result;
-          } else {
-            loggerService.catWarn(LogCategory.INFERENCE, "Result for untracked tool call", { toolName, callId: call.id });
-            accumulatedToolCalls.push({ id: call.id, name: toolName, args, result });
-          }
           toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: call.id });
           if (contextSessionId) {
             await contextService.recordMessage(contextSessionId, {
@@ -689,10 +715,6 @@ export async function* sendMessageAndHandleTools(
           }
         } catch (err) {
           loggerService.catError(LogCategory.INFERENCE, `Error executing tool ${toolName}`, { err });
-          const toolCallIdx = accumulatedToolCalls.findIndex(tc => tc.id === call.id);
-          if (toolCallIdx !== -1) {
-            accumulatedToolCalls[toolCallIdx].result = { error: String(err) };
-          }
           toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: call.id });
           if (contextSessionId) {
             await contextService.recordMessage(contextSessionId, {
@@ -705,70 +727,10 @@ export async function* sendMessageAndHandleTools(
       }
     }
 
-    // Update transient messages for the audit or next loop
-    const currentAssistantMessage = nextAssistant!;
-    const turnToolResponses = [...toolResponses];
-
-    let auditTriggered = false;
-    let auditMessage = "";
-    const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
-    const isCallingTraceThisTurn = currentToolNames.has('log_trace');
-    const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
-    const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
-    const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
-    const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
-    loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
-
-    if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
-      if (!traceSatisfied) {
-        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
-        auditTriggered = true;
-      }
-    }
-
-    if (auditTriggered) {
-      if (auditRetries < MAX_AUDIT_RETRIES) {
-        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Missing required check.", { contextSessionId, auditRetries, hasLoggedTrace });
-
-        const finalAuditMessage = auditMessage + "Retry immediately to satisfy the audit message. Do not acknowledge this message.";
-
-        transientMessages.push(currentAssistantMessage);
-        if (turnToolResponses.length > 0) transientMessages.push(...turnToolResponses);
-        transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${finalAuditMessage}` });
-        auditRetries++;
-        continue;
-      } else {
-        loggerService.catError(LogCategory.INFERENCE, "System Audit: Max retries reached. Proceeding despite violations.", { contextSessionId });
-        auditTriggered = false;
-      }
-    }
-
-    // --- SUCCESSFUL TURN ACCUMULATION ---
-    // Only accumulate narrative and tool calls if the turn passed audit (or max retries reached)
-    totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
-
-    if (yieldedToolCalls && yieldedToolCalls.length > 0) {
-      for (const call of yieldedToolCalls) {
-        // Avoid duplicate calls in the final history record
-        if (!accumulatedToolCalls.some(tc => tc.id === call.id)) {
-          accumulatedToolCalls.push({
-            id: call.id,
-            name: call.function?.name,
-            args: parseToolArguments(call.function?.arguments || "").data,
-            result: null
-          });
-        }
-      }
-    }
-
-    // YIELD NARRATIVE ONLY ON FINAL TURN
-    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
-      yield { text: totalTextAccumulatedAcrossLoops.trim() };
-    }
-
-    transientMessages.push(currentAssistantMessage);
-    if (turnToolResponses.length > 0) {
-      transientMessages.push(...turnToolResponses);
+    // Update transient messages for the next loop
+    transientMessages.push(nextAssistant!);
+    if (toolResponses.length > 0) {
+      transientMessages.push(...toolResponses);
     }
 
     if (isEndingTurn) {
@@ -779,7 +741,11 @@ export async function* sendMessageAndHandleTools(
           role: "assistant",
           content: stripThoughts(totalTextAccumulatedAcrossLoops),
           timestamp: new Date().toISOString(),
-          toolCalls: accumulatedToolCalls,
+          toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({
+            id: call.id,
+            name: call.function?.name,
+            arguments: call.function?.arguments
+          })),
           metadata: { kind: "assistant_response" },
           correlationId: correlationId
         } as any);
@@ -999,6 +965,8 @@ export const primeSymbolicContext = async (
       "trace_reason": "Brief explanation if trace_needed is true",
       "suggested_name": string | null
     }`;
+
+    loggerService.catDebug(LogCategory.INFERENCE, "Fast model priming prompt", { prompt });
 
     let fastResponse: any = {};
     if (settings.provider === 'gemini') {
