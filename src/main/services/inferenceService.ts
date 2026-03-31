@@ -966,8 +966,6 @@ export const primeSymbolicContext = async (
       "suggested_name": string | null
     }`;
 
-    loggerService.catDebug(LogCategory.INFERENCE, "Fast model priming prompt", { prompt });
-
     let fastResponse: any = {};
     if (settings.provider === 'gemini') {
       const client = await getGeminiClient();
