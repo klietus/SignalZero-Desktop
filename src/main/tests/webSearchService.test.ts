@@ -10,12 +10,20 @@ vi.mock('../services/settingsService.js', () => ({
   }
 }));
 
-vi.mock('../services/loggerService.js', () => ({
-  loggerService: {
-    info: vi.fn(),
-    error: vi.fn()
-  }
-}));
+vi.mock('../services/loggerService.js', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    loggerService: {
+      info: vi.fn(),
+      error: vi.fn(),
+      catInfo: vi.fn(),
+      catDebug: vi.fn(),
+      catError: vi.fn(),
+      log: vi.fn(),
+    }
+  };
+});
 
 describe('webSearchService failover', () => {
   beforeEach(() => {
@@ -30,7 +38,12 @@ describe('webSearchService failover', () => {
 
     // Mock SerpApi failure
     (global.fetch as any)
-      .mockResolvedValueOnce({ ok: false, statusText: 'Forbidden' }) // SerpApi
+      .mockResolvedValueOnce({ 
+        ok: false, 
+        status: 403,
+        statusText: 'Forbidden',
+        json: async () => ({ error: 'Invalid API Key' })
+      }) // SerpApi
       .mockResolvedValueOnce({ 
         ok: true, 
         json: async () => ({ web: { results: [{ title: 'Brave Result', url: 'http://brave.com', description: 'desc' }] } }) 
@@ -64,8 +77,13 @@ describe('webSearchService failover', () => {
     (settingsService.getBraveSearchSettings as any).mockResolvedValue({ apiKey: 'brave-key', enabled: false });
     (settingsService.getTavilySettings as any).mockResolvedValue({ apiKey: 'tavily-key', enabled: false });
 
-    (global.fetch as any).mockResolvedValue({ ok: false, statusText: 'Service Unavailable' });
+    (global.fetch as any).mockResolvedValue({ 
+      ok: false, 
+      status: 503,
+      statusText: 'Service Unavailable',
+      json: async () => ({})
+    });
 
-    await expect(webSearchService.search('test query')).rejects.toThrow('SerpApi failed: Service Unavailable');
+    await expect(webSearchService.search('test query')).rejects.toThrow('SerpApi failed: 503 Service Unavailable');
   });
 });
