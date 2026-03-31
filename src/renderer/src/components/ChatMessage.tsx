@@ -159,7 +159,7 @@ const ThinkingBlock: React.FC<{ content: string }> = ({ content }) => {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick, onDomainClick, onTraceClick, onRetry, isVisible = true }) => {
   const isUser = message.role === Sender.USER;
   const isAssistantResponse = message.role !== Sender.USER;
-  const [showToolList, setShowToolList] = useState(message.toolCalls && message.toolCalls.length > 0);
+  const [showToolList, setShowToolList] = useState(false);
   const [showTraceList, setShowTraceList] = useState(false);
   const [copyLabel, setCopyLabel] = useState('Copy');
 

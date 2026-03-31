@@ -174,7 +174,7 @@ export const lancedbService = {
         }
     },
 
-    async search(query: string, nResults: number = 5, metadataFilter?: Record<string, any>): Promise<VectorSearchResult[]> {
+    async search(query: string, nResults: number = 5, filter?: Record<string, any>): Promise<VectorSearchResult[]> {
         try {
             const table = await getTable();
             if (!table) return [];
@@ -183,20 +183,30 @@ export const lancedbService = {
             
             let searchBuilder = table.search(queryVector).limit(nResults);
             
-            if (metadataFilter) {
+            let metadataFilter = filter;
+            if (filter?.metadata_filter) {
+                metadataFilter = filter.metadata_filter;
+            }
+
+            if (metadataFilter && Object.keys(metadataFilter).length > 0) {
                 const filterParts: string[] = [];
                 for (const [key, value] of Object.entries(metadataFilter)) {
+                    if (key === 'metadata_filter') continue;
+
                     if (Array.isArray(value)) {
                         const vals = value.map(v => typeof v === 'string' ? `'${v}'` : v).join(', ');
                         filterParts.push(`${key} IN (${vals})`);
                     } else if (typeof value === 'string') {
                         filterParts.push(`${key} = '${value}'`);
+                    } else if (value !== null && typeof value === 'object') {
+                        console.warn(`[LanceDB] Unsupported nested filter for key: ${key}`, value);
                     } else {
                         filterParts.push(`${key} = ${value}`);
                     }
                 }
                 if (filterParts.length > 0) {
-                    searchBuilder = searchBuilder.where(filterParts.join(' AND '));
+                    const filterStr = filterParts.join(' AND ');
+                    searchBuilder = searchBuilder.where(filterStr);
                 }
             }
 
@@ -249,6 +259,11 @@ export const lancedbService = {
 
     async removeSymbol(symbolId: string): Promise<boolean> {
         return this.deleteSymbol(symbolId);
+    },
+
+    // Test utility
+    __resetDb() {
+        db = null;
     },
 
     async syncLanceDB(allSqlSymbols: SymbolDef[]): Promise<{ deleted: number, updated: number }> {

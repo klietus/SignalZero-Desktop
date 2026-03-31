@@ -2,6 +2,12 @@
 
 SignalZero Recursive Symbolic Kernel - Desktop Edition.
 
+## Demo
+
+[![SignalZero Desktop Demo](https://img.youtube.com/vi/Ys6TIy5-0Gs/maxresdefault.jpg)](https://youtu.be/Ys6TIy5-0Gs)
+
+*Click the image above to watch the demo on YouTube.*
+
 ## Overview
 
 SignalZero Desktop is a sophisticated recursive symbolic reasoning engine built as a desktop application using Electron, Vite, and React. It provides a robust environment for managing symbolic contexts, executing tool-based reasoning, and visualizing complex information traces.

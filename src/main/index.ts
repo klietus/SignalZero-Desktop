@@ -268,6 +268,16 @@ app.whenReady().then(async () => {
       loggerService.catError(LogCategory.KERNEL, "Background vector index sync failed", { error });
     }
   }, 5 * 60 * 1000);
+
+  // Background topology analysis: run hygiene every 15 minutes
+  setInterval(async () => {
+    try {
+      loggerService.catInfo(LogCategory.SYSTEM, "Starting background graph hygiene run...");
+      await topologyService.analyze();
+    } catch (error: any) {
+      loggerService.catError(LogCategory.SYSTEM, "Background graph hygiene failed", { error: error.message });
+    }
+  }, 15 * 60 * 1000);
   electronApp.setAppUserModelId('com.signalzero.desktop')
 
   app.on('browser-window-created', (_, window) => {
