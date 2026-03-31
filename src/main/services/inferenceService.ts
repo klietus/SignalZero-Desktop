@@ -604,16 +604,9 @@ export async function* sendMessageAndHandleTools(
             let textToYield = processedText;
             if (isFirstTextChunkInTurn && totalTextAccumulatedAcrossLoops.length > 0) textToYield = "\n\n" + textToYield;
 
-            loggerService.catDebug(LogCategory.INFERENCE, "Streaming chunk", {
-              text: textToYield,
-              isFirst: isFirstTextChunkInTurn,
-              loop: loops
-            });
-
             textAccumulatedInTurn += textToYield;
             isFirstTextChunkInTurn = false;
-          }
-        }
+          }        }
         if (chunk.toolCalls) {
           yieldedToolCalls = chunk.toolCalls;
           yield { toolCalls: chunk.toolCalls };
