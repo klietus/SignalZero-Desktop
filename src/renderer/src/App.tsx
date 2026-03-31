@@ -564,13 +564,13 @@ function App() {
 
                 <div className={`flex-1 flex flex-col min-w-0 bg-transparent relative z-10 ${isChatActive ? 'pointer-events-none' : ''}`}>
                     {/* Persistent Chat View */}
-                    <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${isChatActive ? 'opacity-100 pointer-events-auto z-20' : 'opacity-0 pointer-events-none z-0'}`}>
+                    <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${isChatActive ? 'opacity-100' : 'opacity-0 pointer-events-none'} ${isChatActive && isGraphView ? 'z-0 pointer-events-none' : 'z-20 pointer-events-auto'}`}>
                         <div className="flex flex-col h-full w-full">
-                            <div className="pointer-events-auto w-full z-30">
+                            <div className="pointer-events-auto w-full z-50">
                                 <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
                             </div>
                             
-                            <div className={`flex-1 flex flex-col min-h-0 transition-opacity duration-300 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                            <div className={`flex-1 flex flex-col min-h-0 transition-opacity duration-300 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}`}>
                                 <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-transparent pointer-events-none">
                                     <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-none">
                                         {messages.length === 0 ? (
