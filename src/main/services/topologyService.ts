@@ -27,6 +27,7 @@ class TopologyService {
     private readonly CONFIDENCE_THRESHOLD = 0.85;
     private readonly REDUNDANCY_THRESHOLD = 0.98;
     private isAnalyzing = false;
+    private lastRunTimestamp: string | null = null;
 
     constructor() {}
 
@@ -44,11 +45,13 @@ class TopologyService {
         try {
             this.isAnalyzing = true;
             const hygiene = overrideSettings || await settingsService.getHygieneSettings();
+            const currentRunTimestamp = new Date().toISOString();
 
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting topology analysis", { 
                 strategy: specificStrategy || 'full', 
                 hygiene,
-                isOverride: !!overrideSettings 
+                isOverride: !!overrideSettings,
+                lastRun: this.lastRunTimestamp
             });
             
             // 1. Fetch all symbols
@@ -87,7 +90,7 @@ class TopologyService {
 
             // --- STRATEGY: Semantic (Vector) Analysis ---
             if (canRunRelational && (specificStrategy === 'semantic' || (specificStrategy === undefined && (hygiene.semantic.autoCompress || hygiene.semantic.autoLink)))) {
-                const semanticResults = await this.runSemanticAnalysis(symbols, hygiene);
+                const semanticResults = await this.runSemanticAnalysis(symbols, hygiene, this.lastRunTimestamp);
                 newLinksPredicted += semanticResults.newLinks;
                 redundantSymbolsFound += semanticResults.redundantCount;
             }
@@ -118,6 +121,7 @@ class TopologyService {
                 redundantSymbolsFound
             };
 
+            this.lastRunTimestamp = currentRunTimestamp;
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Analysis complete", stats);
             return stats;
 
@@ -132,33 +136,81 @@ class TopologyService {
         }
     }
 
-    private async runSemanticAnalysis(symbols: SymbolDef[], hygiene: GraphHygieneSettings) {
+    private async runSemanticAnalysis(symbols: SymbolDef[], hygiene: GraphHygieneSettings, lastRun: string | null) {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting semantic analysis", { symbolCount: symbols.length });
         let newLinksCount = 0;
         let redundantCount = 0;
+
+        // 1. Scoring helper for choosing the canonical symbol
+        const getPriorityScore = (s: SymbolDef): number => {
+            let score = 0;
+            // Favor descriptive IDs over UUIDs
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s.id);
+            if (!isUuid) score += 100;
+            
+            // Domain priority
+            if (s.symbol_domain === 'user') score += 50;
+            else if (s.symbol_domain === 'root') score += 30;
+            else if (s.symbol_domain === 'state') score += 10;
+
+            // Timestamp (most recent is slightly better)
+            if (s.updated_at) score += (new Date(s.updated_at).getTime() / 1e12); 
+
+            return score;
+        };
+
+        // 2. Check for updates helper
+        const wasUpdated = (s: SymbolDef): boolean => {
+            if (!lastRun || !s.updated_at) return true;
+            return new Date(s.updated_at) > new Date(lastRun);
+        };
 
         const texts = symbols.map(s => `${s.name}: ${s.role}`);
         
         let embeddings: number[][] = [];
         try {
             embeddings = await embedTexts(texts);
-        } catch (embErr) {
-            loggerService.catError(LogCategory.KERNEL, "TopologyService: Embedding failed", { error: embErr });
+        } catch (embErr: any) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Semantic analysis failed at embedding stage", { 
+                error: embErr.message || String(embErr),
+                symbolCount: symbols.length 
+            });
             return { newLinks: 0, redundantCount: 0 };
         }
 
         const N = symbols.length;
-        if (embeddings.length !== N) return { newLinks: 0, redundantCount: 0 };
+        if (embeddings.length !== N) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Embedding count mismatch", { 
+                expected: N, 
+                received: embeddings.length 
+            });
+            return { newLinks: 0, redundantCount: 0 };
+        }
+
+        // Helper to yield to event loop
+        const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve));
 
         // Normalize all embeddings first for cosine similarity
         const normalizedEmbeddings: number[][] = [];
-        for (let i = 0; i < N; i++) {
-            const emb = embeddings[i];
-            const norm = Math.sqrt(emb.reduce((sum, val) => sum + val * val, 0));
-            normalizedEmbeddings.push(emb.map(val => val / (norm + 1e-9)));
+        try {
+            for (let i = 0; i < N; i++) {
+                const emb = embeddings[i];
+                if (!emb || emb.length === 0) {
+                    normalizedEmbeddings.push([]);
+                    continue;
+                }
+                const norm = Math.sqrt(emb.reduce((sum, val) => sum + val * val, 0));
+                normalizedEmbeddings.push(emb.map(val => val / (norm + 1e-9)));
+                
+                if (i % 500 === 0) await yieldToEventLoop();
+            }
+        } catch (normErr: any) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Embedding normalization failed", { error: normErr.message });
+            return { newLinks: 0, redundantCount: 0 };
         }
 
         const computeSimilarity = (v1: number[], v2: number[]) => {
+            if (v1.length === 0 || v2.length === 0 || v1.length !== v2.length) return 0;
             return v1.reduce((sum, val, idx) => sum + val * v2[idx], 0);
         };
         
@@ -167,61 +219,106 @@ class TopologyService {
             const redundantGroups: string[][] = [];
             const visited = new Set<number>();
 
-            for (let i = 0; i < N; i++) {
-                if (visited.has(i)) continue;
-                
-                const group = [symbols[i].id];
-                for (let j = i + 1; j < N; j++) {
-                    if (visited.has(j)) continue;
-                    const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
-                    if (sim > this.REDUNDANCY_THRESHOLD) {
-                        group.push(symbols[j].id);
-                        visited.add(j);
+            try {
+                let iterations = 0;
+                for (let i = 0; i < N; i++) {
+                    if (visited.has(i) || normalizedEmbeddings[i].length === 0) continue;
+                    
+                    const group = [symbols[i]];
+                    for (let j = i + 1; j < N; j++) {
+                        if (visited.has(j) || normalizedEmbeddings[j].length === 0) continue;
+                        
+                        const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
+                        if (sim > this.REDUNDANCY_THRESHOLD) {
+                            // Only proceed if one of them has changed since last run
+                            if (wasUpdated(symbols[i]) || wasUpdated(symbols[j])) {
+                                group.push(symbols[j]);
+                                visited.add(j);
+                            }
+                        }
+
+                        iterations++;
+                        if (iterations % 5000 === 0) await yieldToEventLoop();
+                    }
+                    if (group.length > 1) {
+                        // Sort by priority score DESC
+                        group.sort((a, b) => getPriorityScore(b) - getPriorityScore(a));
+                        redundantGroups.push(group.map(s => s.id));
+                        visited.add(i);
                     }
                 }
-                if (group.length > 1) {
-                    redundantGroups.push(group);
-                    visited.add(i);
-                }
+            } catch (compErr: any) {
+                loggerService.catError(LogCategory.KERNEL, "TopologyService: Semantic redundancy check failed", { error: compErr.message });
             }
 
             if (redundantGroups.length > 0) {
                 loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Merging ${redundantGroups.length} potential redundant groups`);
-                await this.mergeRedundantSymbols(redundantGroups);
-                redundantCount = redundantGroups.reduce((acc, g) => acc + g.length - 1, 0);
+                try {
+                    await this.mergeRedundantSymbols(redundantGroups);
+                    redundantCount = redundantGroups.reduce((acc, g) => acc + g.length - 1, 0);
+                } catch (mergeErr: any) {
+                    loggerService.catError(LogCategory.KERNEL, "TopologyService: Symbol merge failed", { error: mergeErr.message });
+                }
             }
         }
 
         if (hygiene.semantic.autoLink) {
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Checking for semantic link opportunities");
             const predicted: PredictedLink[] = [];
-            for (let i = 0; i < N; i++) {
-                for (let j = i + 1; j < N; j++) {
-                    const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
-                    // Use a slightly lower threshold for potential links than for redundancy
-                    if (sim > this.CONFIDENCE_THRESHOLD && sim <= this.REDUNDANCY_THRESHOLD) {
-                        const hasLink = symbols[i].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[j].id) ||
-                                        symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
+            try {
+                let iterations = 0;
+                for (let i = 0; i < N; i++) {
+                    if (normalizedEmbeddings[i].length === 0) continue;
+                    
+                    for (let j = i + 1; j < N; j++) {
+                        if (normalizedEmbeddings[j].length === 0) continue;
                         
-                        if (!hasLink) {
-                            // LLM Validation for link
-                            const validation = await this.validateLink(symbols[i], symbols[j]);
-                            if (validation.shouldLink) {
-                                predicted.push({
-                                    sourceId: symbols[i].id,
-                                    targetId: symbols[j].id,
-                                    linkType: validation.linkType || 'semantic_inference',
-                                    confidence: sim
-                                });
+                        const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
+                        // Use a slightly lower threshold for potential links than for redundancy
+                        if (sim > this.CONFIDENCE_THRESHOLD && sim <= this.REDUNDANCY_THRESHOLD) {
+                            // Only proceed if one of them has changed since last run
+                            if (wasUpdated(symbols[i]) || wasUpdated(symbols[j])) {
+                                const hasLink = symbols[i].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[j].id) ||
+                                                symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
+                                
+                                if (!hasLink) {
+                                    // LLM Validation for link
+                                    try {
+                                        const validation = await this.validateLink(symbols[i], symbols[j]);
+                                        if (validation.shouldLink) {
+                                            predicted.push({
+                                                sourceId: symbols[i].id,
+                                                targetId: symbols[j].id,
+                                                linkType: validation.linkType || 'semantic_inference',
+                                                confidence: sim
+                                            });
+                                        }
+                                    } catch (valErr: any) {
+                                        loggerService.catError(LogCategory.KERNEL, "TopologyService: Link validation failed for pair", { 
+                                            s1: symbols[i].id, 
+                                            s2: symbols[j].id, 
+                                            error: valErr.message 
+                                        });
+                                    }
+                                }
                             }
                         }
+
+                        iterations++;
+                        if (iterations % 5000 === 0) await yieldToEventLoop();
                     }
                 }
+            } catch (linkErr: any) {
+                loggerService.catError(LogCategory.KERNEL, "TopologyService: Semantic auto-link check failed", { error: linkErr.message });
             }
 
             if (predicted.length > 0) {
-                await this.promoteToTentative(predicted);
-                newLinksCount = predicted.length;
+                try {
+                    await this.promoteToTentative(predicted);
+                    newLinksCount = predicted.length;
+                } catch (promoErr: any) {
+                    loggerService.catError(LogCategory.KERNEL, "TopologyService: Failed to promote links", { error: promoErr.message });
+                }
             }
         }
 

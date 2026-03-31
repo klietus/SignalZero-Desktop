@@ -7,6 +7,30 @@ import { loggerService, LogCategory } from './loggerService.js';
 let db: BetterSqlite3.Database;
 let isInitialized = false;
 
+const migrateSchema = () => {
+    // Add missing columns to symbols table if they don't exist
+    const tableInfo = db.prepare("PRAGMA table_info(symbols)").all() as any[];
+    const columnNames = tableInfo.map(info => info.name);
+
+    const requiredColumns = [
+        { name: 'lattice', type: 'TEXT' },
+        { name: 'persona', type: 'TEXT' },
+        { name: 'data', type: 'TEXT' },
+        { name: 'invocations', type: 'TEXT' }
+    ];
+
+    for (const col of requiredColumns) {
+        if (!columnNames.includes(col.name)) {
+            loggerService.catInfo(LogCategory.SQLITE, `Migrating: Adding ${col.name} column to symbols table`);
+            try {
+                db.exec(`ALTER TABLE symbols ADD COLUMN ${col.name} ${col.type}`);
+            } catch (err) {
+                loggerService.catError(LogCategory.SQLITE, `Migration failed for column ${col.name}`, { error: err });
+            }
+        }
+    }
+};
+
 const initDb = () => {
     if (isInitialized) return;
 
@@ -56,6 +80,10 @@ const initDb = () => {
                 triad TEXT,
                 role TEXT,
                 macro TEXT,
+                invocations TEXT, -- JSON array
+                lattice TEXT, -- JSON object
+                persona TEXT, -- JSON object
+                data TEXT, -- JSON object
                 facets TEXT, -- JSON object
                 activation_conditions TEXT, -- JSON array
                 failure_mode TEXT,
@@ -149,6 +177,10 @@ const initDb = () => {
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         `);
+
+        // Migration for existing tables
+        migrateSchema();
+
         loggerService.catInfo(LogCategory.SQLITE, 'Database schema initialized');
         isInitialized = true;
     } catch (error) {

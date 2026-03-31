@@ -88,11 +88,12 @@ const SYMBOL_DATA_SCHEMA = {
         macro: { type: 'string' },
         role: { type: 'string' },
         name: { type: 'string' },
+        invocations: { type: 'array', items: { type: 'string' }, description: "Synonym for activation_conditions. Use for persona-specific triggers." },
         lattice: {
             type: 'object',
             description: "Configuration for lattice symbols (execution topology)",
             properties: {
-                topology: { type: 'string', description: "inductive, deductive, bidirectional, invariant, energy" },
+                topology: { type: 'string', description: "inductive, deductive, bidirectional, invariant, energy, constellation" },
                 closure: { type: 'string', description: "loop, branch, collapse, constellation, synthesis" }
             }
         },
@@ -103,7 +104,8 @@ const SYMBOL_DATA_SCHEMA = {
                 recursion_level: { type: 'string' },
                 function: { type: 'string' },
                 fallback_behavior: { type: 'array', items: { type: 'string' } },
-                linked_personas: { type: 'array', items: { type: 'string' } }
+                linked_personas: { type: 'array', items: { type: 'string' } },
+                activation_conditions: { type: 'array', items: { type: 'string' } }
             }
         },
         data: {
@@ -120,7 +122,7 @@ const SYMBOL_DATA_SCHEMA = {
                 }
             }
         },
-        activation_conditions: { type: 'array', items: { type: 'string' } },
+        activation_conditions: { type: 'array', items: { type: 'string' }, description: "Phrases that activate this symbol." },
         facets: {
             type: 'object',
             properties: {
@@ -137,7 +139,18 @@ const SYMBOL_DATA_SCHEMA = {
         symbol_domain: { type: 'string' },
         symbol_tag: { type: 'string' },
         failure_mode: { type: 'string' },
-        linked_patterns: { type: 'array', items: { type: 'string' } }
+        linked_patterns: { 
+            type: 'array', 
+            items: { 
+                type: 'object',
+                properties: {
+                    id: { type: 'string' },
+                    link_type: { type: 'string', description: "relates_to, depends_on, part_of, instance_of, informs, constrained_by" },
+                    bidirectional: { type: 'boolean' }
+                },
+                required: ['id', 'link_type', 'bidirectional']
+            } 
+        }
     },
     required: ['id', 'kind', 'triad', 'macro', 'role', 'name', 'activation_conditions', 'facets', 'symbol_domain', 'failure_mode', 'linked_patterns']
 };

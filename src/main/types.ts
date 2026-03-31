@@ -98,12 +98,12 @@ export interface SymbolFacet {
 }
 
 export type SymbolKind = 'pattern' | 'lattice' | 'persona' | 'data';
-export type LatticeTopology = 'inductive' | 'deductive' | 'bidirectional' | 'invariant' | 'energy';
+export type LatticeTopology = 'inductive' | 'deductive' | 'bidirectional' | 'invariant' | 'energy' | 'constellation';
 export type LatticeClosure = 'loop' | 'branch' | 'collapse' | 'constellation' | 'synthesis';
 
 export interface SymbolLatticeDef {
-    topology: LatticeTopology;
-    closure: LatticeClosure;
+    topology: LatticeTopology | string;
+    closure: LatticeClosure | string;
 }
 
 export interface SymbolPersonaDef {
@@ -111,6 +111,7 @@ export interface SymbolPersonaDef {
     function: string;
     fallback_behavior: string[];
     linked_personas: string[];
+    activation_conditions?: string[];
 }
 
 export interface SymbolDataDef {

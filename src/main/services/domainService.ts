@@ -28,6 +28,9 @@ const mapRowToSymbol = (row: any, links: SymbolLink[] = []): SymbolDef => ({
     triad: row.triad,
     role: row.role,
     macro: row.macro,
+    lattice: row.lattice ? JSON.parse(row.lattice) : undefined,
+    persona: row.persona ? JSON.parse(row.persona) : undefined,
+    data: row.data ? JSON.parse(row.data) : undefined,
     facets: row.facets ? JSON.parse(row.facets) : {},
     activation_conditions: row.activation_conditions ? JSON.parse(row.activation_conditions) : [],
     failure_mode: row.failure_mode,
@@ -168,14 +171,21 @@ export const domainService = {
     // Pass 1 & 2: Single heavy transaction for relational integrity
     sqliteService.transaction(() => {
         const stmt = sqliteService.db().prepare(`
-            INSERT OR REPLACE INTO symbols (id, domain_id, name, kind, triad, role, macro, facets, activation_conditions, failure_mode, symbol_tag, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO symbols (id, domain_id, name, kind, triad, role, macro, lattice, persona, data, facets, activation_conditions, failure_mode, symbol_tag, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         // First pass: symbols
         for (const symbol of symbols) {
             const domainId = symbol.symbol_domain || symbol.domain_id || defaultDomainId;
             if (!domainId) continue;
+
+            // Merge invocations into activation_conditions (synonyms)
+            const conditions = new Set([
+                ...(symbol.activation_conditions || []),
+                ...(symbol.invocations || []),
+                ...(symbol.persona?.activation_conditions || [])
+            ]);
 
             stmt.run(
                 symbol.id,
@@ -185,8 +195,11 @@ export const domainService = {
                 symbol.triad,
                 symbol.role,
                 symbol.macro,
+                JSON.stringify(symbol.lattice || null),
+                JSON.stringify(symbol.persona || null),
+                JSON.stringify(symbol.data || null),
                 JSON.stringify(symbol.facets || {}),
-                JSON.stringify(symbol.activation_conditions || []),
+                JSON.stringify(Array.from(conditions)),
                 symbol.failure_mode,
                 symbol.symbol_tag || '',
                 now
@@ -244,38 +257,82 @@ export const domainService = {
       throw new Error(`Symbol not found: ${!canonical ? canonicalId : redundantId}`);
     }
 
-    // 1. Synthesis via Complex Model
+    // 1. Synthesis via Fast Model
     let synthesized = { ...canonical };
     try {
         const settings = await settingsService.getInferenceSettings();
-        const complexModel = settings.model;
+        const fastModel = settings.fastModel;
         
-        if (complexModel) {
-            const prompt = `Synthesize these two symbolic definitions into one canonical symbol. 
-            The new symbol should incorporate all the knowledge, role, and macro logic of both, while prioritizing the identity of the canonical symbol (${canonicalId}).
-            You MUST preserve all activation conditions from both symbols.
+        if (fastModel) {
+            const prompt = `Synthesize these two symbolic definitions from a knowledge graph into one canonical symbol.
             
             Canonical Symbol (${canonicalId}):
-            ${JSON.stringify(canonical, null, 2)}
+            ${JSON.stringify({ 
+                name: canonical.name, 
+                role: canonical.role, 
+                macro: canonical.macro, 
+                kind: canonical.kind,
+                lattice: canonical.lattice,
+                persona: canonical.persona,
+                data: canonical.data,
+                invocations: canonical.invocations,
+                activation_conditions: canonical.activation_conditions, 
+                updated_at: canonical.updated_at 
+            })}
             
             Redundant Symbol (${redundantId}):
-            ${JSON.stringify(redundant, null, 2)}
+            ${JSON.stringify({ 
+                name: redundant.name, 
+                role: redundant.role, 
+                macro: redundant.macro, 
+                kind: redundant.kind,
+                lattice: redundant.lattice,
+                persona: redundant.persona,
+                data: redundant.data,
+                invocations: redundant.invocations,
+                activation_conditions: redundant.activation_conditions, 
+                updated_at: redundant.updated_at 
+            })}
             
-            Determine if a merge is sensible. If it is, output the synthesized JSON object for the canonical symbol.
-            If a merge does not make sense (e.g. they are fundamentally different concepts), output { "canMerge": false }.
-            If merging, output: { "canMerge": true, "synthesized": <updated_canonical_symbol_object> }
+            CRITERIA:
+            1. Determine if they represent the EXACT same concept or if one is a direct evolution of the other.
+            2. If they are fundamentally different, or if merging would lose critical distinct nuance, you MUST reject the merge.
+            3. Prioritize the identity and structure of the Canonical Symbol.
             
-            Valid JSON only.`;
+            OUTPUT:
+            Return valid JSON only:
+            {
+              "canMerge": true/false,
+              "reason": "Brief explanation of why a merge is or isn't appropriate",
+              "synthesized": {
+                 "name": "...",
+                 "role": "...",
+                 "macro": "...",
+                 "kind": "...",
+                 "lattice": { ... },
+                 "persona": { ... },
+                 "data": { ... },
+                 "invocations": [...],
+                 "activation_conditions": [...]
+              }
+            }`;
 
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: complexModel, generationConfig: { responseMimeType: "application/json" } });
+                const model = client.getGenerativeModel({ 
+                    model: fastModel, 
+                    generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1000 } 
+                });
                 const result = await model.generateContent(prompt);
                 response = extractJson(result.response.text());
             } else {
                 const client = await getClient();
-                const result = await client.chat.completions.create({ model: complexModel, messages: [{ role: "user", content: prompt }] });
+                const result = await client.chat.completions.create({ 
+                    model: fastModel, 
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 1000
+                });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }
 
@@ -285,7 +342,12 @@ export const domainService = {
             }
 
             if (response.canMerge === true && response.synthesized) {
-                synthesized = { ...response.synthesized, id: canonicalId }; // Ensure ID remains canonical
+                synthesized = { 
+                    ...canonical, 
+                    ...response.synthesized, 
+                    id: canonicalId,
+                    facets: { ...(canonical.facets || {}), ...(response.synthesized.facets || {}) }
+                }; 
                 loggerService.catInfo(LogCategory.DOMAIN, `Model-assisted synthesis complete for ${canonicalId}`);
             }
         }

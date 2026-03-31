@@ -32,10 +32,20 @@ function tensorToVectors(result: any, fallbackCount: number): number[][] {
 export async function embedTexts(texts: string[]): Promise<number[][]> {
     if (!texts || texts.length === 0) return [];
 
+    const BATCH_SIZE = 32;
+    const allVectors: number[][] = [];
+
     try {
         const embedder = await getEmbeddingPipeline();
-        const tensor = await embedder(texts, { pooling: 'mean', normalize: true });
-        return tensorToVectors(tensor, texts.length);
+        
+        for (let i = 0; i < texts.length; i += BATCH_SIZE) {
+            const batch = texts.slice(i, i + BATCH_SIZE);
+            const tensor = await embedder(batch, { pooling: 'mean', normalize: true });
+            const vectors = tensorToVectors(tensor, batch.length);
+            allVectors.push(...vectors);
+        }
+        
+        return allVectors;
     } catch (error) {
         console.error('[EmbeddingService] Embedding generation failed', error);
         return texts.map(() => []);

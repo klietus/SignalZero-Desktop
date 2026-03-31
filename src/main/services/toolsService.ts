@@ -18,12 +18,39 @@ const SYMBOL_DATA_SCHEMA = {
   type: 'object',
   properties: {
     id: { type: 'string' },
-    kind: { type: 'string' },
+    kind: { type: 'string', enum: ['pattern', 'lattice', 'persona', 'data'] },
     triad: { type: 'string' },
     macro: { type: 'string' },
     role: { type: 'string' },
     name: { type: 'string' },
+    invocations: { type: 'array', items: { type: 'string' } },
     activation_conditions: { type: 'array', items: { type: 'string' } },
+    lattice: {
+      type: 'object',
+      properties: {
+        topology: { type: 'string' },
+        closure: { type: 'string' }
+      }
+    },
+    persona: {
+      type: 'object',
+      properties: {
+        recursion_level: { type: 'string' },
+        function: { type: 'string' },
+        fallback_behavior: { type: 'array', items: { type: 'string' } },
+        linked_personas: { type: 'array', items: { type: 'string' } },
+        activation_conditions: { type: 'array', items: { type: 'string' } }
+      }
+    },
+    data: {
+      type: 'object',
+      properties: {
+        source: { type: 'string' },
+        verification: { type: 'string' },
+        status: { type: 'string' },
+        payload: { type: 'object' }
+      }
+    },
     facets: {
       type: 'object',
       properties: {
