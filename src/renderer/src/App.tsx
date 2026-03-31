@@ -484,56 +484,7 @@ function App() {
 
         switch (currentView) {
             case 'chat':
-                return (
-                    <div className="relative z-10 flex flex-col h-full w-full pointer-events-none">
-                        <div className="pointer-events-auto w-full z-30">
-                            <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
-                        </div>
-                        
-                        <div className={`flex-1 flex flex-col min-h-0 transition-opacity duration-300 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                            <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-transparent pointer-events-none">
-                                <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-none">
-                                    {messages.length === 0 ? (
-                                        <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center pointer-events-none">
-                                            <MessageSquare size={64} className="mb-4 mx-auto" />
-                                            <p className="text-xl font-light tracking-widest uppercase">SignalZero Kernel</p>
-                                            <p className="text-sm mt-2 font-mono">Ready for symbolic execution</p>
-                                        </div>
-                                    ) : (
-                                        messages.map((msg) => (
-                                            <div key={msg.id} className={isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}>
-                                                <ChatMessage
-                                                    message={msg}
-                                                    isVisible={!isGraphView}
-                                                    onSymbolClick={(_id, data) => { 
-                                                        if (data) setSelectedSymbol(data);
-                                                        setSelectedDomainId(data?.symbol_domain || null);
-                                                        setCurrentView('dev'); 
-                                                    }}
-                                                    onDomainClick={(domain) => {
-                                                        setSelectedDomainId(domain);
-                                                        setCurrentView('dev');
-                                                    }}
-                                                    onTraceClick={(id) => {
-                                                        if (id) setSelectedTraceId(id);
-                                                        setIsTracePanelOpen(true);
-                                                    }}
-                                                    onRetry={handleSendMessage}
-                                                />                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-
-
-                            <div className={`p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pointer-events-none transition-opacity duration-300 ${isGraphView ? 'opacity-0' : 'opacity-100'}`}>
-                                <div className={`w-full max-w-full mx-auto ${isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}`}>
-                                    <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
+                return null; // Handled specially below for persistence
             case 'settings':
                 return <SettingsScreen headerProps={getHeaderProps('Settings')} user={defaultUser} onLogout={() => { }} />;
             case 'store':
@@ -580,32 +531,89 @@ function App() {
         );
     }
 
+    const isChatActive = currentView === 'chat';
+
     return (
         <div className="relative flex flex-col h-screen overflow-hidden bg-gray-950 font-sans text-gray-100 selection:bg-indigo-500/30">
-            {currentView === 'chat' && showGraphviz && (
-                <div className={`absolute inset-0 transition-opacity duration-700 ${isGraphView ? 'opacity-100 z-20 pointer-events-auto' : 'opacity-20 z-0 pointer-events-none'}`}>
+            {showGraphviz && (
+                <div className={`absolute inset-0 transition-opacity duration-700 ${isChatActive ? (isGraphView ? 'opacity-100 z-20 pointer-events-auto' : 'opacity-20 z-0 pointer-events-none') : 'opacity-0 z-0 pointer-events-none'}`}>
                     <CinematicView onSymbolFocus={setFocusedSymbolName} />
                 </div>
             )}
-            <div className={`flex-1 flex min-h-0 relative z-30 ${currentView === 'chat' ? 'pointer-events-none' : ''}`}>
-                {currentView === 'chat' && (
-                    <>
-                        <div className={`pointer-events-auto h-full flex-shrink-0 flex transition-all duration-700 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} style={{ width: sidebarWidth }}>
-                            <ContextListPanel
-                                contexts={contexts} activeContextId={activeContextId}
-                                onSelectContext={setActiveContextId} onCreateContext={handleCreateContext}
-                                onArchiveContext={handleArchiveContext} width={sidebarWidth}
-                            />
-                        </div>
+            <div className={`flex-1 flex min-h-0 relative z-30 ${isChatActive ? 'pointer-events-none' : ''}`}>
+                {/* Persistent Chat Sidebar */}
+                <div className={`pointer-events-auto h-full flex-shrink-0 flex transition-all duration-700 ${isChatActive && !isGraphView ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} style={{ width: isChatActive && !isGraphView ? sidebarWidth : 0, overflow: 'hidden' }}>
+                    <ContextListPanel
+                        contexts={contexts} activeContextId={activeContextId}
+                        onSelectContext={setActiveContextId} onCreateContext={handleCreateContext}
+                        onArchiveContext={handleArchiveContext} width={sidebarWidth}
+                    />
+                </div>
 
-                        <div
-                            className={`pointer-events-auto w-1 hover:w-1.5 bg-transparent hover:bg-indigo-500/30 cursor-col-resize transition-all z-10 flex-shrink-0 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-                            onMouseDown={startResizing}
-                        />
-                    </>
+                {isChatActive && !isGraphView && (
+                    <div
+                        className={`pointer-events-auto w-1 hover:w-1.5 bg-transparent hover:bg-indigo-500/30 cursor-col-resize transition-all z-10 flex-shrink-0`}
+                        onMouseDown={startResizing}
+                    />
                 )}
-                <div className={`flex-1 flex flex-col min-w-0 bg-transparent relative z-10 ${currentView === 'chat' ? 'pointer-events-none' : ''}`}>
-                    {renderCurrentView()}
+
+                <div className={`flex-1 flex flex-col min-w-0 bg-transparent relative z-10 ${isChatActive ? 'pointer-events-none' : ''}`}>
+                    {/* Persistent Chat View */}
+                    <div className={`absolute inset-0 flex flex-col z-10 transition-opacity duration-300 ${isChatActive ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                        <div className="flex flex-col h-full w-full">
+                            <div className="pointer-events-auto w-full z-30">
+                                <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
+                            </div>
+                            
+                            <div className={`flex-1 flex flex-col min-h-0 transition-opacity duration-300 ${isGraphView ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                                <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-transparent pointer-events-none">
+                                    <div className="w-full max-w-full mx-auto space-y-10 pb-12 pointer-events-none">
+                                        {messages.length === 0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center pointer-events-none">
+                                                <MessageSquare size={64} className="mb-4 mx-auto" />
+                                                <p className="text-xl font-light tracking-widest uppercase">SignalZero Kernel</p>
+                                                <p className="text-sm mt-2 font-mono">Ready for symbolic execution</p>
+                                            </div>
+                                        ) : (
+                                            messages.map((msg) => (
+                                                <div key={msg.id} className={isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}>
+                                                    <ChatMessage
+                                                        message={msg}
+                                                        isVisible={!isGraphView && isChatActive}
+                                                        onSymbolClick={(_id, data) => { 
+                                                            if (data) setSelectedSymbol(data);
+                                                            setSelectedDomainId(data?.symbol_domain || null);
+                                                            setCurrentView('dev'); 
+                                                        }}
+                                                        onDomainClick={(domain) => {
+                                                            setSelectedDomainId(domain);
+                                                            setCurrentView('dev');
+                                                        }}
+                                                        onTraceClick={(id) => {
+                                                            if (id) setSelectedTraceId(id);
+                                                            setIsTracePanelOpen(true);
+                                                        }}
+                                                        onRetry={handleSendMessage}
+                                                    />                                            </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+
+
+                                <div className={`p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent pointer-events-none transition-opacity duration-300 ${isGraphView ? 'opacity-0' : 'opacity-100'}`}>
+                                    <div className={`w-full max-w-full mx-auto ${isGraphView ? 'pointer-events-none' : 'pointer-events-auto'}`}>
+                                        <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Other Views */}
+                    <div className={`flex-1 flex flex-col min-h-0 ${!isChatActive ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                        {renderCurrentView()}
+                    </div>
 
                     {/* Popout Trace Panel */}
                     <TracePanel
@@ -624,17 +632,15 @@ function App() {
                 </div>
             </div>
             
-            {currentView === 'chat' && (
-                <div className="pointer-events-auto z-30 relative">
-                    <StatusBar
-                        modelName={modelName} isBusy={isProcessing}
-                        symbolCount={symbolCount} domainCount={domainCount}
-                        cacheSize={cacheSize}
-                        lastRequestTokens={lastRequestTokens}
-                        focusedSymbolName={focusedSymbolName}
-                    />
-                </div>
-            )}
+            <div className={`pointer-events-auto z-30 relative transition-opacity duration-300 ${isChatActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <StatusBar
+                    modelName={modelName} isBusy={isProcessing}
+                    symbolCount={symbolCount} domainCount={domainCount}
+                    cacheSize={cacheSize}
+                    lastRequestTokens={lastRequestTokens}
+                    focusedSymbolName={focusedSymbolName}
+                />
+            </div>
         </div>
     );
 }
