@@ -564,7 +564,7 @@ function App() {
 
                 <div className={`flex-1 flex flex-col min-w-0 bg-transparent relative z-10 ${isChatActive ? 'pointer-events-none' : ''}`}>
                     {/* Persistent Chat View */}
-                    <div className={`absolute inset-0 flex flex-col z-10 transition-opacity duration-300 ${isChatActive ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                    <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${isChatActive ? 'opacity-100 pointer-events-auto z-20' : 'opacity-0 pointer-events-none z-0'}`}>
                         <div className="flex flex-col h-full w-full">
                             <div className="pointer-events-auto w-full z-30">
                                 <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
@@ -616,7 +616,7 @@ function App() {
                     </div>
 
                     {/* Other Views */}
-                    <div className={`flex-1 flex flex-col min-h-0 ${!isChatActive ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                    <div className={`flex-1 flex flex-col min-h-0 ${!isChatActive ? 'opacity-100 pointer-events-auto z-10' : 'opacity-0 pointer-events-none z-0'}`}>
                         {renderCurrentView()}
                     </div>
 
