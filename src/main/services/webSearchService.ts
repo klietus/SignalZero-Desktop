@@ -96,7 +96,7 @@ export const webSearchService = {
 
       try {
         loggerService.catInfo(LogCategory.TOOL, `[WebSearch] Trying ${provider.name}...`);
-        const results = await provider.search(query, provider.settings.apiKey);
+        const results = await provider.search(query, provider.settings.apiKey as string);
         loggerService.catInfo(LogCategory.TOOL, `[WebSearch] ${provider.name} success`, { count: results.length });
         return { results, provider: provider.name };
       } catch (e: any) {
