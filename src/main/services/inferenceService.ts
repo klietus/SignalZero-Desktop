@@ -564,55 +564,22 @@ export async function* sendMessageAndHandleTools(
 
       const assistantMessage = inferenceService.streamAssistantResponse(contextMessages as ChatCompletionMessageParam[], chat.model, activeToolList);
       textAccumulatedInTurn = "";
+      let rawTextInTurn = "";
       yieldedToolCalls = undefined;
       nextAssistant = null;
 
-      let isFirstTextChunkInTurn = true;
-      let inThinkBlock = false;
-      let currentThinkTag = "";
-
       for await (const chunk of assistantMessage) {
         if (chunk.text) {
-          let textToProcess = chunk.text;
-          let processedText = "";
-          let i = 0;
-          while (i < textToProcess.length) {
-            if (!inThinkBlock) {
-              const remaining = textToProcess.slice(i);
-              const thinkMatch = remaining.match(/^<(think|thought)>/i);
-              if (thinkMatch) {
-                inThinkBlock = true;
-                currentThinkTag = thinkMatch[1].toLowerCase();
-                i += thinkMatch[0].length;
-                continue;
-              }
-              processedText += textToProcess[i];
-              i++;
-            } else {
-              const remaining = textToProcess.slice(i);
-              const endMatch = remaining.match(new RegExp(`^</${currentThinkTag}>`, "i"));
-              if (endMatch) {
-                inThinkBlock = false;
-                currentThinkTag = "";
-                i += endMatch[0].length;
-                continue;
-              }
-              i++;
-            }
-          }
-          if (processedText) {
-            let textToYield = processedText;
-            if (isFirstTextChunkInTurn && totalTextAccumulatedAcrossLoops.length > 0) textToYield = "\n\n" + textToYield;
-
-            textAccumulatedInTurn += textToYield;
-            isFirstTextChunkInTurn = false;
-          }        }
+          rawTextInTurn += chunk.text;
+        }
         if (chunk.toolCalls) {
           yieldedToolCalls = chunk.toolCalls;
           yield { toolCalls: chunk.toolCalls };
         }
         if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
       }
+
+      textAccumulatedInTurn = stripThoughts(rawTextInTurn);
 
       if (textAccumulatedInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) break;
       retries++;
@@ -634,8 +601,6 @@ export async function* sendMessageAndHandleTools(
       }
     }
 
-    totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
-
     let auditTriggered = false;
     let auditMessage = "";
     const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
@@ -645,11 +610,6 @@ export async function* sendMessageAndHandleTools(
     const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
     const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
     loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
-
-    // YIELD NARRATIVE ONLY ON FINAL TURN
-    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
-      yield { text: totalTextAccumulatedAcrossLoops.trim() };
-    }
 
     if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
       if (!traceSatisfied) {
@@ -672,6 +632,19 @@ export async function* sendMessageAndHandleTools(
         loggerService.catError(LogCategory.INFERENCE, "System Audit: Max retries reached. Proceeding despite violations.", { contextSessionId });
         auditTriggered = false;
       }
+    }
+
+    // --- SUCCESSFUL TURN ACCUMULATION ---
+    // Only accumulate narrative if the turn passed audit
+    if (totalTextAccumulatedAcrossLoops.length > 0 && textAccumulatedInTurn.trim().length > 0) {
+      totalTextAccumulatedAcrossLoops += "\n\n" + textAccumulatedInTurn;
+    } else {
+      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
+    }
+
+    // YIELD NARRATIVE ONLY ON FINAL TURN
+    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
+      yield { text: totalTextAccumulatedAcrossLoops.trim() };
     }
 
     // --- Tool Execution ---
