@@ -107,4 +107,42 @@ describe('sendMessageAndHandleTools Turn Logic', () => {
     expect(textChunks[0]).toContain('I am thinking...');
     expect(textChunks[0]).toContain('Final answer.');
   });
+
+  it('should handle split thought tags correctly across chunks', async () => {
+    const toolExecutor = vi.fn().mockResolvedValue({ status: 'success' });
+
+    // Simulate a closing tag split across two chunks: "</thi" and "nk> "
+    const loop0 = [
+      { text: '<think> Reasoning ' },
+      { text: '</thi' },
+      { text: 'nk> Narrative text.' },
+      { assistantMessage: { role: 'assistant', content: '<think> Reasoning </think> Narrative text.' } }
+    ];
+
+    mockStreamAssistantResponse.mockImplementation(async function* () {
+      for (const chunk of loop0) {
+        yield chunk as any;
+      }
+    });
+
+    const generator = inferenceService.sendMessageAndHandleTools(
+      { model: 'test-model', messages: [], systemInstruction: '' },
+      'user message',
+      toolExecutor,
+      false,
+      'system instruction',
+      'sess-1'
+    );
+
+    const emittedChunks: any[] = [];
+    for await (const chunk of generator) {
+      emittedChunks.push(chunk);
+    }
+
+    const textChunks = emittedChunks.filter(c => c.text).map(c => c.text);
+
+    // Verify that the narrative part "Narrative text." was captured despite the split tag
+    expect(textChunks[0]).toContain('Narrative text.');
+    expect(textChunks[0]).not.toContain('Reasoning');
+  });
 });
