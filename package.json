@@ -4,7 +4,7 @@
   "description": "SignalZero Recursive Symbolic Kernel - Desktop Edition",
   "main": "./out/main/index.js",
   "author": "klietus",
-  "license": "CC-BY-NC-4.0",
+  "license": "MIT",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",

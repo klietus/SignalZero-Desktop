@@ -101,9 +101,9 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onComplete }) => {
                         <section className="space-y-4">
                             <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 font-mono">1. License Agreement</h3>
                             <div className="p-4 bg-gray-50 dark:bg-gray-950 rounded-lg border border-gray-100 dark:border-gray-800 text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-h-32 overflow-y-auto font-mono">
-                                SignalZero is licensed under **Creative Commons Attribution-NonCommercial 4.0 International**.
-                                Commercial use is strictly prohibited without a separate commercial license.
-                                By initializing, you agree to use this software for non-commercial purposes only.
+                                SignalZero is licensed under the **MIT License**.
+                                Copyright (c) 2026 Klietus.
+                                By initializing, you agree to the terms of the MIT license.
                             </div>
                             <label className="flex items-center gap-3 cursor-pointer group">
                                 <input 
@@ -112,7 +112,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onComplete }) => {
                                     onChange={(e) => setLicenseAccepted(e.target.checked)}
                                     className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
                                 />
-                                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-500 transition-colors">I accept the non-commercial license agreement.</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-500 transition-colors">I accept the MIT license agreement.</span>
                             </label>
                         </section>
 
