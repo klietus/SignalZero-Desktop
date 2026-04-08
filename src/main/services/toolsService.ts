@@ -413,7 +413,38 @@ export const createToolExecutor = (contextSessionId?: string) => {
       case 'web_fetch': {
         try {
           const result = await webFetchService.fetch(args.url);
-          return result || { error: "Failed to fetch or parse content." };
+          if (!result) return { error: "Failed to fetch or parse content." };
+
+          // --- Automated Symbolic Precaching from Fetch ---
+          if (contextSessionId) {
+            const searchTerms = [
+              ...result.extracted.actors,
+              ...result.extracted.events,
+              ...result.extracted.verbatim_statements.map(s => s.slice(0, 100)) // Snippets of statements
+            ].filter(t => t && t.length > 3);
+
+            if (searchTerms.length > 0) {
+              loggerService.catInfo(LogCategory.TOOL, `WebFetch: Searching for ${searchTerms.length} symbolic terms from content...`);
+              const foundSymbols: SymbolDef[] = [];
+              
+              for (const term of searchTerms.slice(0, 10)) { // Limit to top 10 terms to avoid flood
+                const res = await domainService.search(term, 3);
+                res.forEach((r: any) => {
+                  if (!foundSymbols.find(s => s.id === r.id)) {
+                    foundSymbols.push(r.metadata as SymbolDef);
+                  }
+                });
+              }
+
+              if (foundSymbols.length > 0) {
+                const { added } = await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
+                loggerService.catInfo(LogCategory.TOOL, `WebFetch: Injected ${added} new symbols into cache from content analysis.`);
+                await symbolCacheService.emitCacheLoad(contextSessionId);
+              }
+            }
+          }
+
+          return result;
         } catch (e: any) {
           return { error: e.message };
         }
