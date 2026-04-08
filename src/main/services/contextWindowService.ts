@@ -27,7 +27,7 @@ export class ContextWindowService {
     async constructContextWindow(
         contextSessionId: string,
         systemPrompt: string
-    ): Promise<ChatCompletionMessageParam[]> {
+    ): Promise<{ messages: ChatCompletionMessageParam[], totalTokens: number }> {
         const messages: ChatCompletionMessageParam[] = [];
 
         // Determine context type for selective injection
@@ -72,17 +72,17 @@ export class ContextWindowService {
 
         // 5. Sliding History Window (Sliding Cache)
         const rawHistory = await contextService.getUnfilteredHistory(contextSessionId);
-        
+
         // Filter history to only include messages AFTER the last summarized round
         const lastSummarized = session?.metadata?.lastSummarizedRoundCount || 0;
         const userMessageIndices = rawHistory
             .map((m, i) => m.role === 'user' ? i : -1)
             .filter(i => i !== -1);
-            
+
         const firstIncludedIndex = (lastSummarized > 0)
             ? (lastSummarized < userMessageIndices.length ? userMessageIndices[lastSummarized] : rawHistory.length)
             : 0;
-            
+
         const effectiveHistory = rawHistory.slice(firstIncludedIndex);
         const historyMessages: ChatCompletionMessageParam[] = [];
 
@@ -159,7 +159,7 @@ export class ContextWindowService {
             type: session?.type,
             lifecycle: session?.status === 'closed' ? 'zombie' : 'live',
             readonly: session?.metadata?.readOnly === true,
-            trace_needed: session?.metadata?.trace_needed,
+            trace_needed: session?.metadata?.trace_needed ? 'YOU MUST LOG A TRACE FOR THIS OPERATION' : 'false',
             trace_reason: session?.metadata?.trace_reason
         });
 
@@ -180,7 +180,7 @@ export class ContextWindowService {
             totalTokens
         });
 
-        return messages;
+        return { messages, totalTokens };
     }
 
     /**
@@ -396,7 +396,7 @@ export class ContextWindowService {
      * Fetches dynamic symbols (Identity, Preferences, Recent State) that change frequently.
      */
     private async buildDynamicContext(
-        contextSessionId: string, 
+        contextSessionId: string,
         type: ContextKind = 'conversation'
     ): Promise<string> {
         try {

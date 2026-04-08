@@ -13,6 +13,7 @@ export enum KernelEventType {
     INFERENCE_CHUNK = 'inference:chunk',
     INFERENCE_COMPLETED = 'inference:completed',
     INFERENCE_ERROR = 'inference:error',
+    INFERENCE_TOKENS = 'inference:tokens',
     CACHE_LOAD = 'cache:load',
     AGENT_HEARTBEAT = 'agent:heartbeat',
     PROJECT_IMPORT_STATUS = 'project:import-status',

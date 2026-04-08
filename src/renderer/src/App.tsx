@@ -377,13 +377,6 @@ function App() {
                     if (history) {
                         const grouped = groupHistoryByCorrelation(history);
                         setMessages(grouped);
-
-                        const lastGroup = grouped[grouped.length - 1];
-                        if (lastGroup && lastGroup.role === Sender.MODEL) {
-                            const text = lastGroup.content || '';
-                            const toolText = JSON.stringify(lastGroup.toolCalls || '');
-                            setLastRequestTokens(Math.floor((text.length + toolText.length) / 3.5));
-                        }
                     }
                 });
             }
@@ -397,6 +390,9 @@ function App() {
         const unbindKernel = window.api.onKernelEvent((type, data) => {
             if (type === 'cache:load') {
                 setCacheSize(data.symbolIds?.length || 0);
+            }
+            if (type === 'inference:tokens') {
+                setLastRequestTokens(data.totalTokens || 0);
             }
             if (type === 'context:updated') {
                 setContexts(prev => prev.map(c =>

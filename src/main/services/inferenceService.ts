@@ -532,9 +532,14 @@ export async function* sendMessageAndHandleTools(
     let textAccumulatedInTurn = "";
 
     while (retries < MAX_RETRIES) {
-      let contextMessages = contextSessionId
-        ? await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction)
-        : [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: resolvedContent }] as ChatCompletionMessageParam[];
+      let contextMessages: ChatCompletionMessageParam[] = [];
+      if (contextSessionId) {
+        const { messages: contextWindowMessages, totalTokens } = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
+        contextMessages = contextWindowMessages;
+        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens });
+      } else {
+        contextMessages = [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: resolvedContent }] as ChatCompletionMessageParam[];
+      }
 
       if (transientMessages.length > 0) contextMessages = [...contextMessages, ...transientMessages];
 
@@ -613,7 +618,7 @@ export async function* sendMessageAndHandleTools(
 
     if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
       if (!traceSatisfied) {
-        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
+        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: YOU MUST TRACE THIS OPERATION! This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
         auditTriggered = true;
       }
     }
@@ -908,7 +913,7 @@ export const primeSymbolicContext = async (
       needsNaming
     });
 
-    const prompt = `Analyze the conversation history and the new user message to identify symbolic search queries and determine if web search grounding is needed.
+    const prompt = `Analyze the conversation history and the new user message to identify 3 symbolic search queries and determine if web search grounding is needed.  Include one more query that is the local opposite of your predictions, include antonyms and orthogonal logic it its search terms.
     
     ${needsNaming ? 'CRITICAL: Based on the conversation context, suggest a descriptive and concise name for this context session in "suggested_name".' : ''}
 
