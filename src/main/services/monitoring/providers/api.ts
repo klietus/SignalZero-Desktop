@@ -1,5 +1,6 @@
 import { MonitoringSourceConfig } from '../../../types.js';
 import { MonitoringProvider } from '../types.js';
+import { loggerService, LogCategory } from '../../loggerService.js';
 
 export class ApiProvider implements MonitoringProvider {
     async poll(config: MonitoringSourceConfig): Promise<string> {
@@ -12,6 +13,7 @@ export class ApiProvider implements MonitoringProvider {
             else if (config.id === 'marinetraffic') url = url.replace('YOUR_KEY', apiKey);
         }
 
+        loggerService.catDebug(LogCategory.MONITORING, `ApiProvider: Fetching from ${url.replace(apiKey || '', '***')}`);
         const timeout = config.timeoutMs || 60000;
         const resp = await fetch(url, { signal: AbortSignal.timeout(timeout) });
         if (!resp.ok) {
@@ -19,6 +21,7 @@ export class ApiProvider implements MonitoringProvider {
         }
 
         const data = await resp.json();
+        loggerService.catDebug(LogCategory.MONITORING, `ApiProvider: Received data from ${config.id}`, { length: JSON.stringify(data).length });
         return JSON.stringify(data);
     }
 }

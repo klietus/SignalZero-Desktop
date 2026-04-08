@@ -12,8 +12,8 @@ import { ApiProvider } from './monitoring/providers/api.js';
 import { MonitoringProvider } from './monitoring/types.js';
 
 const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
-    { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://acleddata.com/api/acled/read?limit=10&terms_accept=yes', pollingIntervalMs: 86400000, type: 'api' },
-    { id: 'gdelt', name: 'GDELT (Global Events)', enabled: false, url: 'https://api.gdeltproject.org/api/v2/doc/doc?query=world&mode=artlist&format=json&maxrecords=10', pollingIntervalMs: 3600000, timeoutMs: 120000, type: 'api' },
+    { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://api.acleddata.com/api/acled/read?limit=10&terms_accept=yes', pollingIntervalMs: 86400000, type: 'api' },
+    { id: 'gdelt', name: 'GDELT (Global Events)', enabled: false, url: 'https://api.gdeltproject.org/api/v2/doc/doc?query=world&mode=artlist&format=json&maxrecords=20', pollingIntervalMs: 3600000, timeoutMs: 120000, type: 'api' },
     { id: 'alphavantage', name: 'Alpha Vantage (Markets)', enabled: false, url: 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=SPY', pollingIntervalMs: 3600000, type: 'api' },
     { id: 'marketstack', name: 'Market Stack (Stocks)', enabled: false, url: 'http://api.marketstack.com/v1/eod?symbols=AAPL', pollingIntervalMs: 86400000, type: 'api' },
     { id: 'aviationstack', name: 'Aviation Stack (Flights)', enabled: false, url: 'http://api.aviationstack.com/v1/flights?limit=10', pollingIntervalMs: 3600000, type: 'api' },
@@ -178,19 +178,35 @@ class MonitoringService {
         const fastModel = settings.fastModel;
         if (!fastModel) return null;
 
+        loggerService.catDebug(LogCategory.MONITORING, `Itemizing data for ${source.name} (type: ${source.type})`, { length: rawData.length });
+
         // Specialized itemization logic for common formats
         if (source.type === 'api') {
             try {
                 const data = JSON.parse(rawData);
                 // ACLED: { data: [...] }
-                if (source.id === 'acled' && Array.isArray(data.data)) return data.data;
+                if (source.id === 'acled' && Array.isArray(data.data)) {
+                    loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.data.length} items from ACLED API`);
+                    return data.data;
+                }
                 // GDELT Artlist: { articles: [...] }
-                if (source.id === 'gdelt' && Array.isArray(data.articles)) return data.articles;
+                if (source.id === 'gdelt' && Array.isArray(data.articles)) {
+                    loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.articles.length} articles from GDELT API`);
+                    return data.articles;
+                }
                 // Aviation Stack: { data: [...] }
-                if (source.id.includes('stack') && Array.isArray(data.data)) return data.data;
+                if (source.id.includes('stack') && Array.isArray(data.data)) {
+                    loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.data.length} items from ${source.name}`);
+                    return data.data;
+                }
                 // Generic arrays
-                if (Array.isArray(data)) return data;
-            } catch (e) { }
+                if (Array.isArray(data)) {
+                    loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.length} items from generic array API`);
+                    return data;
+                }
+            } catch (e) { 
+                loggerService.catWarn(LogCategory.MONITORING, `JSON parse failed during itemization for ${source.name}`, { error: e });
+            }
         }
 
         // Use model to itemize complex or unknown formats
