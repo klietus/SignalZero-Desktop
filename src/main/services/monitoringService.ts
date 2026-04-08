@@ -251,7 +251,7 @@ class MonitoringService {
                 const result = await client.chat.completions.create({
                     model: fastModel,
                     messages: [{ role: "user", content: prompt }],
-                    response_format: { type: "json_object" }
+                    response_format: settings.provider === 'local' ? undefined : { type: "json_object" }
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }
@@ -321,7 +321,7 @@ class MonitoringService {
                 const result = await client.chat.completions.create({
                     model: fastModel,
                     messages: [{ role: "user", content: prompt }],
-                    response_format: { type: "json_object" }
+                    response_format: settings.provider === 'local' ? undefined : { type: "json_object" }
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }

@@ -15,8 +15,8 @@ export class GdeltProvider implements MonitoringProvider {
             const resp = await fetch(config.url, { 
                 signal: controller.signal,
                 headers: {
-                    'Accept': 'application/json',
-                    'User-Agent': 'SignalZero-Desktop/1.0'
+                    'Accept': 'application/json, text/plain, */*',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
                 }
             });
             clearTimeout(id);
