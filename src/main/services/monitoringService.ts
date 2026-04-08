@@ -5,6 +5,11 @@ import { lancedbService } from './lancedbService.js';
 import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
 import { MonitoringSourceConfig, MonitoringDelta, MonitoringPeriod } from '../types.js';
 import { randomUUID } from 'crypto';
+import { AcledProvider } from './monitoring/providers/acled.js';
+import { RssProvider } from './monitoring/providers/rss.js';
+import { WebScrapeProvider } from './monitoring/providers/web.js';
+import { ApiProvider } from './monitoring/providers/api.js';
+import { MonitoringProvider } from './monitoring/types.js';
 
 const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
     { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://acleddata.com/api/acled/read?limit=10', pollingIntervalMs: 86400000, type: 'api' },
@@ -21,8 +26,15 @@ const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
 
 class MonitoringService {
     private intervals: Map<string, NodeJS.Timeout> = new Map();
-    private tokens: Map<string, { token: string, expires: number }> = new Map();
+    private providers: Map<string, MonitoringProvider> = new Map();
     private isRunning = false;
+
+    constructor() {
+        this.providers.set('acled', new AcledProvider());
+        this.providers.set('rss', new RssProvider());
+        this.providers.set('web', new WebScrapeProvider());
+        this.providers.set('api', new ApiProvider());
+    }
 
     async initialize() {
         if (this.isRunning) return;
@@ -85,76 +97,16 @@ class MonitoringService {
         }
     }
 
-    private async getAcledToken(source: MonitoringSourceConfig): Promise<string | null> {
-        const cached = this.tokens.get(source.id);
-        if (cached && cached.expires > Date.now() + 60000) {
-            return cached.token;
-        }
-
-        const email = source.metadata?.email;
-        const password = source.metadata?.apiKey; // We reuse apiKey field for password
-
-        if (!email || !password) {
-            throw new Error("ACLED requires both email and password (set in API Key field)");
-        }
-
-        loggerService.catInfo(LogCategory.MONITORING, "Fetching new ACLED access token...");
-        
-        const resp = await fetch("https://acleddata.com/oauth/token", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                username: email,
-                password: password,
-                grant_type: 'password',
-                client_id: 'acled'
-            })
-        });
-
-        if (!resp.ok) {
-            const err = await resp.text();
-            throw new Error(`ACLED Auth failed: ${resp.status} ${err}`);
-        }
-
-        const data = await resp.json();
-        if (data.access_token) {
-            this.tokens.set(source.id, {
-                token: data.access_token,
-                expires: Date.now() + (data.expires_in * 1000)
-            });
-            return data.access_token;
-        }
-        return null;
-    }
-
     private async pollSource(source: MonitoringSourceConfig) {
         loggerService.catDebug(LogCategory.MONITORING, `Polling source: ${source.name}`);
         try {
-            let url = source.url;
-            const apiKey = source.metadata?.apiKey;
-            const headers: Record<string, string> = {};
-
-            if (source.id === 'acled') {
-                const token = await this.getAcledToken(source);
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-            } else if (apiKey) {
-                if (source.id === 'alphavantage') url += `&apikey=${apiKey}`;
-                else if (source.id.includes('stack')) url += `&access_key=${apiKey}`;
-                else if (source.id === 'marinetraffic') url = url.replace('YOUR_KEY', apiKey);
+            const provider = this.providers.get(source.id) || this.providers.get(source.type);
+            if (!provider) {
+                loggerService.catError(LogCategory.MONITORING, `No provider found for source: ${source.id} (type: ${source.type})`);
+                return;
             }
 
-            let rawData = "";
-            if (source.type === 'rss' || source.type === 'web') {
-                const resp = await fetch(url, { headers });
-                rawData = await resp.text();
-            } else if (source.type === 'api') {
-                const resp = await fetch(url, { headers });
-                const data = await resp.json();
-                rawData = JSON.stringify(data);
-            }
-
+            const rawData = await provider.poll(source);
             if (!rawData) return;
 
             const summary = await this.summarizeRawData(source, rawData);
