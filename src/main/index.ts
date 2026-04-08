@@ -434,6 +434,17 @@ ipcMain.handle('settings:update', async (_, settings) => {
   return updated;
 });
 
+ipcMain.handle('monitoring:poll-source', async (_, sourceId) => {
+  const settings = await settingsService.getMonitoringSettings();
+  const source = settings.sources.find(s => s.id === sourceId);
+  if (source) {
+    // We trigger it asynchronously to not block UI
+    monitoringService.triggerPoll(sourceId);
+    return { success: true };
+  }
+  return { success: false, error: 'Source not found' };
+});
+
 ipcMain.handle('system:validate-mcp', async (_, endpoint, token) => {
   return await mcpClientService.validateConfig(endpoint, token);
 });

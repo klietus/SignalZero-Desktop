@@ -76,6 +76,14 @@ class MonitoringService {
         }
     }
 
+    async triggerPoll(sourceId: string) {
+        const settings = await settingsService.getMonitoringSettings();
+        const source = settings.sources.find(s => s.id === sourceId);
+        if (source) {
+            await this.pollSource(source);
+        }
+    }
+
     private async pollSource(source: MonitoringSourceConfig) {
         loggerService.catDebug(LogCategory.MONITORING, `Polling source: ${source.name}`);
         try {

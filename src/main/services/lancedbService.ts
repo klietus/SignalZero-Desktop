@@ -305,6 +305,7 @@ export const lancedbService = {
             const obsoleteIds = lanceEntries.filter(r => !sqlIds.has(r.id)).map(r => r.id);
             
             if (obsoleteIds.length > 0) {
+                console.log(`[LanceDB] Found ${obsoleteIds.length} obsolete symbols in index. Examples:`, obsoleteIds.slice(0, 5));
                 // Delete in chunks to avoid query length limits
                 const CHUNK_SIZE = 50;
                 for (let i = 0; i < obsoleteIds.length; i += CHUNK_SIZE) {
@@ -321,9 +322,11 @@ export const lancedbService = {
                 const lanceUpdate = lanceIdMap.get(s.id);
                 if (!lanceUpdate) return true; // Missing
                 
-                // Compare timestamps
+                // Compare timestamps - use Date objects for safety across formats
                 try {
-                    return new Date(s.updated_at).getTime() > new Date(lanceUpdate).getTime();
+                    const sqlTime = new Date(s.updated_at).getTime();
+                    const lanceTime = new Date(lanceUpdate).getTime();
+                    return sqlTime > lanceTime;
                 } catch (e) {
                     return true; // If comparison fails, assume outdated
                 }

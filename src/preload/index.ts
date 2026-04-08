@@ -48,6 +48,7 @@ const api = {
   validateMcp: (endpoint: string, token?: string) => ipcRenderer.invoke('system:validate-mcp', endpoint, token),
   runHygiene: (strategy?: string) => ipcRenderer.invoke('system:run-hygiene', strategy),
   isInitialized: () => ipcRenderer.invoke('system:is-initialized'),
+  pollSource: (sourceId: string) => ipcRenderer.invoke('monitoring:poll-source', sourceId),
 
   // System
   getRecentLogs: (limit?: number) => ipcRenderer.invoke('system:get-recent-logs', limit),

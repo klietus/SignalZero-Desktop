@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Save, Database, Network, Cpu, Cloud, 
     Search, AlertCircle, Layout, RefreshCw, Plus,
-    Trash2, CheckCircle2, XCircle, Server, Activity
+    Trash2, CheckCircle2, XCircle, Server, Activity, Play
 } from 'lucide-react';
 import { UserProfile, GraphHygieneSettings, McpConfiguration } from '../../types';
 import { Header, HeaderProps } from '../Header';
@@ -266,6 +266,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
+  const handlePollSource = async (sourceId: string) => {
+    try {
+        await window.api.pollSource(sourceId);
+        alert('Poll triggered! Check logs for progress.');
+    } catch (err: any) {
+        alert(`Failed to trigger poll: ${err.message}`);
+    }
+  };
+
   const tabs = [
       { id: 'appearance', label: 'Appearance', icon: Layout },
       { id: 'inference', label: 'Inference', icon: Cpu },
@@ -451,15 +460,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                                               <div className="font-bold text-sm text-indigo-700 dark:text-indigo-300">{source.name}</div>
                                                               <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-bold uppercase">{source.type}</span>
                                                           </div>
-                                                          <label className="relative inline-flex items-center cursor-pointer">
-                                                              <input type="checkbox" className="sr-only peer" checked={source.enabled} onChange={(e) => {
-                                                                  const updated = [...monitoringSources];
-                                                                  const idx = updated.findIndex(s => s.id === source.id);
-                                                                  updated[idx].enabled = e.target.checked;
-                                                                  setMonitoringSources(updated);
-                                                              }} />
-                                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
-                                                          </label>
+                                                          <div className="flex items-center gap-3 ml-4 pt-4">
+                                                              <button 
+                                                                  onClick={() => handlePollSource(source.id)}
+                                                                  className="p-1.5 text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 rounded-md transition-colors"
+                                                                  title="Run Poll Now"
+                                                              >
+                                                                  <Play size={14} fill="currentColor" />
+                                                              </button>
+                                                              <label className="relative inline-flex items-center cursor-pointer">
+                                                                  <input type="checkbox" className="sr-only peer" checked={source.enabled} onChange={(e) => {
+                                                                      const updated = [...monitoringSources];
+                                                                      const idx = updated.findIndex(s => s.id === source.id);
+                                                                      updated[idx].enabled = e.target.checked;
+                                                                      setMonitoringSources(updated);
+                                                                  }} />
+                                                                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                                                              </label>
+                                                          </div>
                                                       </div>
                                                       
                                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -576,6 +594,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                                               </div>
                                                           </div>
                                                           <div className="flex items-center gap-2 ml-4 pt-4">
+                                                              <button 
+                                                                  onClick={() => handlePollSource(source.id)}
+                                                                  className="p-1.5 text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 rounded-md transition-colors"
+                                                                  title="Run Poll Now"
+                                                              >
+                                                                  <Play size={14} fill="currentColor" />
+                                                              </button>
                                                               <label className="relative inline-flex items-center cursor-pointer">
                                                                   <input type="checkbox" className="sr-only peer" checked={source.enabled} onChange={(e) => {
                                                                       const updated = [...monitoringSources];

@@ -46,6 +46,7 @@ declare global {
             validateMcp: (endpoint: string, token?: string) => Promise<any>;
             runHygiene: (strategy?: string) => Promise<any>;
             isInitialized: () => Promise<boolean>;
+            pollSource: (sourceId: string) => Promise<any>;
             getRecentLogs: (limit?: number) => Promise<any[]>;
             getTraces: (sessionId: string) => Promise<any[]>;
             showEmojiPicker: () => Promise<void>;

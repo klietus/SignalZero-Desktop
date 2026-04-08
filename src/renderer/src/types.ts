@@ -93,6 +93,22 @@ export interface McpConfiguration {
   enabled: boolean;
 }
 
+export interface MonitoringSourceConfig {
+  id: string;
+  name: string;
+  enabled: boolean;
+  url: string;
+  pollingIntervalMs: number;
+  lastPolledAt?: string;
+  type: 'rss' | 'api' | 'web';
+  metadata?: Record<string, any>;
+}
+
+export interface MonitoringSettings {
+  enabled: boolean;
+  sources: MonitoringSourceConfig[];
+}
+
 export interface GraphHygieneSettings {
   positional: {
     autoCompress: boolean;
@@ -117,6 +133,7 @@ export interface SystemSettings {
   tavily?: WebSearchProviderSettings;
   hygiene?: GraphHygieneSettings;
   mcpConfigs?: McpConfiguration[];
+  monitoring?: MonitoringSettings;
   ui?: {
     showGraphviz?: boolean;
   };
@@ -129,6 +146,7 @@ export interface SystemSettingsUpdate {
   tavily?: WebSearchProviderSettings;
   hygiene?: Partial<GraphHygieneSettings>;
   mcpConfigs?: McpConfiguration[];
+  monitoring?: Partial<MonitoringSettings>;
   ui?: {
     showGraphviz?: boolean;
   };
