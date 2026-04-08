@@ -66,6 +66,8 @@ class MonitoringService {
         // Ensure prebuilt sources exist in settings and have updated URLs
         const settings = await settingsService.getMonitoringSettings();
         let changed = false;
+
+        // 1. Add or Update prebuilt sources
         for (const prebuilt of PREBUILT_SOURCES) {
             const existing = settings.sources.find(s => s.id === prebuilt.id);
             if (!existing) {
@@ -81,6 +83,20 @@ class MonitoringService {
                 }
             }
         }
+
+        // 2. Remove stale system sources (those that were system-provided but are no longer in our list)
+        const initialCount = settings.sources.length;
+        settings.sources = settings.sources.filter(s => {
+            const isSystemSource = !s.id.startsWith('mon-');
+            const stillInList = PREBUILT_SOURCES.some(p => p.id === s.id);
+            return !isSystemSource || stillInList;
+        });
+
+        if (settings.sources.length !== initialCount) {
+            loggerService.catInfo(LogCategory.MONITORING, `Removed ${initialCount - settings.sources.length} stale system sources from config`);
+            changed = true;
+        }
+
         if (changed) {
             await settingsService.setMonitoringSettings(settings);
         }
