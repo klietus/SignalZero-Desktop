@@ -536,9 +536,9 @@ export async function* sendMessageAndHandleTools(
     while (retries < MAX_RETRIES) {
       let contextMessages: ChatCompletionMessageParam[] = [];
       if (contextSessionId) {
-        const { messages: contextWindowMessages, totalTokens } = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
-        contextMessages = contextWindowMessages;
-        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens });
+        const result = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
+        contextMessages = result.messages;
+        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens: result.totalTokens });
       } else {
         contextMessages = [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: resolvedContent }] as ChatCompletionMessageParam[];
       }
@@ -613,52 +613,6 @@ export async function* sendMessageAndHandleTools(
       }
     }
 
-    let auditTriggered = false;
-    let auditMessage = "";
-    const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
-    const isCallingTraceThisTurn = currentToolNames.has('log_trace');
-    const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
-    const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
-    const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
-    const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
-    loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
-
-    if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
-      if (!traceSatisfied) {
-        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: YOU MUST TRACE THIS OPERATION! This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
-        auditTriggered = true;
-      }
-    }
-
-    if (auditTriggered) {
-      if (auditRetries < MAX_AUDIT_RETRIES) {
-        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Missing required check.", { contextSessionId, auditRetries, hasLoggedTrace });
-
-        const finalAuditMessage = auditMessage + "Retry immediately to satisfy the audit message. Do not acknowledge this message.";
-
-        transientMessages.push(nextAssistant!);
-        transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${finalAuditMessage}` });
-        auditRetries++;
-        continue;
-      } else {
-        loggerService.catError(LogCategory.INFERENCE, "System Audit: Max retries reached. Proceeding despite violations.", { contextSessionId });
-        auditTriggered = false;
-      }
-    }
-
-    // --- SUCCESSFUL TURN ACCUMULATION ---
-    // Only accumulate narrative if the turn passed audit
-    if (totalTextAccumulatedAcrossLoops.length > 0 && textAccumulatedInTurn.trim().length > 0) {
-      totalTextAccumulatedAcrossLoops += "\n\n" + textAccumulatedInTurn;
-    } else {
-      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
-    }
-
-    // YIELD NARRATIVE ONLY ON FINAL TURN
-    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
-      yield { text: totalTextAccumulatedAcrossLoops.trim() };
-    }
-
     // --- Tool Execution ---
     const toolResponses: ChatCompletionMessageParam[] = [];
     if (yieldedToolCalls && yieldedToolCalls.length > 0) {
@@ -703,6 +657,53 @@ export async function* sendMessageAndHandleTools(
           }
         }
       }
+    }
+
+    let auditTriggered = false;
+    let auditMessage = "";
+    const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
+    const isCallingTraceThisTurn = currentToolNames.has('log_trace');
+    const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
+    const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
+    const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
+    const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
+    loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
+
+    if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
+      if (!traceSatisfied) {
+        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: YOU MUST TRACE THIS OPERATION! This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
+        auditTriggered = true;
+      }
+    }
+
+    if (auditTriggered) {
+      if (auditRetries < MAX_AUDIT_RETRIES) {
+        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Missing required check.", { contextSessionId, auditRetries, hasLoggedTrace });
+
+        const finalAuditMessage = auditMessage + "Retry immediately to satisfy the audit message. Do not acknowledge this message.";
+
+        transientMessages.push(nextAssistant!);
+        if (toolResponses.length > 0) transientMessages.push(...toolResponses);
+        transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${finalAuditMessage}` });
+        auditRetries++;
+        continue;
+      } else {
+        loggerService.catError(LogCategory.INFERENCE, "System Audit: Max retries reached. Proceeding despite violations.", { contextSessionId });
+        auditTriggered = false;
+      }
+    }
+
+    // --- SUCCESSFUL TURN ACCUMULATION ---
+    // Only accumulate narrative if the turn passed audit
+    if (totalTextAccumulatedAcrossLoops.length > 0 && textAccumulatedInTurn.trim().length > 0) {
+      totalTextAccumulatedAcrossLoops += "\n\n" + textAccumulatedInTurn;
+    } else {
+      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
+    }
+
+    // YIELD NARRATIVE ONLY ON FINAL TURN
+    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
+      yield { text: totalTextAccumulatedAcrossLoops.trim() };
     }
 
     // Update transient messages for the next loop

@@ -23,7 +23,10 @@ vi.mock('../services/settingsService.js', () => ({
 
 vi.mock('../services/contextWindowService.js', () => ({
   contextWindowService: {
-    constructContextWindow: vi.fn().mockResolvedValue([{ role: 'system', content: 'test instruction' }]),
+    constructContextWindow: vi.fn().mockResolvedValue({ 
+      messages: [{ role: 'system', content: 'test instruction' }], 
+      totalTokens: 100 
+    }),
   }
 }));
 
