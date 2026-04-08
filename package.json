@@ -32,7 +32,7 @@
     "better-sqlite3": "^11.0.0",
     "cron-parser": "^5.4.0",
     "js-tiktoken": "^1.0.21",
-    "jsdom": "^27.0.1",
+    "jsdom": "24.1.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.372.0",
     "openai": "^4.40.0",

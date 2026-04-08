@@ -1,3 +1,5 @@
+import { JSDOM } from 'jsdom';
+import { Readability } from '@mozilla/readability';
 import { settingsService } from './settingsService.js';
 import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
 import { loggerService, LogCategory } from './loggerService.js';
@@ -21,10 +23,6 @@ export const webFetchService = {
         loggerService.catInfo(LogCategory.TOOL, `WebFetchService: Fetching and extracting from ${url}`);
         
         try {
-            // Dynamically import ESM modules to avoid startup errors in CJS environment
-            const { JSDOM } = await import('jsdom');
-            const { Readability } = await import('@mozilla/readability');
-
             const resp = await fetch(url, {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
