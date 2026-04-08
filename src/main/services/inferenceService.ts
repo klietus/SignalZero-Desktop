@@ -929,7 +929,9 @@ export const primeSymbolicContext = async (
       needsNaming
     });
 
-    const prompt = `Analyze the conversation history and the new user message to identify 3 symbolic search queries and determine if web search grounding is needed.  Include one more query that is the local opposite of your predictions, include antonyms and orthogonal logic it its search terms.
+    const prompt = `Analyze the conversation history and the new user message to identify 3 symbolic search queries and determine if web search grounding is needed. 
+    
+    Additionally, generate 2 "orthogonal_queries" that explore the local opposite of your predictions, including antonyms, contradictory logic, or orthogonal concepts to ensure context diversity.
     
     ${needsNaming ? 'CRITICAL: Based on the conversation context, suggest a descriptive and concise name for this context session in "suggested_name".' : ''}
 
@@ -946,6 +948,7 @@ export const primeSymbolicContext = async (
     Output valid JSON only:
     {
       "queries": ["symbolic query1", "symbolic query2", ...],
+      "orthogonal_queries": ["opposite query1", "orthogonal query2", ...],
       "web_search_needed": boolean,
       "web_search_queries": ["search query1", "search query2", ...],
       "trace_needed": boolean,
@@ -968,11 +971,14 @@ export const primeSymbolicContext = async (
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
 
     const symbolicQueriesRaw = fastResponse.queries || [];
+    const orthogonalQueriesRaw = fastResponse.orthogonal_queries || [];
     const webSearchQueriesRaw = fastResponse.web_search_queries || [];
 
     // Normalize queries to strings (handling models that return objects with "query" property)
-    const symbolicQueries = symbolicQueriesRaw.map((q: any) => typeof q === 'string' ? q : (q.query || JSON.stringify(q)));
-    const webSearchQueries = webSearchQueriesRaw.map((q: any) => typeof q === 'string' ? q : (q.query || JSON.stringify(q)));
+    const normalize = (q: any) => typeof q === 'string' ? q : (q.query || JSON.stringify(q));
+    
+    const symbolicQueries = [...symbolicQueriesRaw.map(normalize), ...orthogonalQueriesRaw.map(normalize)];
+    const webSearchQueries = webSearchQueriesRaw.map(normalize);
 
     traceNeeded = !!fastResponse.trace_needed;
     traceReason = fastResponse.trace_reason;
