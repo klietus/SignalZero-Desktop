@@ -10,8 +10,13 @@ export class AcledProvider implements MonitoringProvider {
         try {
             const token = await this.getToken(config);
             
+            loggerService.catDebug(LogCategory.MONITORING, `ACLED Provider: Polling data from ${config.url}`);
             const resp = await fetch(config.url, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'User-Agent': 'SignalZero-Desktop/1.0'
+                }
             });
 
             if (!resp.ok) {
@@ -23,7 +28,11 @@ export class AcledProvider implements MonitoringProvider {
             const data = await resp.json();
             return JSON.stringify(data);
         } catch (error: any) {
-            loggerService.catError(LogCategory.MONITORING, "ACLED Poll exception", { error: error.message });
+            loggerService.catError(LogCategory.MONITORING, "ACLED Poll exception", { 
+                error: error.message,
+                stack: error.stack,
+                cause: error.cause
+            });
             throw error;
         }
     }

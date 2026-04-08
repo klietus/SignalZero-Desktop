@@ -42,13 +42,22 @@ class MonitoringService {
         
         loggerService.catInfo(LogCategory.MONITORING, "Initializing Monitoring Service");
 
-        // Ensure prebuilt sources exist in settings
+        // Ensure prebuilt sources exist in settings and have updated URLs
         const settings = await settingsService.getMonitoringSettings();
         let changed = false;
         for (const prebuilt of PREBUILT_SOURCES) {
-            if (!settings.sources.find(s => s.id === prebuilt.id)) {
+            const existing = settings.sources.find(s => s.id === prebuilt.id);
+            if (!existing) {
                 settings.sources.push(prebuilt);
                 changed = true;
+            } else {
+                // If it's a prebuilt source and the URL has changed in our code, update it
+                // but keep the user's enabled status and metadata
+                if (existing.url !== prebuilt.url && !existing.id.startsWith('mon-')) {
+                    loggerService.catInfo(LogCategory.MONITORING, `Updating URL for system source: ${existing.id}`);
+                    existing.url = prebuilt.url;
+                    changed = true;
+                }
             }
         }
         if (changed) {
