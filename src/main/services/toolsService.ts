@@ -12,6 +12,7 @@ import os from 'os';
 import { loggerService, LogCategory } from "./loggerService.js";
 
 import { webSearchService } from "./webSearchService.js";
+import { webFetchService } from "./webFetchService.js";
 
 const execAsync = promisify(exec);
 
@@ -288,6 +289,20 @@ export const PRIMARY_TOOLS: ChatCompletionTool[] = [
         required: ['query']
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'web_fetch',
+      description: 'Fetch content from a URL and extract structured metadata (actors, quotes, summary, timeline).',
+      parameters: {
+        type: 'object',
+        properties: {
+          url: { type: 'string', description: 'The URL to fetch.' }
+        },
+        required: ['url']
+      }
+    }
   }
 ];
 
@@ -390,6 +405,15 @@ export const createToolExecutor = (contextSessionId?: string) => {
             sources: results.map(r => r.metadata.sourceId)
           });
           return { deltas: results };
+        } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'web_fetch': {
+        try {
+          const result = await webFetchService.fetch(args.url);
+          return result || { error: "Failed to fetch or parse content." };
         } catch (e: any) {
           return { error: e.message };
         }
