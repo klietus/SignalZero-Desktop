@@ -19,6 +19,9 @@ import { CnnProvider } from './monitoring/providers/cnn.js';
 import { ReutersProvider } from './monitoring/providers/reuters.js';
 import { AlJazeeraProvider } from './monitoring/providers/aljazeera.js';
 import { MonitoringProvider } from './monitoring/types.js';
+import Parser from 'rss-parser';
+
+const rssParser = new Parser();
 
 const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
     { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://api.acleddata.com/api/acled/read?limit=10&terms_accept=yes', pollingIntervalMs: 86400000, type: 'api' },
@@ -202,6 +205,23 @@ class MonitoringService {
         loggerService.catDebug(LogCategory.MONITORING, `Itemizing data for ${source.name} (type: ${source.type})`, { length: rawData.length });
 
         // Specialized itemization logic for common formats
+        if (source.type === 'rss') {
+            try {
+                const feed = await rssParser.parseString(rawData);
+                const items = feed.items.map(item => ({
+                    id: item.guid || item.link || item.title,
+                    title: item.title,
+                    content: item.contentSnippet || item.content || item.summary,
+                    link: item.link,
+                    pubDate: item.pubDate
+                }));
+                loggerService.catInfo(LogCategory.MONITORING, `Itemized ${items.length} items from RSS feed for ${source.name}`);
+                return items;
+            } catch (rssErr) {
+                loggerService.catError(LogCategory.MONITORING, `Failed to parse RSS XML for ${source.name}`, { error: rssErr });
+            }
+        }
+
         if (source.type === 'api') {
             try {
                 const data = JSON.parse(rawData);
