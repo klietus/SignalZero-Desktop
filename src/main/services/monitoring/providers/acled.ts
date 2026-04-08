@@ -11,7 +11,9 @@ export class AcledProvider implements MonitoringProvider {
             const token = await this.getToken(config);
             
             loggerService.catDebug(LogCategory.MONITORING, `ACLED Provider: Polling data from ${config.url}`);
+            const timeout = config.timeoutMs || 60000;
             const resp = await fetch(config.url, {
+                signal: AbortSignal.timeout(timeout),
                 headers: { 
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
@@ -60,6 +62,7 @@ export class AcledProvider implements MonitoringProvider {
         try {
             const resp = await fetch("https://acleddata.com/oauth/token", {
                 method: 'POST',
+                signal: AbortSignal.timeout(30000), // 30s timeout for auth
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
                     username: email,

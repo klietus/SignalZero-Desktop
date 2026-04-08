@@ -12,7 +12,8 @@ export class ApiProvider implements MonitoringProvider {
             else if (config.id === 'marinetraffic') url = url.replace('YOUR_KEY', apiKey);
         }
 
-        const resp = await fetch(url);
+        const timeout = config.timeoutMs || 60000;
+        const resp = await fetch(url, { signal: AbortSignal.timeout(timeout) });
         if (!resp.ok) {
             throw new Error(`API Poll failed: ${resp.status} ${resp.statusText}`);
         }

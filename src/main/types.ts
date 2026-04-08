@@ -334,6 +334,7 @@ export interface MonitoringSourceConfig {
   enabled: boolean;
   url: string;
   pollingIntervalMs: number;
+  timeoutMs?: number; // Optional timeout in milliseconds
   lastPolledAt?: string;
   type: 'rss' | 'api' | 'web';
   metadata?: Record<string, any>;
