@@ -7,18 +7,25 @@ export class AcledProvider implements MonitoringProvider {
     private expires: number = 0;
 
     async poll(config: MonitoringSourceConfig): Promise<string> {
-        const token = await this.getToken(config);
-        
-        const resp = await fetch(config.url, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        try {
+            const token = await this.getToken(config);
+            
+            const resp = await fetch(config.url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-        if (!resp.ok) {
-            throw new Error(`ACLED Poll failed: ${resp.status} ${resp.statusText}`);
+            if (!resp.ok) {
+                const errText = await resp.text();
+                loggerService.catError(LogCategory.MONITORING, `ACLED Data Poll failed: ${resp.status}`, { error: errText });
+                throw new Error(`ACLED Poll failed: ${resp.status} ${resp.statusText}`);
+            }
+
+            const data = await resp.json();
+            return JSON.stringify(data);
+        } catch (error: any) {
+            loggerService.catError(LogCategory.MONITORING, "ACLED Poll exception", { error: error.message });
+            throw error;
         }
-
-        const data = await resp.json();
-        return JSON.stringify(data);
     }
 
     private async getToken(config: MonitoringSourceConfig): Promise<string> {
@@ -30,30 +37,45 @@ export class AcledProvider implements MonitoringProvider {
         const password = config.metadata?.apiKey;
 
         if (!email || !password) {
-            throw new Error("ACLED requires both email and password (set in API Key field)");
+            const err = "ACLED requires both email and password (set in API Key field)";
+            loggerService.catError(LogCategory.MONITORING, err);
+            throw new Error(err);
         }
 
-        loggerService.catInfo(LogCategory.MONITORING, "ACLED Provider: Fetching new access token...");
+        loggerService.catInfo(LogCategory.MONITORING, "ACLED Provider: Fetching new access token...", { email: email.replace(/(?<=.{2}).(?=.*@)/g, '*') });
         
-        const resp = await fetch("https://acleddata.com/oauth/token", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                username: email,
-                password: password,
-                grant_type: 'password',
-                client_id: 'acled'
-            })
-        });
+        try {
+            const resp = await fetch("https://acleddata.com/oauth/token", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    username: email,
+                    password: password,
+                    grant_type: 'password',
+                    client_id: 'acled'
+                })
+            });
 
-        if (!resp.ok) {
-            throw new Error(`ACLED Auth failed: ${resp.status}`);
+            if (!resp.ok) {
+                const errText = await resp.text();
+                loggerService.catError(LogCategory.MONITORING, `ACLED Auth failed: ${resp.status}`, { error: errText });
+                throw new Error(`ACLED Auth failed: ${resp.status} ${errText}`);
+            }
+
+            const data = await resp.json();
+            if (!data.access_token) {
+                loggerService.catError(LogCategory.MONITORING, "ACLED Auth response missing access_token", { data });
+                throw new Error("ACLED Auth failed: No access_token returned");
+            }
+
+            this.token = data.access_token;
+            this.expires = Date.now() + (data.expires_in * 1000);
+            
+            loggerService.catInfo(LogCategory.MONITORING, "ACLED Provider: Successfully obtained token");
+            return this.token!;
+        } catch (error: any) {
+            loggerService.catError(LogCategory.MONITORING, "ACLED Auth exception", { error: error.message });
+            throw error;
         }
-
-        const data = await resp.json();
-        this.token = data.access_token;
-        this.expires = Date.now() + (data.expires_in * 1000);
-        
-        return this.token!;
     }
 }
