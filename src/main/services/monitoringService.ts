@@ -9,6 +9,15 @@ import { AcledProvider } from './monitoring/providers/acled.js';
 import { RssProvider } from './monitoring/providers/rss.js';
 import { WebScrapeProvider } from './monitoring/providers/web.js';
 import { ApiProvider } from './monitoring/providers/api.js';
+import { GdeltProvider } from './monitoring/providers/gdelt.js';
+import { AlphaVantageProvider } from './monitoring/providers/alphavantage.js';
+import { MarketStackProvider } from './monitoring/providers/marketstack.js';
+import { AviationStackProvider } from './monitoring/providers/aviationstack.js';
+import { MarineTrafficProvider } from './monitoring/providers/marinetraffic.js';
+import { NyTimesProvider } from './monitoring/providers/nytimes.js';
+import { CnnProvider } from './monitoring/providers/cnn.js';
+import { ReutersProvider } from './monitoring/providers/reuters.js';
+import { AlJazeeraProvider } from './monitoring/providers/aljazeera.js';
 import { MonitoringProvider } from './monitoring/types.js';
 
 const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
@@ -30,7 +39,19 @@ class MonitoringService {
     private isRunning = false;
 
     constructor() {
+        // Register Specialized Providers
         this.providers.set('acled', new AcledProvider());
+        this.providers.set('gdelt', new GdeltProvider());
+        this.providers.set('alphavantage', new AlphaVantageProvider());
+        this.providers.set('marketstack', new MarketStackProvider());
+        this.providers.set('aviationstack', new AviationStackProvider());
+        this.providers.set('marinetraffic', new MarineTrafficProvider());
+        this.providers.set('times-news', new NyTimesProvider());
+        this.providers.set('cnn-news', new CnnProvider());
+        this.providers.set('reuters-news', new ReutersProvider());
+        this.providers.set('aljazeera-news', new AlJazeeraProvider());
+
+        // Generic Type Fallbacks
         this.providers.set('rss', new RssProvider());
         this.providers.set('web', new WebScrapeProvider());
         this.providers.set('api', new ApiProvider());
