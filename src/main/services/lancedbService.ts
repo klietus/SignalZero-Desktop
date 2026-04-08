@@ -150,6 +150,7 @@ export const lancedbService = {
                 await conn.createTable(COLLECTION_NAME, allRecords);
             } else {
                 try {
+                    // Delete existing records with these IDs first to prevent duplicates
                     const ids = symbols.map(s => `'${s.id}'`).join(',');
                     await table.delete(`id IN (${ids})`);
                     await table.add(allRecords);
@@ -302,10 +303,10 @@ export const lancedbService = {
                 }
                 throw queryErr;
             }
-            const obsoleteIds = lanceEntries.filter(r => !sqlIds.has(r.id)).map(r => r.id);
+            const obsoleteIds = Array.from(new Set(lanceEntries.filter(r => !sqlIds.has(r.id)).map(r => r.id)));
             
             if (obsoleteIds.length > 0) {
-                console.log(`[LanceDB] Found ${obsoleteIds.length} obsolete symbols in index. Examples:`, obsoleteIds.slice(0, 5));
+                console.log(`[LanceDB] Found ${obsoleteIds.length} obsolete unique symbols in index. Examples:`, obsoleteIds.slice(0, 15));
                 // Delete in chunks to avoid query length limits
                 const CHUNK_SIZE = 50;
                 for (let i = 0; i < obsoleteIds.length; i += CHUNK_SIZE) {
