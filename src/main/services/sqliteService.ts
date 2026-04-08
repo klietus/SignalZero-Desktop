@@ -29,6 +29,17 @@ const migrateSchema = () => {
             }
         }
     }
+
+    // Ensure monitoring_article_cache exists
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS monitoring_article_cache (
+            source_id TEXT NOT NULL,
+            article_id TEXT NOT NULL,
+            summary TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (source_id, article_id)
+        );
+    `);
 };
 
 const initDb = () => {
@@ -178,6 +189,15 @@ const initDb = () => {
                 content TEXT NOT NULL,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                 metadata TEXT -- JSON object
+            );
+
+            -- Monitoring Article Cache
+            CREATE TABLE IF NOT EXISTS monitoring_article_cache (
+                source_id TEXT NOT NULL,
+                article_id TEXT NOT NULL,
+                summary TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (source_id, article_id)
             );
 
             -- Simple Key-Value Store (for legacy/settings support)

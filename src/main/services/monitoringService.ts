@@ -118,9 +118,46 @@ class MonitoringService {
             const rawData = await provider.poll(source);
             if (!rawData) return;
 
-            const summary = await this.summarizeRawData(source, rawData);
-            if (summary && summary.hasChanges) {
-                await this.recordDelta(source.id, 'hour', summary.content);
+            // 1. Itemize the raw data into individual articles/entries
+            const items = await this.itemizeData(source, rawData);
+            
+            if (items && items.length > 0) {
+                loggerService.catInfo(LogCategory.MONITORING, `Source ${source.name} returned ${items.length} items. Checking cache...`);
+                
+                for (const item of items) {
+                    const articleId = item.id || item.link || item.title;
+                    if (!articleId) continue;
+
+                    // 2. Check SQLite cache
+                    const cached = sqliteService.get(
+                        `SELECT summary FROM monitoring_article_cache WHERE source_id = ? AND article_id = ?`,
+                        [source.id, articleId]
+                    );
+
+                    if (cached) {
+                        loggerService.catDebug(LogCategory.MONITORING, `Skipping cached article: ${articleId}`);
+                        continue;
+                    }
+
+                    // 3. Summarize new article
+                    const summary = await this.summarizeArticle(source, item);
+                    if (summary) {
+                        // 4. Cache the result
+                        sqliteService.run(
+                            `INSERT INTO monitoring_article_cache (source_id, article_id, summary) VALUES (?, ?, ?)`,
+                            [source.id, articleId, summary]
+                        );
+
+                        // 5. Feed to delta engine
+                        await this.recordDelta(source.id, 'hour', summary);
+                    }
+                }
+            } else {
+                // Fallback for non-itemized or failed itemization
+                const summary = await this.summarizeRawData(source, rawData);
+                if (summary && summary.hasChanges) {
+                    await this.recordDelta(source.id, 'hour', summary.content);
+                }
             }
 
             // Update last polled
@@ -133,6 +170,91 @@ class MonitoringService {
 
         } catch (error) {
             loggerService.catError(LogCategory.MONITORING, `Failed to poll source: ${source.name}`, { error });
+        }
+    }
+
+    private async itemizeData(source: MonitoringSourceConfig, rawData: string): Promise<any[] | null> {
+        const settings = await settingsService.getInferenceSettings();
+        const fastModel = settings.fastModel;
+        if (!fastModel) return null;
+
+        // Specialized itemization logic for common formats
+        if (source.type === 'api') {
+            try {
+                const data = JSON.parse(rawData);
+                // ACLED: { data: [...] }
+                if (source.id === 'acled' && Array.isArray(data.data)) return data.data;
+                // GDELT Artlist: { articles: [...] }
+                if (source.id === 'gdelt' && Array.isArray(data.articles)) return data.articles;
+                // Aviation Stack: { data: [...] }
+                if (source.id.includes('stack') && Array.isArray(data.data)) return data.data;
+                // Generic arrays
+                if (Array.isArray(data)) return data;
+            } catch (e) { }
+        }
+
+        // Use model to itemize complex or unknown formats
+        const prompt = `Itemize the following raw data from source "${source.name}" into a list of distinct articles or events.
+        Include 'id' (if available), 'title', 'content', and 'link' for each item.
+        
+        Raw Data:
+        ${rawData.slice(0, 8000)}
+
+        Output valid JSON: { "items": [{ "id": "...", "title": "...", "content": "...", "link": "..." }, ...] }`;
+
+        try {
+            let response: any = {};
+            if (settings.provider === 'gemini') {
+                const client = await getGeminiClient();
+                const model = client.getGenerativeModel({ model: fastModel, generationConfig: { responseMimeType: "application/json" } });
+                const result = await model.generateContent(prompt);
+                response = extractJson(result.response.text());
+            } else {
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                    model: fastModel,
+                    messages: [{ role: "user", content: prompt }],
+                    response_format: { type: "json_object" }
+                });
+                response = extractJson(result.choices[0]?.message?.content || "{}");
+            }
+            return response.items || null;
+        } catch (error) {
+            loggerService.catError(LogCategory.MONITORING, "Itemization failed", { error });
+            return null;
+        }
+    }
+
+    private async summarizeArticle(source: MonitoringSourceConfig, item: any): Promise<string | null> {
+        const settings = await settingsService.getInferenceSettings();
+        const fastModel = settings.fastModel;
+        if (!fastModel) return null;
+
+        const prompt = `Summarize the following article/event from source "${source.name}". 
+        Focus on identifying the core delta (the change in the world).
+        
+        Article:
+        ${JSON.stringify(item)}
+
+        Output a concise bulleted summary.`;
+
+        try {
+            if (settings.provider === 'gemini') {
+                const client = await getGeminiClient();
+                const model = client.getGenerativeModel({ model: fastModel });
+                const result = await model.generateContent(prompt);
+                return result.response.text().trim();
+            } else {
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                    model: fastModel,
+                    messages: [{ role: "user", content: prompt }]
+                });
+                return result.choices[0]?.message?.content?.trim() || null;
+            }
+        } catch (error) {
+            loggerService.catError(LogCategory.MONITORING, "Article summarization failed", { error });
+            return null;
         }
     }
 
