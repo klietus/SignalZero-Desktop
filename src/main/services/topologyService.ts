@@ -141,25 +141,7 @@ class TopologyService {
         let newLinksCount = 0;
         let redundantCount = 0;
 
-        // 1. Scoring helper for choosing the canonical symbol
-        const getPriorityScore = (s: SymbolDef): number => {
-            let score = 0;
-            // Favor descriptive IDs over UUIDs
-            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s.id);
-            if (!isUuid) score += 100;
-            
-            // Domain priority
-            if (s.symbol_domain === 'user') score += 50;
-            else if (s.symbol_domain === 'root') score += 30;
-            else if (s.symbol_domain === 'state') score += 10;
-
-            // Timestamp (most recent is slightly better)
-            if (s.updated_at) score += (new Date(s.updated_at).getTime() / 1e12); 
-
-            return score;
-        };
-
-        // 2. Check for updates helper
+        // Check for updates helper
         const wasUpdated = (s: SymbolDef): boolean => {
             if (!lastRun || !s.updated_at) return true;
             return new Date(s.updated_at) > new Date(lastRun);
@@ -216,7 +198,7 @@ class TopologyService {
         
         if (hygiene.semantic.autoCompress) {
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Checking for semantic redundancy");
-            const redundantGroups: string[][] = [];
+            const redundantGroups: SymbolDef[][] = [];
             const visited = new Set<number>();
 
             try {
@@ -241,9 +223,7 @@ class TopologyService {
                         if (iterations % 5000 === 0) await yieldToEventLoop();
                     }
                     if (group.length > 1) {
-                        // Sort by priority score DESC
-                        group.sort((a, b) => getPriorityScore(b) - getPriorityScore(a));
-                        redundantGroups.push(group.map(s => s.id));
+                        redundantGroups.push(group);
                         visited.add(i);
                     }
                 }
@@ -331,11 +311,11 @@ class TopologyService {
         let newLinksCount = 0;
 
         if (hygiene.triadic.autoCompress) {
-            const triadicGroups = new Map<string, string[]>();
+            const triadicGroups = new Map<string, SymbolDef[]>();
             symbols.forEach(s => {
                 if (!s.triad) return;
                 const existing = triadicGroups.get(s.triad) || [];
-                existing.push(s.id);
+                existing.push(s);
                 triadicGroups.set(s.triad, existing);
             });
 
@@ -567,12 +547,59 @@ class TopologyService {
         }
     }
 
-    private async mergeRedundantSymbols(groups: string[][]) {
-        for (const group of groups) {
-            const canonicalId = group[0];
-            const redundantIds = group.slice(1);
+    private async selectCanonicalId(candidates: SymbolDef[]): Promise<string> {
+        if (candidates.length === 0) return "";
+        if (candidates.length === 1) return candidates[0].id;
+
+        try {
+            const settings = await settingsService.getInferenceSettings();
+            const fastModel = settings.fastModel;
+            if (!fastModel) return candidates[0].id;
+
+            const prompt = `You are a knowledge graph curator. Choose the most "Canonical" symbol identity from this group of redundant symbols.
             
-            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Merging redundant symbols into ${canonicalId}`, { redundantIds });
+            CRITERIA:
+            1. Most descriptive and permanent-sounding ID.
+            2. Most appropriate and specific domain (User > Root > State > others).
+            3. Latest "updated_at" timestamp if all else is equal.
+            
+            CANDIDATES:
+            ${candidates.map((s, i) => `${i + 1}. [${s.id}] in domain "${s.symbol_domain}" (Updated: ${s.updated_at}) Name: ${s.name}`).join('\n')}
+            
+            Output ONLY the ID of the winner. Valid JSON: { "winnerId": "..." }`;
+
+            let response: any = {};
+            if (settings.provider === 'gemini') {
+                const client = await getGeminiClient();
+                const model = client.getGenerativeModel({ model: fastModel, generationConfig: { responseMimeType: "application/json" } });
+                const result = await model.generateContent(prompt);
+                response = extractJson(result.response.text());
+            } else {
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                    model: fastModel,
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 100,
+                    response_format: { type: "json_object" }
+                });
+                response = extractJson(result.choices[0]?.message?.content || "{}");
+            }
+
+            const winnerId = response.winnerId;
+            const cleanWinner = candidates.find(c => c.id === winnerId)?.id;
+            return cleanWinner || candidates[0].id;
+        } catch (err) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Failed to select canonical ID via model", { error: err });
+            return candidates[0].id;
+        }
+    }
+
+    private async mergeRedundantSymbols(groups: SymbolDef[][]) {
+        for (const group of groups) {
+            const canonicalId = await this.selectCanonicalId(group);
+            const redundantIds = group.map(s => s.id).filter(id => id !== canonicalId);
+            
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Merging redundant symbols into selected leader ${canonicalId}`, { redundantIds });
             
             for (const oldId of redundantIds) {
                 try {

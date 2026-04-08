@@ -57,6 +57,20 @@ vi.mock('../services/eventBusService.js', () => ({
     }
 }));
 
+vi.mock('../services/inferenceService.js', () => ({
+    getClient: vi.fn().mockResolvedValue({
+        chat: {
+            completions: {
+                create: vi.fn().mockResolvedValue({
+                    choices: [{ message: { content: '{"winnerId": "SYM-0"}' } }]
+                })
+            }
+        }
+    }),
+    getGeminiClient: vi.fn(),
+    extractJson: vi.fn().mockImplementation((t) => JSON.parse(t))
+}));
+
 describe('TopologyService Semantic Analysis', () => {
     beforeEach(() => {
         vi.clearAllMocks();
