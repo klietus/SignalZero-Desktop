@@ -433,96 +433,183 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                   </button>
                               </div>
 
-                              <div className="space-y-4">
+                              <div className="space-y-6">
                                   {monitoringSources.length === 0 ? (
                                       <div className="py-12 text-center opacity-40">
                                           <Activity size={48} className="mx-auto mb-2" />
                                           <p className="text-sm font-mono uppercase tracking-widest">No_Sources_Configured</p>
                                       </div>
                                   ) : (
-                                      monitoringSources.map((source, idx) => (
-                                          <div key={source.id} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 space-y-4">
-                                              <div className="flex items-center justify-between">
-                                                  <div className="flex-1 grid grid-cols-2 gap-4">
+                                      <>
+                                          {/* System Sources */}
+                                          <div className="space-y-4">
+                                              <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-gray-800 pb-1">System Monitoring Sources</div>
+                                              {monitoringSources.filter(s => !s.id.startsWith('mon-')).map((source) => (
+                                                  <div key={source.id} className="p-4 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-lg border border-indigo-100/50 dark:border-indigo-900/20 space-y-4">
+                                                      <div className="flex items-center justify-between">
+                                                          <div className="flex items-center gap-2">
+                                                              <div className="font-bold text-sm text-indigo-700 dark:text-indigo-300">{source.name}</div>
+                                                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-bold uppercase">{source.type}</span>
+                                                          </div>
+                                                          <label className="relative inline-flex items-center cursor-pointer">
+                                                              <input type="checkbox" className="sr-only peer" checked={source.enabled} onChange={(e) => {
+                                                                  const updated = [...monitoringSources];
+                                                                  const idx = updated.findIndex(s => s.id === source.id);
+                                                                  updated[idx].enabled = e.target.checked;
+                                                                  setMonitoringSources(updated);
+                                                              }} />
+                                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                                                          </label>
+                                                      </div>
+                                                      
+                                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                          <div className="space-y-1">
+                                                              <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Endpoint / API URL</label>
+                                                              <input 
+                                                                  type="text" 
+                                                                  value={source.url} 
+                                                                  onChange={(e) => {
+                                                                      const updated = [...monitoringSources];
+                                                                      const idx = updated.findIndex(s => s.id === source.id);
+                                                                      updated[idx].url = e.target.value;
+                                                                      setMonitoringSources(updated);
+                                                                  }}
+                                                                  className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-xs font-mono"
+                                                              />
+                                                          </div>
+                                                          {(source.type === 'api' || source.id.includes('acled') || source.id.includes('stack') || source.id.includes('vantage')) && (
+                                                              <div className="space-y-1">
+                                                                  <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">API Key / Auth</label>
+                                                                  <input 
+                                                                      type="password" 
+                                                                      value={source.metadata?.apiKey || ''} 
+                                                                      onChange={(e) => {
+                                                                          const updated = [...monitoringSources];
+                                                                          const idx = updated.findIndex(s => s.id === source.id);
+                                                                          updated[idx].metadata = { ...(updated[idx].metadata || {}), apiKey: e.target.value };
+                                                                          setMonitoringSources(updated);
+                                                                      }}
+                                                                      placeholder="Enter key if required"
+                                                                      className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-xs font-mono"
+                                                                  />
+                                                              </div>
+                                                          )}
+                                                      </div>
+
+                                                      <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono pt-2 border-t border-indigo-100/30 dark:border-indigo-900/20">
+                                                          <div>Last Poll: {source.lastPolledAt ? new Date(source.lastPolledAt).toLocaleString() : 'Never'}</div>
+                                                          <div className="flex items-center gap-2">
+                                                              <span>Interval (ms):</span>
+                                                              <input 
+                                                                  type="number" 
+                                                                  value={source.pollingIntervalMs} 
+                                                                  onChange={(e) => {
+                                                                      const updated = [...monitoringSources];
+                                                                      const idx = updated.findIndex(s => s.id === source.id);
+                                                                      updated[idx].pollingIntervalMs = parseInt(e.target.value);
+                                                                      setMonitoringSources(updated);
+                                                                  }}
+                                                                  className="w-20 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-2 py-0.5"
+                                                              />
+                                                          </div>
+                                                      </div>
+                                                  </div>
+                                              ))}
+                                          </div>
+
+                                          {/* Custom Sources */}
+                                          <div className="space-y-4 pt-4">
+                                              <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-gray-800 pb-1">Custom Monitoring Sources</div>
+                                              {monitoringSources.filter(s => s.id.startsWith('mon-')).map((source) => (
+                                                  <div key={source.id} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 space-y-4">
+                                                      <div className="flex items-center justify-between">
+                                                          <div className="flex-1 grid grid-cols-2 gap-4">
+                                                              <div className="space-y-1">
+                                                                  <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Source Name</label>
+                                                                  <input 
+                                                                      type="text" 
+                                                                      value={source.name} 
+                                                                      onChange={(e) => {
+                                                                          const updated = [...monitoringSources];
+                                                                          const idx = updated.findIndex(s => s.id === source.id);
+                                                                          updated[idx].name = e.target.value;
+                                                                          setMonitoringSources(updated);
+                                                                      }}
+                                                                      className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-sm"
+                                                                  />
+                                                              </div>
+                                                              <div className="space-y-1">
+                                                                  <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Type</label>
+                                                                  <select 
+                                                                      value={source.type}
+                                                                      onChange={(e) => {
+                                                                          const updated = [...monitoringSources];
+                                                                          const idx = updated.findIndex(s => s.id === source.id);
+                                                                          updated[idx].type = e.target.value;
+                                                                          setMonitoringSources(updated);
+                                                                      }}
+                                                                      className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-sm"
+                                                                  >
+                                                                      <option value="rss">RSS Feed</option>
+                                                                      <option value="api">JSON API</option>
+                                                                      <option value="web">Web Page (Scrape)</option>
+                                                                  </select>
+                                                              </div>
+                                                          </div>
+                                                          <div className="flex items-center gap-2 ml-4 pt-4">
+                                                              <label className="relative inline-flex items-center cursor-pointer">
+                                                                  <input type="checkbox" className="sr-only peer" checked={source.enabled} onChange={(e) => {
+                                                                      const updated = [...monitoringSources];
+                                                                      const idx = updated.findIndex(s => s.id === source.id);
+                                                                      updated[idx].enabled = e.target.checked;
+                                                                      setMonitoringSources(updated);
+                                                                  }} />
+                                                                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-500"></div>
+                                                              </label>
+                                                              <button 
+                                                                  onClick={() => setMonitoringSources(monitoringSources.filter(s => s.id !== source.id))}
+                                                                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                                                              >
+                                                                  <Trash2 size={16} />
+                                                              </button>
+                                                          </div>
+                                                      </div>
                                                       <div className="space-y-1">
-                                                          <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Source Name</label>
+                                                          <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Endpoint URL</label>
                                                           <input 
                                                               type="text" 
-                                                              value={source.name} 
+                                                              value={source.url} 
                                                               onChange={(e) => {
                                                                   const updated = [...monitoringSources];
-                                                                  updated[idx].name = e.target.value;
+                                                                  const idx = updated.findIndex(s => s.id === source.id);
+                                                                  updated[idx].url = e.target.value;
                                                                   setMonitoringSources(updated);
                                                               }}
-                                                              className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-sm"
+                                                              placeholder="https://..."
+                                                              className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-xs font-mono"
                                                           />
                                                       </div>
-                                                      <div className="space-y-1">
-                                                          <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Type</label>
-                                                          <select 
-                                                              value={source.type}
-                                                              onChange={(e) => {
-                                                                  const updated = [...monitoringSources];
-                                                                  updated[idx].type = e.target.value;
-                                                                  setMonitoringSources(updated);
-                                                              }}
-                                                              className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-sm"
-                                                          >
-                                                              <option value="rss">RSS Feed</option>
-                                                              <option value="api">JSON API</option>
-                                                              <option value="web">Web Page (Scrape)</option>
-                                                          </select>
+                                                      <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono">
+                                                          <div>Last Poll: {source.lastPolledAt ? new Date(source.lastPolledAt).toLocaleString() : 'Never'}</div>
+                                                          <div className="flex items-center gap-2">
+                                                              <span>Interval (ms):</span>
+                                                              <input 
+                                                                  type="number" 
+                                                                  value={source.pollingIntervalMs} 
+                                                                  onChange={(e) => {
+                                                                      const updated = [...monitoringSources];
+                                                                      const idx = updated.findIndex(s => s.id === source.id);
+                                                                      updated[idx].pollingIntervalMs = parseInt(e.target.value);
+                                                                      setMonitoringSources(updated);
+                                                                  }}
+                                                                  className="w-20 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-2 py-0.5"
+                                                              />
+                                                          </div>
                                                       </div>
                                                   </div>
-                                                  <div className="flex items-center gap-2 ml-4 pt-4">
-                                                      <label className="relative inline-flex items-center cursor-pointer">
-                                                          <input type="checkbox" className="sr-only peer" checked={source.enabled} onChange={(e) => {
-                                                              const updated = [...monitoringSources];
-                                                              updated[idx].enabled = e.target.checked;
-                                                              setMonitoringSources(updated);
-                                                          }} />
-                                                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-500"></div>
-                                                      </label>
-                                                      <button 
-                                                          onClick={() => setMonitoringSources(monitoringSources.filter(s => s.id !== source.id))}
-                                                          className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                                                      >
-                                                          <Trash2 size={16} />
-                                                      </button>
-                                                  </div>
-                                              </div>
-                                              <div className="space-y-1">
-                                                  <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Endpoint URL</label>
-                                                  <input 
-                                                      type="text" 
-                                                      value={source.url} 
-                                                      onChange={(e) => {
-                                                          const updated = [...monitoringSources];
-                                                          updated[idx].url = e.target.value;
-                                                          setMonitoringSources(updated);
-                                                      }}
-                                                      placeholder="https://..."
-                                                      className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-sm font-mono"
-                                                  />
-                                              </div>
-                                              <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono">
-                                                  <div>Last Poll: {source.lastPolledAt ? new Date(source.lastPolledAt).toLocaleString() : 'Never'}</div>
-                                                  <div className="flex items-center gap-2">
-                                                      <span>Interval (ms):</span>
-                                                      <input 
-                                                          type="number" 
-                                                          value={source.pollingIntervalMs} 
-                                                          onChange={(e) => {
-                                                              const updated = [...monitoringSources];
-                                                              updated[idx].pollingIntervalMs = parseInt(e.target.value);
-                                                              setMonitoringSources(updated);
-                                                          }}
-                                                          className="w-20 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-2 py-0.5"
-                                                      />
-                                                  </div>
-                                              </div>
+                                              ))}
                                           </div>
-                                      ))
+                                      </>
                                   )}
                               </div>
                           </div>
