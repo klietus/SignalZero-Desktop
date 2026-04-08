@@ -6,6 +6,19 @@ import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
 import { MonitoringSourceConfig, MonitoringDelta, MonitoringPeriod } from '../types.js';
 import { randomUUID } from 'crypto';
 
+const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
+    { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://api.acleddata.com/acled/read?key=YOUR_KEY&email=YOUR_EMAIL', pollingIntervalMs: 86400000, type: 'api' },
+    { id: 'gdelt', name: 'GDELT (Global Events)', enabled: false, url: 'http://export.gdeltproject.org/api/v2/gsg/gsg?format=json', pollingIntervalMs: 3600000, type: 'api' },
+    { id: 'alphavantage', name: 'Alpha Vantage (Markets)', enabled: false, url: 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=SPY&apikey=YOUR_KEY', pollingIntervalMs: 3600000, type: 'api' },
+    { id: 'marketstack', name: 'Market Stack (Stocks)', enabled: false, url: 'http://api.marketstack.com/v1/eod?access_key=YOUR_KEY&symbols=AAPL', pollingIntervalMs: 86400000, type: 'api' },
+    { id: 'aviationstack', name: 'Aviation Stack (Flights)', enabled: false, url: 'http://api.aviationstack.com/v1/flights?access_key=YOUR_KEY', pollingIntervalMs: 3600000, type: 'api' },
+    { id: 'marinetraffic', name: 'Marine Traffic', enabled: false, url: 'https://services.marinetraffic.com/api/exportvessels/v:8/YOUR_KEY/timespan:10/protocol:json', pollingIntervalMs: 3600000, type: 'api' },
+    { id: 'times-news', name: 'The New York Times', enabled: false, url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', pollingIntervalMs: 3600000, type: 'rss' },
+    { id: 'cnn-news', name: 'CNN World', enabled: false, url: 'http://rss.cnn.com/rss/edition_world.rss', pollingIntervalMs: 3600000, type: 'rss' },
+    { id: 'reuters-news', name: 'Reuters World', enabled: false, url: 'https://www.reutersagency.com/feed/?best-types=world-news&post_type=best', pollingIntervalMs: 3600000, type: 'rss' },
+    { id: 'aljazeera-news', name: 'Al Jazeera', enabled: false, url: 'https://www.aljazeera.com/xml/rss/all.xml', pollingIntervalMs: 3600000, type: 'rss' }
+];
+
 class MonitoringService {
     private intervals: Map<string, NodeJS.Timeout> = new Map();
     private isRunning = false;
@@ -15,6 +28,20 @@ class MonitoringService {
         this.isRunning = true;
         
         loggerService.catInfo(LogCategory.MONITORING, "Initializing Monitoring Service");
+
+        // Ensure prebuilt sources exist in settings
+        const settings = await settingsService.getMonitoringSettings();
+        let changed = false;
+        for (const prebuilt of PREBUILT_SOURCES) {
+            if (!settings.sources.find(s => s.id === prebuilt.id)) {
+                settings.sources.push(prebuilt);
+                changed = true;
+            }
+        }
+        if (changed) {
+            await settingsService.setMonitoringSettings(settings);
+        }
+
         await this.refreshIntervals();
         
         // Start the rollup checker (every 15 minutes)
