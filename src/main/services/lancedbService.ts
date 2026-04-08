@@ -3,6 +3,7 @@ import { join } from 'path';
 import { app } from 'electron';
 import fs from 'fs';
 import { embedTexts } from './embeddingService.js';
+import { loggerService, LogCategory } from './loggerService.js';
 
 // Types (Mirrored from LocalNode/types.ts)
 export interface VectorSearchResult {
@@ -306,7 +307,18 @@ export const lancedbService = {
             const obsoleteIds = Array.from(new Set(lanceEntries.filter(r => !sqlIds.has(r.id)).map(r => r.id)));
             
             if (obsoleteIds.length > 0) {
-                console.log(`[LanceDB] Found ${obsoleteIds.length} obsolete unique symbols in index. Examples:`, obsoleteIds.slice(0, 15));
+                loggerService.catInfo(LogCategory.LANCEDB, `Found ${obsoleteIds.length} obsolete unique symbols in index.`, { examples: obsoleteIds.slice(0, 15) });
+                
+                // If more than 1000 are obsolete, it's likely a massive schema change or data corruption.
+                // Just reset the collection and do a full index for stability.
+                if (obsoleteIds.length > 1000) {
+                    loggerService.catWarn(LogCategory.LANCEDB, "Massive obsolescence detected. Dropping and re-indexing for stability.");
+                    const conn = await getDb();
+                    await conn.dropTable(COLLECTION_NAME);
+                    stats.updated = await this.indexBatch(allSqlSymbols);
+                    return stats;
+                }
+
                 // Delete in chunks to avoid query length limits
                 const CHUNK_SIZE = 50;
                 for (let i = 0; i < obsoleteIds.length; i += CHUNK_SIZE) {
