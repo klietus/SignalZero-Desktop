@@ -266,8 +266,10 @@ export const domainService = {
         if (fastModel) {
             const prompt = `Synthesize these two symbolic definitions from a knowledge graph into one canonical symbol.
             
-            Canonical Symbol (${canonicalId}):
+            Canonical Symbol Candidate (${canonicalId}) in domain "${canonical.symbol_domain}":
             ${JSON.stringify({ 
+                id: canonical.id,
+                domain: canonical.symbol_domain,
                 name: canonical.name, 
                 role: canonical.role, 
                 macro: canonical.macro, 
@@ -275,13 +277,14 @@ export const domainService = {
                 lattice: canonical.lattice,
                 persona: canonical.persona,
                 data: canonical.data,
-                invocations: canonical.invocations,
                 activation_conditions: canonical.activation_conditions, 
                 updated_at: canonical.updated_at 
             })}
             
-            Redundant Symbol (${redundantId}):
+            Redundant Symbol Candidate (${redundantId}) in domain "${redundant.symbol_domain}":
             ${JSON.stringify({ 
+                id: redundant.id,
+                domain: redundant.symbol_domain,
                 name: redundant.name, 
                 role: redundant.role, 
                 macro: redundant.macro, 
@@ -289,31 +292,31 @@ export const domainService = {
                 lattice: redundant.lattice,
                 persona: redundant.persona,
                 data: redundant.data,
-                invocations: redundant.invocations,
                 activation_conditions: redundant.activation_conditions, 
                 updated_at: redundant.updated_at 
             })}
             
             CRITERIA:
             1. Determine if they represent the EXACT same concept or if one is a direct evolution of the other.
-            2. If they are fundamentally different, or if merging would lose critical distinct nuance, you MUST reject the merge.
-            3. Prioritize the identity and structure of the Canonical Symbol.
+            2. SYNTHESIZE a HIGHER-LEVEL concept if they represent related ideas at different levels of abstraction.
+            3. CHOOSE the most descriptive and canonical "name" based on domain specificity (User > Root > State) and technical accuracy.
+            4. You MUST preserve and deduplicate all "activation_conditions" from both symbols.
+            5. MERGE all fields (macros, roles, facets) if the symbols have evolved, ensuring no knowledge is lost.
+            6. If they are fundamentally different concepts that should NOT be merged, output { "canMerge": false }.
             
-            OUTPUT:
-            Return valid JSON only:
+            OUTPUT (Valid JSON only):
             {
               "canMerge": true/false,
-              "reason": "Brief explanation of why a merge is or isn't appropriate",
+              "reason": "Brief explanation of synthesis approach and why this name was chosen",
               "synthesized": {
-                 "name": "...",
-                 "role": "...",
-                 "macro": "...",
-                 "kind": "...",
+                 "name": "Synthesized canonical name",
+                 "role": "Synthesized role/definition",
+                 "macro": "Merged and evolved symbolic macro logic",
+                 "kind": "pattern/lattice/persona/data",
+                 "activation_conditions": ["merged", "unique", "conditions", ...],
                  "lattice": { ... },
                  "persona": { ... },
-                 "data": { ... },
-                 "invocations": [...],
-                 "activation_conditions": [...]
+                 "data": { ... }
               }
             }`;
 
@@ -337,32 +340,46 @@ export const domainService = {
             }
 
             if (response.canMerge === false) {
-                loggerService.catWarn(LogCategory.DOMAIN, `Merge rejected by model: ${canonicalId} and ${redundantId} are fundamentally different.`);
+                loggerService.catWarn(LogCategory.DOMAIN, `Merge rejected by model: ${response.reason || 'Fundamentally different'}`);
                 return;
             }
 
             if (response.canMerge === true && response.synthesized) {
+                // Merge facets intelligently
+                const mergedFacets = {
+                    ...(canonical.facets || {}),
+                    ...(redundant.facets || {}),
+                    ...(response.synthesized.facets || {})
+                };
+
+                // Deduplicate array facets
+                if (mergedFacets.gate) mergedFacets.gate = Array.from(new Set([...(canonical.facets?.gate || []), ...(redundant.facets?.gate || []), ...(response.synthesized.facets?.gate || [])]));
+                if (mergedFacets.substrate) mergedFacets.substrate = Array.from(new Set([...(canonical.facets?.substrate || []), ...(redundant.facets?.substrate || []), ...(response.synthesized.facets?.substrate || [])]));
+                if (mergedFacets.invariants) mergedFacets.invariants = Array.from(new Set([...(canonical.facets?.invariants || []), ...(redundant.facets?.invariants || []), ...(response.synthesized.facets?.invariants || [])]));
+
                 synthesized = { 
                     ...canonical, 
                     ...response.synthesized, 
                     id: canonicalId,
-                    facets: { ...(canonical.facets || {}), ...(response.synthesized.facets || {}) }
+                    facets: mergedFacets
                 }; 
-                loggerService.catInfo(LogCategory.DOMAIN, `Model-assisted synthesis complete for ${canonicalId}`);
+                loggerService.catInfo(LogCategory.DOMAIN, `Model-assisted synthesis complete for ${canonicalId}`, { reason: response.reason });
             }
         }
     } catch (err) {
         loggerService.catError(LogCategory.DOMAIN, `Synthesis failed, falling back to basic merge`, { error: err });
     }
 
-    // 2. Move links from redundant to synthesized
-    if (redundant.linked_patterns) {
-      if (!synthesized.linked_patterns) synthesized.linked_patterns = [];
+    // 2. Move and merge links
+    if (!synthesized.linked_patterns) synthesized.linked_patterns = [];
+    const existingLinkIds = new Set(synthesized.linked_patterns.map(l => typeof l === 'string' ? l : l.id));
 
+    if (redundant.linked_patterns) {
       for (const link of redundant.linked_patterns) {
         const targetId = typeof link === 'string' ? link : link.id;
-        if (targetId !== canonicalId && !synthesized.linked_patterns.some(l => (typeof l === 'string' ? l : l.id) === targetId)) {
+        if (targetId !== canonicalId && !existingLinkIds.has(targetId)) {
           synthesized.linked_patterns.push(link);
+          existingLinkIds.add(targetId);
         }
       }
     }
