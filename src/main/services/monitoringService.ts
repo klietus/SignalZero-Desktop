@@ -227,6 +227,7 @@ class MonitoringService {
                 }
             } catch (e) { 
                 loggerService.catWarn(LogCategory.MONITORING, `JSON parse failed during itemization for ${source.name}`, { error: e });
+                return []; // Return empty instead of null to avoid accidental raw summary of huge JSON error string
             }
         }
 
@@ -332,12 +333,14 @@ class MonitoringService {
         }
     }
 
-    private async recordDelta(sourceId: string, period: MonitoringPeriod, content: string) {
+    private async recordDelta(sourceId: string, period: MonitoringPeriod, content: any) {
+        const finalContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+
         const delta: MonitoringDelta = {
             id: `delta-${randomUUID()}`,
             sourceId,
             period,
-            content,
+            content: finalContent,
             timestamp: new Date().toISOString()
         };
 
