@@ -9,7 +9,7 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
-import { loggerService } from "./loggerService.js";
+import { loggerService, LogCategory } from "./loggerService.js";
 
 import { webSearchService } from "./webSearchService.js";
 
@@ -384,6 +384,10 @@ export const createToolExecutor = (contextSessionId?: string) => {
           const results = await lancedbService.searchDeltas(args.query, args.limit || 5, {
             sourceId: args.sourceId,
             period: args.period
+          });
+          loggerService.catInfo(LogCategory.TOOL, `search_deltas: Found ${results.length} deltas.`, { 
+            query: args.query,
+            sources: results.map(r => r.metadata.sourceId)
           });
           return { deltas: results };
         } catch (e: any) {

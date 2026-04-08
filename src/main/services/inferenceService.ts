@@ -1021,7 +1021,9 @@ export const primeSymbolicContext = async (
       if (monSettings.enabled) {
         const deltaResults = await lancedbService.searchDeltas(message, 5);
         if (deltaResults.length > 0) {
-          loggerService.catInfo(LogCategory.INFERENCE, `Precached ${deltaResults.length} monitoring deltas for grounding.`);
+          loggerService.catInfo(LogCategory.INFERENCE, `Precached ${deltaResults.length} monitoring deltas for grounding.`, {
+            sources: deltaResults.map(d => d.metadata.sourceId)
+          });
           monitoringDeltas.push(...deltaResults);
         }
       }
