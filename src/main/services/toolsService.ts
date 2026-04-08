@@ -388,6 +388,36 @@ export const createToolExecutor = (contextSessionId?: string) => {
       case 'web_search': {
         try {
           const { results, provider } = await webSearchService.search(args.query);
+          
+          // --- Automated Symbolic Precaching from Search ---
+          if (contextSessionId && results && results.length > 0) {
+            // Use titles and snippets as search terms for the symbol store
+            const searchTerms = results.slice(0, 5).flatMap(r => [
+              r.title,
+              r.snippet?.slice(0, 100)
+            ]).filter(t => t && t.length > 5);
+
+            if (searchTerms.length > 0) {
+              loggerService.catInfo(LogCategory.TOOL, `WebSearch: Searching for symbolic matches from ${results.length} search results...`);
+              const foundSymbols: SymbolDef[] = [];
+              
+              for (const term of searchTerms.slice(0, 8)) {
+                const res = await domainService.search(term, 2);
+                res.forEach((r: any) => {
+                  if (!foundSymbols.find(s => s.id === r.id)) {
+                    foundSymbols.push(r.metadata as SymbolDef);
+                  }
+                });
+              }
+
+              if (foundSymbols.length > 0) {
+                const { added } = await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
+                loggerService.catInfo(LogCategory.TOOL, `WebSearch: Injected ${added} new symbols into cache from search results.`);
+                await symbolCacheService.emitCacheLoad(contextSessionId);
+              }
+            }
+          }
+
           return { results, provider };
         } catch (e: any) {
           return { error: e.message };
