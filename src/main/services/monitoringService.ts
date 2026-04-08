@@ -16,7 +16,6 @@ import { AviationStackProvider } from './monitoring/providers/aviationstack.js';
 import { MarineTrafficProvider } from './monitoring/providers/marinetraffic.js';
 import { NyTimesProvider } from './monitoring/providers/nytimes.js';
 import { CnnProvider } from './monitoring/providers/cnn.js';
-import { ReutersProvider } from './monitoring/providers/reuters.js';
 import { AlJazeeraProvider } from './monitoring/providers/aljazeera.js';
 import { MonitoringProvider } from './monitoring/types.js';
 import Parser from 'rss-parser';
@@ -32,7 +31,6 @@ const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
     { id: 'marinetraffic', name: 'Marine Traffic', enabled: false, url: 'https://services.marinetraffic.com/api/exportvessels/v:8/protocol:json', pollingIntervalMs: 3600000, type: 'api' },
     { id: 'times-news', name: 'The New York Times', enabled: false, url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', pollingIntervalMs: 3600000, type: 'rss' },
     { id: 'cnn-news', name: 'CNN World', enabled: false, url: 'http://rss.cnn.com/rss/edition_world.rss', pollingIntervalMs: 3600000, type: 'rss' },
-    { id: 'reuters-news', name: 'Reuters World News', enabled: false, url: 'https://www.reuters.com/world/', pollingIntervalMs: 3600000, type: 'web' },
     { id: 'aljazeera-news', name: 'Al Jazeera', enabled: false, url: 'https://www.aljazeera.com/xml/rss/all.xml', pollingIntervalMs: 3600000, type: 'rss' }
 ];
 
@@ -51,7 +49,6 @@ class MonitoringService {
         this.providers.set('marinetraffic', new MarineTrafficProvider());
         this.providers.set('times-news', new NyTimesProvider());
         this.providers.set('cnn-news', new CnnProvider());
-        this.providers.set('reuters-news', new ReutersProvider());
         this.providers.set('aljazeera-news', new AlJazeeraProvider());
 
         // Generic Type Fallbacks
