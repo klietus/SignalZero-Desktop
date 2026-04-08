@@ -7,15 +7,15 @@ import { MonitoringSourceConfig, MonitoringDelta, MonitoringPeriod } from '../ty
 import { randomUUID } from 'crypto';
 
 const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
-    { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://api.acleddata.com/acled/read?key=YOUR_KEY&email=YOUR_EMAIL', pollingIntervalMs: 86400000, type: 'api' },
-    { id: 'gdelt', name: 'GDELT (Global Events)', enabled: false, url: 'http://export.gdeltproject.org/api/v2/gsg/gsg?format=json', pollingIntervalMs: 3600000, type: 'api' },
-    { id: 'alphavantage', name: 'Alpha Vantage (Markets)', enabled: false, url: 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=SPY&apikey=YOUR_KEY', pollingIntervalMs: 3600000, type: 'api' },
-    { id: 'marketstack', name: 'Market Stack (Stocks)', enabled: false, url: 'http://api.marketstack.com/v1/eod?access_key=YOUR_KEY&symbols=AAPL', pollingIntervalMs: 86400000, type: 'api' },
-    { id: 'aviationstack', name: 'Aviation Stack (Flights)', enabled: false, url: 'http://api.aviationstack.com/v1/flights?access_key=YOUR_KEY', pollingIntervalMs: 3600000, type: 'api' },
-    { id: 'marinetraffic', name: 'Marine Traffic', enabled: false, url: 'https://services.marinetraffic.com/api/exportvessels/v:8/YOUR_KEY/timespan:10/protocol:json', pollingIntervalMs: 3600000, type: 'api' },
+    { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://acleddata.com/api/acled/read?limit=10', pollingIntervalMs: 86400000, type: 'api' },
+    { id: 'gdelt', name: 'GDELT (Global Events)', enabled: false, url: 'https://api.gdeltproject.org/api/v2/doc/doc?query=world&mode=artlist&format=json&maxrecords=10', pollingIntervalMs: 3600000, type: 'api' },
+    { id: 'alphavantage', name: 'Alpha Vantage (Markets)', enabled: false, url: 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=SPY', pollingIntervalMs: 3600000, type: 'api' },
+    { id: 'marketstack', name: 'Market Stack (Stocks)', enabled: false, url: 'http://api.marketstack.com/v1/eod?symbols=AAPL', pollingIntervalMs: 86400000, type: 'api' },
+    { id: 'aviationstack', name: 'Aviation Stack (Flights)', enabled: false, url: 'http://api.aviationstack.com/v1/flights?limit=10', pollingIntervalMs: 3600000, type: 'api' },
+    { id: 'marinetraffic', name: 'Marine Traffic', enabled: false, url: 'https://services.marinetraffic.com/api/exportvessels/v:8/protocol:json', pollingIntervalMs: 3600000, type: 'api' },
     { id: 'times-news', name: 'The New York Times', enabled: false, url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', pollingIntervalMs: 3600000, type: 'rss' },
     { id: 'cnn-news', name: 'CNN World', enabled: false, url: 'http://rss.cnn.com/rss/edition_world.rss', pollingIntervalMs: 3600000, type: 'rss' },
-    { id: 'reuters-news', name: 'Reuters World', enabled: false, url: 'https://www.reutersagency.com/feed/?best-types=world-news&post_type=best', pollingIntervalMs: 3600000, type: 'rss' },
+    { id: 'reuters-news', name: 'Reuters World News', enabled: false, url: 'https://www.reuters.com/world/', pollingIntervalMs: 3600000, type: 'web' },
     { id: 'aljazeera-news', name: 'Al Jazeera', enabled: false, url: 'https://www.aljazeera.com/xml/rss/all.xml', pollingIntervalMs: 3600000, type: 'rss' }
 ];
 
@@ -79,12 +79,22 @@ class MonitoringService {
     private async pollSource(source: MonitoringSourceConfig) {
         loggerService.catDebug(LogCategory.MONITORING, `Polling source: ${source.name}`);
         try {
+            let url = source.url;
+            const apiKey = source.metadata?.apiKey;
+
+            if (apiKey) {
+                if (source.id === 'acled') url += `&key=${apiKey}&email=${source.metadata?.email || ''}`;
+                else if (source.id === 'alphavantage') url += `&apikey=${apiKey}`;
+                else if (source.id.includes('stack')) url += `&access_key=${apiKey}`;
+                else if (source.id === 'marinetraffic') url = url.replace('YOUR_KEY', apiKey);
+            }
+
             let rawData = "";
             if (source.type === 'rss' || source.type === 'web') {
-                const resp = await fetch(source.url);
+                const resp = await fetch(url);
                 rawData = await resp.text();
             } else if (source.type === 'api') {
-                const resp = await fetch(source.url);
+                const resp = await fetch(url);
                 const data = await resp.json();
                 rawData = JSON.stringify(data);
             }

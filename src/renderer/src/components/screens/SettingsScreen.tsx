@@ -478,20 +478,39 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                                               />
                                                           </div>
                                                           {(source.type === 'api' || source.id.includes('acled') || source.id.includes('stack') || source.id.includes('vantage')) && (
-                                                              <div className="space-y-1">
-                                                                  <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">API Key / Auth</label>
-                                                                  <input 
-                                                                      type="password" 
-                                                                      value={source.metadata?.apiKey || ''} 
-                                                                      onChange={(e) => {
-                                                                          const updated = [...monitoringSources];
-                                                                          const idx = updated.findIndex(s => s.id === source.id);
-                                                                          updated[idx].metadata = { ...(updated[idx].metadata || {}), apiKey: e.target.value };
-                                                                          setMonitoringSources(updated);
-                                                                      }}
-                                                                      placeholder="Enter key if required"
-                                                                      className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-xs font-mono"
-                                                                  />
+                                                              <div className="space-y-4">
+                                                                  <div className="space-y-1">
+                                                                      <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">API Key / Auth</label>
+                                                                      <input 
+                                                                          type="password" 
+                                                                          value={source.metadata?.apiKey || ''} 
+                                                                          onChange={(e) => {
+                                                                              const updated = [...monitoringSources];
+                                                                              const idx = updated.findIndex(s => s.id === source.id);
+                                                                              updated[idx].metadata = { ...(updated[idx].metadata || {}), apiKey: e.target.value };
+                                                                              setMonitoringSources(updated);
+                                                                          }}
+                                                                          placeholder="Enter key if required"
+                                                                          className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-xs font-mono"
+                                                                      />
+                                                                  </div>
+                                                                  {source.id === 'acled' && (
+                                                                      <div className="space-y-1">
+                                                                          <label className="text-[10px] font-bold uppercase text-gray-500 font-mono">Registered Email</label>
+                                                                          <input 
+                                                                              type="text" 
+                                                                              value={source.metadata?.email || ''} 
+                                                                              onChange={(e) => {
+                                                                                  const updated = [...monitoringSources];
+                                                                                  const idx = updated.findIndex(s => s.id === source.id);
+                                                                                  updated[idx].metadata = { ...(updated[idx].metadata || {}), email: e.target.value };
+                                                                                  setMonitoringSources(updated);
+                                                                              }}
+                                                                              placeholder="email@example.com"
+                                                                              className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded px-3 py-1.5 text-xs font-mono"
+                                                                          />
+                                                                      </div>
+                                                                  )}
                                                               </div>
                                                           )}
                                                       </div>
