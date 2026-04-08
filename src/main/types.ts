@@ -325,6 +325,29 @@ export interface VectorSearchResult {
     document: string;
 }
 
+// Monitoring Types
+export type MonitoringPeriod = 'hour' | 'day' | 'week' | 'month' | 'year';
+
+export interface MonitoringSourceConfig {
+  id: string;
+  name: string;
+  enabled: boolean;
+  url: string;
+  pollingIntervalMs: number;
+  lastPolledAt?: string;
+  type: 'rss' | 'api' | 'web';
+  metadata?: Record<string, any>;
+}
+
+export interface MonitoringDelta {
+  id: string;
+  sourceId: string;
+  period: MonitoringPeriod;
+  content: string;
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
+
 export interface GraphHygieneSettings {
   positional: {
     autoCompress: boolean;

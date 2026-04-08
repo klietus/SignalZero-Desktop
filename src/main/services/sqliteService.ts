@@ -170,6 +170,16 @@ const initDb = () => {
                 FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
             );
 
+            -- Monitoring Deltas
+            CREATE TABLE IF NOT EXISTS monitoring_deltas (
+                id TEXT PRIMARY KEY,
+                source_id TEXT NOT NULL,
+                period TEXT NOT NULL, -- hour, day, week, month, year
+                content TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT -- JSON object
+            );
+
             -- Simple Key-Value Store (for legacy/settings support)
             CREATE TABLE IF NOT EXISTS kv_store (
                 key TEXT PRIMARY KEY,

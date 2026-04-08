@@ -1,4 +1,4 @@
-import { GraphHygieneSettings } from '../types.js';
+import { GraphHygieneSettings, MonitoringSourceConfig } from '../types.js';
 import fs from 'fs';
 import path from 'path';
 import { app, safeStorage } from 'electron';
@@ -40,6 +40,11 @@ export interface WebSearchProviderSettings {
   enabled: boolean;
 }
 
+export interface MonitoringSettings {
+  enabled: boolean;
+  sources: MonitoringSourceConfig[];
+}
+
 export interface SystemSettings {
   inference?: Partial<InferenceSettings>;
   serpApi?: WebSearchProviderSettings;
@@ -47,6 +52,7 @@ export interface SystemSettings {
   tavily?: WebSearchProviderSettings;
   hygiene?: GraphHygieneSettings;
   mcpConfigs?: McpConfiguration[];
+  monitoring?: MonitoringSettings;
 }
 
 let _settingsCache: SystemSettings | null = null;
@@ -240,6 +246,17 @@ export const settingsService = {
     saveToFile(current);
   },
 
+  getMonitoringSettings: async (): Promise<MonitoringSettings> => {
+    const settings = loadFromFile();
+    return settings.monitoring || { enabled: false, sources: [] };
+  },
+
+  setMonitoringSettings: async (monitoring: MonitoringSettings) => {
+    const current = loadFromFile();
+    current.monitoring = monitoring;
+    saveToFile(current);
+  },
+
   get: async (): Promise<SystemSettings> => {
     const settings = loadFromFile();
     // Return decrypted view for UI/Runtime use
@@ -247,12 +264,14 @@ export const settingsService = {
     const serpApi = await settingsService.getSerpApiSettings();
     const braveSearch = await settingsService.getBraveSearchSettings();
     const tavily = await settingsService.getTavilySettings();
+    const monitoring = await settingsService.getMonitoringSettings();
     return {
         ...settings,
         inference,
         serpApi,
         braveSearch,
-        tavily
+        tavily,
+        monitoring
     };
   },
 
@@ -290,12 +309,20 @@ export const settingsService = {
             apiKey: encrypt(settings.tavily.apiKey || '')
         };
     }
+
+    if (settings.monitoring) {
+        current.monitoring = {
+            ...current.monitoring,
+            ...settings.monitoring
+        };
+    }
     
     const otherSettings = { ...settings };
     delete otherSettings.inference;
     delete otherSettings.serpApi;
     delete otherSettings.braveSearch;
     delete otherSettings.tavily;
+    delete otherSettings.monitoring;
 
     saveToFile({ ...current, ...otherSettings });
   }

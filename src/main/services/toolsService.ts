@@ -3,6 +3,7 @@ import { domainService } from "./domainService.js";
 import { traceService } from "./traceService.js";
 import { SymbolDef, VectorSearchResult } from "../types.js";
 import { symbolCacheService } from "./symbolCacheService.js";
+import { lancedbService } from "./lancedbService.js";
 import { mcpClientService } from "./mcpClientService.js";
 import fs from 'fs';
 import { exec } from 'child_process';
@@ -270,6 +271,23 @@ export const PRIMARY_TOOLS: ChatCompletionTool[] = [
         required: ['query']
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_deltas',
+      description: 'Search for monitoring deltas (world changes) using semantic or structured queries.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Semantic search query.' },
+          sourceId: { type: 'string', description: 'Optional data source ID filter.' },
+          period: { type: 'string', enum: ['hour', 'day', 'week', 'month', 'year'], description: 'Optional time period filter.' },
+          limit: { type: 'integer', default: 5 }
+        },
+        required: ['query']
+      }
+    }
   }
 ];
 
@@ -356,6 +374,18 @@ export const createToolExecutor = (contextSessionId?: string) => {
         try {
           const { results, provider } = await webSearchService.search(args.query);
           return { results, provider };
+        } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'search_deltas': {
+        try {
+          const results = await lancedbService.searchDeltas(args.query, args.limit || 5, {
+            sourceId: args.sourceId,
+            period: args.period
+          });
+          return { deltas: results };
         } catch (e: any) {
           return { error: e.message };
         }

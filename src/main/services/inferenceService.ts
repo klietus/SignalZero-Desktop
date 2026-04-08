@@ -17,6 +17,7 @@ import { symbolCacheService } from './symbolCacheService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
 import { contextWindowService } from './contextWindowService.js';
 import { sqliteService } from './sqliteService.js';
+import { lancedbService } from './lancedbService.js';
 import { mcpClientService } from './mcpClientService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { webSearchService } from './webSearchService.js';
@@ -442,6 +443,7 @@ export async function* sendMessageAndHandleTools(
   userMessageId?: string,
   anticipatedWebResults?: any[],
   anticipatedWebBrief?: string,
+  monitoringDeltas?: any[],
 
 ): AsyncGenerator<
   { text?: string; toolCalls?: any[]; isComplete?: boolean },
@@ -548,6 +550,11 @@ export async function* sendMessageAndHandleTools(
           contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH BRIEF]\n${anticipatedWebBrief}` });
         } else if (anticipatedWebResults && anticipatedWebResults.length > 0) {
           contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH RESULTS]\n${JSON.stringify(anticipatedWebResults, null, 2)}` });
+        }
+
+        if (monitoringDeltas && monitoringDeltas.length > 0) {
+          const deltaBrief = monitoringDeltas.map(d => `Source: ${d.metadata.sourceId} (${d.metadata.period})\nTimestamp: ${d.metadata.timestamp}\nContent: ${d.document}`).join('\n\n---\n\n');
+          contextMessages.push({ role: 'system', content: `\n\n[WORLD MONITORING DELTAS]\nThe following recent changes and events have been detected in the world:\n\n${deltaBrief}` });
         }
       }
 
@@ -869,9 +876,17 @@ export const synthesizeWebResults = async (
 export const primeSymbolicContext = async (
   message: string,
   contextSessionId: string
-): Promise<{ symbols: SymbolDef[], webResults: any[], webBrief?: string, traceNeeded: boolean, traceReason?: string }> => {
+): Promise<{ 
+  symbols: SymbolDef[], 
+  webResults: any[], 
+  webBrief?: string, 
+  monitoringDeltas?: any[],
+  traceNeeded: boolean, 
+  traceReason?: string 
+}> => {
   const foundSymbols: SymbolDef[] = [];
   const webResults: any[] = [];
+  const monitoringDeltas: any[] = [];
   let traceNeeded = true;
   let traceReason: string | undefined;
   let webBrief: string | undefined;
@@ -998,8 +1013,22 @@ export const primeSymbolicContext = async (
         } as any);
       }
     }
+
+    // --- Automated Monitoring Delta Precache ---
+    try {
+      const monSettings = await settingsService.getMonitoringSettings();
+      if (monSettings.enabled) {
+        const deltaResults = await lancedbService.searchDeltas(message, 5);
+        if (deltaResults.length > 0) {
+          loggerService.catInfo(LogCategory.INFERENCE, `Precached ${deltaResults.length} monitoring deltas for grounding.`);
+          monitoringDeltas.push(...deltaResults);
+        }
+      }
+    } catch (e) {
+      loggerService.catError(LogCategory.INFERENCE, "Delta precache failed", { error: e });
+    }
   } catch (e) { loggerService.catError(LogCategory.INFERENCE, "Priming failed", { error: e }); }
-  return { symbols: foundSymbols, webResults, webBrief, traceNeeded, traceReason };
+  return { symbols: foundSymbols, webResults, webBrief, monitoringDeltas, traceNeeded, traceReason };
 };
 
 export const processMessageAsync = async (
@@ -1011,7 +1040,7 @@ export const processMessageAsync = async (
 ) => {
   let messageTraceNeeded = false;
   try {
-    const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
+    const { webResults, webBrief, monitoringDeltas, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
     const session = await contextService.getSession(contextSessionId);
     if (session) {
       if (traceNeeded === undefined) {
@@ -1027,7 +1056,7 @@ export const processMessageAsync = async (
       });
     }
     const chat = await getChatSession(systemInstruction, contextSessionId);
-    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, messageTraceNeeded, systemInstruction, contextSessionId, messageId, webResults, webBrief);
+    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, messageTraceNeeded, systemInstruction, contextSessionId, messageId, webResults, webBrief, monitoringDeltas);
     eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
     for await (const chunk of stream) {
       if (chunk.isComplete) eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId });

@@ -18,6 +18,7 @@ import { projectService } from './services/projectService.js'
 import { mcpPromptService } from './services/mcpPromptService.js'
 import { traceService } from './services/traceService.js'
 import { topologyService } from './services/topologyService.js'
+import { monitoringService } from './services/monitoringService.js'
 import { mcpClientService } from './services/mcpClientService.js'
 import fs from 'fs'
 import { dialog } from 'electron'
@@ -253,6 +254,8 @@ app.whenReady().then(async () => {
   await domainService.init('user', 'User Domain');
   await domainService.init('state', 'State Domain');
 
+  await monitoringService.initialize();
+
   // Ensure Vector Index is populated
   try {
     await domainService.ensureVectorIndex();
@@ -426,7 +429,9 @@ ipcMain.handle('settings:get', async () => {
 });
 
 ipcMain.handle('settings:update', async (_, settings) => {
-  return await settingsService.update(settings);
+  const updated = await settingsService.update(settings);
+  await monitoringService.refreshIntervals();
+  return updated;
 });
 
 ipcMain.handle('system:validate-mcp', async (_, endpoint, token) => {

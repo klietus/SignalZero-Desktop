@@ -19,7 +19,8 @@ export enum LogCategory {
   SYSTEM = 'SYSTEM',
   AGENT = 'AGENT',
   VOICE = 'VOICE',
-  TOOL = 'TOOL'
+  TOOL = 'TOOL',
+  MONITORING = 'MONITORING'
 }
 
 class LoggerService {

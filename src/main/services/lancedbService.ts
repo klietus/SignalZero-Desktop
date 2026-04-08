@@ -37,6 +37,7 @@ export interface SymbolDef {
 
 let db: lancedb.Connection | null = null;
 const COLLECTION_NAME = 'symbols';
+const DELTAS_COLLECTION_NAME = 'monitoring_deltas';
 
 const getDb = async () => {
     if (db) return db;
@@ -57,6 +58,16 @@ const getTable = async () => {
     
     if (tableNames.includes(COLLECTION_NAME)) {
         return await conn.openTable(COLLECTION_NAME);
+    }
+    return null;
+};
+
+const getDeltasTable = async () => {
+    const conn = await getDb();
+    const tableNames = await conn.tableNames();
+    
+    if (tableNames.includes(DELTAS_COLLECTION_NAME)) {
+        return await conn.openTable(DELTAS_COLLECTION_NAME);
     }
     return null;
 };
@@ -326,6 +337,102 @@ export const lancedbService = {
         } catch (e) {
             console.error("[LanceDB] Sync failed", e);
             return stats;
+        }
+    },
+
+    // --- Monitoring Deltas Support ---
+
+    async indexDeltaBatch(deltas: any[]): Promise<number> {
+        if (deltas.length === 0) return 0;
+
+        const allRecords: any[] = [];
+        const EMBED_CHUNK_SIZE = 10;
+
+        try {
+            for (let i = 0; i < deltas.length; i += EMBED_CHUNK_SIZE) {
+                const chunk = deltas.slice(i, i + EMBED_CHUNK_SIZE);
+                const contents = chunk.map(d => `Source: ${d.sourceId}\nPeriod: ${d.period}\nContent: ${d.content}`);
+                const vectors = await embedTexts(contents);
+                
+                for (let j = 0; j < chunk.length; j++) {
+                    const delta = chunk[j];
+                    allRecords.push({
+                        vector: vectors[j],
+                        id: delta.id,
+                        text: contents[j],
+                        sourceId: delta.sourceId,
+                        period: delta.period,
+                        timestamp: delta.timestamp,
+                        metadata: JSON.stringify(delta.metadata || {})
+                    });
+                }
+            }
+
+            const conn = await getDb();
+            let table = await getDeltasTable();
+
+            if (!table) {
+                await conn.createTable(DELTAS_COLLECTION_NAME, allRecords);
+            } else {
+                const ids = deltas.map(d => `'${d.id}'`).join(',');
+                await table.delete(`id IN (${ids})`);
+                await table.add(allRecords);
+            }
+
+            return deltas.length;
+        } catch (e) {
+            console.error("[LanceDB] Delta indexing error", e);
+            return 0;
+        }
+    },
+
+    async searchDeltas(query: string, nResults: number = 5, filter?: { sourceId?: string, period?: string }): Promise<VectorSearchResult[]> {
+        try {
+            const table = await getDeltasTable();
+            if (!table) return [];
+
+            const [queryVector] = await embedTexts([query]);
+            let searchBuilder = table.search(queryVector).limit(nResults);
+
+            if (filter) {
+                const filterParts: string[] = [];
+                if (filter.sourceId) filterParts.push(`sourceId = '${filter.sourceId}'`);
+                if (filter.period) filterParts.push(`period = '${filter.period}'`);
+                
+                if (filterParts.length > 0) {
+                    searchBuilder = searchBuilder.where(filterParts.join(' AND '));
+                }
+            }
+
+            const results = await searchBuilder.toArray();
+
+            return results.map((r: any) => ({
+                id: r.id,
+                score: 1 - (r._distance || 0),
+                metadata: {
+                    id: r.id,
+                    sourceId: r.sourceId,
+                    period: r.period,
+                    timestamp: r.timestamp,
+                    metadata: r.metadata ? JSON.parse(r.metadata) : {}
+                },
+                document: r.text
+            }));
+        } catch (e) {
+            console.error("[LanceDB] Delta search failed", e);
+            return [];
+        }
+    },
+
+    async deleteDelta(deltaId: string): Promise<boolean> {
+        try {
+            const table = await getDeltasTable();
+            if (table) {
+                await table.delete(`id = '${deltaId}'`);
+            }
+            return true;
+        } catch (e) {
+            return false;
         }
     }
 };
