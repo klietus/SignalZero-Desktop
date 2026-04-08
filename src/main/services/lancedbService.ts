@@ -304,7 +304,7 @@ export const lancedbService = {
                 }
                 throw queryErr;
             }
-            const obsoleteIds = Array.from(new Set(lanceEntries.filter(r => !sqlIds.has(r.id)).map(r => r.id)));
+            const obsoleteIds = Array.from(new Set(lanceEntries.filter(r => r.id && !sqlIds.has(r.id)).map(r => r.id)));
             
             if (obsoleteIds.length > 0) {
                 loggerService.catInfo(LogCategory.LANCEDB, `Found ${obsoleteIds.length} obsolete unique symbols in index.`, { examples: obsoleteIds.slice(0, 15) });
