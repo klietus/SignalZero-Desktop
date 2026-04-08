@@ -967,8 +967,13 @@ export const primeSymbolicContext = async (
 
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
 
-    const symbolicQueries = fastResponse.queries || [];
-    const webSearchQueries = fastResponse.web_search_queries || [];
+    const symbolicQueriesRaw = fastResponse.queries || [];
+    const webSearchQueriesRaw = fastResponse.web_search_queries || [];
+
+    // Normalize queries to strings (handling models that return objects with "query" property)
+    const symbolicQueries = symbolicQueriesRaw.map((q: any) => typeof q === 'string' ? q : (q.query || JSON.stringify(q)));
+    const webSearchQueries = webSearchQueriesRaw.map((q: any) => typeof q === 'string' ? q : (q.query || JSON.stringify(q)));
+
     traceNeeded = !!fastResponse.trace_needed;
     traceReason = fastResponse.trace_reason;
 
