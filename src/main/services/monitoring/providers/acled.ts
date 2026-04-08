@@ -21,8 +21,12 @@ export class AcledProvider implements MonitoringProvider {
 
             if (!resp.ok) {
                 const errText = await resp.text();
-                loggerService.catError(LogCategory.MONITORING, `ACLED Data Poll failed: ${resp.status}`, { error: errText });
-                throw new Error(`ACLED Poll failed: ${resp.status} ${resp.statusText}`);
+                let diagnostic = errText;
+                if (resp.status === 403) {
+                    diagnostic = "Access denied. Ensure your ACLED profile is 100% complete at acleddata.com AND terms_accept=yes is in the URL.";
+                }
+                loggerService.catError(LogCategory.MONITORING, `ACLED Data Poll failed: ${resp.status}`, { error: diagnostic });
+                throw new Error(`ACLED Poll failed: ${resp.status} ${diagnostic}`);
             }
 
             const data = await resp.json();

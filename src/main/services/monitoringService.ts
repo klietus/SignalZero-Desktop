@@ -12,7 +12,7 @@ import { ApiProvider } from './monitoring/providers/api.js';
 import { MonitoringProvider } from './monitoring/types.js';
 
 const PREBUILT_SOURCES: MonitoringSourceConfig[] = [
-    { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://acleddata.com/api/acled/read?limit=10', pollingIntervalMs: 86400000, type: 'api' },
+    { id: 'acled', name: 'ACLED (Conflict Data)', enabled: false, url: 'https://api.acleddata.com/api/acled/read?limit=10&terms_accept=yes', pollingIntervalMs: 86400000, type: 'api' },
     { id: 'gdelt', name: 'GDELT (Global Events)', enabled: false, url: 'https://api.gdeltproject.org/api/v2/doc/doc?query=world&mode=artlist&format=json&maxrecords=10', pollingIntervalMs: 3600000, type: 'api' },
     { id: 'alphavantage', name: 'Alpha Vantage (Markets)', enabled: false, url: 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=SPY', pollingIntervalMs: 3600000, type: 'api' },
     { id: 'marketstack', name: 'Market Stack (Stocks)', enabled: false, url: 'http://api.marketstack.com/v1/eod?symbols=AAPL', pollingIntervalMs: 86400000, type: 'api' },
