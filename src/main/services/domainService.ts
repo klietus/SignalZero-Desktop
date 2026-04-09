@@ -468,6 +468,11 @@ export const domainService = {
     return row?.count || 0;
   },
 
+  async getLinkCount(): Promise<number> {
+    const row = sqliteService.get(`SELECT COUNT(*) as count FROM symbol_links`);
+    return row?.count || 0;
+  },
+
   async ensureVectorIndex(): Promise<void> {
     loggerService.catInfo(LogCategory.KERNEL, `Ensuring vector index integrity...`);
     const allSymbols = await this.getAllSymbols();

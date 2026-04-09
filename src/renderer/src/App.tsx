@@ -43,6 +43,7 @@ declare global {
             deleteDomain: (domainId: string) => Promise<boolean>;
             getSymbolCount: () => Promise<number>;
             getDomainCount: () => Promise<number>;
+            getLinkCount: () => Promise<number>;
             getSettings: () => Promise<any>;
             updateSettings: (settings: any) => Promise<void>;
             validateMcp: (endpoint: string, token?: string) => Promise<any>;
@@ -202,6 +203,7 @@ function App() {
     // Status Bar State
     const [modelName, setModelName] = useState('');
     const [symbolCount, setSymbolCount] = useState(0);
+    const [linkCount, setLinkCount] = useState(0);
     const [domainCount, setDomainCount] = useState(0);
     const [cacheSize, setCacheSize] = useState(0);
     const [lastRequestTokens, setLastRequestTokens] = useState<number>(0);
@@ -268,11 +270,13 @@ function App() {
 
     const refreshSystemStats = async () => {
         try {
-            const [sCount, dCount] = await Promise.all([
+            const [sCount, lCount, dCount] = await Promise.all([
                 window.api.getSymbolCount(),
+                window.api.getLinkCount(),
                 window.api.getDomainCount()
             ]);
             setSymbolCount(sCount || 0);
+            setLinkCount(lCount || 0);
             setDomainCount(dCount || 0);
         } catch (e) { }
     };
@@ -407,6 +411,10 @@ function App() {
                 setFocusedSymbolName(data.name || data.id);
                 // Clear after 3 seconds
                 setTimeout(() => setFocusedSymbolName(null), 3000);
+            }
+            if (type === 'symbol:upserted' || type === 'symbol:deleted' || type === 'symbol:compression' || 
+                type === 'domain:created' || type === 'tentative:create' || type === 'tentative:delete') {
+                refreshSystemStats();
             }
         });
 
@@ -640,13 +648,14 @@ function App() {
                 <div className="z-50 pointer-events-auto relative">
                     <StatusBar
                         modelName={modelName} isBusy={isProcessing}
-                        symbolCount={symbolCount} domainCount={domainCount}
+                        symbolCount={symbolCount} 
+                        linkCount={linkCount}
+                        domainCount={domainCount}
                         cacheSize={cacheSize}
                         lastRequestTokens={lastRequestTokens}
                         focusedSymbolName={focusedSymbolName}
                         onNavigate={(v) => { setCurrentView(v); if (v !== 'chat') setIsGraphView(false); }}
-                        />
-                        </div>            </div>
+                    />                        </div>            </div>
 
             {/* 2. OTHER SCREENS CONTAINER (Settings, Store, Project, Forge, Logs) */}
             <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${!isKernelActive ? 'opacity-100 z-40 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}>

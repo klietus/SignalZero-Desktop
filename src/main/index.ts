@@ -421,6 +421,10 @@ ipcMain.handle('domain:get-domain-count', async () => {
   return await domainService.getDomainCount();
 });
 
+ipcMain.handle('domain:get-link-count', async () => {
+  return await domainService.getLinkCount();
+});
+
 ipcMain.handle('context:update-session', async (_, session) => {
   return await contextService.updateSession(session);
 });

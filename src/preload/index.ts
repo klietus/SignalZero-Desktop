@@ -35,6 +35,7 @@ const api = {
     ipcRenderer.invoke('domain:delete', domainId),
   getSymbolCount: () => ipcRenderer.invoke('domain:get-symbol-count'),
   getDomainCount: () => ipcRenderer.invoke('domain:get-domain-count'),
+  getLinkCount: () => ipcRenderer.invoke('domain:get-link-count'),
   
   // Projects
   exportProject: (meta: any) => ipcRenderer.invoke('project:export', meta),

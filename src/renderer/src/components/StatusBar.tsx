@@ -6,6 +6,7 @@ interface StatusBarProps {
     modelName: string;
     isBusy: boolean;
     symbolCount: number;
+    linkCount: number;
     domainCount: number;
     cacheSize: number;
     lastRequestTokens?: number;
@@ -17,6 +18,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     modelName,
     isBusy,
     symbolCount,
+    linkCount,
     domainCount,
     cacheSize,
     lastRequestTokens,
@@ -37,6 +39,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
                     <Database size={12} className="text-gray-600" />
                     <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
                         Symbols: <span className="text-emerald-500 font-bold">{symbolCount}</span>
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-2 border-l border-gray-800 pl-6">
+                    <Activity size={12} className="text-gray-600" />
+                    <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                        Lattice_Links: <span className="text-indigo-400 font-bold">{linkCount}</span>
                     </span>
                 </div>
 
