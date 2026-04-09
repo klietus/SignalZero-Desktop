@@ -10,6 +10,7 @@ interface StatusBarProps {
     cacheSize: number;
     lastRequestTokens?: number;
     focusedSymbolName?: string | null;
+    onNavigate: (view: any) => void;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -19,7 +20,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     domainCount,
     cacheSize,
     lastRequestTokens,
-    focusedSymbolName
+    focusedSymbolName,
+    onNavigate
 }) => {
     return (
         <div className="h-8 bg-gray-950 border-t border-gray-800 flex items-center justify-between px-6 shrink-0 z-50 overflow-hidden select-none">
@@ -38,7 +40,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
                     </span>
                 </div>
 
-                <div className="flex items-center gap-2 border-l border-gray-800 pl-6">
+                <div className="flex items-center gap-2 border-l border-gray-800 pl-6 cursor-pointer hover:bg-gray-900 px-2 py-1 rounded transition-colors" onClick={() => onNavigate('store')}>
                     <Layout size={12} className="text-gray-600" />
                     <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
                         Domains: <span className="text-indigo-400 font-bold">{domainCount}</span>

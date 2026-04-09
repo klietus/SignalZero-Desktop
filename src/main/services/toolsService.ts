@@ -10,6 +10,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
 import { loggerService, LogCategory } from "./loggerService.js";
+import { settingsService } from "./settingsService.js";
 
 import { webSearchService } from "./webSearchService.js";
 import { webFetchService } from "./webFetchService.js";
@@ -181,7 +182,7 @@ export const SECONDARY_TOOLS_MAP: Record<string, ChatCompletionTool> = {
   }
 };
 
-export const PRIMARY_TOOLS: ChatCompletionTool[] = [
+export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
@@ -496,4 +497,24 @@ export const createToolExecutor = (contextSessionId?: string) => {
   };
 
   return executor;
+};
+
+export const getPrimaryTools = async (): Promise<ChatCompletionTool[]> => {
+  const settings = await settingsService.getMonitoringSettings();
+  const enabledSources = (settings.sources || []).filter(s => s.enabled);
+  const sourceNames = enabledSources.map(s => `${s.name} (${s.id})`).join(', ');
+
+  return STATIC_PRIMARY_TOOLS.map(tool => {
+    if (tool.function.name === 'search_deltas') {
+      const updatedTool = JSON.parse(JSON.stringify(tool));
+      updatedTool.function.description = `Search for monitoring deltas (world changes). ACTIVE FEEDS: ${sourceNames || 'None active'}.`;
+      
+      if (enabledSources.length > 0) {
+        updatedTool.function.parameters.properties.sourceId.enum = enabledSources.map(s => s.id);
+      }
+      
+      return updatedTool;
+    }
+    return tool;
+  });
 };

@@ -7,11 +7,13 @@ import { ChatInput } from './components/ChatInput';
 import { SettingsScreen } from './components/screens/SettingsScreen';
 import { DomainScreen } from './components/screens/DomainScreen';
 import { ProjectScreen } from './components/screens/ProjectScreen';
+import { MonitoringScreen } from './components/screens/MonitoringScreen';
 import { SymbolForgeScreen } from './components/screens/SymbolForgeScreen';
 import { CinematicView } from './components/screens/CinematicView';
 import { LogsScreen } from './components/screens/LogsScreen';
 import { Header, HeaderProps } from './components/Header';
 import { ContextListPanel } from './components/panels/ContextListPanel';
+import { WorldMonitoringPanel } from './components/panels/WorldMonitoringPanel';
 import { SetupScreen } from './components/screens/SetupScreen';
 import { TracePanel } from './components/panels/TracePanel';
 import { StatusBar } from './components/StatusBar';
@@ -47,6 +49,7 @@ declare global {
             runHygiene: (strategy?: string) => Promise<any>;
             isInitialized: () => Promise<boolean>;
             pollSource: (sourceId: string) => Promise<any>;
+            listDeltas: (filter?: any) => Promise<any[]>;
             getRecentLogs: (limit?: number) => Promise<any[]>;
             getTraces: (sessionId: string) => Promise<any[]>;
             showEmojiPicker: () => Promise<void>;
@@ -187,7 +190,7 @@ function App() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor'>('chat');
+    const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor'>('chat');
     const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
     const [selectedSymbol, setSelectedSymbol] = useState<SymbolDef | null>(null);
     const [isGraphView, setIsGraphView] = useState(false);
@@ -209,7 +212,7 @@ function App() {
     const [systemPrompt, setSystemPrompt] = useState(ACTIVATION_PROMPT);
     const [mcpPrompt, setMcpPrompt] = useState("");
 
-    const [sidebarWidth, setSidebarWidth] = useState(260);
+    const [sidebarWidth, setSidebarWidth] = useState(350);
     const isResizing = useRef(false);
     const [showGraphviz, setShowGraphviz] = useState(true);
 
@@ -281,8 +284,8 @@ function App() {
                 const viewParam = urlParams.get('view');
                 console.log(`[Debug] Initializing App. URL view param: '${viewParam}'`);
 
-                if (viewParam === 'monitor') {
-                    setCurrentView('monitor');
+                if (viewParam === 'monitor' || viewParam === 'world-monitor') {
+                    setCurrentView(viewParam);
                     setAppState('app');
                     return;
                 }
@@ -441,6 +444,17 @@ function App() {
         }
     }, [currentView, appState]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
+                e.preventDefault();
+                setCurrentView(prev => prev === 'world-monitor' ? 'chat' : 'world-monitor');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     const handleSendMessage = async (text: string) => {
         if (!activeContextId || isProcessing) return;
         setIsProcessing(true);
@@ -509,6 +523,8 @@ function App() {
                 return <SymbolForgeScreen headerProps={getHeaderProps('Symbol Forge')} initialDomain={selectedDomainId} initialSymbol={selectedSymbol} />;
             case 'logs':
                 return <LogsScreen headerProps={getHeaderProps('System Logs')} />;
+            case 'world-monitor':
+                return <MonitoringScreen headerProps={getHeaderProps('World Monitoring')} />;
             default:
                 return <div className="flex-1 flex items-center justify-center text-gray-500 font-mono uppercase tracking-[0.3em]">Module_Loading: {currentView}</div>;
         }
@@ -555,12 +571,17 @@ function App() {
 
                 <div className={`flex-1 flex min-h-0 relative transition-all duration-300 ${isGraphView ? 'z-10 pointer-events-none' : 'z-30 pointer-events-auto'}`}>
                     {/* Sidebar */}
-                    <div className={`pointer-events-auto h-full flex-shrink-0 flex transition-all duration-700 ${isGraphView ? 'opacity-0' : 'opacity-100'}`} style={{ width: isGraphView ? 0 : sidebarWidth, overflow: 'hidden' }}>
-                        <ContextListPanel
-                            contexts={contexts} activeContextId={activeContextId}
-                            onSelectContext={setActiveContextId} onCreateContext={handleCreateContext}
-                            onArchiveContext={handleArchiveContext} width={sidebarWidth}
-                        />
+                    <div className={`pointer-events-auto h-full flex-shrink-0 flex flex-col transition-all duration-700 ${isGraphView ? 'opacity-0' : 'opacity-100'}`} style={{ width: isGraphView ? 0 : sidebarWidth, overflow: 'hidden' }}>
+                        <div className="flex-1 min-h-0">
+                            <ContextListPanel
+                                contexts={contexts} activeContextId={activeContextId}
+                                onSelectContext={setActiveContextId} onCreateContext={handleCreateContext}
+                                onArchiveContext={handleArchiveContext} width={sidebarWidth}
+                            />
+                        </div>
+                        <div className="h-1/2 min-h-0">
+                            <WorldMonitoringPanel width={sidebarWidth} />
+                        </div>
                     </div>
 
                     {!isGraphView && (
@@ -612,6 +633,7 @@ function App() {
                             </div>
                         </div>
                     </div>
+
                 </div>
 
                 {/* Kernel Status Bar */}
@@ -622,9 +644,9 @@ function App() {
                         cacheSize={cacheSize}
                         lastRequestTokens={lastRequestTokens}
                         focusedSymbolName={focusedSymbolName}
-                    />
-                </div>
-            </div>
+                        onNavigate={(v) => { setCurrentView(v); if (v !== 'chat') setIsGraphView(false); }}
+                        />
+                        </div>            </div>
 
             {/* 2. OTHER SCREENS CONTAINER (Settings, Store, Project, Forge, Logs) */}
             <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${!isKernelActive ? 'opacity-100 z-40 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}>

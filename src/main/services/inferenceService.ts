@@ -7,7 +7,7 @@ import type {
   ChatCompletionMessageToolCall,
   ChatCompletionTool,
 } from "openai/resources/chat/completions";
-import { PRIMARY_TOOLS, SECONDARY_TOOLS_MAP } from "./toolsService.js";
+import { getPrimaryTools, SECONDARY_TOOLS_MAP } from "./toolsService.js";
 import { SymbolDef, ContextMessage } from "../types.js";
 import { domainService } from "./domainService.js";
 import { settingsService } from "./settingsService.js";
@@ -209,7 +209,7 @@ export const normalizeMessages = (messages: ChatCompletionMessageParam[]): ChatC
 export const streamAssistantResponse = async function* (
   messages: ChatCompletionMessageParam[],
   model: string,
-  activeTools: ChatCompletionTool[] = PRIMARY_TOOLS
+  activeTools?: ChatCompletionTool[]
 ): AsyncGenerator<{
   text?: string;
   toolCalls?: ChatCompletionMessageToolCall[];
@@ -217,7 +217,8 @@ export const streamAssistantResponse = async function* (
 }> {
   try {
     const normalized = normalizeMessages(messages);
-    for await (const chunk of _streamAssistantResponseInternal(normalized, model, activeTools)) {
+    const tools = activeTools || await getPrimaryTools();
+    for await (const chunk of _streamAssistantResponseInternal(normalized, model, tools)) {
       yield chunk;
     }
   } catch (error: any) {
@@ -232,7 +233,7 @@ export const streamAssistantResponse = async function* (
 const _streamAssistantResponseInternal = async function* (
   messages: ChatCompletionMessageParam[],
   model: string,
-  activeTools: ChatCompletionTool[] = PRIMARY_TOOLS
+  activeTools: ChatCompletionTool[]
 ): AsyncGenerator<{
   text?: string;
   toolCalls?: ChatCompletionMessageToolCall[];
@@ -558,7 +559,7 @@ export async function* sendMessageAndHandleTools(
         }
       }
 
-      let activeToolList = [...PRIMARY_TOOLS];
+      let activeToolList = [...await getPrimaryTools()];
       if (contextSessionId) {
         try {
           const currentSession = await contextService.getSession(contextSessionId);
@@ -568,7 +569,7 @@ export async function* sendMessageAndHandleTools(
           // MCP Tools are dynamically fetched and included if enabled in settings
           const remoteTools = await mcpClientService.getAllTools();
 
-          activeToolList = [...PRIMARY_TOOLS, ...secondaryTools, ...remoteTools];
+          activeToolList = [...await getPrimaryTools(), ...secondaryTools, ...remoteTools];
         } catch (e) {
           loggerService.catWarn(LogCategory.INFERENCE, "Failed to fetch active tools", { error: e });
         }
@@ -978,12 +979,21 @@ export const primeSymbolicContext = async (
     let fastResponse: any = {};
     if (settings.provider === 'gemini') {
       const client = await getGeminiClient();
-      const model = client.getGenerativeModel({ model: fastModel, generationConfig: { responseMimeType: "application/json" } });
+      const model = client.getGenerativeModel({ 
+        model: fastModel, 
+        generationConfig: { 
+          maxOutputTokens: 1024
+        } 
+      });
       const result = await model.generateContent(prompt);
       fastResponse = extractJson(result.response.text());
     } else {
       const client = await getClient();
-      const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }] });
+      const result = await client.chat.completions.create({ 
+        model: fastModel, 
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1024
+      });
       fastResponse = extractJson(result.choices[0]?.message?.content || "{}");
     }
 

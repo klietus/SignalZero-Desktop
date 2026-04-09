@@ -49,6 +49,7 @@ const api = {
   runHygiene: (strategy?: string) => ipcRenderer.invoke('system:run-hygiene', strategy),
   isInitialized: () => ipcRenderer.invoke('system:is-initialized'),
   pollSource: (sourceId: string) => ipcRenderer.invoke('monitoring:poll-source', sourceId),
+  listDeltas: (filter?: any) => ipcRenderer.invoke('monitoring:list-deltas', filter),
 
   // System
   getRecentLogs: (limit?: number) => ipcRenderer.invoke('system:get-recent-logs', limit),

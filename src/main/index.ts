@@ -19,6 +19,7 @@ import { mcpPromptService } from './services/mcpPromptService.js'
 import { traceService } from './services/traceService.js'
 import { topologyService } from './services/topologyService.js'
 import { monitoringService } from './services/monitoringService.js'
+import { sqliteService } from './services/sqliteService.js'
 import { mcpClientService } from './services/mcpClientService.js'
 import fs from 'fs'
 import { dialog } from 'electron'
@@ -85,9 +86,9 @@ function createMonitorWindow(): void {
   });
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    if (mainWindow) mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    monitorWindow.loadURL(process.env['ELECTRON_RENDERER_URL'] + '?view=world-monitor')
   } else {
-    if (mainWindow) mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    monitorWindow.loadFile(join(__dirname, '../renderer/index.html'), { query: { view: 'world-monitor' } })
   }
 }
 
@@ -443,6 +444,31 @@ ipcMain.handle('monitoring:poll-source', async (_, sourceId) => {
     return { success: true };
   }
   return { success: false, error: 'Source not found' };
+});
+
+ipcMain.handle('monitoring:list-deltas', async (_, filter?: { sourceId?: string, period?: string, limit?: number }) => {
+  const limit = filter?.limit || 100;
+  let sql = `SELECT * FROM monitoring_deltas`;
+  const params: any[] = [];
+  const whereParts: string[] = [];
+
+  if (filter?.sourceId) {
+    whereParts.push(`source_id = ?`);
+    params.push(filter.sourceId);
+  }
+  if (filter?.period) {
+    whereParts.push(`period = ?`);
+    params.push(filter.period);
+  }
+
+  if (whereParts.length > 0) {
+    sql += ` WHERE ` + whereParts.join(' AND ');
+  }
+
+  sql += ` ORDER BY timestamp DESC LIMIT ?`;
+  params.push(limit);
+
+  return sqliteService.all(sql, params);
 });
 
 ipcMain.handle('system:validate-mcp', async (_, endpoint, token) => {
