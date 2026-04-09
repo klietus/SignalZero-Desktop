@@ -14,12 +14,15 @@ SignalZero Desktop is a sophisticated recursive symbolic reasoning engine built 
 
 ## Key Features
 
-- **Recursive Symbolic Reasoning:** Advanced inference engine with tool integration.
-- **Context Management:** Create, list, and manage persistent conversation sessions.
-- **Symbolic Store:** Integrated symbol store with vector search capabilities.
-- **Trace Visualization:** Real-time reasoning trace visualization.
-- **MCP Integration:** Support for Model Context Protocol (MCP) tools.
-- **Attachment Support:** Handle and analyze file attachments within the reasoning loop.
+- **Recursive Symbolic Reasoning:** Advanced inference engine with multi-step tool integration and trace-based reasoning.
+- **World Monitoring & Data Feeds:** Real-time ingestion of global events and data from sources like ACLED (conflict), GDELT (events), AlphaVantage (markets), and customizable RSS/Web feeds.
+- **Autonomous Synthesis & Rollups:** Automatic synthesis of raw data into hierarchical time periods (hour, day, week, month, year) for efficient AI grounding. Supports on-demand synthesis for missing or stale time ranges.
+- **Symbolic Store & Graph Hygiene:** Integrated knowledge store with vector search. Includes automated "Symbolic Compression" and "Canonical Merging" to maintain a clean, high-signal knowledge graph.
+- **Trace Visualization:** Real-time visualization of the reasoning process, showing activated symbols and tool execution paths.
+- **Context Management:** Persistent conversation sessions with automated "Priming" for pre-caching relevant symbols and world deltas.
+- **MCP Integration:** Native support for the Model Context Protocol (MCP), enabling extensible tool capabilities.
+- **Attachment Support:** Analyze and ground reasoning in local file attachments.
+- **Integrated Search:** Grounded web search and fetch capabilities with automated symbolic extraction.
 
 ## Installation
 
@@ -41,6 +44,23 @@ Ensure you have [Node.js](https://nodejs.org/) installed on your system.
    ```bash
    npm install
    ```
+
+## Technical Architecture
+
+- **Recursive Inference Engine:** Multi-turn tool execution loop with automated context priming.
+- **Monitoring & Synthesis Pipeline:** Parallelized polling, itemization, and LLM-based summarization of world data.
+- **Hierarchical Rollups:** Recursive synthesis of data (e.g., hours -> days -> weeks) with staleness checks for current periods.
+- **Vector Search Store:** Efficient local vector retrieval powered by LanceDB for both symbols and world deltas.
+- **Symbolic Cleanup:** Automated canonical ID selection and graph merging based on semantic and temporal signals.
+
+## Data Providers
+
+The kernel includes specialized handlers for:
+- **Conflict Monitoring:** ACLED API integration for real-time conflict tracking.
+- **Global Events:** GDELT Project integration for worldwide news events.
+- **Financial Markets:** AlphaVantage and MarketStack for real-time market signals.
+- **Regional News:** High-fidelity RSS processing for NYT, CNN, Al Jazeera, etc.
+- **Custom Feeds:** Generic RSS, Web Scraping, and API polling support.
 
 ## Running the Application
 
