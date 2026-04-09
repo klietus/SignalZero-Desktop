@@ -499,26 +499,30 @@ class TopologyService {
             Activation Conditions: ${JSON.stringify(s2.activation_conditions || [])}
             
             Should these symbols be linked? Output valid JSON only.
-            If "shouldLink" is true, you MUST choose the most appropriate "linkType" from this list:
-            - relates_to: General association
-            - depends_on: Symbol 1 requires Symbol 2
-            - required_by: Symbol 1 is required by Symbol 2
-            - part_of: Symbol 1 is a component of Symbol 2
-            - contains: Symbol 1 contains or is an aggregate of Symbol 2
-            - instance_of: Symbol 1 is a specific example of Symbol 2
-            - exemplifies: Symbol 1 is a category/concept exemplified by Symbol 2
-            - informs: Symbol 1 provides context or data to Symbol 2
-            - informed_by: Symbol 1 receives context or data from Symbol 2
-            - constrained_by: Symbol 1 is limited or governed by Symbol 2
-            - limits: Symbol 1 limits or governs Symbol 2
-            - triggers: Symbol 1 initiates or causes Symbol 2
-            - triggered_by: Symbol 1 is initiated or caused by Symbol 2
-            - negates: Symbol 1 contradicts or opposes Symbol 2
-            - negated_by: Symbol 1 is contradicted or opposed by Symbol 2
-            - evolved_from: Symbol 1 is a later version/evolution of Symbol 2
-            - evolved_into: Symbol 1 is an earlier version that became Symbol 2
-            - implements: Symbol 1 is a concrete realization of Symbol 2
-            - implemented_by: Symbol 1 is an interface/abstraction realized by Symbol 2
+            If "shouldLink" is true, you MUST choose the most appropriate "linkType" from this list of reciprocal pairs:
+            - relates_to / relates_to
+            - depends_on / required_by
+            - part_of / contains
+            - instance_of / exemplifies
+            - informs / informed_by
+            - constrained_by / limits
+            - triggers / triggered_by
+            - negates / negated_by
+            - evolved_from / evolved_into
+            - implements / implemented_by
+            - extends / extended_by
+            - synthesized_from / synthesis_of
+            - derived_from / source_of
+            - feeds_into / receives_data_from
+            - orchestrates / orchestrated_by
+            - monitors / monitored_by
+            - validates / validated_by
+            - enables / enabled_by
+            - executes / executed_by
+            - grounds_in / reality_for
+            - documents / documented_by
+            - contrasts_with / contrasts_with
+            - references / referenced_by
 
             {
               "shouldLink": true/false,

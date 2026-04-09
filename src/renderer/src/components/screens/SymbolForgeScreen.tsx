@@ -321,44 +321,43 @@ const SymbolRelationshipField = ({
                                     onChange={(e) => updateItem(idx, { link_type: e.target.value })}
                                     className="bg-black/40 border border-gray-800 rounded px-1.5 py-0.5 text-[9px] font-mono uppercase text-gray-400"
                                 >
-                                    <optgroup label="General">
-                                        <option value="relates_to">relates_to</option>
+                                    <optgroup label="Grounding & Evidence">
+                                        <option value="grounds_in">grounds_in</option>
+                                        <option value="reality_for">reality_for</option>
+                                        <option value="documents">documents</option>
+                                        <option value="documented_by">documented_by</option>
+                                        <option value="references">references</option>
+                                        <option value="referenced_by">referenced_by</option>
                                     </optgroup>
-                                    <optgroup label="Requirements">
-                                        <option value="depends_on">depends_on</option>
-                                        <option value="required_by">required_by</option>
-                                    </optgroup>
-                                    <optgroup label="Composition">
-                                        <option value="part_of">part_of</option>
-                                        <option value="contains">contains</option>
-                                    </optgroup>
-                                    <optgroup label="Abstraction">
-                                        <option value="instance_of">instance_of</option>
-                                        <option value="exemplifies">exemplifies</option>
-                                    </optgroup>
-                                    <optgroup label="Flow">
-                                        <option value="informs">informs</option>
-                                        <option value="informed_by">informed_by</option>
-                                    </optgroup>
-                                    <optgroup label="Constraints">
-                                        <option value="constrained_by">constrained_by</option>
-                                        <option value="limits">limits</option>
-                                    </optgroup>
-                                    <optgroup label="Causal">
+                                    <optgroup label="Orchestration & Tools">
+                                        <option value="orchestrates">orchestrates</option>
+                                        <option value="orchestrated_by">orchestrated_by</option>
+                                        <option value="executes">executes</option>
+                                        <option value="executed_by">executed_by</option>
                                         <option value="triggers">triggers</option>
                                         <option value="triggered_by">triggered_by</option>
                                     </optgroup>
-                                    <optgroup label="Logic">
-                                        <option value="negates">negates</option>
-                                        <option value="negated_by">negated_by</option>
+                                    <optgroup label="Functional">
+                                        <option value="enables">enables</option>
+                                        <option value="enabled_by">enabled_by</option>
+                                        <option value="monitors">monitors</option>
+                                        <option value="monitored_by">monitored_by</option>
+                                        <option value="validates">validates</option>
+                                        <option value="validated_by">validated_by</option>
                                     </optgroup>
-                                    <optgroup label="Evolution">
+                                    <optgroup label="Evolution & Synthesis">
                                         <option value="evolved_from">evolved_from</option>
                                         <option value="evolved_into">evolved_into</option>
+                                        <option value="synthesized_from">synthesized_from</option>
+                                        <option value="synthesis_of">synthesis_of</option>
+                                        <option value="derived_from">derived_from</option>
+                                        <option value="source_of">source_of</option>
                                     </optgroup>
-                                    <optgroup label="Implementation">
-                                        <option value="implements">implements</option>
-                                        <option value="implemented_by">implemented_by</option>
+                                    <optgroup label="Logic & Symmetry">
+                                        <option value="negates">negates</option>
+                                        <option value="negated_by">negated_by</option>
+                                        <option value="contrasts_with">contrasts_with</option>
+                                        <option value="relates_to">relates_to</option>
                                     </optgroup>
                                 </select>
                                 <button

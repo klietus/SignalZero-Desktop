@@ -58,7 +58,32 @@ const RECIPROCAL_MAP: Record<string, string> = {
     'evolved_from': 'evolved_into',
     'evolved_into': 'evolved_from',
     'implements': 'implemented_by',
-    'implemented_by': 'implements'
+    'implemented_by': 'implements',
+    'extends': 'extended_by',
+    'extended_by': 'extends',
+    'synthesized_from': 'synthesis_of',
+    'synthesis_of': 'synthesized_from',
+    'derived_from': 'source_of',
+    'source_of': 'derived_from',
+    'feeds_into': 'receives_data_from',
+    'receives_data_from': 'feeds_into',
+    'orchestrates': 'orchestrated_by',
+    'orchestrated_by': 'orchestrates',
+    'monitors': 'monitored_by',
+    'monitored_by': 'monitors',
+    'validates': 'validated_by',
+    'validated_by': 'validates',
+    'enables': 'enabled_by',
+    'enabled_by': 'enables',
+    'executes': 'executed_by',
+    'executed_by': 'executes',
+    'documents': 'documented_by',
+    'documented_by': 'documents',
+    'contrasts_with': 'contrasts_with',
+    'references': 'referenced_by',
+    'referenced_by': 'references',
+    'grounds_in': 'reality_for',
+    'reality_for': 'grounds_in'
 };
 
 export const domainService = {
