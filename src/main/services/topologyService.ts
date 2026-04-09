@@ -28,8 +28,17 @@ class TopologyService {
     private readonly REDUNDANCY_THRESHOLD = 0.98;
     private isAnalyzing = false;
     private lastRunTimestamp: string | null = null;
+    private mergeAttemptCache: Map<string, string> = new Map();
 
     constructor() {}
+
+    private getGroupKey(symbols: SymbolDef[]): string {
+        return symbols.map(s => s.id).sort().join(',');
+    }
+
+    private getGroupTimestampKey(symbols: SymbolDef[]): string {
+        return symbols.map(s => s.updated_at || '').sort().join(',');
+    }
 
     /**
      * Executes the global topology analysis loop.
@@ -593,9 +602,25 @@ class TopologyService {
 
     private async mergeRedundantSymbols(groups: SymbolDef[][]) {
         for (const group of groups) {
+            const groupKey = this.getGroupKey(group);
+            const timestampKey = this.getGroupTimestampKey(group);
+
+            if (this.mergeAttemptCache.get(groupKey) === timestampKey) {
+                loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Skipping redundant group ${groupKey} - no changes since last attempt`);
+                continue;
+            }
+
+            // Record this attempt before starting (prevents loops if something crashes inside)
+            this.mergeAttemptCache.set(groupKey, timestampKey);
+
             const canonicalId = await this.selectCanonicalId(group);
             const redundantIds = group.map(s => s.id).filter(id => id !== canonicalId);
             
+            if (redundantIds.length === 0) {
+                loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Redundant group ${groupKey} evaluated, but leader was unchanged and no merges performed.`);
+                continue;
+            }
+
             loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Merging redundant symbols into selected leader ${canonicalId}`, { redundantIds });
             
             for (const oldId of redundantIds) {
