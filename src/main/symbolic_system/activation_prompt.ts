@@ -145,10 +145,9 @@ const SYMBOL_DATA_SCHEMA = {
                 type: 'object',
                 properties: {
                     id: { type: 'string' },
-                    link_type: { type: 'string', description: "RELATIONAL PAIRS: relates_to <-> relates_to, depends_on <-> required_by, part_of <-> contains, instance_of <-> exemplifies, informs <-> informed_by, constrained_by <-> limits, triggers <-> triggered_by, negates <-> negated_by, evolved_from <-> evolved_into, implements <-> implemented_by, extends <-> extended_by, synthesized_from <-> synthesis_of, derived_from <-> source_of, feeds_into <-> receives_data_from, orchestrates <-> orchestrated_by, monitors <-> monitored_by, validates <-> validated_by, enables <-> enabled_by, executes <-> executed_by, documents <-> documented_by, contrasts_with <-> contrasts_with, references <-> referenced_by, grounds_in <-> reality_for" },
-                    bidirectional: { type: 'boolean' }
+                    link_type: { type: 'string', description: "RELATIONAL PAIRS: relates_to <-> relates_to, depends_on <-> required_by, part_of <-> contains, instance_of <-> exemplifies, informs <-> informed_by, constrained_by <-> limits, triggers <-> triggered_by, negates <-> negated_by, evolved_from <-> evolved_into, implements <-> implemented_by, extends <-> extended_by, synthesized_from <-> synthesis_of, derived_from <-> source_of, feeds_into <-> receives_data_from, orchestrates <-> orchestrated_by, monitors <-> monitored_by, validates <-> validated_by, enables <-> enabled_by, executes <-> executed_by, documents <-> documented_by, contrasts_with <-> contrasts_with, references <-> referenced_by, grounds_in <-> reality_for" }
                 },
-                required: ['id', 'link_type', 'bidirectional']
+                required: ['id', 'link_type']
             } 
         }
     },

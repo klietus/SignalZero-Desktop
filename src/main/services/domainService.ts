@@ -255,7 +255,7 @@ export const domainService = {
 
         // Second pass: links
         const deleteLinks = sqliteService.db().prepare(`DELETE FROM symbol_links WHERE source_id = ?`);
-        const insertLink = sqliteService.db().prepare(`INSERT INTO symbol_links (source_id, target_id, link_type, bidirectional) VALUES (?, ?, ?, ?)`);
+        const insertLink = sqliteService.db().prepare(`INSERT INTO symbol_links (source_id, target_id, link_type) VALUES (?, ?, ?)`);
 
         for (const symbol of symbols) {
             deleteLinks.run(symbol.id);
@@ -263,15 +263,14 @@ export const domainService = {
                 for (const link of symbol.linked_patterns) {
                     const targetId = typeof link === 'string' ? link : link.id;
                     const linkType = typeof link === 'string' ? 'relates_to' : (link.link_type || 'relates_to');
-                    const bidirectional = typeof link === 'string' ? 0 : (link.bidirectional ? 1 : 0);
                     
                     try {
                         // 1. Insert original link
-                        insertLink.run(symbol.id, targetId, linkType, bidirectional);
+                        insertLink.run(symbol.id, targetId, linkType);
 
                         // 2. Automatic Reciprocation
                         const reciprocalType = RECIPROCAL_MAP[linkType] || 'relates_to';
-                        insertLink.run(targetId, symbol.id, reciprocalType, bidirectional);
+                        insertLink.run(targetId, symbol.id, reciprocalType);
                     } catch (e) {}
                 }
             }
@@ -296,8 +295,8 @@ export const domainService = {
     const row = sqliteService.get(`SELECT * FROM symbols WHERE id = ?`, [id]);
     if (!row) return null;
 
-    const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [id]) as any[];
-    return mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional })));
+    const links = sqliteService.all(`SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?`, [id]) as any[];
+    return mapRowToSymbol(row, links);
   },
 
   async mergeSymbols(canonicalId: string, redundantId: string): Promise<void> {
@@ -471,8 +470,8 @@ export const domainService = {
     const rows = sqliteService.all(`SELECT * FROM symbols WHERE domain_id = ?`, [domainId]) as any[];
     const symbols: SymbolDef[] = [];
     for (const row of rows) {
-        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
-        symbols.push(mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional }))));
+        const links = sqliteService.all(`SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
+        symbols.push(mapRowToSymbol(row, links));
     }
     return symbols;
   },
@@ -481,8 +480,8 @@ export const domainService = {
     const rows = sqliteService.all(`SELECT * FROM symbols`) as any[];
     const symbols: SymbolDef[] = [];
     for (const row of rows) {
-        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
-        symbols.push(mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional }))));
+        const links = sqliteService.all(`SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
+        symbols.push(mapRowToSymbol(row, links));
     }
     return symbols;
   },
@@ -497,8 +496,8 @@ export const domainService = {
     `, tags) as any[];
     const symbols: SymbolDef[] = [];
     for (const row of rows) {
-        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
-        symbols.push(mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional }))));
+        const links = sqliteService.all(`SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
+        symbols.push(mapRowToSymbol(row, links));
     }
     return symbols;
   },
@@ -512,8 +511,8 @@ export const domainService = {
     `, [limit]) as any[];
     const symbols: SymbolDef[] = [];
     for (const row of rows) {
-        const links = sqliteService.all(`SELECT target_id as id, link_type, bidirectional FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
-        symbols.push(mapRowToSymbol(row, links.map(l => ({ ...l, bidirectional: !!l.bidirectional }))));
+        const links = sqliteService.all(`SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?`, [row.id]) as any[];
+        symbols.push(mapRowToSymbol(row, links));
     }
     return symbols;
   },

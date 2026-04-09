@@ -124,7 +124,7 @@ export interface SymbolDataDef {
 export interface SymbolLink {
   id: string;
   link_type: string;
-  bidirectional: boolean;
+  bidirectional?: boolean; // @deprecated - Reciprocity is now handled via reflexive links
 }
 
 export interface SymbolDef {

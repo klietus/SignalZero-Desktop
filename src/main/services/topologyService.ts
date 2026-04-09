@@ -15,6 +15,7 @@ export interface TopologyStats {
     newLinksPredicted: number;
     redundantSymbolsFound: number;
     linksRefactored: number;
+    reflexiveLinksCreated: number;
 }
 
 interface PredictedLink {
@@ -90,13 +91,19 @@ class TopologyService {
             let newLinksPredicted = 0;
             let redundantSymbolsFound = 0;
             let linksRefactored = 0;
+            let reflexiveLinksCreated = 0;
 
             // Relational analysis requires at least 2 symbols
             const canRunRelational = symbols.length >= 2;
 
-            // --- STRATEGY: Link Type Refactoring (Always runs if specificStrategy is undefined) ---
+            // --- STRATEGY: Link Type Refactoring ---
             if (canRunRelational && (specificStrategy === 'refactor' || specificStrategy === undefined)) {
                 linksRefactored = await this.refactorLinksToCanonical(symbols);
+            }
+
+            // --- STRATEGY: Instantiate Missing Reflexive Links ---
+            if (canRunRelational && (specificStrategy === 'reflexive' || specificStrategy === undefined)) {
+                reflexiveLinksCreated = await this.instantiateMissingReflexiveLinks(symbols);
             }
 
             // --- STRATEGY: Dead Link Cleanup ---
@@ -135,7 +142,8 @@ class TopologyService {
                 reconstructionError: 0,
                 newLinksPredicted,
                 redundantSymbolsFound,
-                linksRefactored
+                linksRefactored,
+                reflexiveLinksCreated
             };
 
             this.lastRunTimestamp = currentRunTimestamp;
@@ -689,6 +697,67 @@ class TopologyService {
             loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Refactored ${refactoredCount} links to canonical taxonomy`);
         }
         return refactoredCount;
+    }
+
+    private async instantiateMissingReflexiveLinks(symbols: SymbolDef[]): Promise<number> {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting reflexive link instantiation");
+        
+        // 1. Build a map of existing links for fast lookup
+        const linkMap = new Set<string>();
+        for (const s of symbols) {
+            if (!s.linked_patterns) continue;
+            for (const link of s.linked_patterns) {
+                linkMap.add(`${s.id}:${link.id}:${link.link_type}`);
+            }
+        }
+
+        let createdCount = 0;
+        const updatedSymbols = new Map<string, SymbolDef>();
+        const idToSymbol = new Map(symbols.map(s => [s.id, s]));
+
+        // 2. Identify missing reciprocals
+        for (const s of symbols) {
+            if (!s.linked_patterns) continue;
+
+            for (const link of s.linked_patterns) {
+                const targetId = link.id;
+                const forwardType = link.link_type;
+                const reciprocalType = RECIPROCAL_MAP[forwardType];
+
+                if (!reciprocalType) continue;
+
+                const reciprocalKey = `${targetId}:${s.id}:${reciprocalType}`;
+                if (!linkMap.has(reciprocalKey)) {
+                    // Missing!
+                    const targetSymbol = updatedSymbols.get(targetId) || idToSymbol.get(targetId);
+                    if (targetSymbol) {
+                        if (!targetSymbol.linked_patterns) targetSymbol.linked_patterns = [];
+                        
+                        // Check if it already exists in the local object but not in the global set yet
+                        const alreadyAdded = targetSymbol.linked_patterns.some(l => l.id === s.id && l.link_type === reciprocalType);
+                        if (!alreadyAdded) {
+                            targetSymbol.linked_patterns.push({
+                                id: s.id,
+                                link_type: reciprocalType
+                            });
+                            updatedSymbols.set(targetId, targetSymbol);
+                            createdCount++;
+                            // Add to map to prevent double creation in this run
+                            linkMap.add(reciprocalKey);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Persist changes
+        if (updatedSymbols.size > 0) {
+            const symbolsToUpdate = Array.from(updatedSymbols.values());
+            await domainService.bulkUpsertSymbols(symbolsToUpdate);
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Instantiated ${createdCount} missing reflexive links across ${updatedSymbols.size} symbols`);
+        }
+
+        return createdCount;
     }
 }
 

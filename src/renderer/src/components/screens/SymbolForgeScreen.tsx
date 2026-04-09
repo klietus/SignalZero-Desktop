@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Check, AlertTriangle, GitMerge, Box, ArrowRightLeft, X, User, Database, RefreshCcw, Layout } from 'lucide-react';
+import { Plus, Check, AlertTriangle, GitMerge, Box, X, User, Database, RefreshCcw, Layout } from 'lucide-react';
 import { SymbolDef, SymbolFacet } from '../../types';
 import { Header, HeaderProps } from '../Header';
 
@@ -206,7 +206,7 @@ const sanitizeForEditor = (raw: any): SymbolDef => {
     if (Array.isArray(copy.linked_patterns)) {
         copy.linked_patterns = copy.linked_patterns.map((item: any) => {
             if (typeof item === 'string') {
-                return { id: item, link_type: 'relates_to', bidirectional: false };
+                return { id: item, link_type: 'relates_to' };
             }
             return item;
         });
@@ -282,7 +282,7 @@ const SymbolRelationshipField = ({
             if (!exists) {
                 const newItems = [
                     ...safeItems,
-                    { id: symbolId, link_type: 'relates_to', bidirectional: false }
+                    { id: symbolId, link_type: 'relates_to' }
                 ];
                 onChange(newItems);
             }
@@ -308,7 +308,6 @@ const SymbolRelationshipField = ({
                     {(safeItems || []).map((item, idx) => {
                         const display = typeof item === 'object' ? (item.id || "Invalid Obj") : item;
                         const linkType = typeof item === 'object' ? item.link_type : 'relates_to';
-                        const bidirectional = typeof item === 'object' ? !!item.bidirectional : false;
 
                         return (
                             <div key={`${display}-${idx}`} className="flex flex-wrap items-center gap-2 bg-gray-900 border border-gray-800 rounded-lg p-2 shadow-sm group">
@@ -360,13 +359,6 @@ const SymbolRelationshipField = ({
                                         <option value="relates_to">relates_to</option>
                                     </optgroup>
                                 </select>
-                                <button
-                                    onClick={() => updateItem(idx, { bidirectional: !bidirectional })}
-                                    title={bidirectional ? "Bidirectional" : "Unidirectional"}
-                                    className={`p-1 rounded transition-colors ${bidirectional ? 'bg-emerald-900/20 text-emerald-400 border border-emerald-800/50' : 'bg-gray-800 text-gray-500'}`}
-                                >
-                                    <ArrowRightLeft size={10} />
-                                </button>
 
                                 <div className="flex-1"></div>
 
@@ -376,9 +368,9 @@ const SymbolRelationshipField = ({
                                 >
                                     <X size={14} />
                                 </button>
-                            </div>
-                        );
-                    })}
+                                </div>
+                                );
+                                })}
                 </div>
             )}
         </div>

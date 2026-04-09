@@ -81,10 +81,9 @@ const SYMBOL_DATA_SCHEMA = {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          link_type: { type: 'string' },
-          bidirectional: { type: 'boolean' }
+          link_type: { type: 'string' }
         },
-        required: ['id', 'link_type', 'bidirectional']
+        required: ['id', 'link_type']
       }
     }
   },
