@@ -316,19 +316,51 @@ const SymbolRelationshipField = ({
                                 
                                 <div className="h-4 w-[1px] bg-gray-800 hidden sm:block"></div>
 
-                                <select 
+                                <select
                                     value={linkType}
                                     onChange={(e) => updateItem(idx, { link_type: e.target.value })}
                                     className="bg-black/40 border border-gray-800 rounded px-1.5 py-0.5 text-[9px] font-mono uppercase text-gray-400"
                                 >
-                                    <option value="relates_to">relates_to</option>
-                                    <option value="depends_on">depends_on</option>
-                                    <option value="instance_of">instance_of</option>
-                                    <option value="part_of">part_of</option>
-                                    <option value="evolved_from">evolved_from</option>
-                                    <option value="conflicts_with">conflicts_with</option>
+                                    <optgroup label="General">
+                                        <option value="relates_to">relates_to</option>
+                                    </optgroup>
+                                    <optgroup label="Requirements">
+                                        <option value="depends_on">depends_on</option>
+                                        <option value="required_by">required_by</option>
+                                    </optgroup>
+                                    <optgroup label="Composition">
+                                        <option value="part_of">part_of</option>
+                                        <option value="contains">contains</option>
+                                    </optgroup>
+                                    <optgroup label="Abstraction">
+                                        <option value="instance_of">instance_of</option>
+                                        <option value="exemplifies">exemplifies</option>
+                                    </optgroup>
+                                    <optgroup label="Flow">
+                                        <option value="informs">informs</option>
+                                        <option value="informed_by">informed_by</option>
+                                    </optgroup>
+                                    <optgroup label="Constraints">
+                                        <option value="constrained_by">constrained_by</option>
+                                        <option value="limits">limits</option>
+                                    </optgroup>
+                                    <optgroup label="Causal">
+                                        <option value="triggers">triggers</option>
+                                        <option value="triggered_by">triggered_by</option>
+                                    </optgroup>
+                                    <optgroup label="Logic">
+                                        <option value="negates">negates</option>
+                                        <option value="negated_by">negated_by</option>
+                                    </optgroup>
+                                    <optgroup label="Evolution">
+                                        <option value="evolved_from">evolved_from</option>
+                                        <option value="evolved_into">evolved_into</option>
+                                    </optgroup>
+                                    <optgroup label="Implementation">
+                                        <option value="implements">implements</option>
+                                        <option value="implemented_by">implemented_by</option>
+                                    </optgroup>
                                 </select>
-
                                 <button
                                     onClick={() => updateItem(idx, { bidirectional: !bidirectional })}
                                     title={bidirectional ? "Bidirectional" : "Unidirectional"}

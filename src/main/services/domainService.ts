@@ -39,6 +39,28 @@ const mapRowToSymbol = (row: any, links: SymbolLink[] = []): SymbolDef => ({
     linked_patterns: links
 });
 
+const RECIPROCAL_MAP: Record<string, string> = {
+    'relates_to': 'relates_to',
+    'depends_on': 'required_by',
+    'required_by': 'depends_on',
+    'part_of': 'contains',
+    'contains': 'part_of',
+    'instance_of': 'exemplifies',
+    'exemplifies': 'instance_of',
+    'informs': 'informed_by',
+    'informed_by': 'informs',
+    'constrained_by': 'limits',
+    'limits': 'constrained_by',
+    'triggers': 'triggered_by',
+    'triggered_by': 'triggers',
+    'negates': 'negated_by',
+    'negated_by': 'negates',
+    'evolved_from': 'evolved_into',
+    'evolved_into': 'evolved_from',
+    'implements': 'implemented_by',
+    'implemented_by': 'implements'
+};
+
 export const domainService = {
   // --- Domain Management ---
 
@@ -217,8 +239,14 @@ export const domainService = {
                     const targetId = typeof link === 'string' ? link : link.id;
                     const linkType = typeof link === 'string' ? 'relates_to' : (link.link_type || 'relates_to');
                     const bidirectional = typeof link === 'string' ? 0 : (link.bidirectional ? 1 : 0);
+                    
                     try {
+                        // 1. Insert original link
                         insertLink.run(symbol.id, targetId, linkType, bidirectional);
+
+                        // 2. Automatic Reciprocation
+                        const reciprocalType = RECIPROCAL_MAP[linkType] || 'relates_to';
+                        insertLink.run(targetId, symbol.id, reciprocalType, bidirectional);
                     } catch (e) {}
                 }
             }
@@ -371,16 +399,23 @@ export const domainService = {
         loggerService.catError(LogCategory.DOMAIN, `Synthesis failed, falling back to basic merge`, { error: err });
     }
 
-    // 2. Move and merge links
+    // 2. Move and merge links (Type-Aware Deduplication)
     if (!synthesized.linked_patterns) synthesized.linked_patterns = [];
-    const existingLinkIds = new Set(synthesized.linked_patterns.map(l => typeof l === 'string' ? l : l.id));
+    const existingLinkKeys = new Set(synthesized.linked_patterns.map(l => {
+        const targetId = typeof l === 'string' ? l : l.id;
+        const type = typeof l === 'string' ? 'relates_to' : (l.link_type || 'relates_to');
+        return `${targetId}:${type}`;
+    }));
 
     if (redundant.linked_patterns) {
       for (const link of redundant.linked_patterns) {
         const targetId = typeof link === 'string' ? link : link.id;
-        if (targetId !== canonicalId && !existingLinkIds.has(targetId)) {
+        const type = typeof link === 'string' ? 'relates_to' : (link.link_type || 'relates_to');
+        const key = `${targetId}:${type}`;
+
+        if (targetId !== canonicalId && !existingLinkKeys.has(key)) {
           synthesized.linked_patterns.push(link);
-          existingLinkIds.add(targetId);
+          existingLinkKeys.add(key);
         }
       }
     }

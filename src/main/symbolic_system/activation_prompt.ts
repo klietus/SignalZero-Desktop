@@ -145,7 +145,7 @@ const SYMBOL_DATA_SCHEMA = {
                 type: 'object',
                 properties: {
                     id: { type: 'string' },
-                    link_type: { type: 'string', description: "relates_to, depends_on, part_of, instance_of, informs, constrained_by" },
+                    link_type: { type: 'string', description: "RELATIONAL PAIRS: relates_to <-> relates_to, depends_on <-> required_by, part_of <-> contains, instance_of <-> exemplifies, informs <-> informed_by, constrained_by <-> limits, triggers <-> triggered_by, negates <-> negated_by, evolved_from <-> evolved_into, implements <-> implemented_by" },
                     bidirectional: { type: 'boolean' }
                 },
                 required: ['id', 'link_type', 'bidirectional']
