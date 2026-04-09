@@ -1,4 +1,4 @@
-import { domainService } from './domainService.js';
+import { domainService, RECIPROCAL_MAP } from './domainService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { settingsService } from './settingsService.js';
@@ -14,6 +14,7 @@ export interface TopologyStats {
     reconstructionError: number;
     newLinksPredicted: number;
     redundantSymbolsFound: number;
+    linksRefactored: number;
 }
 
 interface PredictedLink {
@@ -88,9 +89,15 @@ class TopologyService {
 
             let newLinksPredicted = 0;
             let redundantSymbolsFound = 0;
+            let linksRefactored = 0;
 
             // Relational analysis requires at least 2 symbols
             const canRunRelational = symbols.length >= 2;
+
+            // --- STRATEGY: Link Type Refactoring (Always runs if specificStrategy is undefined) ---
+            if (canRunRelational && (specificStrategy === 'refactor' || specificStrategy === undefined)) {
+                linksRefactored = await this.refactorLinksToCanonical(symbols);
+            }
 
             // --- STRATEGY: Dead Link Cleanup ---
             if (specificStrategy === 'deadLinkCleanup' || (specificStrategy === undefined && hygiene.deadLinkCleanup)) {
@@ -127,7 +134,8 @@ class TopologyService {
                 linkTypes: Array.from(linkTypes), 
                 reconstructionError: 0,
                 newLinksPredicted,
-                redundantSymbolsFound
+                redundantSymbolsFound,
+                linksRefactored
             };
 
             this.lastRunTimestamp = currentRunTimestamp;
@@ -652,6 +660,35 @@ class TopologyService {
                 }
             }
         }
+    }
+
+    private async refactorLinksToCanonical(symbols: SymbolDef[]): Promise<number> {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting link type refactoring");
+        const canonicalTypes = new Set(Object.keys(RECIPROCAL_MAP));
+        let refactoredCount = 0;
+
+        for (const s of symbols) {
+            if (!s.linked_patterns || s.linked_patterns.length === 0) continue;
+
+            let updated = false;
+            for (const link of s.linked_patterns) {
+                if (!canonicalTypes.has(link.link_type)) {
+                    loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Refactoring non-canonical link type "${link.link_type}" to "relates_to" for symbol ${s.id}`);
+                    link.link_type = 'relates_to';
+                    updated = true;
+                    refactoredCount++;
+                }
+            }
+
+            if (updated) {
+                await domainService.addSymbol(s.symbol_domain, s);
+            }
+        }
+
+        if (refactoredCount > 0) {
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Refactored ${refactoredCount} links to canonical taxonomy`);
+        }
+        return refactoredCount;
     }
 }
 

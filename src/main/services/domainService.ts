@@ -39,7 +39,7 @@ const mapRowToSymbol = (row: any, links: SymbolLink[] = []): SymbolDef => ({
     linked_patterns: links
 });
 
-const RECIPROCAL_MAP: Record<string, string> = {
+export const RECIPROCAL_MAP: Record<string, string> = {
     'relates_to': 'relates_to',
     'depends_on': 'required_by',
     'required_by': 'depends_on',
