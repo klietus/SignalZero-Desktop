@@ -47,10 +47,14 @@ const SYMBOL_DATA_SCHEMA = {
     data: {
       type: 'object',
       properties: {
-        source: { type: 'string' },
-        verification: { type: 'string' },
-        status: { type: 'string' },
-        payload: { type: 'object' }
+        source: { type: 'string', description: 'Origin of the data.' },
+        verification: { type: 'string', description: 'Verification status or method.' },
+        status: { type: 'string', description: 'Current status of the data.' },
+        payload: { 
+          type: 'object', 
+          additionalProperties: true,
+          description: 'Key-value store for the actual data being recorded. REQUIRED for kind: "data".'
+        }
       }
     },
     facets: {

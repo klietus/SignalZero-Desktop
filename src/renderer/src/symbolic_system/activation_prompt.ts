@@ -110,7 +110,7 @@ const SYMBOL_DATA_SCHEMA = {
         },
         data: {
             type: 'object',
-            description: "Configuration for data symbols (key-value store)",
+            description: "Configuration for data symbols (key-value store). REQUIRED if kind is 'data'.",
             properties: {
                 source: { type: 'string', description: "Origin of the data." },
                 verification: { type: 'string', description: "Verification status or method." },
@@ -118,7 +118,7 @@ const SYMBOL_DATA_SCHEMA = {
                 payload: { 
                     type: 'object', 
                     additionalProperties: true, 
-                    description: "Key-value store for arbitrary data." 
+                    description: "Key-value store for the actual data being recorded. You MUST include the relevant facts or state in this object." 
                 }
             }
         },

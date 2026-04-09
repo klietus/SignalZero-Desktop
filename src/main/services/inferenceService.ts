@@ -669,7 +669,7 @@ export async function* sendMessageAndHandleTools(
     const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
     loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
 
-    if (ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
+    if (isEndingTurn && ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
       if (!traceSatisfied) {
         auditMessage += "⚠️ SYSTEM AUDIT FAILURE: YOU MUST TRACE THIS OPERATION! This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
         auditTriggered = true;
@@ -803,28 +803,47 @@ export async function* sendMessageAndHandleTools(
 }
 
 export const extractJson = (text: string): any => {
-  try { return JSON.parse(text); } catch (e) {
-    loggerService.catDebug(LogCategory.INFERENCE, "Direct JSON.parse failed, attempting extraction...", { text: text.slice(0, 100) });
-    const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (match) {
+  const tryParse = (str: string) => {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      // Heuristic: common error is unescaped double quotes inside strings.
+      // This is a very basic attempt to fix them for common cases like "He said "Hello""
+      // We look for patterns like: "key": "value "with" quotes"
+      let fixed = str
+        .replace(/":\s*"(.*?)"(\s*[,}\n])/g, (_match, p1, p2) => {
+          // If p1 contains unescaped quotes, escape them
+          const escaped = p1.replace(/(?<!\\)"/g, '\\"');
+          return `": "${escaped}"${p2}`;
+        });
       try {
-        return JSON.parse(match[1].trim());
+        return JSON.parse(fixed);
       } catch (inner) {
-        loggerService.catDebug(LogCategory.INFERENCE, "JSON block extraction failed", { error: inner });
+        return null;
       }
     }
-    const firstBrace = text.indexOf('{');
-    const lastBrace = text.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      try {
-        return JSON.parse(text.substring(firstBrace, lastBrace + 1));
-      } catch (final) {
-        loggerService.catDebug(LogCategory.INFERENCE, "Brace extraction failed", { error: final });
-      }
-    }
-    loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed", { text });
-    throw e;
+  };
+
+  const direct = tryParse(text);
+  if (direct) return direct;
+
+  loggerService.catDebug(LogCategory.INFERENCE, "Direct JSON.parse failed, attempting extraction...", { text: text.slice(0, 100) });
+
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (match) {
+    const extracted = tryParse(match[1].trim());
+    if (extracted) return extracted;
   }
+
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    const extracted = tryParse(text.substring(firstBrace, lastBrace + 1));
+    if (extracted) return extracted;
+  }
+
+  loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed", { text });
+  throw new Error("JSON extraction failed");
 };
 
 export const summarizeHistory = async (history: ContextMessage[], currentSummary?: string): Promise<string> => {
@@ -877,13 +896,13 @@ export const synthesizeWebResults = async (
 export const primeSymbolicContext = async (
   message: string,
   contextSessionId: string
-): Promise<{ 
-  symbols: SymbolDef[], 
-  webResults: any[], 
-  webBrief?: string, 
+): Promise<{
+  symbols: SymbolDef[],
+  webResults: any[],
+  webBrief?: string,
   monitoringDeltas?: any[],
-  traceNeeded: boolean, 
-  traceReason?: string 
+  traceNeeded: boolean,
+  traceReason?: string
 }> => {
   const foundSymbols: SymbolDef[] = [];
   const webResults: any[] = [];
@@ -976,7 +995,7 @@ export const primeSymbolicContext = async (
 
     // Normalize queries to strings (handling models that return objects with "query" property)
     const normalize = (q: any) => typeof q === 'string' ? q : (q.query || JSON.stringify(q));
-    
+
     const symbolicQueries = [...symbolicQueriesRaw.map(normalize), ...orthogonalQueriesRaw.map(normalize)];
     const webSearchQueries = webSearchQueriesRaw.map(normalize);
 

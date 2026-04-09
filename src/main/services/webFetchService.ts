@@ -69,7 +69,9 @@ export const webFetchService = {
         TEXT:
         ${text.slice(0, 10000)}
 
-        Return ONLY valid JSON matching this schema:
+        Return ONLY valid JSON matching this schema. 
+        CRITICAL: All double quotes INSIDE string values must be properly escaped with backslashes (e.g., "He said \\"Hello\\"").
+        
         {
             "actors": ["List of primary entities/people involved"],
             "verbatim_statements": ["Key direct quotes or specific declarations"],
