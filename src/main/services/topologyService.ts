@@ -508,15 +508,13 @@ class TopologyService {
 
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ 
-                    model: fastModel,
-                    generationConfig: { responseMimeType: "application/json" }
+                const model = client.getGenerativeModel({
+                    model: fastModel
                 });
                 const result = await model.generateContent(prompt);
                 const response = result.response.text();
                 resultJson = extractJson(response);
-            } else {
-                const client = await getClient();
+            } else {                const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
                     messages: [{ role: "user", content: prompt }],
@@ -571,7 +569,7 @@ class TopologyService {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel, generationConfig: { responseMimeType: "application/json" } });
+                const model = client.getGenerativeModel({ model: fastModel });
                 const result = await model.generateContent(prompt);
                 response = extractJson(result.response.text());
             } else {
@@ -579,8 +577,7 @@ class TopologyService {
                 const result = await client.chat.completions.create({
                     model: fastModel,
                     messages: [{ role: "user", content: prompt }],
-                    max_tokens: 100,
-                    response_format: { type: "json_object" }
+                    max_tokens: 100
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }

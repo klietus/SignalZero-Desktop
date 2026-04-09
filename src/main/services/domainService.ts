@@ -325,10 +325,11 @@ export const domainService = {
                 const client = await getGeminiClient();
                 const model = client.getGenerativeModel({ 
                     model: fastModel, 
-                    generationConfig: { responseMimeType: "application/json", maxOutputTokens: 1000 } 
+                    generationConfig: { maxOutputTokens: 1000 } 
                 });
                 const result = await model.generateContent(prompt);
-                response = extractJson(result.response.text());
+                const text = result.response.text();
+                response = extractJson(text);
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({ 

@@ -277,15 +277,14 @@ class MonitoringService {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel, generationConfig: { responseMimeType: "application/json" } });
+                const model = client.getGenerativeModel({ model: fastModel });
                 const result = await model.generateContent(prompt);
                 response = extractJson(result.response.text());
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    response_format: settings.provider === 'local' ? undefined : { type: "json_object" }
+                    messages: [{ role: "user", content: prompt }]
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }
@@ -347,15 +346,14 @@ class MonitoringService {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel, generationConfig: { responseMimeType: "application/json" } });
+                const model = client.getGenerativeModel({ model: fastModel });
                 const result = await model.generateContent(prompt);
                 response = extractJson(result.response.text());
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    response_format: settings.provider === 'local' ? undefined : { type: "json_object" }
+                    messages: [{ role: "user", content: prompt }]
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }
@@ -366,15 +364,16 @@ class MonitoringService {
         }
     }
 
-    private async recordDelta(sourceId: string, period: MonitoringPeriod, content: any) {
+    private async recordDelta(sourceId: string, period: MonitoringPeriod, content: any, customTimestamp?: string) {
         const finalContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+        const timestamp = customTimestamp || new Date().toISOString();
 
         const delta: MonitoringDelta = {
             id: `delta-${randomUUID()}`,
             sourceId,
             period,
             content: finalContent,
-            timestamp: new Date().toISOString()
+            timestamp
         };
 
         // Persist to SQLite
@@ -386,47 +385,116 @@ class MonitoringService {
         // Index in LanceDB
         await lancedbService.indexDeltaBatch([delta]);
         
-        loggerService.catInfo(LogCategory.MONITORING, `Recorded new ${period} delta for ${sourceId}`);
+        loggerService.catInfo(LogCategory.MONITORING, `Recorded new ${period} delta for ${sourceId} at ${timestamp}`);
+    }
+
+    /**
+     * Ensures a rollup exists for the given period and time range.
+     * If not found, it recursively rolls up smaller periods to generate it.
+     * If found but "stale" (new sub-data available), it re-synthesizes.
+     */
+    async ensureRollup(sourceId: string, period: MonitoringPeriod, startDate: string, endDate: string): Promise<MonitoringDelta[]> {
+        // 1. Check for existing
+        const existing = sqliteService.all(
+            `SELECT * FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC`,
+            [sourceId, period, startDate, endDate]
+        );
+
+        const periodOrder: MonitoringPeriod[] = ['hour', 'day', 'week', 'month', 'year'];
+        const currentIdx = periodOrder.indexOf(period);
+        const prevPeriod = periodOrder[currentIdx - 1];
+
+        if (existing.length > 0) {
+            // Check for staleness: Are there newer sub-deltas than this rollup?
+            if (period !== 'hour') {
+                const latestRollupTime = existing[0].timestamp;
+                const newerSubData = sqliteService.get(
+                    `SELECT id FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp > ? AND timestamp <= ? LIMIT 1`,
+                    [sourceId, prevPeriod, latestRollupTime, endDate]
+                );
+
+                if (!newerSubData) {
+                    return existing; // Not stale
+                }
+                loggerService.catInfo(LogCategory.MONITORING, `Rollup ${period} for ${sourceId} is stale. Re-synthesizing...`);
+            } else {
+                return existing;
+            }
+        }
+
+        // 2. If base layer 'hour', we can't roll up
+        if (period === 'hour') return [];
+
+        loggerService.catInfo(LogCategory.MONITORING, `Dynamic rollup requested: ${period} for ${sourceId} from ${startDate} to ${endDate}. Synthesizing from ${prevPeriod}...`);
+
+        // Recursively ensure we have the previous period deltas
+        const subDeltas = await this.ensureRollup(sourceId, prevPeriod, startDate, endDate);
+        
+        if (subDeltas.length === 0) {
+            loggerService.catWarn(LogCategory.MONITORING, `Cannot synthesize ${period}: No ${prevPeriod} deltas found in range.`);
+            return [];
+        }
+
+        // Perform the synthesis
+        await this.performRollup(sourceId, prevPeriod, period, subDeltas, endDate, existing[0]?.id);
+
+        // Fetch and return
+        return sqliteService.all(
+            `SELECT * FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC`,
+            [sourceId, period, startDate, endDate]
+        );
     }
 
     private async checkRollups() {
         const periods: MonitoringPeriod[] = ['hour', 'day', 'week', 'month'];
-        const periodMap: Record<MonitoringPeriod, { next: MonitoringPeriod, count: number }> = {
-            'hour': { next: 'day', count: 24 },
-            'day': { next: 'week', count: 7 },
-            'week': { next: 'month', count: 4 },
-            'month': { next: 'year', count: 12 },
-            'year': { next: 'year', count: 0 } // Terminal
+        const periodMap: Record<MonitoringPeriod, { next: MonitoringPeriod, count: number, window: string }> = {
+            'hour': { next: 'day', count: 24, window: '1 day' },
+            'day': { next: 'week', count: 7, window: '7 days' },
+            'week': { next: 'month', count: 4, window: '30 days' },
+            'month': { next: 'year', count: 12, window: '365 days' },
+            'year': { next: 'year', count: 0, window: '' } 
         };
 
         for (const p of periods) {
             const rollupInfo = periodMap[p];
-            // Find sources that have enough deltas for the next period rollup
             const sources = sqliteService.all(`SELECT DISTINCT source_id FROM monitoring_deltas WHERE period = ?`, [p]);
             
             for (const { source_id } of sources) {
+                // Get all deltas in the current window for this period
                 const deltas = sqliteService.all(
-                    `SELECT * FROM monitoring_deltas WHERE source_id = ? AND period = ? ORDER BY timestamp DESC LIMIT ?`,
-                    [source_id, p, rollupInfo.count]
+                    `SELECT * FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp > datetime('now', '-${rollupInfo.window}') ORDER BY timestamp DESC`,
+                    [source_id, p]
                 );
 
-                if (deltas.length >= rollupInfo.count) {
-                    // Check if we already rolled up recently for this source/next-period
+                if (deltas.length > 0) {
+                    // Check for existing rollup in the same window
                     const existing = sqliteService.get(
-                        `SELECT id FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp > datetime('now', '-1 ${rollupInfo.next}')`,
+                        `SELECT id, timestamp FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp > datetime('now', '-${rollupInfo.window}')`,
                         [source_id, rollupInfo.next]
                     );
 
                     if (!existing) {
-                        await this.performRollup(source_id, p, rollupInfo.next, deltas);
+                        // Only auto-create if we have at least half the expected count to avoid jitter
+                        if (deltas.length >= (rollupInfo.count / 2)) {
+                            await this.performRollup(source_id, p, rollupInfo.next, deltas);
+                        }
+                    } else {
+                        // Update if stale
+                        const newerSubData = sqliteService.get(
+                            `SELECT id FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp > ? LIMIT 1`,
+                            [source_id, p, existing.timestamp]
+                        );
+                        if (newerSubData) {
+                            await this.performRollup(source_id, p, rollupInfo.next, deltas, new Date().toISOString(), existing.id);
+                        }
                     }
                 }
             }
         }
     }
 
-    private async performRollup(sourceId: string, fromPeriod: MonitoringPeriod, toPeriod: MonitoringPeriod, deltas: any[]) {
-        loggerService.catInfo(LogCategory.MONITORING, `Performing ${toPeriod} rollup for ${sourceId}`);
+    private async performRollup(sourceId: string, fromPeriod: MonitoringPeriod, toPeriod: MonitoringPeriod, deltas: any[], customTimestamp?: string, existingId?: string) {
+        loggerService.catInfo(LogCategory.MONITORING, `${existingId ? 'Updating' : 'Performing'} ${toPeriod} rollup for ${sourceId}`);
         
         const settings = await settingsService.getInferenceSettings();
         const fastModel = settings.fastModel;
@@ -458,7 +526,18 @@ class MonitoringService {
             }
 
             if (summary) {
-                await this.recordDelta(sourceId, toPeriod, summary);
+                if (existingId) {
+                    // Update existing
+                    sqliteService.run(
+                        `UPDATE monitoring_deltas SET content = ?, timestamp = ? WHERE id = ?`,
+                        [summary, customTimestamp || new Date().toISOString(), existingId]
+                    );
+                    // Re-index in LanceDB (LanceDB replace is handled by delete then add in our service)
+                    const delta = sqliteService.get(`SELECT * FROM monitoring_deltas WHERE id = ?`, [existingId]);
+                    if (delta) await lancedbService.indexDeltaBatch([delta]);
+                } else {
+                    await this.recordDelta(sourceId, toPeriod, summary, customTimestamp);
+                }
             }
         } catch (error) {
             loggerService.catError(LogCategory.MONITORING, "Rollup synthesis failed", { error });

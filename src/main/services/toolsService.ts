@@ -11,6 +11,7 @@ import { promisify } from 'util';
 import os from 'os';
 import { loggerService, LogCategory } from "./loggerService.js";
 import { settingsService } from "./settingsService.js";
+import { monitoringService } from "./monitoringService.js";
 
 import { webSearchService } from "./webSearchService.js";
 import { webFetchService } from "./webFetchService.js";
@@ -289,6 +290,8 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
           query: { type: 'string', description: 'Semantic search query.' },
           sourceId: { type: 'string', description: 'Optional data source ID filter.' },
           period: { type: 'string', enum: ['hour', 'day', 'week', 'month', 'year'], description: 'Optional time period filter.' },
+          startDate: { type: 'string', description: 'Optional start date ISO string (e.g. 2026-04-01).' },
+          endDate: { type: 'string', description: 'Optional end date ISO string.' },
           limit: { type: 'integer', default: 5 }
         },
         required: ['query']
@@ -431,9 +434,16 @@ export const createToolExecutor = (contextSessionId?: string) => {
 
       case 'search_deltas': {
         try {
+          // If a specific period and date range is requested, ensure we have the rollup
+          if (args.sourceId && args.period && args.startDate && args.endDate) {
+            await monitoringService.ensureRollup(args.sourceId, args.period, args.startDate, args.endDate);
+          }
+
           const results = await lancedbService.searchDeltas(args.query, args.limit || 5, {
             sourceId: args.sourceId,
-            period: args.period
+            period: args.period,
+            startDate: args.startDate,
+            endDate: args.endDate
           });
           loggerService.catInfo(LogCategory.TOOL, `search_deltas: Found ${results.length} deltas.`, { 
             query: args.query,

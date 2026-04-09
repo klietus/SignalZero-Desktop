@@ -402,18 +402,22 @@ export const lancedbService = {
         }
     },
 
-    async searchDeltas(query: string, nResults: number = 5, filter?: { sourceId?: string, period?: string }): Promise<VectorSearchResult[]> {
+    async searchDeltas(query: string, nResults: number = 5, filter?: { sourceId?: string, period?: string, startDate?: string, endDate?: string }): Promise<VectorSearchResult[]> {
         try {
             const table = await getDeltasTable();
             if (!table) return [];
 
             const [queryVector] = await embedTexts([query]);
+            // We search by vector and sort by timestamp descending (most recent first)
+            // Note: sorting in LanceDB might be expensive if the table is huge, but for monitoring it should be fine.
             let searchBuilder = table.search(queryVector).limit(nResults);
 
             if (filter) {
                 const filterParts: string[] = [];
                 if (filter.sourceId) filterParts.push(`sourceId = '${filter.sourceId}'`);
                 if (filter.period) filterParts.push(`period = '${filter.period}'`);
+                if (filter.startDate) filterParts.push(`timestamp >= '${filter.startDate}'`);
+                if (filter.endDate) filterParts.push(`timestamp <= '${filter.endDate}'`);
                 
                 if (filterParts.length > 0) {
                     searchBuilder = searchBuilder.where(filterParts.join(' AND '));
@@ -421,6 +425,9 @@ export const lancedbService = {
             }
 
             const results = await searchBuilder.toArray();
+
+            // Sort results by timestamp descending after vector search
+            results.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
             return results.map((r: any) => ({
                 id: r.id,

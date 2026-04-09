@@ -1,8 +1,8 @@
 import OpenAI from "openai";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { domainService } from "./domainService.js";
 import { embedText } from "./embeddingService.js";
 import { settingsService } from "./settingsService.js";
+import { getGeminiClient, extractJson } from "./inferenceService.js";
 
 interface DomainDescriptor {
     id: string;
@@ -75,25 +75,23 @@ ROOT DOMAIN INVARIANTS: ${(rootDomain.invariants || []).join('; ') || 'None reco
 CLOSEST DOMAINS: ${closest.map(d => `- ${d.id}: ${d.invariants.join('; ')}`).join('\n')}
 Return JSON with field "invariants" (concise statements).`;
 
-        const { provider, model, apiKey } = await settingsService.getInferenceSettings();
-        let messageText = "{}";
+        const { provider, model } = await settingsService.getInferenceSettings();
+        let parsed: any = {};
 
         if (provider === 'gemini') {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const genModel = genAI.getGenerativeModel({ model, generationConfig: { responseMimeType: "application/json" } });
+            const genAI = await getGeminiClient();
+            const genModel = genAI.getGenerativeModel({ model });
             const result = await genModel.generateContent(prompt);
-            messageText = result.response.text();
+            parsed = extractJson(result.response.text());
         } else {
             const client = await getClient();
-            const response = await client.chat.completions.create({
+            const result = await client.chat.completions.create({
                 model,
-                messages: [{ role: 'user', content: prompt }],
-                response_format: { type: 'json_object' }
+                messages: [{ role: 'user', content: prompt }]
             });
-            messageText = response.choices[0]?.message?.content || '{}';
+            parsed = extractJson(result.choices[0]?.message?.content || "{}");
         }
 
-        const parsed = JSON.parse(messageText);
         return {
             invariants: (parsed.invariants || []) as string[],
             reasoning: parsed.reasoning,
