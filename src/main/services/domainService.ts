@@ -448,7 +448,22 @@ export const domainService = {
     await this.addSymbol(synthesized.symbol_domain, synthesized);
 
     // 4. Update all global links pointing to redundant to point to canonical
-    sqliteService.run(`UPDATE symbol_links SET target_id = ? WHERE target_id = ?`, [canonicalId, redundantId]);
+    // We use a pattern that handles potential duplicates (primary key collisions)
+    sqliteService.transaction(() => {
+        // Move incoming links: if a link from S -> Redundant already exists as S -> Canonical, the insert will ignore it
+        sqliteService.run(`
+            INSERT OR IGNORE INTO symbol_links (source_id, target_id, link_type)
+            SELECT source_id, ? as target_id, link_type 
+            FROM symbol_links 
+            WHERE target_id = ?
+        `, [canonicalId, redundantId]);
+
+        // Now safe to delete all links pointing to redundant
+        sqliteService.run(`DELETE FROM symbol_links WHERE target_id = ?`, [redundantId]);
+        
+        // Also clean up any outgoing links from the redundant symbol that were missed (they should be gone via deleteSymbol anyway)
+        sqliteService.run(`DELETE FROM symbol_links WHERE source_id = ?`, [redundantId]);
+    });
 
     // 5. Delete redundant symbol
     await this.deleteSymbol(redundant.symbol_domain, redundantId);

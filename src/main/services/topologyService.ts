@@ -394,27 +394,26 @@ class TopologyService {
 
     private async cleanupDeadLinks(symbols: SymbolDef[]) {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting dead link cleanup");
-        const symbolIds = new Set(symbols.map(s => s.id));
-        let deadLinksCount = 0;
+        
+        try {
+            // 1. Delete links where target doesn't exist
+            const resultTarget = sqliteService.run(`
+                DELETE FROM symbol_links 
+                WHERE target_id NOT IN (SELECT id FROM symbols)
+            `);
 
-        for (const s of symbols) {
-            if (!s.linked_patterns) continue;
-            
-            const initialCount = s.linked_patterns.length;
-            const validLinks = s.linked_patterns.filter(link => {
-                const targetId = typeof link === 'string' ? link : link.id;
-                return symbolIds.has(targetId);
-            });
-            
-            if (validLinks.length < initialCount) {
-                deadLinksCount += (initialCount - validLinks.length);
-                s.linked_patterns = validLinks;
-                await domainService.addSymbol(s.symbol_domain, s);
+            // 2. Delete links where source doesn't exist
+            const resultSource = sqliteService.run(`
+                DELETE FROM symbol_links 
+                WHERE source_id NOT IN (SELECT id FROM symbols)
+            `);
+
+            const totalDeleted = (resultTarget.changes || 0) + (resultSource.changes || 0);
+            if (totalDeleted > 0) {
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Cleaned up ${totalDeleted} dead links globally`);
             }
-        }
-
-        if (deadLinksCount > 0) {
-            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Cleaned up ${deadLinksCount} dead links`);
+        } catch (error) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Global dead link cleanup failed", { error });
         }
     }
 
