@@ -349,7 +349,7 @@ export class ContextWindowService {
 
             // Query 2: Recursive Core Injection
             const coreSet = new Map<string, SymbolDef>();
-            await this.recursiveSymbolLoad('SELF-RECURSIVE-CORE', 2, coreSet);
+            await this.recursiveSymbolLoad('SELF-RECURSIVE-CORE', 1, coreSet);
 
             const coreSymbols = Array.from(coreSet.values());
             // Inject with turnCount 4 to stabilize immediately
@@ -357,7 +357,7 @@ export class ContextWindowService {
 
             // Query 3: Root Domain
             const rootSet = new Map<string, SymbolDef>();
-            await this.recursiveSymbolLoad('ROOT-SYNTHETIC-CORE', 2, rootSet);
+            await this.recursiveSymbolLoad('ROOT-SYNTHETIC-CORE', 1, rootSet);
 
             const rootSymbols = Array.from(rootSet.values());
             symbolCacheService.batchUpsertSymbols(contextSessionId, rootSymbols, 4);
@@ -406,7 +406,7 @@ export class ContextWindowService {
             if (type !== 'agent') {
                 // Query 4: Recursive User Core Injection
                 const userSet = new Map<string, SymbolDef>();
-                await this.recursiveSymbolLoad('USER-RECURSIVE-CORE', 2, userSet);
+                await this.recursiveSymbolLoad('USER-RECURSIVE-CORE', 1, userSet);
 
                 const userSymbols = Array.from(userSet.values());
                 userCoreCount = userSymbols.length;
