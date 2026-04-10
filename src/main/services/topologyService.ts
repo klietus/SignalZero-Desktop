@@ -631,6 +631,18 @@ class TopologyService {
         if (candidates.length === 0) return "";
         if (candidates.length === 1) return candidates[0].id;
 
+        // --- CORE PRECEDENCE LOGIC ---
+        // If one of the candidates has "CORE" in its ID or name, it automatically wins.
+        const coreCandidates = candidates.filter(s => 
+            s.id.toUpperCase().includes('CORE') || 
+            s.name.toUpperCase().includes('CORE')
+        );
+
+        if (coreCandidates.length === 1) {
+            loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Automatic CORE precedence selected ${coreCandidates[0].id}`);
+            return coreCandidates[0].id;
+        }
+
         try {
             const settings = await settingsService.getInferenceSettings();
             const fastModel = settings.fastModel;
@@ -639,9 +651,10 @@ class TopologyService {
             const prompt = `You are a knowledge graph curator. Choose the most "Canonical" symbol identity from this group of redundant symbols.
             
             CRITERIA:
-            1. Most descriptive and permanent-sounding ID.
-            2. Most appropriate and specific domain (User > Root > State > others).
-            3. Latest "updated_at" timestamp if all else is equal.
+            1. CORE symbols (those with "CORE" in their ID or Name) ALWAYS take precedence.
+            2. Most descriptive and permanent-sounding ID.
+            3. Most appropriate and specific domain (User > Root > State > others).
+            4. Latest "updated_at" timestamp if all else is equal.
             
             CANDIDATES:
             ${candidates.map((s, i) => `${i + 1}. [${s.id}] in domain "${s.symbol_domain}" (Updated: ${s.updated_at}) Name: ${s.name}`).join('\n')}
@@ -864,10 +877,13 @@ class TopologyService {
             return 0;
         }
 
-        // Identify the "Mainland" (component containing user-recursive-core or largest)
-        let mainlandIdx = components.findIndex(c => c.includes('user-recursive-core'));
+        // 1. Identify the "Mainland"
+        // Priority: component with USER-RECURSIVE-CORE > largest component
+        let mainlandIdx = components.findIndex(c => c.includes('USER-RECURSIVE-CORE'));
         if (mainlandIdx === -1) {
-            // Find largest
+            mainlandIdx = components.findIndex(c => c.some(id => id.toUpperCase().includes('CORE')));
+        }
+        if (mainlandIdx === -1) {
             let maxLen = -1;
             for (let i = 0; i < components.length; i++) {
                 if (components[i].length > maxLen) {
@@ -881,20 +897,38 @@ class TopologyService {
         const islands = components.filter((_, i) => i !== mainlandIdx);
         let bridgedCount = 0;
 
+        // Sort islands so that those containing "CORE" or large clusters are processed first
+        islands.sort((a, b) => {
+            const aHasCore = a.some(id => id.toUpperCase().includes('CORE'));
+            const bHasCore = b.some(id => id.toUpperCase().includes('CORE'));
+            if (aHasCore && !bHasCore) return -1;
+            if (!aHasCore && bHasCore) return 1;
+            return b.length - a.length;
+        });
+
         loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Identified ${islands.length} isolated islands to bridge to mainland (size: ${mainlandIds.size})`);
 
         const idToSymbol = new Map(symbols.map(s => [s.id, s]));
 
-        for (const island of islands) {
-            // 1. Find the "Centroid" of the island (symbol with most links)
-            let centroidId = island[0];
-            let maxLinks = -1;
-            for (const id of island) {
-                const sym = idToSymbol.get(id);
-                const linkCount = sym?.linked_patterns?.length || 0;
-                if (linkCount > maxLinks) {
-                    maxLinks = linkCount;
-                    centroidId = id;
+        // To keep hygiene runs reasonably fast, we bridge up to 20 islands per run
+        const maxIslandsPerRun = 20;
+        const islandsToProcess = islands.slice(0, maxIslandsPerRun);
+
+        for (const island of islandsToProcess) {
+            // Find the best candidate from the island to bridge (the "Centroid")
+            // Priority: any symbol with CORE in the name
+            let centroidId = island.find(id => id.toUpperCase().includes('CORE')) || island[0];
+            
+            // If no CORE, find most connected
+            if (!centroidId.toUpperCase().includes('CORE')) {
+                let maxLinks = -1;
+                for (const id of island) {
+                    const sym = idToSymbol.get(id);
+                    const linkCount = sym?.linked_patterns?.length || 0;
+                    if (linkCount > maxLinks) {
+                        maxLinks = linkCount;
+                        centroidId = id;
+                    }
                 }
             }
 
@@ -903,30 +937,36 @@ class TopologyService {
 
             // 2. Vector search for docking points in the mainland
             try {
+                // Search against mainland symbols
                 const mainlandFilter = { id: Array.from(mainlandIds) };
-                const candidates = await domainService.search(`${centroid.name} ${centroid.role}`, 3, mainlandFilter);
+                const candidates = await domainService.search(`${centroid.name} ${centroid.role} ${centroid.macro}`, 5, mainlandFilter);
                 
                 if (candidates.length === 0) continue;
 
-                // 3. LLM Validation and docking
-                const dockingSym = await domainService.findById(candidates[0].id);
-                if (dockingSym) {
-                    const validation = await this.validateLink(centroid, dockingSym);
-                    if (validation.shouldLink) {
-                        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Bridging island centroid ${centroid.id} to mainland docking point ${dockingSym.id} via ${validation.linkType}`);
-                        
-                        centroid.linked_patterns = centroid.linked_patterns || [];
-                        centroid.linked_patterns.push({
-                            id: dockingSym.id,
-                            link_type: validation.linkType || 'relates_to'
-                        });
+                // 3. Try top 3 candidates for a bridge
+                for (const cand of candidates.slice(0, 3)) {
+                    const dockingSym = await domainService.findById(cand.id);
+                    if (dockingSym) {
+                        const validation = await this.validateLink(centroid, dockingSym);
+                        if (validation.shouldLink) {
+                            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Bridging island centroid ${centroid.id} to mainland docking point ${dockingSym.id} via ${validation.linkType}`);
+                            
+                            centroid.linked_patterns = centroid.linked_patterns || [];
+                            // Ensure we don't add duplicate
+                            if (!centroid.linked_patterns.some(l => l.id === dockingSym.id)) {
+                                centroid.linked_patterns.push({
+                                    id: dockingSym.id,
+                                    link_type: validation.linkType || 'relates_to'
+                                });
 
-                        // Saving centroid will also trigger automatic reciprocation back from the docking symbol
-                        await domainService.addSymbol(centroid.symbol_domain, centroid);
-                        bridgedCount++;
-
-                        // Add this island to mainlandIds to prevent double bridging if we run multiple passes
-                        island.forEach(id => mainlandIds.add(id));
+                                await domainService.addSymbol(centroid.symbol_domain, centroid);
+                                bridgedCount++;
+                                
+                                // Merge this island into mainland set immediately for next island logic
+                                island.forEach(id => mainlandIds.add(id));
+                                break; // Bridge found for this island
+                            }
+                        }
                     }
                 }
             } catch (err) {
