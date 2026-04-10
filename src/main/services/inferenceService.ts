@@ -65,15 +65,18 @@ export const getGeminiClient = async () => {
 const cleanGeminiSchema = (schema: any): any => {
   if (!schema || typeof schema !== 'object') return schema;
   if (Array.isArray(schema)) return schema.map(cleanGeminiSchema);
-  const { additionalProperties, ...rest } = schema;
-  const cleaned = { ...rest };
-  if (cleaned.properties) {
-    cleaned.properties = {};
-    for (const [key, val] of Object.entries(schema.properties)) {
-      cleaned.properties[key] = cleanGeminiSchema(val);
+
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === 'additionalProperties') continue;
+    if (key === 'oneOf' || key === 'anyOf' || key === 'allOf') {
+      cleaned[key] = (value as any[]).map(cleanGeminiSchema);
+    } else if (typeof value === 'object') {
+      cleaned[key] = cleanGeminiSchema(value);
+    } else {
+      cleaned[key] = value;
     }
   }
-  if (cleaned.items) cleaned.items = cleanGeminiSchema(cleaned.items);
   return cleaned;
 };
 
