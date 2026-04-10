@@ -1,5 +1,6 @@
 import { domainService, RECIPROCAL_MAP } from './domainService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
+import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { settingsService } from './settingsService.js';
 import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
@@ -115,7 +116,7 @@ class TopologyService {
 
             // --- STRATEGY: Dead Link Cleanup ---
             if (specificStrategy === 'deadLinkCleanup' || (specificStrategy === undefined && hygiene.deadLinkCleanup)) {
-                await this.cleanupDeadLinks(symbols);
+                await this.cleanupDeadLinks();
             }
 
             // --- STRATEGY: Semantic (Vector) Analysis ---
@@ -392,7 +393,7 @@ class TopologyService {
         return { newLinks: newLinksCount, redundantCount };
     }
 
-    private async cleanupDeadLinks(symbols: SymbolDef[]) {
+    private async cleanupDeadLinks() {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting dead link cleanup");
         
         try {
