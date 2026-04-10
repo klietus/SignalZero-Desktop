@@ -204,11 +204,11 @@ export const lancedbService = {
             if (metadataFilter && Object.keys(metadataFilter).length > 0) {
                 const filterParts: string[] = [];
                 for (const [key, value] of Object.entries(metadataFilter)) {
-                    if (key === 'metadata_filter') continue;
+                    if (key === 'metadata_filter' || key === 'undefined' || value === undefined) continue;
 
                     if (Array.isArray(value)) {
-                        const vals = value.map(v => typeof v === 'string' ? `'${v}'` : v).join(', ');
-                        filterParts.push(`${key} IN (${vals})`);
+                        const vals = value.filter(v => v !== undefined).map(v => typeof v === 'string' ? `'${v}'` : v).join(', ');
+                        if (vals) filterParts.push(`${key} IN (${vals})`);
                     } else if (typeof value === 'string') {
                         filterParts.push(`${key} = '${value}'`);
                     } else if (value !== null && typeof value === 'object') {
@@ -419,8 +419,11 @@ export const lancedbService = {
                 if (filter.startDate) filterParts.push(`timestamp >= '${filter.startDate}'`);
                 if (filter.endDate) filterParts.push(`timestamp <= '${filter.endDate}'`);
                 
-                if (filterParts.length > 0) {
-                    searchBuilder = searchBuilder.where(filterParts.join(' AND '));
+                // Clean up any undefined parts that might have slipped through
+                const cleanParts = filterParts.filter(p => !p.includes("'undefined'") && !p.includes("= undefined"));
+
+                if (cleanParts.length > 0) {
+                    searchBuilder = searchBuilder.where(cleanParts.join(' AND '));
                 }
             }
 
