@@ -18,6 +18,7 @@ export interface TopologyStats {
     linksRefactored: number;
     reflexiveLinksCreated: number;
     islandsBridged: number;
+    domainLatticeLinksCreated: number;
 }
 
 interface PredictedLink {
@@ -95,6 +96,7 @@ class TopologyService {
             let linksRefactored = 0;
             let reflexiveLinksCreated = 0;
             let islandsBridged = 0;
+            let domainLatticeLinksCreated = 0;
 
             // Relational analysis requires at least 2 symbols
             const canRunRelational = symbols.length >= 2;
@@ -112,6 +114,11 @@ class TopologyService {
             // --- STRATEGY: Bridge Isolated Subgraphs ---
             if (canRunRelational && (specificStrategy === 'bridge' || specificStrategy === undefined)) {
                 islandsBridged = await this.bridgeIsolatedSubgraphs(symbols);
+            }
+
+            // --- STRATEGY: Domain Lattice Refactoring ---
+            if (canRunRelational && (specificStrategy === 'domainRefactor' || specificStrategy === undefined)) {
+                domainLatticeLinksCreated = await this.refactorDomainLattices(symbols);
             }
 
             // --- STRATEGY: Dead Link Cleanup ---
@@ -162,7 +169,8 @@ class TopologyService {
                 redundantSymbolsFound,
                 linksRefactored,
                 reflexiveLinksCreated,
-                islandsBridged
+                islandsBridged,
+                domainLatticeLinksCreated
             };
 
             this.lastRunTimestamp = currentRunTimestamp;
@@ -845,6 +853,106 @@ class TopologyService {
         }
 
         return createdCount;
+    }
+
+    private async refactorDomainLattices(symbols: SymbolDef[]): Promise<number> {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting domain lattice refactoring");
+        let linksCreated = 0;
+
+        // 1. Group symbols by domain
+        const domainMap = new Map<string, { patterns: SymbolDef[], lattices: SymbolDef[] }>();
+        const idToSymbol = new Map(symbols.map(s => [s.id, s]));
+
+        for (const s of symbols) {
+            const domain = s.symbol_domain;
+            if (!domainMap.has(domain)) {
+                domainMap.set(domain, { patterns: [], lattices: [] });
+            }
+            if (s.kind === 'lattice') {
+                domainMap.get(domain)!.lattices.push(s);
+            } else if (s.kind === 'pattern') {
+                domainMap.get(domain)!.patterns.push(s);
+            }
+        }
+
+        // 2. For each domain, find patterns with no connection to a lattice IN THAT DOMAIN
+        for (const [domainId, { patterns, lattices }] of domainMap.entries()) {
+            if (lattices.length === 0 || patterns.length === 0) continue;
+
+            for (const pattern of patterns) {
+                const linkedLatticeIds = (pattern.linked_patterns || [])
+                    .filter(l => idToSymbol.get(l.id)?.kind === 'lattice' && idToSymbol.get(l.id)?.symbol_domain === domainId)
+                    .map(l => l.id);
+
+                if (linkedLatticeIds.length === 0) {
+                    // This pattern is unanchored in its domain!
+                    loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Pattern ${pattern.id} is unanchored in domain ${domainId}. Attempting reconciliation...`);
+
+                    try {
+                        const settings = await settingsService.getInferenceSettings();
+                        const fastModel = settings.fastModel;
+                        if (!fastModel) continue;
+
+                        const prompt = `You are a knowledge graph architect. A symbolic pattern is currently "unanchored" in its domain because it is not linked to any local Lattices.
+                        
+                        PATTERN TO DOCK:
+                        Name: ${pattern.name}
+                        Role: ${pattern.role}
+                        Macro: ${pattern.macro}
+                        
+                        AVAILABLE LATTICES IN DOMAIN "${domainId}":
+                        ${lattices.map((l, i) => `${i + 1}. [${l.id}] ${l.name}: ${l.role}`).join('\n')}
+                        
+                        Should this pattern be part of one or more of these lattices? Output valid JSON only.
+                        Choose the most semantically appropriate lattices.
+                        
+                        {
+                          "shouldLink": true/false,
+                          "matches": [
+                            { "id": "lattice_id", "linkType": "chosen_link_type", "reason": "why" }
+                          ]
+                        }`;
+
+                        let response: any = {};
+                        if (settings.provider === 'gemini') {
+                            const client = await getGeminiClient();
+                            const model = client.getGenerativeModel({ model: fastModel });
+                            const result = await model.generateContent(prompt);
+                            response = extractJson(result.response.text());
+                        } else {
+                            const client = await getClient();
+                            const result = await client.chat.completions.create({
+                                model: fastModel,
+                                messages: [{ role: "user", content: prompt }]
+                            });
+                            response = extractJson(result.choices[0]?.message?.content || "{}");
+                        }
+
+                        if (response.shouldLink && Array.isArray(response.matches)) {
+                            for (const match of response.matches) {
+                                if (lattices.some(l => l.id === match.id)) {
+                                    loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Docking pattern ${pattern.id} into lattice ${match.id} via ${match.linkType}`);
+                                    
+                                    pattern.linked_patterns = pattern.linked_patterns || [];
+                                    if (!pattern.linked_patterns.some(l => l.id === match.id)) {
+                                        pattern.linked_patterns.push({
+                                            id: match.id,
+                                            link_type: match.linkType || 'part_of'
+                                        });
+                                        await domainService.addSymbol(pattern.symbol_domain, pattern);
+                                        linksCreated++;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed domain refactor for pattern ${pattern.id}`, { error: err });
+                    }
+                }
+            }
+        }
+
+        return linksCreated;
     }
 
     private findConnectedComponents(symbols: SymbolDef[]): string[][] {
