@@ -448,14 +448,28 @@ class TopologyService {
                 eventBusService.emitKernelEvent(KernelEventType.ORPHAN_DETECTED, { symbolId: orphan.id, domainId: orphan.symbol_domain });
                 
                 // --- Semantic Healing for Orphans ---
-                const searchQuery = `${orphan.name} ${orphan.role}`;
+                // NEW: Prioritize search within the same domain (likely connection points)
+                const searchQuery = `${orphan.name} ${orphan.role} domain:${orphan.symbol_domain}`;
                 try {
-                    const candidates = await domainService.search(searchQuery, 5);
+                    // Search same domain first
+                    const domainCandidates = await domainService.search(searchQuery, 5, { symbol_domain: orphan.symbol_domain });
+                    // Broad search second
+                    const broadCandidates = await domainService.search(searchQuery, 5);
+                    
+                    const allCandidates = [...domainCandidates, ...broadCandidates];
+                    const uniqueIds = new Set<string>();
+                    const candidates: any[] = [];
+                    
+                    for (const c of allCandidates) {
+                        if (c.id !== orphan.id && !uniqueIds.has(c.id)) {
+                            uniqueIds.add(c.id);
+                            candidates.push(c);
+                        }
+                    }
 
-                    const validCandidates = candidates.filter(c => c.id !== orphan.id);
                     const predictedLinks: PredictedLink[] = [];
 
-                    for (const cand of validCandidates) {
+                    for (const cand of candidates) {
                         const candSym = await domainService.findById(cand.id);
                         if (!candSym) continue;
 
@@ -938,13 +952,17 @@ class TopologyService {
             // 2. Vector search for docking points in the mainland
             try {
                 // Search against mainland symbols
-                const mainlandFilter = { id: Array.from(mainlandIds) };
-                const candidates = await domainService.search(`${centroid.name} ${centroid.role} ${centroid.macro}`, 5, mainlandFilter);
+                // NEW: Include all mainland symbols OR any symbol from the centroid's domain that is in the mainland
+                const mainlandFilter: any = { 
+                    id: Array.from(mainlandIds)
+                };
+                
+                const candidates = await domainService.search(`${centroid.name} ${centroid.role} domain:${centroid.symbol_domain} ${centroid.macro}`, 8, mainlandFilter);
                 
                 if (candidates.length === 0) continue;
 
-                // 3. Try top 3 candidates for a bridge
-                for (const cand of candidates.slice(0, 3)) {
+                // 3. Try top 5 candidates for a bridge (expanded from 3)
+                for (const cand of candidates.slice(0, 5)) {
                     const dockingSym = await domainService.findById(cand.id);
                     if (dockingSym) {
                         const validation = await this.validateLink(centroid, dockingSym);
