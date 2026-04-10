@@ -507,6 +507,7 @@ class TopologyService {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting link promotion analysis");
         const idToSymbol = new Map<string, SymbolDef>();
         symbols.forEach(s => idToSymbol.set(s.id, s));
+        const canonicalTypes = new Set(Object.keys(RECIPROCAL_MAP));
 
         for (const s of symbols) {
             if (!s.linked_patterns) continue;
@@ -517,10 +518,15 @@ class TopologyService {
                     const target = idToSymbol.get(link.id);
                     if (target) {
                         const validation = await this.validateLink(s, target);
+                        // Only promote if the model suggested a type AND that type is in our canonical taxonomy
                         if (validation.shouldLink && validation.linkType && validation.linkType !== 'relates_to') {
-                            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting link ${s.id} -> ${target.id} to ${validation.linkType}`);
-                            link.link_type = validation.linkType;
-                            updated = true;
+                            if (canonicalTypes.has(validation.linkType)) {
+                                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting link ${s.id} -> ${target.id} to ${validation.linkType}`);
+                                link.link_type = validation.linkType;
+                                updated = true;
+                            } else {
+                                loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Link promotion rejected non-canonical type: ${validation.linkType}`);
+                            }
                         }
                     }
                 }
