@@ -143,10 +143,20 @@ class TopologyService {
                 await this.promoteRelatesToLinks(symbols);
             }
 
+            // 4. Recalculate final stats (post-cleanup)
+            const finalLinkTypes = new Set<string>();
+            let finalLinkCount = 0;
+            symbols.forEach(s => {
+                (s.linked_patterns || []).forEach(l => {
+                    finalLinkTypes.add(l.link_type || 'relates_to');
+                    finalLinkCount++;
+                });
+            });
+
             const stats: TopologyStats = {
                 symbolCount: symbols.length,
-                linkCount,
-                linkTypes: Array.from(linkTypes), 
+                linkCount: finalLinkCount,
+                linkTypes: Array.from(finalLinkTypes), 
                 reconstructionError: 0,
                 newLinksPredicted,
                 redundantSymbolsFound,
@@ -523,30 +533,52 @@ class TopologyService {
             Activation Conditions: ${JSON.stringify(s2.activation_conditions || [])}
             
             Should these symbols be linked? Output valid JSON only.
-            If "shouldLink" is true, you MUST choose the most appropriate "linkType" from this list of reciprocal pairs:
-            - relates_to / relates_to
-            - depends_on / required_by
-            - part_of / contains
-            - instance_of / exemplifies
-            - informs / informed_by
-            - constrained_by / limits
-            - triggers / triggered_by
-            - negates / negated_by
-            - evolved_from / evolved_into
-            - implements / implemented_by
-            - extends / extended_by
-            - synthesized_from / synthesis_of
-            - derived_from / source_of
-            - feeds_into / receives_data_from
-            - orchestrates / orchestrated_by
-            - monitors / monitored_by
-            - validates / validated_by
-            - enables / enabled_by
-            - executes / executed_by
-            - grounds_in / reality_for
-            - documents / documented_by
-            - contrasts_with / contrasts_with
-            - references / referenced_by
+            
+            If "shouldLink" is true, you MUST choose the ONE most appropriate "linkType" from this list:
+            - relates_to
+            - depends_on (reciprocal: required_by)
+            - required_by (reciprocal: depends_on)
+            - part_of (reciprocal: contains)
+            - contains (reciprocal: part_of)
+            - instance_of (reciprocal: exemplifies)
+            - exemplifies (reciprocal: instance_of)
+            - informs (reciprocal: informed_by)
+            - informed_by (reciprocal: informs)
+            - constrained_by (reciprocal: limits)
+            - limits (reciprocal: constrained_by)
+            - triggers (reciprocal: triggered_by)
+            - triggered_by (reciprocal: triggers)
+            - negates (reciprocal: negated_by)
+            - negated_by (reciprocal: negates)
+            - evolved_from (reciprocal: evolved_into)
+            - evolved_into (reciprocal: evolved_from)
+            - implements (reciprocal: implemented_by)
+            - implemented_by (reciprocal: implements)
+            - extends (reciprocal: extended_by)
+            - extended_by (reciprocal: extends)
+            - synthesized_from (reciprocal: synthesis_of)
+            - synthesis_of (reciprocal: synthesized_from)
+            - derived_from (reciprocal: source_of)
+            - source_of (reciprocal: derived_from)
+            - feeds_into (reciprocal: receives_data_from)
+            - receives_data_from (reciprocal: feeds_into)
+            - orchestrates (reciprocal: orchestrated_by)
+            - orchestrated_by (reciprocal: orchestrates)
+            - monitors (reciprocal: monitored_by)
+            - monitored_by (reciprocal: monitors)
+            - validates (reciprocal: validated_by)
+            - validated_by (reciprocal: validates)
+            - enables (reciprocal: enabled_by)
+            - enabled_by (reciprocal: enables)
+            - executes (reciprocal: executed_by)
+            - executed_by (reciprocal: executes)
+            - grounds_in (reciprocal: reality_for)
+            - reality_for (reciprocal: grounds_in)
+            - documents (reciprocal: documented_by)
+            - documented_by (reciprocal: documents)
+            - contrasts_with (symmetric)
+            - references (reciprocal: referenced_by)
+            - referenced_by (reciprocal: references)
 
             {
               "shouldLink": true/false,
@@ -688,7 +720,27 @@ class TopologyService {
 
             let updated = false;
             for (const link of s.linked_patterns) {
+                if (!link.link_type) {
+                    link.link_type = 'relates_to';
+                    updated = true;
+                    refactoredCount++;
+                    continue;
+                }
+
                 if (!canonicalTypes.has(link.link_type)) {
+                    // Smart refactor: Check if it's a composite string from the prompt (e.g. "orchestrates / orchestrated_by")
+                    if (link.link_type.includes('/')) {
+                        const parts = link.link_type.split('/').map(p => p.trim());
+                        const validPart = parts.find(p => canonicalTypes.has(p));
+                        if (validPart) {
+                            loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Refactoring composite link type "${link.link_type}" -> "${validPart}"`);
+                            link.link_type = validPart;
+                            updated = true;
+                            refactoredCount++;
+                            continue;
+                        }
+                    }
+
                     loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Refactoring non-canonical link type "${link.link_type}" to "relates_to" for symbol ${s.id}`);
                     link.link_type = 'relates_to';
                     updated = true;
