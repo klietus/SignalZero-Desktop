@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Globe, Clock, Activity, X } from 'lucide-react';
+import { Globe, Clock, Activity, X, RotateCcw, Loader2 } from 'lucide-react';
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 interface WorldMonitoringPanelProps {
@@ -12,6 +12,7 @@ export const WorldMonitoringPanel: React.FC<WorldMonitoringPanelProps> = ({ widt
     const [latestDeltas, setLatestDeltas] = useState<Record<string, any>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [selectedDelta, setSelectedDelta] = useState<any>(null);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -31,6 +32,27 @@ export const WorldMonitoringPanel: React.FC<WorldMonitoringPanelProps> = ({ widt
             console.error("Failed to fetch monitoring data", error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleRegenerate = async () => {
+        if (!selectedDelta || isRegenerating) return;
+        setIsRegenerating(true);
+        try {
+            const updated = await window.api.regenerateDelta(selectedDelta.id);
+            if (updated) {
+                const sourceName = selectedDelta.sourceName;
+                const newDelta = { ...updated, sourceName };
+                setSelectedDelta(newDelta);
+                setLatestDeltas(prev => ({
+                    ...prev,
+                    [updated.source_id]: updated
+                }));
+            }
+        } catch (error) {
+            console.error("Failed to regenerate delta", error);
+        } finally {
+            setIsRegenerating(false);
         }
     };
 
@@ -126,11 +148,50 @@ export const WorldMonitoringPanel: React.FC<WorldMonitoringPanelProps> = ({ widt
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-8 bg-gray-900/50">
-                            <div className="text-xl leading-relaxed font-sans text-gray-200 whitespace-pre-wrap tracking-wide">
-                                {selectedDelta.content}
-                            </div>
+                            {(() => {
+                                const meta = typeof selectedDelta.metadata === 'string' ? JSON.parse(selectedDelta.metadata) : (selectedDelta.metadata || {});
+                                return (
+                                    <>
+                                        {meta.imageUrl && (
+                                            <div className="mb-6 rounded-2xl overflow-hidden border border-gray-800 shadow-xl aspect-video bg-black/40 relative group">
+                                                <img 
+                                                    src={meta.imageUrl} 
+                                                    alt="Monitoring Visual" 
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                                    <p className="text-[10px] text-gray-300 font-mono tracking-widest uppercase">Delta_Visual_Verification</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="text-xl leading-relaxed font-sans text-gray-200 whitespace-pre-wrap tracking-wide mb-6">
+                                            {selectedDelta.content}
+                                        </div>
+                                        {meta.articleUrl && (
+                                            <a 
+                                                href={meta.articleUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-bold transition-all shadow-lg hover:shadow-indigo-500/20 active:scale-95 group"
+                                            >
+                                                View Full Source
+                                                <Globe size={16} className="group-hover:rotate-12 transition-transform" />
+                                            </a>
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
-                        <div className="p-4 border-t border-gray-800 bg-gray-950/30 flex justify-end">
+                        <div className="p-4 border-t border-gray-800 bg-gray-950/30 flex justify-between items-center px-6">
+                            <button 
+                                onClick={handleRegenerate}
+                                disabled={isRegenerating}
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-emerald-500 rounded-full text-xs font-bold transition-all group"
+                                title="Regenerate this summary using AI"
+                            >
+                                {isRegenerating ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} className="group-hover:-rotate-180 transition-transform duration-500" />}
+                                {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+                            </button>
                             <button 
                                 onClick={() => setSelectedDelta(null)}
                                 className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-full text-sm font-bold transition-colors"

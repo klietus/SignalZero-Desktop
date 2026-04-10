@@ -225,7 +225,12 @@ export const settingsService = {
         autoLink: saved.triadic?.autoLink === true
       },
       deadLinkCleanup: saved.deadLinkCleanup === true,
-      orphanAnalysis: saved.orphanAnalysis === true
+      refactorLinks: saved.refactorLinks === true,
+      reflexiveLinks: saved.reflexiveLinks === true,
+      bridgeIslands: saved.bridgeIslands === true,
+      domainRefactor: saved.domainRefactor === true,
+      bridgeLifting: saved.bridgeLifting === true,
+      linkPromotion: saved.linkPromotion === true
     };
   },
 

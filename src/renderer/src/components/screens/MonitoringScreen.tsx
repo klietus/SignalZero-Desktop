@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Activity, Filter, 
     ChevronRight, ChevronDown, Database, 
-    RefreshCw, Globe
+    RefreshCw, Globe, RotateCcw, Loader2
 } from 'lucide-react';
 import { Header, HeaderProps } from '../Header';
 import { formatTimestamp } from '../utils/formatTimestamp';
@@ -18,8 +18,24 @@ export const MonitoringScreen: React.FC<MonitoringScreenProps> = ({ headerProps 
     const [filterPeriod, setFilterPeriod] = useState('');
     const [sources, setSources] = useState<any[]>([]);
     const [expandedDelta, setExpandedDelta] = useState<string | null>(null);
+    const [isRegenerating, setIsRegenerating] = useState<string | null>(null);
 
     const periods = ['hour', 'day', 'week', 'month', 'year'];
+
+    const handleRegenerate = async (deltaId: string) => {
+        if (isRegenerating) return;
+        setIsRegenerating(deltaId);
+        try {
+            const updated = await window.api.regenerateDelta(deltaId);
+            if (updated) {
+                setDeltas(prev => prev.map(d => d.id === deltaId ? updated : d));
+            }
+        } catch (error) {
+            console.error("Failed to regenerate delta", error);
+        } finally {
+            setIsRegenerating(null);
+        }
+    };
 
     const loadData = async () => {
         setIsLoading(true);
@@ -150,20 +166,65 @@ export const MonitoringScreen: React.FC<MonitoringScreenProps> = ({ headerProps 
                                     {expandedDelta === delta.id && (
                                         <div className="px-4 pb-6 pt-2 border-t border-gray-800/50 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="bg-gray-950/50 rounded-lg p-6 border border-gray-800/50">
-                                                <div className="prose prose-invert prose-sm max-w-none">
-                                                    <div className="whitespace-pre-wrap font-sans leading-relaxed text-gray-300">
-                                                        {delta.content}
-                                                    </div>
-                                                </div>
-                                                
-                                                {delta.metadata && (
-                                                    <div className="mt-6 pt-4 border-t border-gray-800/50">
-                                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 font-mono">Metadata</h4>
-                                                        <pre className="text-[10px] font-mono bg-black/30 p-3 rounded border border-gray-800 overflow-x-auto text-indigo-300/70">
-                                                            {JSON.stringify(typeof delta.metadata === 'string' ? JSON.parse(delta.metadata) : delta.metadata, null, 2)}
-                                                        </pre>
-                                                    </div>
-                                                )}
+                                                {(() => {
+                                                    const meta = typeof delta.metadata === 'string' ? JSON.parse(delta.metadata) : (delta.metadata || {});
+                                                    return (
+                                                        <>
+                                                            {meta.imageUrl && (
+                                                                <div className="mb-6 rounded-xl overflow-hidden border border-gray-800 shadow-xl max-h-80 bg-black/40 relative group">
+                                                                    <img 
+                                                                        src={meta.imageUrl} 
+                                                                        alt="Delta Visual" 
+                                                                        className="w-full h-full object-contain" 
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            
+                                                            <div className="prose prose-invert prose-sm max-w-none">
+                                                                <div className="whitespace-pre-wrap font-sans leading-relaxed text-gray-300 text-base">
+                                                                    {delta.content}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="mt-8 pt-4 border-t border-gray-800/50 flex flex-wrap items-center justify-between gap-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <button 
+                                                                        onClick={() => handleRegenerate(delta.id)}
+                                                                        disabled={!!isRegenerating}
+                                                                        className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-emerald-500 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all group"
+                                                                    >
+                                                                        {isRegenerating === delta.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} className="group-hover:-rotate-180 transition-transform duration-500" />}
+                                                                        {isRegenerating === delta.id ? 'Regenerating...' : 'Regenerate'}
+                                                                    </button>
+
+                                                                    {meta.articleUrl && (
+                                                                        <a 
+                                                                            href={meta.articleUrl} 
+                                                                            target="_blank" 
+                                                                            rel="noopener noreferrer"
+                                                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all"
+                                                                        >
+                                                                            <Globe size={14} /> View Source
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+
+                                                                {delta.metadata && (
+                                                                    <button 
+                                                                        className="text-[10px] font-mono text-gray-600 hover:text-gray-400 underline"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            console.log("Delta Metadata:", meta);
+                                                                            alert(JSON.stringify(meta, null, 2));
+                                                                        }}
+                                                                    >
+                                                                        View_Raw_Meta
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     )}

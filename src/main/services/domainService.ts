@@ -255,9 +255,24 @@ export const domainService = {
 
         // Second pass: links
         const deleteLinks = sqliteService.db().prepare(`DELETE FROM symbol_links WHERE source_id = ?`);
+        const deleteSpecificLink = sqliteService.db().prepare(`DELETE FROM symbol_links WHERE source_id = ? AND target_id = ?`);
+        const getOldLinks = sqliteService.db().prepare(`SELECT target_id FROM symbol_links WHERE source_id = ?`);
         const insertLink = sqliteService.db().prepare(`INSERT INTO symbol_links (source_id, target_id, link_type) VALUES (?, ?, ?)`);
 
         for (const symbol of symbols) {
+            // 1. Find links that are about to be removed to handle reciprocals
+            const oldLinks = getOldLinks.all(symbol.id) as { target_id: string }[];
+            const newTargetIds = new Set((symbol.linked_patterns || []).map(l => typeof l === 'string' ? l : l.id));
+
+            for (const old of oldLinks) {
+                if (!newTargetIds.has(old.target_id)) {
+                    // This link is being removed from the source. 
+                    // We must also remove the reciprocal link from the target back to this source.
+                    deleteSpecificLink.run(old.target_id, symbol.id);
+                }
+            }
+
+            // 2. Standard outgoing link refresh
             deleteLinks.run(symbol.id);
             if (symbol.linked_patterns && symbol.linked_patterns.length > 0) {
                 for (const link of symbol.linked_patterns) {
@@ -265,10 +280,10 @@ export const domainService = {
                     const linkType = typeof link === 'string' ? 'relates_to' : (link.link_type || 'relates_to');
                     
                     try {
-                        // 1. Insert original link
+                        // 3. Insert original link
                         insertLink.run(symbol.id, targetId, linkType);
 
-                        // 2. Automatic Reciprocation
+                        // 4. Automatic Reciprocation
                         const reciprocalType = RECIPROCAL_MAP[linkType] || 'relates_to';
                         insertLink.run(targetId, symbol.id, reciprocalType);
                     } catch (e) {}

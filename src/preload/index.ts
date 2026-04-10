@@ -51,6 +51,7 @@ const api = {
   isInitialized: () => ipcRenderer.invoke('system:is-initialized'),
   pollSource: (sourceId: string) => ipcRenderer.invoke('monitoring:poll-source', sourceId),
   listDeltas: (filter?: any) => ipcRenderer.invoke('monitoring:list-deltas', filter),
+  regenerateDelta: (deltaId: string) => ipcRenderer.invoke('monitoring:regenerate-delta', deltaId),
 
   // System
   getRecentLogs: (limit?: number) => ipcRenderer.invoke('system:get-recent-logs', limit),
@@ -64,6 +65,12 @@ const api = {
   deleteAgent: (id: string) => ipcRenderer.invoke('agent:delete', id),
   getAgentLogs: (agentId?: string, limit?: number, includeTraces?: boolean) => 
     ipcRenderer.invoke('agent:logs', agentId, limit, includeTraces),
+  
+  // Prompt Management
+  getSystemPrompt: () => ipcRenderer.invoke('system-prompt:get'),
+  setSystemPrompt: (prompt: string) => ipcRenderer.invoke('system-prompt:set', prompt),
+  getMcpPrompt: () => ipcRenderer.invoke('mcp-prompt:get'),
+  setMcpPrompt: (prompt: string) => ipcRenderer.invoke('mcp-prompt:set', prompt),
   
   // Events (Streaming)
   onInferenceChunk: (callback: (chunk: any) => void) => {

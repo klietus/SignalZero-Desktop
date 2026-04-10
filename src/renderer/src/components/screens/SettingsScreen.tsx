@@ -43,7 +43,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     semantic: { autoCompress: false, autoLink: false },
     triadic: { autoCompress: false, autoLink: false },
     deadLinkCleanup: false,
-    orphanAnalysis: false
+    refactorLinks: false,
+    reflexiveLinks: false,
+    bridgeIslands: false,
+    domainRefactor: false,
+    bridgeLifting: false,
+    linkPromotion: false
   });
 
   // UI Settings
@@ -116,7 +121,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         semantic: { autoCompress: false, autoLink: false },
         triadic: { autoCompress: false, autoLink: false },
         deadLinkCleanup: false,
-        orphanAnalysis: false
+        refactorLinks: false,
+        reflexiveLinks: false,
+        bridgeIslands: false,
+        domainRefactor: false,
+        bridgeLifting: false,
+        linkPromotion: false
     };
 
     setSerpApiKey(serpApi.apiKey || '');
@@ -745,110 +755,111 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           </div>
 
                           <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-8">
-                              {/* Analysis Strategies */}
-                              <div className="space-y-6">
-                                  {[
-                                      { id: 'semantic', label: 'Semantic Similarity (Vector)', desc: 'Uses embeddings to find symbols representing similar concepts.' },
-                                      { id: 'triadic', label: 'Triadic Similarity (Emoji)', desc: 'Matches symbols based on emoji triads and resonant patterns.' }
-                                  ].map(strat => (
-                                      <div key={strat.id} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 space-y-4">
-                                          <div className="flex items-center justify-between">
-                                              <div>
-                                                  <div className="font-bold text-sm text-gray-900 dark:text-gray-100">{strat.label}</div>
-                                                  <div className="text-xs text-gray-500">{strat.desc}</div>
+                              {/* Intelligence Automation (Top Group) */}
+                              <div className="space-y-4">
+                                  <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Intelligence Automation</div>
+                                  <div className="space-y-3">
+                                      {[
+                                          { id: 'semantic', label: 'Semantic Intelligence', desc: 'Vector-based similarity analysis.', icon: Cpu },
+                                          { id: 'triadic', label: 'Triadic Resonance', desc: 'Emoji-based structural analysis.', icon: Database }
+                                      ].map(strat => (
+                                          <div key={strat.id} className="p-4 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-lg border border-indigo-100/50 dark:border-indigo-900/20 flex items-center justify-between">
+                                              <div className="flex items-center gap-4">
+                                                  <div className="p-2 bg-white dark:bg-gray-800 rounded-lg text-indigo-600 shadow-sm">
+                                                      <strat.icon size={20} />
+                                                  </div>
+                                                  <div>
+                                                      <div className="font-bold text-sm text-indigo-700 dark:text-indigo-300">{strat.label}</div>
+                                                      <div className="text-xs text-gray-500">{strat.desc}</div>
+                                                  </div>
+                                              </div>
+
+                                              <div className="flex items-center gap-8">
+                                                  <div className="flex items-center gap-6">
+                                                      <label className="flex items-center gap-2 cursor-pointer group">
+                                                          <input
+                                                              type="checkbox"
+                                                              checked={(hygieneSettings as any)[strat.id].autoCompress}
+                                                              onChange={(e) => setHygieneSettings({
+                                                                  ...hygieneSettings,
+                                                                  [strat.id]: { ...(hygieneSettings as any)[strat.id], autoCompress: e.target.checked }
+                                                              })}
+                                                              className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                          />
+                                                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">Auto-Compress</span>
+                                                      </label>
+                                                      <label className="flex items-center gap-2 cursor-pointer group">
+                                                          <input
+                                                              type="checkbox"
+                                                              checked={(hygieneSettings as any)[strat.id].autoLink}
+                                                              onChange={(e) => setHygieneSettings({
+                                                                  ...hygieneSettings,
+                                                                  [strat.id]: { ...(hygieneSettings as any)[strat.id], autoLink: e.target.checked }
+                                                              })}
+                                                              className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                          />
+                                                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">Auto-Link</span>
+                                                      </label>
+                                                  </div>
+
+                                                  <button
+                                                      onClick={() => handleRunHygiene(strat.id)}
+                                                      disabled={isRunningHygiene !== null}
+                                                      className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-md text-xs font-bold transition-colors"
+                                                  >
+                                                      {isRunningHygiene === strat.id ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} fill="currentColor" />}
+                                                      Run Now
+                                                  </button>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                              </div>
+
+                              {/* Analysis & Healing Strategies (Consolidated List) */}
+                              <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+                                  <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Analysis & Healing Strategies</div>
+                                  <div className="space-y-4">
+                                      {[
+                                          { id: 'refactor', settingKey: 'refactorLinks', label: 'Canonical Link Refactoring', desc: 'Consolidates redundant link types into their canonical forms.' },
+                                          { id: 'reflexive', settingKey: 'reflexiveLinks', label: 'Reflexive Link Synthesis', desc: 'Automatically creates reciprocal relationships (e.g., A part_of B -> B contains A).' },
+                                          { id: 'bridge', settingKey: 'bridgeIslands', label: 'Island Bridging & Orphan Healing', desc: 'Analyzes disconnected subgraphs and orphaned symbols, suggesting bridge links to the mainland.' },
+                                          { id: 'domainRefactor', settingKey: 'domainRefactor', label: 'Domain Lattice Docking', desc: 'Anchors unlinked patterns into appropriate domain lattices.' },
+                                          { id: 'bridgeLifting', settingKey: 'bridgeLifting', label: 'Bridge Lifting', desc: 'Elevates cross-domain pattern links to the lattice level for structural clarity.' },
+                                          { id: 'promotion', settingKey: 'linkPromotion', label: 'Link Promotion', desc: 'Promotes high-confidence "relates_to" links to specific semantic types.' },
+                                          { id: 'deadLinkCleanup', settingKey: 'deadLinkCleanup', label: 'Dead Link Cleanup', desc: 'Removes links pointing to non-existent symbols.' }
+                                      ].map(strat => (
+                                          <div key={strat.id + (strat.settingKey || '')} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                                              <div className="flex-1">
+                                                  <div className="flex items-center gap-3">
+                                                      {strat.settingKey && (
+                                                          <label className="relative inline-flex items-center cursor-pointer">
+                                                              <input 
+                                                                  type="checkbox" 
+                                                                  className="sr-only peer" 
+                                                                  checked={(hygieneSettings as any)[strat.settingKey]} 
+                                                                  onChange={(e) => setHygieneSettings({...hygieneSettings, [strat.settingKey]: e.target.checked})}
+                                                              />
+                                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-500"></div>
+                                                          </label>
+                                                      )}
+                                                      {!strat.settingKey && <div className="w-9 h-5 flex items-center justify-center opacity-30"><Play size={14} /></div>}
+                                                      <div>
+                                                          <div className="font-bold text-sm text-gray-900 dark:text-gray-100">{strat.label}</div>
+                                                          <div className="text-xs text-gray-500">{strat.desc}</div>
+                                                      </div>
+                                                  </div>
                                               </div>
                                               <button
                                                   onClick={() => handleRunHygiene(strat.id)}
                                                   disabled={isRunningHygiene !== null}
-                                                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-md text-xs font-bold transition-colors"
+                                                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-200 rounded-md text-xs font-bold transition-colors ml-4"
                                               >
-                                                  {isRunningHygiene === strat.id ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
+                                                  {isRunningHygiene === strat.id ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} fill="currentColor" />}
                                                   Run Now
                                               </button>
                                           </div>
-                                          
-                                          <div className="flex gap-6 pt-2 border-t border-gray-100 dark:border-gray-800">
-                                              <label className="flex items-center gap-2 cursor-pointer group">
-                                                  <input
-                                                      type="checkbox"
-                                                      checked={(hygieneSettings as any)[strat.id].autoCompress}
-                                                      onChange={(e) => setHygieneSettings({
-                                                          ...hygieneSettings,
-                                                          [strat.id]: { ...(hygieneSettings as any)[strat.id], autoCompress: e.target.checked }
-                                                      })}
-                                                      className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                                                  />
-                                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">Auto-Compression</span>
-                                              </label>
-                                              <label className="flex items-center gap-2 cursor-pointer group">
-                                                  <input
-                                                      type="checkbox"
-                                                      checked={(hygieneSettings as any)[strat.id].autoLink}
-                                                      onChange={(e) => setHygieneSettings({
-                                                          ...hygieneSettings,
-                                                          [strat.id]: { ...(hygieneSettings as any)[strat.id], autoLink: e.target.checked }
-                                                      })}
-                                                      className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                                                  />
-                                                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">Auto-Linking</span>
-                                              </label>
-                                          </div>
-                                      </div>
-                                  ))}
-                              </div>
-
-                              {/* Cleanup Tasks */}
-                              <div className="pt-6 border-t border-gray-100 dark:border-gray-800 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 space-y-4">
-                                      <div className="flex items-center justify-between">
-                                          <div className="space-y-1">
-                                              <div className="font-bold text-xs uppercase tracking-wider text-gray-500">Dead Link Cleanup</div>
-                                              <div className="text-[10px] text-gray-400">Removes links pointing to non-existent symbols.</div>
-                                          </div>
-                                          <label className="relative inline-flex items-center cursor-pointer">
-                                              <input 
-                                                  type="checkbox" 
-                                                  checked={hygieneSettings.deadLinkCleanup}
-                                                  onChange={(e) => setHygieneSettings({...hygieneSettings, deadLinkCleanup: e.target.checked})}
-                                                  className="sr-only peer" 
-                                              />
-                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
-                                          </label>
-                                      </div>
-                                      <button
-                                          onClick={() => handleRunHygiene('deadLinkCleanup')}
-                                          disabled={isRunningHygiene !== null}
-                                          className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:bg-gray-400 text-gray-700 dark:text-gray-200 rounded-md text-[10px] font-bold transition-colors"
-                                      >
-                                          {isRunningHygiene === 'deadLinkCleanup' ? <RefreshCw size={10} className="animate-spin" /> : <RefreshCw size={10} />}
-                                          Run Cleanup Now
-                                      </button>
-                                  </div>
-
-                                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800 space-y-4">
-                                      <div className="flex items-center justify-between">
-                                          <div className="space-y-1">
-                                              <div className="font-bold text-xs uppercase tracking-wider text-gray-500">Orphan Analysis</div>
-                                              <div className="text-[10px] text-gray-400">Identifies symbols with no incoming or outgoing links.</div>
-                                          </div>
-                                          <label className="relative inline-flex items-center cursor-pointer">
-                                              <input 
-                                                  type="checkbox" 
-                                                  checked={hygieneSettings.orphanAnalysis}
-                                                  onChange={(e) => setHygieneSettings({...hygieneSettings, orphanAnalysis: e.target.checked})}
-                                                  className="sr-only peer" 
-                                              />
-                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
-                                          </label>
-                                      </div>
-                                      <button
-                                          onClick={() => handleRunHygiene('orphanAnalysis')}
-                                          disabled={isRunningHygiene !== null}
-                                          className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:bg-gray-400 text-gray-700 dark:text-gray-200 rounded-md text-[10px] font-bold transition-colors"
-                                      >
-                                          {isRunningHygiene === 'orphanAnalysis' ? <RefreshCw size={10} className="animate-spin" /> : <Search size={10} />}
-                                          Run Analysis Now
-                                      </button>
+                                      ))}
                                   </div>
                               </div>
                           </div>

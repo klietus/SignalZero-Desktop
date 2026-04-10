@@ -17,6 +17,9 @@ vi.mock('../services/settingsService.js', () => ({
     getInferenceSettings: vi.fn().mockResolvedValue({
       model: 'test-model',
       provider: 'openai',
+    }),
+    getMonitoringSettings: vi.fn().mockResolvedValue({
+      sources: []
     })
   }
 }));

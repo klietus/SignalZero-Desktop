@@ -55,14 +55,18 @@ describe('Inference Logic Parity', () => {
         expect(result).toBe("Line 1\n\nLine 2\n\nLine 3");
     });
 
-    it('should extract JSON from markdown or raw strings', () => {
+    it('should extract JSON from markdown or raw strings and handle trailing commas', () => {
         const raw = '{"key": "value"}';
         const markdown = 'Here is the data:\n```json\n{"key": "value"}\n```';
         const messy = 'Some text {"key": "value"} more text';
+        const trailing = '{"key": "value",}';
+        const nestedTrailing = '{"a": 1, "b": {"c": 2,},}';
 
         expect(extractJson(raw)).toEqual({ key: 'value' });
         expect(extractJson(markdown)).toEqual({ key: 'value' });
         expect(extractJson(messy)).toEqual({ key: 'value' });
+        expect(extractJson(trailing)).toEqual({ key: 'value' });
+        expect(extractJson(nestedTrailing)).toEqual({ a: 1, b: { c: 2 } });
     });
 });
 

@@ -51,6 +51,7 @@ declare global {
             isInitialized: () => Promise<boolean>;
             pollSource: (sourceId: string) => Promise<any>;
             listDeltas: (filter?: any) => Promise<any[]>;
+            regenerateDelta: (deltaId: string) => Promise<any>;
             getRecentLogs: (limit?: number) => Promise<any[]>;
             getTraces: (sessionId: string) => Promise<any[]>;
             showEmojiPicker: () => Promise<void>;
@@ -58,6 +59,10 @@ declare global {
             upsertAgent: (id: string, prompt: string, enabled: boolean, schedule?: string) => Promise<any>;
             deleteAgent: (id: string) => Promise<boolean>;
             getAgentLogs: (agentId?: string, limit?: number, includeTraces?: boolean) => Promise<any[]>;
+            getSystemPrompt: () => Promise<string>;
+            setSystemPrompt: (prompt: string) => Promise<void>;
+            getMcpPrompt: () => Promise<string>;
+            setMcpPrompt: (prompt: string) => Promise<void>;
             exportProject: (meta: any) => Promise<any>;
             importProject: () => Promise<any>;
             importSampleProject: () => Promise<any>;

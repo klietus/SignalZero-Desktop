@@ -365,6 +365,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
                 ),
                 hr: () => (
                     <hr className="my-2 border-gray-200 dark:border-gray-800" />
+                ),
+                img: ({src, alt}: any) => (
+                    <div className="my-4 block">
+                        <img 
+                            src={src} 
+                            alt={alt} 
+                            className="max-w-full h-auto rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow cursor-zoom-in"
+                            onClick={() => window.open(src, '_blank')}
+                        />
+                        {alt && <span className="block mt-1.5 text-[10px] text-gray-400 italic text-center">{alt}</span>}
+                    </div>
                 )
              }}
            >

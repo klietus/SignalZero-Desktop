@@ -197,6 +197,7 @@ const initDb = () => {
                 article_id TEXT NOT NULL,
                 summary TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT, -- JSON object
                 PRIMARY KEY (source_id, article_id)
             );
 

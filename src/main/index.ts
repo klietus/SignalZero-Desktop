@@ -475,6 +475,10 @@ ipcMain.handle('monitoring:list-deltas', async (_, filter?: { sourceId?: string,
   return sqliteService.all(sql, params);
 });
 
+ipcMain.handle('monitoring:regenerate-delta', async (_, deltaId) => {
+  return await monitoringService.regenerateDelta(deltaId);
+});
+
 ipcMain.handle('system:validate-mcp', async (_, endpoint, token) => {
   return await mcpClientService.validateConfig(endpoint, token);
 });

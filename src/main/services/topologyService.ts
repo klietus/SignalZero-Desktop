@@ -19,6 +19,7 @@ export interface TopologyStats {
     reflexiveLinksCreated: number;
     islandsBridged: number;
     domainLatticeLinksCreated: number;
+    crossDomainBridgesLifted: number;
 }
 
 interface PredictedLink {
@@ -36,7 +37,7 @@ class TopologyService {
     private mergeAttemptCache: Map<string, string> = new Map();
     private linkPromotionCache: Map<string, string> = new Map();
 
-    constructor() {}
+    constructor() { }
 
     private getGroupKey(symbols: SymbolDef[]): string {
         return symbols.map(s => s.id).sort().join(',');
@@ -62,13 +63,13 @@ class TopologyService {
             const hygiene = overrideSettings || await settingsService.getHygieneSettings();
             const currentRunTimestamp = new Date().toISOString();
 
-            loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting topology analysis", { 
-                strategy: specificStrategy || 'full', 
+            loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting topology analysis", {
+                strategy: specificStrategy || 'full',
                 hygiene,
                 isOverride: !!overrideSettings,
                 lastRun: this.lastRunTimestamp
             });
-            
+
             // 1. Fetch all symbols
             const allDomains = await domainService.listDomains();
             const symbols: SymbolDef[] = [];
@@ -98,28 +99,35 @@ class TopologyService {
             let reflexiveLinksCreated = 0;
             let islandsBridged = 0;
             let domainLatticeLinksCreated = 0;
+            let crossDomainBridgesLifted = 0;
 
             // Relational analysis requires at least 2 symbols
             const canRunRelational = symbols.length >= 2;
+            const idToSymbol = new Map<string, SymbolDef>(symbols.map(s => [s.id, s]));
 
             // --- STRATEGY: Link Type Refactoring ---
-            if (canRunRelational && (specificStrategy === 'refactor' || specificStrategy === undefined)) {
+            if (canRunRelational && (specificStrategy === 'refactor' || (specificStrategy === undefined && hygiene.refactorLinks))) {
                 linksRefactored = await this.refactorLinksToCanonical(symbols);
             }
 
             // --- STRATEGY: Instantiate Missing Reflexive Links ---
-            if (canRunRelational && (specificStrategy === 'reflexive' || specificStrategy === undefined)) {
+            if (canRunRelational && (specificStrategy === 'reflexive' || (specificStrategy === undefined && hygiene.reflexiveLinks))) {
                 reflexiveLinksCreated = await this.instantiateMissingReflexiveLinks(symbols);
             }
 
             // --- STRATEGY: Bridge Isolated Subgraphs ---
-            if (canRunRelational && (specificStrategy === 'bridge' || specificStrategy === undefined)) {
+            if (canRunRelational && (specificStrategy === 'bridge' || (specificStrategy === undefined && hygiene.bridgeIslands))) {
                 islandsBridged = await this.bridgeIsolatedSubgraphs(symbols);
             }
 
             // --- STRATEGY: Domain Lattice Refactoring ---
-            if (canRunRelational && (specificStrategy === 'domainRefactor' || specificStrategy === undefined)) {
+            if (canRunRelational && (specificStrategy === 'domainRefactor' || (specificStrategy === undefined && hygiene.domainRefactor))) {
                 domainLatticeLinksCreated = await this.refactorDomainLattices(symbols);
+            }
+
+            // --- STRATEGY: Cross-Domain Bridge Lifting ---
+            if (canRunRelational && (specificStrategy === 'bridgeLifting' || (specificStrategy === undefined && hygiene.bridgeLifting))) {
+                crossDomainBridgesLifted = await this.refactorCrossDomainBridges(symbols);
             }
 
             // --- STRATEGY: Dead Link Cleanup ---
@@ -129,25 +137,20 @@ class TopologyService {
 
             // --- STRATEGY: Semantic (Vector) Analysis ---
             if (canRunRelational && (specificStrategy === 'semantic' || (specificStrategy === undefined && (hygiene.semantic.autoCompress || hygiene.semantic.autoLink)))) {
-                const semanticResults = await this.runSemanticAnalysis(symbols, hygiene, this.lastRunTimestamp);
+                const semanticResults = await this.runSemanticAnalysis(symbols, hygiene, this.lastRunTimestamp, idToSymbol);
                 newLinksPredicted += semanticResults.newLinks;
                 redundantSymbolsFound += semanticResults.redundantCount;
             }
 
             // --- STRATEGY: Triadic Analysis ---
             if (canRunRelational && (specificStrategy === 'triadic' || (specificStrategy === undefined && (hygiene.triadic.autoCompress || hygiene.triadic.autoLink)))) {
-                const triadicResults = await this.runTriadicAnalysis(symbols, hygiene);
+                const triadicResults = await this.runTriadicAnalysis(symbols, hygiene, idToSymbol);
                 newLinksPredicted += triadicResults.newLinks;
                 redundantSymbolsFound += triadicResults.redundantCount;
             }
 
-            // --- STRATEGY: Orphan Analysis ---
-            if (specificStrategy === 'orphanAnalysis' || (specificStrategy === undefined && hygiene.orphanAnalysis)) {
-                await this.analyzeOrphans(symbols);
-            }
-
             // --- STRATEGY: Link Promotion ---
-            if (canRunRelational && (specificStrategy === 'promotion' || specificStrategy === undefined)) {
+            if (canRunRelational && (specificStrategy === 'promotion' || (specificStrategy === undefined && hygiene.linkPromotion))) {
                 await this.promoteRelatesToLinks(symbols);
             }
 
@@ -164,14 +167,15 @@ class TopologyService {
             const stats: TopologyStats = {
                 symbolCount: symbols.length,
                 linkCount: finalLinkCount,
-                linkTypes: Array.from(finalLinkTypes), 
+                linkTypes: Array.from(finalLinkTypes),
                 reconstructionError: 0,
                 newLinksPredicted,
                 redundantSymbolsFound,
                 linksRefactored,
                 reflexiveLinksCreated,
                 islandsBridged,
-                domainLatticeLinksCreated
+                domainLatticeLinksCreated,
+                crossDomainBridgesLifted
             };
 
             this.lastRunTimestamp = currentRunTimestamp;
@@ -179,7 +183,7 @@ class TopologyService {
             return stats;
 
         } catch (error: any) {
-            loggerService.catError(LogCategory.KERNEL, "TopologyService: Analysis failed", { 
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Analysis failed", {
                 error: error?.message || String(error),
                 stack: error?.stack
             });
@@ -189,7 +193,7 @@ class TopologyService {
         }
     }
 
-    private async runSemanticAnalysis(symbols: SymbolDef[], hygiene: GraphHygieneSettings, lastRun: string | null) {
+    private async runSemanticAnalysis(symbols: SymbolDef[], hygiene: GraphHygieneSettings, lastRun: string | null, idToSymbol: Map<string, SymbolDef>) {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting semantic analysis", { symbolCount: symbols.length });
         let newLinksCount = 0;
         let redundantCount = 0;
@@ -201,23 +205,23 @@ class TopologyService {
         };
 
         const texts = symbols.map(s => `${s.name}: ${s.role}`);
-        
+
         let embeddings: number[][] = [];
         try {
             embeddings = await embedTexts(texts);
         } catch (embErr: any) {
-            loggerService.catError(LogCategory.KERNEL, "TopologyService: Semantic analysis failed at embedding stage", { 
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Semantic analysis failed at embedding stage", {
                 error: embErr.message || String(embErr),
-                symbolCount: symbols.length 
+                symbolCount: symbols.length
             });
             return { newLinks: 0, redundantCount: 0 };
         }
 
         const N = symbols.length;
         if (embeddings.length !== N) {
-            loggerService.catError(LogCategory.KERNEL, "TopologyService: Embedding count mismatch", { 
-                expected: N, 
-                received: embeddings.length 
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Embedding count mismatch", {
+                expected: N,
+                received: embeddings.length
             });
             return { newLinks: 0, redundantCount: 0 };
         }
@@ -236,7 +240,7 @@ class TopologyService {
                 }
                 const norm = Math.sqrt(emb.reduce((sum, val) => sum + val * val, 0));
                 normalizedEmbeddings.push(emb.map(val => val / (norm + 1e-9)));
-                
+
                 if (i % 500 === 0) await yieldToEventLoop();
             }
         } catch (normErr: any) {
@@ -248,7 +252,7 @@ class TopologyService {
             if (v1.length === 0 || v2.length === 0 || v1.length !== v2.length) return 0;
             return v1.reduce((sum, val, idx) => sum + val * v2[idx], 0);
         };
-        
+
         if (hygiene.semantic.autoCompress) {
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Checking for semantic redundancy");
             const redundantGroups: SymbolDef[][] = [];
@@ -258,11 +262,11 @@ class TopologyService {
                 let iterations = 0;
                 for (let i = 0; i < N; i++) {
                     if (visited.has(i) || normalizedEmbeddings[i].length === 0) continue;
-                    
+
                     const group = [symbols[i]];
                     for (let j = i + 1; j < N; j++) {
                         if (visited.has(j) || normalizedEmbeddings[j].length === 0) continue;
-                        
+
                         const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
                         if (sim > this.REDUNDANCY_THRESHOLD) {
                             // Only proceed if one of them has changed since last run
@@ -302,19 +306,26 @@ class TopologyService {
                 let iterations = 0;
                 for (let i = 0; i < N; i++) {
                     if (normalizedEmbeddings[i].length === 0) continue;
-                    
+
                     for (let j = i + 1; j < N; j++) {
                         if (normalizedEmbeddings[j].length === 0) continue;
-                        
+
                         const sim = computeSimilarity(normalizedEmbeddings[i], normalizedEmbeddings[j]);
                         // Use a slightly lower threshold for potential links than for redundancy
                         if (sim > this.CONFIDENCE_THRESHOLD && sim <= this.REDUNDANCY_THRESHOLD) {
                             // Only proceed if one of them has changed since last run
                             if (wasUpdated(symbols[i]) || wasUpdated(symbols[j])) {
                                 const hasLink = symbols[i].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[j].id) ||
-                                                symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
-                                
+                                    symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
+
                                 if (!hasLink) {
+                                    // NO LINK if already reachable in < 3 hops
+                                    const distance = this.getShortestPathDistance(symbols[i].id, symbols[j].id, idToSymbol);
+                                    if (distance < 3) {
+                                        iterations++;
+                                        continue;
+                                    }
+
                                     // LLM Validation for link
                                     try {
                                         const validation = await this.validateLink(symbols[i], symbols[j]);
@@ -327,10 +338,10 @@ class TopologyService {
                                             });
                                         }
                                     } catch (valErr: any) {
-                                        loggerService.catError(LogCategory.KERNEL, "TopologyService: Link validation failed for pair", { 
-                                            s1: symbols[i].id, 
-                                            s2: symbols[j].id, 
-                                            error: valErr.message 
+                                        loggerService.catError(LogCategory.KERNEL, "TopologyService: Link validation failed for pair", {
+                                            s1: symbols[i].id,
+                                            s2: symbols[j].id,
+                                            error: valErr.message
                                         });
                                     }
                                 }
@@ -358,7 +369,7 @@ class TopologyService {
         return { newLinks: newLinksCount, redundantCount };
     }
 
-    private async runTriadicAnalysis(symbols: SymbolDef[], hygiene: GraphHygieneSettings) {
+    private async runTriadicAnalysis(symbols: SymbolDef[], hygiene: GraphHygieneSettings, idToSymbol: Map<string, SymbolDef>) {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting triadic analysis", { symbolCount: symbols.length });
         let redundantCount = 0;
         let newLinksCount = 0;
@@ -390,9 +401,13 @@ class TopologyService {
                     const triadJ = symbols[j].triad;
                     if (triadI === triadJ) {
                         const hasLink = symbols[i].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[j].id) ||
-                                        symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
-                        
+                            symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
+
                         if (!hasLink) {
+                            // NO LINK if already reachable in < 3 hops
+                            const distance = this.getShortestPathDistance(symbols[i].id, symbols[j].id, idToSymbol);
+                            if (distance < 3) continue;
+
                             predicted.push({
                                 sourceId: symbols[i].id,
                                 targetId: symbols[j].id,
@@ -414,7 +429,7 @@ class TopologyService {
 
     private async cleanupDeadLinks() {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting dead link cleanup");
-        
+
         try {
             // 1. Delete links where target doesn't exist
             const resultTarget = sqliteService.run(`
@@ -428,79 +443,18 @@ class TopologyService {
                 WHERE source_id NOT IN (SELECT id FROM symbols)
             `);
 
-            const totalDeleted = (resultTarget.changes || 0) + (resultSource.changes || 0);
+            // 3. Delete self-links (source_id = target_id)
+            const resultSelf = sqliteService.run(`
+                DELETE FROM symbol_links 
+                WHERE source_id = target_id
+            `);
+
+            const totalDeleted = (resultTarget.changes || 0) + (resultSource.changes || 0) + (resultSelf.changes || 0);
             if (totalDeleted > 0) {
-                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Cleaned up ${totalDeleted} dead links globally`);
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Cleaned up ${totalDeleted} dead or self-links globally`);
             }
         } catch (error) {
             loggerService.catError(LogCategory.KERNEL, "TopologyService: Global dead link cleanup failed", { error });
-        }
-    }
-
-    private async analyzeOrphans(symbols: SymbolDef[]) {
-        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting orphan analysis");
-        const incomingLinks = new Set<string>();
-        symbols.forEach(s => {
-            (s.linked_patterns || []).forEach(l => incomingLinks.add(typeof l === 'string' ? l : l.id));
-        });
-
-        const orphans = symbols.filter(s => {
-            const hasOutgoing = s.linked_patterns && s.linked_patterns.length > 0;
-            const hasIncoming = incomingLinks.has(s.id);
-            return !hasOutgoing && !hasIncoming;
-        });
-
-        if (orphans.length > 0) {
-            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Found ${orphans.length} orphan symbols`);
-            
-            for (const orphan of orphans) {
-                eventBusService.emitKernelEvent(KernelEventType.ORPHAN_DETECTED, { symbolId: orphan.id, domainId: orphan.symbol_domain });
-                
-                // --- Semantic Healing for Orphans ---
-                // NEW: Prioritize search within the same domain (likely connection points)
-                const searchQuery = `${orphan.name} ${orphan.role} domain:${orphan.symbol_domain}`;
-                try {
-                    // Search same domain first
-                    const domainCandidates = await domainService.search(searchQuery, 5, { symbol_domain: orphan.symbol_domain });
-                    // Broad search second
-                    const broadCandidates = await domainService.search(searchQuery, 5);
-                    
-                    const allCandidates = [...domainCandidates, ...broadCandidates];
-                    const uniqueIds = new Set<string>();
-                    const candidates: any[] = [];
-                    
-                    for (const c of allCandidates) {
-                        if (c.id !== orphan.id && !uniqueIds.has(c.id)) {
-                            uniqueIds.add(c.id);
-                            candidates.push(c);
-                        }
-                    }
-
-                    const predictedLinks: PredictedLink[] = [];
-
-                    for (const cand of candidates) {
-                        const candSym = await domainService.findById(cand.id);
-                        if (!candSym) continue;
-
-                        const validation = await this.validateLink(orphan, candSym);
-                        if (validation.shouldLink) {
-                            predictedLinks.push({
-                                sourceId: orphan.id,
-                                targetId: cand.id,
-                                linkType: validation.linkType || 'relates_to',
-                                confidence: 0.85
-                            });
-                        }
-                    }
-
-                    if (predictedLinks.length > 0) {
-                        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Found ${predictedLinks.length} healing links for orphan ${orphan.id}`);
-                        await this.promoteToTentative(predictedLinks);
-                    }
-                } catch (searchErr) {
-                    loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed semantic healing for orphan ${orphan.id}`, { error: searchErr });
-                }
-            }
         }
     }
 
@@ -630,12 +584,14 @@ class TopologyService {
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
                 const model = client.getGenerativeModel({
-                    model: fastModel
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 800 }
                 });
                 const result = await model.generateContent(prompt);
                 const response = result.response.text();
                 resultJson = extractJson(response);
-            } else {                const client = await getClient();
+            } else {
+                const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
                     messages: [{ role: "user", content: prompt }],
@@ -645,9 +601,9 @@ class TopologyService {
                 resultJson = extractJson(response);
             }
 
-            return { 
-                shouldLink: !!resultJson.shouldLink, 
-                linkType: resultJson.linkType || 'relates_to' 
+            return {
+                shouldLink: !!resultJson.shouldLink,
+                linkType: resultJson.linkType || 'relates_to'
             };
         } catch (error) {
             loggerService.catError(LogCategory.KERNEL, "TopologyService: Link validation failed", { error });
@@ -659,7 +615,7 @@ class TopologyService {
         loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting ${links.length} predicted links to tentative store`);
         for (const link of links) {
             const tracePath = [
-                { symbol_id: link.sourceId }, 
+                { symbol_id: link.sourceId },
                 { symbol_id: link.targetId, link_type: link.linkType, reason: 'Topology-based automated link prediction' }
             ];
             await tentativeLinkService.processTrace(tracePath);
@@ -672,8 +628,8 @@ class TopologyService {
 
         // --- CORE PRECEDENCE LOGIC ---
         // If one of the candidates has "CORE" in its ID or name, it automatically wins.
-        const coreCandidates = candidates.filter(s => 
-            s.id.toUpperCase().includes('CORE') || 
+        const coreCandidates = candidates.filter(s =>
+            s.id.toUpperCase().includes('CORE') ||
             s.name.toUpperCase().includes('CORE')
         );
 
@@ -703,7 +659,10 @@ class TopologyService {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel });
+                const model = client.getGenerativeModel({
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 100 }
+                });
                 const result = await model.generateContent(prompt);
                 response = extractJson(result.response.text());
             } else {
@@ -740,20 +699,20 @@ class TopologyService {
 
             const canonicalId = await this.selectCanonicalId(group);
             const redundantIds = group.map(s => s.id).filter(id => id !== canonicalId);
-            
+
             if (redundantIds.length === 0) {
                 loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Redundant group ${groupKey} evaluated, but leader was unchanged and no merges performed.`);
                 continue;
             }
 
             loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Merging redundant symbols into selected leader ${canonicalId}`, { redundantIds });
-            
+
             for (const oldId of redundantIds) {
                 try {
                     await domainService.mergeSymbols(canonicalId, oldId);
-                    eventBusService.emitKernelEvent(KernelEventType.SYMBOL_COMPRESSION, { 
-                        canonicalId, 
-                        redundantId: oldId 
+                    eventBusService.emitKernelEvent(KernelEventType.SYMBOL_COMPRESSION, {
+                        canonicalId,
+                        redundantId: oldId
                     });
                 } catch (error) {
                     loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed to merge ${oldId} into ${canonicalId}`, { error });
@@ -813,7 +772,7 @@ class TopologyService {
 
     private async instantiateMissingReflexiveLinks(symbols: SymbolDef[]): Promise<number> {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting reflexive link instantiation");
-        
+
         // 1. Build a map of existing links for fast lookup
         const linkMap = new Set<string>();
         for (const s of symbols) {
@@ -837,6 +796,7 @@ class TopologyService {
                 const reciprocalType = RECIPROCAL_MAP[forwardType];
 
                 if (!reciprocalType) continue;
+                if (targetId === s.id) continue; // NO SELF LINKS
 
                 const reciprocalKey = `${targetId}:${s.id}:${reciprocalType}`;
                 if (!linkMap.has(reciprocalKey)) {
@@ -844,7 +804,7 @@ class TopologyService {
                     const targetSymbol = updatedSymbols.get(targetId) || idToSymbol.get(targetId);
                     if (targetSymbol) {
                         if (!targetSymbol.linked_patterns) targetSymbol.linked_patterns = [];
-                        
+
                         // Check if it already exists in the local object but not in the global set yet
                         const alreadyAdded = targetSymbol.linked_patterns.some(l => l.id === s.id && l.link_type === reciprocalType);
                         if (!alreadyAdded) {
@@ -910,50 +870,76 @@ class TopologyService {
                         const fastModel = settings.fastModel;
                         if (!fastModel) continue;
 
-                        const prompt = `You are a knowledge graph architect. A symbolic pattern is currently "unanchored" in its domain because it is not linked to any local Lattices.
-                        
+                        const prompt = `### KNOWLEDGE GRAPH ARCHITECT: DOMAIN DOCKING MISSION
+
+                        Analyze the following symbolic pattern and determine if it should be "docked" into one or more of the provided domain lattices.
+
                         PATTERN TO DOCK:
-                        Name: ${pattern.name}
+                        ID: ${pattern.id}
+                        Name: "${pattern.name}"
                         Role: ${pattern.role}
                         Macro: ${pattern.macro}
-                        
+
                         AVAILABLE LATTICES IN DOMAIN "${domainId}":
-                        ${lattices.map((l, i) => `${i + 1}. [${l.id}] ${l.name}: ${l.role}`).join('\n')}
-                        
-                        Should this pattern be part of one or more of these lattices? Output valid JSON only.
-                        Choose the most semantically appropriate lattices.
-                        
+                        ${lattices.map((l, i) => `${i + 1}. ID: ${l.id} | Name: ${l.name} | Role: ${l.role}`).join('\n')}
+
+                        #### MISSION GOAL:
+                        Identify 1-3 lattices that best characterize the structural context for this pattern. 
+
+                        #### CONSTRAINTS:
+                        1. **ID ACCURACY**: Use the EXACT ID string provided in the list (e.g. "LATTICE_ID", NOT "[LATTICE_ID]").
+                        2. **CONCISENESS**: Keep "reason" fields to a single sentence maximum.
+                        3. **FORMAT**: Output EXCLUSIVELY valid JSON. No preamble.
+                        4. **LINKS**: Use canonical link types (e.g. "part_of", "exemplifies", "relates_to").
+
+                        #### OUTPUT SCHEMA:
                         {
-                          "shouldLink": true/false,
-                          "matches": [
-                            { "id": "lattice_id", "linkType": "chosen_link_type", "reason": "why" }
-                          ]
+                        "shouldLink": boolean,
+                        "matches": [
+                        {
+                        "id": "LATTICE_ID_HERE",
+                        "linkType": "canonical_link_type",
+                        "reason": "Single sentence justification."
+                        }
+                        ]
                         }`;
 
                         let response: any = {};
                         if (settings.provider === 'gemini') {
                             const client = await getGeminiClient();
-                            const model = client.getGenerativeModel({ model: fastModel });
+                            const model = client.getGenerativeModel({
+                                model: fastModel,
+                                generationConfig: {
+                                    maxOutputTokens: 2048,
+                                    temperature: 0.1
+                                }
+                            });
                             const result = await model.generateContent(prompt);
                             response = extractJson(result.response.text());
                         } else {
                             const client = await getClient();
                             const result = await client.chat.completions.create({
                                 model: fastModel,
-                                messages: [{ role: "user", content: prompt }]
+                                messages: [{ role: "user", content: prompt }],
+                                max_tokens: 2048,
+                                temperature: 0.1
                             });
                             response = extractJson(result.choices[0]?.message?.content || "{}");
                         }
 
                         if (response.shouldLink && Array.isArray(response.matches)) {
                             for (const match of response.matches) {
-                                if (lattices.some(l => l.id === match.id)) {
-                                    loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Docking pattern ${pattern.id} into lattice ${match.id} via ${match.linkType}`);
-                                    
+                                // SANITIZE ID: Remove brackets if model hallucinated them
+                                const cleanMatchId = (match.id || '').replace(/^\[|\]$/g, '');
+
+                                if (cleanMatchId === pattern.id) continue; // NO SELF LINKS
+                                if (lattices.some(l => l.id === cleanMatchId)) {
+                                    loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Docking pattern ${pattern.id} into lattice ${cleanMatchId} via ${match.linkType}`);
+
                                     pattern.linked_patterns = pattern.linked_patterns || [];
-                                    if (!pattern.linked_patterns.some(l => l.id === match.id)) {
+                                    if (!pattern.linked_patterns.some(l => l.id === cleanMatchId)) {
                                         pattern.linked_patterns.push({
-                                            id: match.id,
+                                            id: cleanMatchId,
                                             link_type: match.linkType || 'part_of'
                                         });
                                         await domainService.addSymbol(pattern.symbol_domain, pattern);
@@ -969,16 +955,344 @@ class TopologyService {
             }
         }
 
+        // 3. Collect patterns that are STILL unanchored after docking attempts
+        const unanchoredByDomain = new Map<string, SymbolDef[]>();
+        for (const [domainId, { patterns }] of domainMap.entries()) {
+            const unanchored = patterns.filter(pattern => {
+                const linkedLatticeIds = (pattern.linked_patterns || [])
+                    .filter(l => idToSymbol.get(l.id)?.kind === 'lattice' && idToSymbol.get(l.id)?.symbol_domain === domainId)
+                    .map(l => l.id);
+                return linkedLatticeIds.length === 0;
+            });
+            if (unanchored.length > 0) {
+                unanchoredByDomain.set(domainId, unanchored);
+            }
+        }
+
+        // 4. Synthesize new lattices for unanchored clusters using the BIG model
+        for (const [domainId, unanchoredPatterns] of unanchoredByDomain.entries()) {
+            if (unanchoredPatterns.length < 10) continue; // Skip if too few patterns to justify new lattice synthesis
+
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Synthesizing new lattices for ${unanchoredPatterns.length} unanchored patterns in domain ${domainId}`);
+
+            try {
+                const settings = await settingsService.getInferenceSettings();
+                const bigModel = settings.model;
+                if (!bigModel) continue;
+
+                const prompt = `### KNOWLEDGE GRAPH ARCHITECT: LATTICE SYNTHESIS MISSION
+
+The following symbolic patterns are currently "UNANCHORED" in the domain "${domainId}". 
+They represent fragmented knowledge that lacks a high-level abstract container (Lattice).
+
+#### UNANCHORED PATTERNS:
+${unanchoredPatterns.map((p, i) => `${i + 1}. [${p.id}] "${p.name}"
+   - Role: ${p.role}
+   - Macro: ${p.macro}
+   - Triad: ${p.triad}
+   - Activation: ${JSON.stringify(p.activation_conditions)}`).join('\n')}
+
+#### MISSION GOAL:
+Synthesize 1-3 NEW Lattices that encompass logical subsets of these patterns. 
+A Lattice is a high-level abstract container providing structural "docking points" for related patterns.
+
+#### CANONICAL VALUE OPTIONS:
+1. **LATTICE TOPOLOGY**: [ inductive, deductive, bidirectional, invariant, energy, constellation ]
+2. **LATTICE CLOSURE**: [ loop, branch, collapse, constellation, synthesis ]
+3. **FACET COMMIT**: [ atomic, volatile, shared ]
+4. **FACET TEMPORAL**: [ perpetual, static, episodic, transient ]
+5. **LINK TYPES**: [ relates_to, depends_on, part_of, contains, instance_of, exemplifies, informs, triggers, negates, implements, extends, synthesized_from, derived_from, feeds_into, orchestrates, monitors, validates, enables, executes, documents, contrasts_with, references, grounds_in ]
+
+#### CONSTRAINTS:
+1. **TRIADIC FLOW**: A "Triad" is a three-emoji string (Entity -> Process -> Result) representing the energy flow. Synthesize a Triad for each Lattice that governs its members (e.g., 👤⚙️💎).
+2. **IDS**: Lattice IDs must be unique, descriptive, and UPPERCASE_UNDERSCORE (e.g., QUANTUM_COHERENCE_LATTICE).
+3. **LINKS**: Map members to the Lattice using "relates_to" as the default link type unless a more specific canonical type is highly certain.
+4. **FULL SPECIFICATION**: Provide all facets and structural properties. Do not simplify.
+
+#### OUTPUT SCHEMA:
+{
+  "lattices": [
+    {
+      "id": "DOMAIN-PREFIX-FUNCTION-LATTICE",
+      "name": "Descriptive Name",
+      "role": "High-level abstract role",
+      "macro": "Concise functional definition (Macro syntax: INPUT -> PROCESS -> OUTPUT)",
+      "triad": "EMOJI_ENTITY_EMOJI_PROCESS_EMOJI_RESULT",
+      "symbol_tag": "Descriptive tag",
+      "failure_mode": "Description of what happens if this lattice fails",
+      "lattice": {
+        "topology": "CANONICAL_TOPOLOGY",
+        "closure": "CANONICAL_CLOSURE"
+      },
+      "facets": {
+        "function": "Functional description",
+        "topology": "CANONICAL_TOPOLOGY",
+        "commit": "CANONICAL_COMMIT",
+        "temporal": "CANONICAL_TEMPORAL",
+        "gate": ["required", "tags/invariants"],
+        "substrate": ["symbolic", "cognitive", "relational", "etc"],
+        "invariants": ["rule1", "rule2"]
+      },
+      "member_ids": ["pattern_id_1", "pattern_id_2"],
+      "link_type": "relates_to"
+    }
+  ]
+}`;
+
+                let response: any = {};
+                if (settings.provider === 'gemini') {
+                    const client = await getGeminiClient();
+                    const model = client.getGenerativeModel({
+                        model: bigModel,
+                        generationConfig: {
+                            maxOutputTokens: 8192,
+                            temperature: 0.2
+                        }
+                    });
+                    const result = await model.generateContent(prompt);
+                    response = extractJson(result.response.text());
+                } else {
+                    const client = await getClient();
+                    const result = await client.chat.completions.create({
+                        model: bigModel,
+                        messages: [{ role: "user", content: prompt }],
+                        max_tokens: 8192,
+                        temperature: 0.2
+                    });
+                    response = extractJson(result.choices[0]?.message?.content || "{}");
+                }
+
+                if (Array.isArray(response.lattices)) {
+                    for (const latDef of response.lattices) {
+                        const newLattice: SymbolDef = {
+                            id: latDef.id.toUpperCase().replace(/\s+/g, '_'),
+                            name: latDef.name,
+                            role: latDef.role,
+                            macro: latDef.macro,
+                            kind: 'lattice',
+                            symbol_domain: domainId,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            last_accessed_at: new Date().toISOString(),
+                            triad: latDef.triad || '🛠️⚙️💎',
+                            activation_conditions: [],
+                            symbol_tag: latDef.symbol_tag || 'synthesized',
+                            failure_mode: latDef.failure_mode || 'Unknown',
+                            facets: {
+                                function: latDef.facets?.function || 'Lattice',
+                                topology: latDef.facets?.topology || latDef.lattice?.topology || 'inductive',
+                                commit: latDef.facets?.commit || 'volatile',
+                                temporal: latDef.facets?.temporal || 'static',
+                                gate: latDef.facets?.gate || [],
+                                substrate: latDef.facets?.substrate || [],
+                                invariants: latDef.facets?.invariants || []
+                            },
+                            lattice: {
+                                topology: latDef.lattice?.topology || 'inductive',
+                                closure: latDef.lattice?.closure || 'synthesis'
+                            },
+                            linked_patterns: (latDef.member_ids || []).map((mid: string) => ({
+                                id: mid,
+                                link_type: RECIPROCAL_MAP[latDef.link_type] || 'relates_to'
+                            }))
+                        };
+
+                        await domainService.addSymbol(domainId, newLattice);
+                        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Synthesized new lattice ${newLattice.id} with ${newLattice.linked_patterns.length} members`);
+
+                    }
+                }
+            } catch (err) {
+                loggerService.catError(LogCategory.KERNEL, `TopologyService: Lattice synthesis failed for domain ${domainId}`, { error: err });
+            }
+        }
+
         return linksCreated;
+    }
+
+    private async refactorCrossDomainBridges(symbols: SymbolDef[]): Promise<number> {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting cross-domain bridge lifting");
+        let bridgesLifted = 0;
+
+        // 1. Map symbols to their parent lattices for quick lookup
+        const membershipMap = new Map<string, SymbolDef>(); // patternId -> Lattice Symbol
+        const idToSymbol = new Map(symbols.map(s => [s.id, s]));
+
+        for (const s of symbols) {
+            if (s.kind === 'lattice' && s.linked_patterns) {
+                for (const link of s.linked_patterns) {
+                    membershipMap.set(link.id, s);
+                }
+            }
+        }
+
+        // 2. Scan patterns for cross-domain links
+        for (const s of symbols) {
+            if (s.kind !== 'pattern' || !s.linked_patterns) continue;
+
+            const sourceLattice = membershipMap.get(s.id);
+            if (!sourceLattice) continue;
+
+            for (const link of s.linked_patterns) {
+                const target = idToSymbol.get(link.id);
+                if (!target) continue;
+
+                // Check if it's cross-domain
+                if (target.symbol_domain !== s.symbol_domain) {
+                    const targetLattice = membershipMap.get(target.id);
+
+                    const shouldLift = await this.evaluateBridgeLifting(sourceLattice, s, target, targetLattice);
+                    if (shouldLift) {
+                        const success = await this.liftLinkToLattice(sourceLattice, s, target, link.link_type, targetLattice);
+                        if (success) bridgesLifted++;
+                    }
+                }
+            }
+        }
+
+        if (bridgesLifted > 0) {
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Lifted ${bridgesLifted} cross-domain bridges to lattice level`);
+        }
+        return bridgesLifted;
+    }
+
+    private async evaluateBridgeLifting(sourceLattice: SymbolDef, pattern: SymbolDef, target: SymbolDef, targetLattice?: SymbolDef): Promise<boolean> {
+        let fullResponse = "";
+        try {
+            const settings = await settingsService.getInferenceSettings();
+            const fastModel = settings.fastModel;
+            if (!fastModel) return false;
+
+            const prompt = `Analyze if a cross-domain semantic relationship should be "lifted" from a specific pattern to its parent lattice.
+            
+            SOURCE LATTICE (Domain: ${sourceLattice.symbol_domain}):
+            Name: ${sourceLattice.name}
+            Role: ${sourceLattice.role}
+            Triad: ${sourceLattice.triad}
+            
+            SOURCE PATTERN:
+            Name: ${pattern.name}
+            Role: ${pattern.role}
+            Triad: ${pattern.triad}
+            
+            TARGET SYMBOL (Domain: ${target.symbol_domain}):
+            Name: ${target.name}
+            Role: ${target.role}
+            Triad: ${target.triad}
+            ${targetLattice ? `
+            TARGET PARENT LATTICE:
+            Name: ${targetLattice.name}
+            Role: ${targetLattice.role}
+            Triad: ${targetLattice.triad}
+            ` : ''}
+            
+            QUESTION: Does this relationship represent a structural dependency or high-level semantic connection that characterizes how the SOURCE LATTICE interacts with the target domain (and potentially the TARGET LATTICE), or is it purely specific to this one pattern?
+            
+            Output valid JSON only:
+            {
+              "shouldLift": boolean,
+              "reason": "Brief explanation"
+            }`;
+
+            let resultJson: any = {};
+            if (settings.provider === 'gemini') {
+                const client = await getGeminiClient();
+                const model = client.getGenerativeModel({
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 400 }
+                });
+                const result = await model.generateContent(prompt);
+                fullResponse = result.response.text();
+                resultJson = extractJson(fullResponse);
+            } else {
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                    model: fastModel,
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 400
+                });
+                fullResponse = result.choices[0]?.message?.content || "{}";
+                resultJson = extractJson(fullResponse);
+            }
+
+            return !!resultJson.shouldLift;
+        } catch (error) {
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Bridge lifting evaluation failed", { 
+                error: error instanceof Error ? error.message : String(error),
+                fullResponse 
+            });
+            return false;
+        }
+    }
+
+    private async liftLinkToLattice(sourceLattice: SymbolDef, sourcePattern: SymbolDef, target: SymbolDef, linkType: string, targetLattice?: SymbolDef): Promise<boolean> {
+        try {
+            const finalTarget = targetLattice || target;
+            sourceLattice.linked_patterns = sourceLattice.linked_patterns || [];
+
+            // Check if already exists
+            if (sourceLattice.linked_patterns.some(l => l.id === finalTarget.id)) {
+                return false;
+            }
+
+            loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Lifting bridge link from ${sourceLattice.id} -> ${finalTarget.id} (${linkType})`);
+
+            // 1. Add link to lattice
+            sourceLattice.linked_patterns.push({
+                id: finalTarget.id,
+                link_type: linkType
+            });
+
+            // 2. Remove link from source pattern
+            if (sourcePattern.linked_patterns) {
+                sourcePattern.linked_patterns = sourcePattern.linked_patterns.filter(l => l.id !== target.id);
+            }
+
+            await domainService.addSymbol(sourceLattice.symbol_domain, sourceLattice);
+            await domainService.addSymbol(sourcePattern.symbol_domain, sourcePattern);
+
+            return true;
+        } catch (error) {
+            loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed to lift link to lattice ${sourceLattice.id}`, { error });
+            return false;
+        }
+    }
+
+    private getShortestPathDistance(sourceId: string, targetId: string, idToSymbol: Map<string, SymbolDef>): number {
+        if (sourceId === targetId) return 0;
+
+        const queue: [string, number][] = [[sourceId, 0]];
+        const visited = new Set<string>([sourceId]);
+
+        while (queue.length > 0) {
+            const [currentId, distance] = queue.shift()!;
+
+            if (distance >= 3) continue; // We only care if it's < 3
+
+            const current = idToSymbol.get(currentId);
+            if (!current || !current.linked_patterns) continue;
+
+            for (const link of current.linked_patterns) {
+                const neighborId = typeof link === 'string' ? link : link.id;
+                if (neighborId === targetId) return distance + 1;
+
+                if (!visited.has(neighborId)) {
+                    visited.add(neighborId);
+                    queue.push([neighborId, distance + 1]);
+                }
+            }
+        }
+
+        return Infinity;
     }
 
     private findConnectedComponents(symbols: SymbolDef[]): string[][] {
         const adjacency = new Map<string, Set<string>>();
-        
+
         // Build undirected adjacency map
         for (const s of symbols) {
             if (!adjacency.has(s.id)) adjacency.set(s.id, new Set());
-            
+
             if (s.linked_patterns) {
                 for (const link of s.linked_patterns) {
                     if (!adjacency.has(link.id)) adjacency.set(link.id, new Set());
@@ -1019,7 +1333,7 @@ class TopologyService {
     private async bridgeIsolatedSubgraphs(symbols: SymbolDef[]): Promise<number> {
         loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting isolated subgraph bridging");
         const components = this.findConnectedComponents(symbols);
-        
+
         if (components.length <= 1) {
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Graph is already fully connected or empty");
             return 0;
@@ -1066,7 +1380,7 @@ class TopologyService {
             // Find the best candidate from the island to bridge (the "Centroid")
             // Priority: any symbol with CORE in the name
             let centroidId = island.find(id => id.toUpperCase().includes('CORE')) || island[0];
-            
+
             // If no CORE, find most connected
             if (!centroidId.toUpperCase().includes('CORE')) {
                 let maxLinks = -1;
@@ -1083,17 +1397,33 @@ class TopologyService {
             const centroid = idToSymbol.get(centroidId);
             if (!centroid) continue;
 
+            // NEW: Emit orphan detected event if the island is a single node
+            if (island.length === 1) {
+                eventBusService.emitKernelEvent(KernelEventType.ORPHAN_DETECTED, {
+                    symbolId: centroid.id,
+                    domainId: centroid.symbol_domain
+                });
+            }
+
             // 2. Vector search for docking points in the mainland
             try {
                 // Priority docking points: Lattices from the same domain that are in the mainland
-                const mainlandFilter: any = { 
+                const mainlandFilter: any = {
                     id: Array.from(mainlandIds)
                 };
-                
+
                 // Construct search query favoring dominant domain and lattices
                 const searchQuery = `${centroid.name} ${centroid.role} domain:${centroid.symbol_domain} kind:lattice ${centroid.macro}`;
-                const candidates = await domainService.search(searchQuery, 10, mainlandFilter);
-                
+                let candidates = await domainService.search(searchQuery, 10, mainlandFilter);
+
+                if (candidates.length === 0) {
+                    // FALLBACK: If mainland search fails, try searching just the domain for potential (unlinked) lattices
+                    // that might be in the mainland but weren't highly ranked, or just good domain anchors.
+                    candidates = await domainService.search(searchQuery, 10, { symbol_domain: centroid.symbol_domain });
+                    // Filter to those that are actually in mainland
+                    candidates = candidates.filter(c => mainlandIds.has(c.id));
+                }
+
                 if (candidates.length === 0) {
                     loggerService.catDebug(LogCategory.KERNEL, `TopologyService: No mainland candidates found for island centroid ${centroid.id}`);
                     continue;
@@ -1101,12 +1431,13 @@ class TopologyService {
 
                 // 3. Try top candidates for a bridge
                 for (const cand of candidates) {
+                    if (cand.id === centroid.id) continue; // NO SELF LINKS
                     const dockingSym = await domainService.findById(cand.id);
                     if (dockingSym) {
                         const validation = await this.validateLink(centroid, dockingSym);
                         if (validation.shouldLink) {
                             loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Bridging island centroid ${centroid.id} to mainland docking point ${dockingSym.id} via ${validation.linkType}`);
-                            
+
                             centroid.linked_patterns = centroid.linked_patterns || [];
                             // Ensure we don't add duplicate
                             if (!centroid.linked_patterns.some(l => l.id === dockingSym.id)) {
@@ -1117,7 +1448,7 @@ class TopologyService {
 
                                 await domainService.addSymbol(centroid.symbol_domain, centroid);
                                 bridgedCount++;
-                                
+
                                 // Merge this island into mainland set immediately for next island logic
                                 island.forEach(id => mainlandIds.add(id));
                                 break; // Bridge found for this island

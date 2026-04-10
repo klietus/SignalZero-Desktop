@@ -186,14 +186,21 @@ class MonitoringService {
                         );
 
                         // 5. Feed to delta engine
-                        await this.recordDelta(source.id, 'hour', summary);
+                        const metadata = {
+                            articleUrl: item.link || item.url,
+                            imageUrl: item.image || item.imageUrl
+                        };
+                        await this.recordDelta(source.id, 'hour', summary, undefined, metadata);
                     }
                 }
             } else {
                 // Fallback for non-itemized or failed itemization
                 const summary = await this.summarizeRawData(source, rawData);
                 if (summary && summary.hasChanges) {
-                    await this.recordDelta(source.id, 'hour', summary.content);
+                    await this.recordDelta(source.id, 'hour', summary.content, undefined, { 
+                        articleUrl: summary.articleUrl,
+                        imageUrl: summary.imageUrl
+                    });
                 }
             }
 
@@ -226,7 +233,8 @@ class MonitoringService {
                     title: item.title,
                     content: item.contentSnippet || item.content || item.summary,
                     link: item.link,
-                    pubDate: item.pubDate
+                    pubDate: item.pubDate,
+                    image: item.enclosure?.url || (item as any).itunes?.image || (item as any).mediaContent?.$?.url
                 }));
                 loggerService.catInfo(LogCategory.MONITORING, `Itemized ${items.length} items from RSS feed for ${source.name}`);
                 return items;
@@ -266,25 +274,29 @@ class MonitoringService {
 
         // Use model to itemize complex or unknown formats
         const prompt = `Itemize the following raw data from source "${source.name}" into a list of distinct articles or events.
-        Include 'id' (if available), 'title', 'content', and 'link' for each item.
+        Include 'id' (if available), 'title', 'content', 'link', and 'image' (URL if available) for each item.
         
         Raw Data:
         ${rawData.slice(0, 8000)}
 
-        Output valid JSON: { "items": [{ "id": "...", "title": "...", "content": "...", "link": "..." }, ...] }`;
+        Output valid JSON: { "items": [{ "id": "...", "title": "...", "content": "...", "link": "...", "image": "..." }, ...] }`;
 
         try {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel });
+                const model = client.getGenerativeModel({ 
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 1024 }
+                });
                 const result = await model.generateContent(prompt);
                 response = extractJson(result.response.text());
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
-                    messages: [{ role: "user", content: prompt }]
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 1024
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }
@@ -311,14 +323,18 @@ class MonitoringService {
         try {
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel });
+                const model = client.getGenerativeModel({ 
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 1024 }
+                });
                 const result = await model.generateContent(prompt);
                 return result.response.text().trim();
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
-                    messages: [{ role: "user", content: prompt }]
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 1024
                 });
                 return result.choices[0]?.message?.content?.trim() || null;
             }
@@ -328,7 +344,7 @@ class MonitoringService {
         }
     }
 
-    private async summarizeRawData(source: MonitoringSourceConfig, rawData: string): Promise<{ hasChanges: boolean, content: string } | null> {
+    private async summarizeRawData(source: MonitoringSourceConfig, rawData: string): Promise<{ hasChanges: boolean, content: string, articleUrl?: string, imageUrl?: string } | null> {
         const settings = await settingsService.getInferenceSettings();
         const fastModel = settings.fastModel;
         if (!fastModel) return null;
@@ -339,21 +355,29 @@ class MonitoringService {
         ${rawData.slice(0, 10000)}
 
         If there are no significant changes, output { "hasChanges": false }.
-        If there are changes, output a concise bulleted summary of the deltas.
-        Output valid JSON: { "hasChanges": boolean, "content": "..." }`;
+        If there are changes:
+        1. Identify a primary 'articleUrl' if one exists in the data.
+        2. Identify a primary 'imageUrl' if one exists in the data.
+        3. Provide a concise bulleted summary of the deltas in 'content'.
+        
+        Output valid JSON: { "hasChanges": boolean, "content": "...", "articleUrl": "...", "imageUrl": "..." }`;
 
         try {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel });
+                const model = client.getGenerativeModel({ 
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 1024 }
+                });
                 const result = await model.generateContent(prompt);
                 response = extractJson(result.response.text());
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
-                    messages: [{ role: "user", content: prompt }]
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 1024
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }
@@ -364,7 +388,7 @@ class MonitoringService {
         }
     }
 
-    private async recordDelta(sourceId: string, period: MonitoringPeriod, content: any, customTimestamp?: string) {
+    private async recordDelta(sourceId: string, period: MonitoringPeriod, content: any, customTimestamp?: string, metadata?: Record<string, any>) {
         const finalContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
         const timestamp = customTimestamp || new Date().toISOString();
 
@@ -373,19 +397,20 @@ class MonitoringService {
             sourceId,
             period,
             content: finalContent,
-            timestamp
+            timestamp,
+            metadata: metadata || {}
         };
 
         // Persist to SQLite
         sqliteService.run(
-            `INSERT INTO monitoring_deltas (id, source_id, period, content, timestamp) VALUES (?, ?, ?, ?, ?)`,
-            [delta.id, delta.sourceId, delta.period, delta.content, delta.timestamp]
+            `INSERT INTO monitoring_deltas (id, source_id, period, content, timestamp, metadata) VALUES (?, ?, ?, ?, ?, ?)`,
+            [delta.id, delta.sourceId, delta.period, delta.content, delta.timestamp, JSON.stringify(delta.metadata)]
         );
 
         // Index in LanceDB
         await lancedbService.indexDeltaBatch([delta]);
         
-        loggerService.catInfo(LogCategory.MONITORING, `Recorded new ${period} delta for ${sourceId} at ${timestamp}`);
+        loggerService.catInfo(LogCategory.MONITORING, `Recorded new ${period} delta for ${sourceId} at ${timestamp}`, { metadata });
     }
 
     /**
@@ -513,14 +538,18 @@ class MonitoringService {
             let summary = "";
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel });
+                const model = client.getGenerativeModel({ 
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 1024 }
+                });
                 const result = await model.generateContent(prompt);
                 summary = result.response.text().trim();
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
-                    messages: [{ role: "user", content: prompt }]
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 1024
                 });
                 summary = result.choices[0]?.message?.content?.trim() || "";
             }
@@ -542,6 +571,87 @@ class MonitoringService {
         } catch (error) {
             loggerService.catError(LogCategory.MONITORING, "Rollup synthesis failed", { error });
         }
+    }
+
+    async regenerateDelta(deltaId: string): Promise<MonitoringDelta | null> {
+        loggerService.catInfo(LogCategory.MONITORING, `Regenerating delta: ${deltaId}`);
+        const delta = sqliteService.get(`SELECT * FROM monitoring_deltas WHERE id = ?`, [deltaId]);
+        if (!delta) {
+            loggerService.catError(LogCategory.MONITORING, `Delta not found for regeneration: ${deltaId}`);
+            return null;
+        }
+
+        const periodOrder: MonitoringPeriod[] = ['hour', 'day', 'week', 'month', 'year'];
+        const idx = periodOrder.indexOf(delta.period);
+
+        if (delta.period === 'hour') {
+            loggerService.catInfo(LogCategory.MONITORING, `Refining hour delta: ${deltaId}`);
+            // For hour deltas, we re-summarize the existing content to "refine" it, 
+            // since we don't store the original raw data for efficiency.
+            const settings = await settingsService.getInferenceSettings();
+            const fastModel = settings.fastModel;
+            if (!fastModel) return delta;
+
+            const prompt = `Refine and improve the following world-monitoring summary. 
+            Ensure it is concise, impactful, and captures the core 'delta' accurately.
+            
+            Current Summary:
+            ${delta.content}
+            
+            Output the refined summary only.`;
+
+            try {
+                let refined = "";
+                if (settings.provider === 'gemini') {
+                    const client = await getGeminiClient();
+                    const model = client.getGenerativeModel({ 
+                        model: fastModel,
+                        generationConfig: { maxOutputTokens: 1024 }
+                    });
+                    const result = await model.generateContent(prompt);
+                    refined = result.response.text().trim();
+                } else {
+                    const client = await getClient();
+                    const result = await client.chat.completions.create({
+                        model: fastModel,
+                        messages: [{ role: "user", content: prompt }],
+                        max_tokens: 1024
+                    });
+                    refined = result.choices[0]?.message?.content?.trim() || "";
+                }
+
+                if (refined) {
+                    sqliteService.run(`UPDATE monitoring_deltas SET content = ? WHERE id = ?`, [refined, deltaId]);
+                    const updated = { ...delta, content: refined };
+                    await lancedbService.indexDeltaBatch([updated]);
+                    return updated;
+                }
+            } catch (error) {
+                loggerService.catError(LogCategory.MONITORING, "Delta regeneration failed", { error });
+            }
+            return delta;
+        } else {
+            // It's a rollup. Find constituent sub-deltas.
+            const prevPeriod = periodOrder[idx - 1];
+            loggerService.catInfo(LogCategory.MONITORING, `Re-synthesizing ${delta.period} rollup from ${prevPeriod} deltas`);
+            
+            // Find deltas of prevPeriod that occurred BEFORE or AT this delta's timestamp,
+            // going back one unit of the current period.
+            // For simplicity, we'll take the latest 50 sub-deltas that precede this one.
+            const subDeltas = sqliteService.all(
+                `SELECT * FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp <= ? ORDER BY timestamp DESC LIMIT 50`,
+                [delta.source_id, prevPeriod, delta.timestamp]
+            );
+
+            if (subDeltas.length > 0) {
+                loggerService.catInfo(LogCategory.MONITORING, `Found ${subDeltas.length} sub-deltas for regeneration`);
+                await this.performRollup(delta.source_id, prevPeriod, delta.period, subDeltas, delta.timestamp, delta.id);
+                return sqliteService.get(`SELECT * FROM monitoring_deltas WHERE id = ?`, [deltaId]);
+            } else {
+                loggerService.catWarn(LogCategory.MONITORING, `No sub-deltas found for ${delta.period} rollup regeneration`, { source_id: delta.source_id, prevPeriod });
+            }
+        }
+        return delta;
     }
 }
 

@@ -59,10 +59,26 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
       };
   }, [onNewProject]);
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const handleSavePrompt = async () => {
-      await window.api.updateSettings({ systemPrompt: promptText, mcpPrompt: mcpPromptText });
-      onSystemPromptChange(promptText);
-      onMcpPromptChange(mcpPromptText);
+      setIsSaving(true);
+      try {
+          await Promise.all([
+              window.api.setSystemPrompt(promptText),
+              window.api.setMcpPrompt(mcpPromptText)
+          ]);
+          onSystemPromptChange(promptText);
+          onMcpPromptChange(mcpPromptText);
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 3000);
+      } catch (err) {
+          console.error("Failed to update kernel prompts", err);
+          alert("Failed to update kernel prompts.");
+      } finally {
+          setIsSaving(false);
+      }
   };
 
   const handleExportProject = async () => {
@@ -191,9 +207,15 @@ export const ProjectScreen: React.FC<ProjectScreenProps> = ({
                       </h2>
                       <button 
                           onClick={handleSavePrompt}
-                          className="flex items-center gap-1.5 px-4 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all"
+                          disabled={isSaving}
+                          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all ${
+                              saveSuccess 
+                              ? 'bg-emerald-600 text-white' 
+                              : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                          }`}
                       >
-                          <Save size={14} /> Update Kernel
+                          {isSaving ? <Loader2 size={14} className="animate-spin" /> : (saveSuccess ? <CheckCircle2 size={14} /> : <Save size={14} />)}
+                          {isSaving ? 'Updating...' : (saveSuccess ? 'Kernel Updated' : 'Update Kernel')}
                       </button>
                   </div>
                   

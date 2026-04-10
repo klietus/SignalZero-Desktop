@@ -550,7 +550,13 @@ export async function* sendMessageAndHandleTools(
         }
 
         if (monitoringDeltas && monitoringDeltas.length > 0) {
-          const deltaBrief = monitoringDeltas.map(d => `Source: ${d.metadata.sourceId} (${d.metadata.period})\nTimestamp: ${d.metadata.timestamp}\nContent: ${d.document}`).join('\n\n---\n\n');
+          const deltaBrief = monitoringDeltas.map(d => {
+            const meta = d.metadata || {};
+            let part = `Source: ${meta.sourceId} (${meta.period})\nTimestamp: ${meta.timestamp}\nContent: ${d.document}`;
+            if (meta.articleUrl) part += `\nArticle: [View Article](${meta.articleUrl})`;
+            if (meta.imageUrl) part += `\nImage: ![Article Image](${meta.imageUrl})`;
+            return part;
+          }).join('\n\n---\n\n');
           contextMessages.push({ role: 'system', content: `\n\n[WORLD MONITORING DELTAS]\nThe following recent changes and events have been detected in the world:\n\n${deltaBrief}` });
         }
       }
@@ -801,21 +807,42 @@ export async function* sendMessageAndHandleTools(
 
 export const extractJson = (text: string): any => {
   const tryParse = (str: string) => {
+    if (!str || str.trim() === "") return null;
     try {
       return JSON.parse(str);
     } catch (e) {
-      // Heuristic: common error is unescaped double quotes inside strings.
-      // This is a very basic attempt to fix them for common cases like "He said "Hello""
-      // We look for patterns like: "key": "value "with" quotes"
+      // Heuristic: common error is unescaped double quotes or literal newlines inside strings.
       let fixed = str
-        .replace(/":\s*"(.*?)"(\s*[,}\n])/g, (_match, p1, p2) => {
-          // If p1 contains unescaped quotes, escape them
-          const escaped = p1.replace(/(?<!\\)"/g, '\\"');
-          return `": "${escaped}"${p2}`;
-        });
+        .replace(/":\s*"([\s\S]*?)"(\s*[,}\n])/g, (_match, p1, p2) => {
+           // Replace literal newlines with escaped \n if they exist
+           const withEscapedNewlines = p1.replace(/\n/g, "\\n");
+           const escapedQuotes = withEscapedNewlines.replace(/(?<!\\)"/g, '\\"');
+           return `": "${escapedQuotes}"${p2}`;
+        })
+        .replace(/,(\s*[}\]])/g, '$1');
+      
       try {
         return JSON.parse(fixed);
       } catch (inner) {
+        // Recovery for truncated JSON
+        let truncated = fixed.trim();
+        // If it starts like an object or array but doesn't end like one
+        if ((truncated.startsWith('{') && !truncated.endsWith('}')) || (truncated.startsWith('[') && !truncated.endsWith(']'))) {
+           const stack: string[] = [];
+           for (let i = 0; i < truncated.length; i++) {
+             if (truncated[i] === '{') stack.push('}');
+             else if (truncated[i] === '[') stack.push(']');
+             else if (truncated[i] === '}' || truncated[i] === ']') stack.pop();
+           }
+           while (stack.length > 0) {
+             truncated += stack.pop();
+           }
+           try {
+             return JSON.parse(truncated);
+           } catch (deepInner) {
+             return null;
+           }
+        }
         return null;
       }
     }
@@ -824,14 +851,15 @@ export const extractJson = (text: string): any => {
   const direct = tryParse(text);
   if (direct) return direct;
 
-  loggerService.catDebug(LogCategory.INFERENCE, "Direct JSON.parse failed, attempting extraction...", { text: text.slice(0, 100) });
-
+  // 1. Try markdown code block (common for LLMs)
+  // We use [\s\S]*? to match across newlines
   const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (match) {
     const extracted = tryParse(match[1].trim());
     if (extracted) return extracted;
   }
 
+  // 2. Try finding the first '{' and last '}'
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace !== -1) {
@@ -839,7 +867,23 @@ export const extractJson = (text: string): any => {
     if (extracted) return extracted;
   }
 
-  loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed", { text });
+  // 3. Try finding the first '[' and last ']'
+  const firstBracket = text.indexOf('[');
+  const lastBracket = text.lastIndexOf(']');
+  if (firstBracket !== -1 && lastBracket !== -1) {
+    const extracted = tryParse(text.substring(firstBracket, lastBracket + 1));
+    if (extracted) return extracted;
+  }
+
+  // 4. Fallback for truncation at the start
+  if (firstBrace !== -1 && lastBrace === -1) {
+      const extracted = tryParse(text.substring(firstBrace));
+      if (extracted) return extracted;
+  }
+
+  loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed. FULL LLM OUTPUT BELOW:", { 
+    fullText: text 
+  });
   throw new Error("JSON extraction failed");
 };
 

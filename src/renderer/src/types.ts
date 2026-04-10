@@ -123,7 +123,12 @@ export interface GraphHygieneSettings {
     autoLink: boolean;
   };
   deadLinkCleanup: boolean;
-  orphanAnalysis: boolean;
+  refactorLinks: boolean;
+  reflexiveLinks: boolean;
+  bridgeIslands: boolean;
+  domainRefactor: boolean;
+  bridgeLifting: boolean;
+  linkPromotion: boolean;
 }
 
 export interface SystemSettings {
