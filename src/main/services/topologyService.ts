@@ -16,6 +16,7 @@ export interface TopologyStats {
     redundantSymbolsFound: number;
     linksRefactored: number;
     reflexiveLinksCreated: number;
+    islandsBridged: number;
 }
 
 interface PredictedLink {
@@ -92,6 +93,7 @@ class TopologyService {
             let redundantSymbolsFound = 0;
             let linksRefactored = 0;
             let reflexiveLinksCreated = 0;
+            let islandsBridged = 0;
 
             // Relational analysis requires at least 2 symbols
             const canRunRelational = symbols.length >= 2;
@@ -104,6 +106,11 @@ class TopologyService {
             // --- STRATEGY: Instantiate Missing Reflexive Links ---
             if (canRunRelational && (specificStrategy === 'reflexive' || specificStrategy === undefined)) {
                 reflexiveLinksCreated = await this.instantiateMissingReflexiveLinks(symbols);
+            }
+
+            // --- STRATEGY: Bridge Isolated Subgraphs ---
+            if (canRunRelational && (specificStrategy === 'bridge' || specificStrategy === undefined)) {
+                islandsBridged = await this.bridgeIsolatedSubgraphs(symbols);
             }
 
             // --- STRATEGY: Dead Link Cleanup ---
@@ -143,7 +150,8 @@ class TopologyService {
                 newLinksPredicted,
                 redundantSymbolsFound,
                 linksRefactored,
-                reflexiveLinksCreated
+                reflexiveLinksCreated,
+                islandsBridged
             };
 
             this.lastRunTimestamp = currentRunTimestamp;
@@ -758,6 +766,123 @@ class TopologyService {
         }
 
         return createdCount;
+    }
+
+    private findConnectedComponents(symbols: SymbolDef[]): string[][] {
+        const idToLinks = new Map<string, string[]>();
+        for (const s of symbols) {
+            const links = (s.linked_patterns || []).map(l => l.id);
+            idToLinks.set(s.id, links);
+        }
+
+        const visited = new Set<string>();
+        const components: string[][] = [];
+
+        for (const s of symbols) {
+            if (visited.has(s.id)) continue;
+
+            const component: string[] = [];
+            const queue = [s.id];
+            visited.add(s.id);
+
+            while (queue.length > 0) {
+                const currentId = queue.shift()!;
+                component.push(currentId);
+
+                const neighbors = idToLinks.get(currentId) || [];
+                for (const nextId of neighbors) {
+                    if (!visited.has(nextId) && idToLinks.has(nextId)) {
+                        visited.add(nextId);
+                        queue.push(nextId);
+                    }
+                }
+            }
+            components.push(component);
+        }
+
+        return components;
+    }
+
+    private async bridgeIsolatedSubgraphs(symbols: SymbolDef[]): Promise<number> {
+        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting isolated subgraph bridging");
+        const components = this.findConnectedComponents(symbols);
+        
+        if (components.length <= 1) {
+            loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Graph is already fully connected or empty");
+            return 0;
+        }
+
+        // Identify the "Mainland" (component containing user-recursive-core or largest)
+        let mainlandIdx = components.findIndex(c => c.includes('user-recursive-core'));
+        if (mainlandIdx === -1) {
+            // Find largest
+            let maxLen = -1;
+            for (let i = 0; i < components.length; i++) {
+                if (components[i].length > maxLen) {
+                    maxLen = components[i].length;
+                    mainlandIdx = i;
+                }
+            }
+        }
+
+        const mainlandIds = new Set(components[mainlandIdx]);
+        const islands = components.filter((_, i) => i !== mainlandIdx);
+        let bridgedCount = 0;
+
+        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Identified ${islands.length} isolated islands to bridge to mainland (size: ${mainlandIds.size})`);
+
+        const idToSymbol = new Map(symbols.map(s => [s.id, s]));
+
+        for (const island of islands) {
+            // 1. Find the "Centroid" of the island (symbol with most links)
+            let centroidId = island[0];
+            let maxLinks = -1;
+            for (const id of island) {
+                const sym = idToSymbol.get(id);
+                const linkCount = sym?.linked_patterns?.length || 0;
+                if (linkCount > maxLinks) {
+                    maxLinks = linkCount;
+                    centroidId = id;
+                }
+            }
+
+            const centroid = idToSymbol.get(centroidId);
+            if (!centroid) continue;
+
+            // 2. Vector search for docking points in the mainland
+            try {
+                const mainlandFilter = { id: Array.from(mainlandIds) };
+                const candidates = await domainService.search(`${centroid.name} ${centroid.role}`, 3, mainlandFilter);
+                
+                if (candidates.length === 0) continue;
+
+                // 3. LLM Validation and docking
+                const dockingSym = await domainService.findById(candidates[0].id);
+                if (dockingSym) {
+                    const validation = await this.validateLink(centroid, dockingSym);
+                    if (validation.shouldLink) {
+                        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Bridging island centroid ${centroid.id} to mainland docking point ${dockingSym.id} via ${validation.linkType}`);
+                        
+                        centroid.linked_patterns = centroid.linked_patterns || [];
+                        centroid.linked_patterns.push({
+                            id: dockingSym.id,
+                            link_type: validation.linkType || 'relates_to'
+                        });
+
+                        // Saving centroid will also trigger automatic reciprocation back from the docking symbol
+                        await domainService.addSymbol(centroid.symbol_domain, centroid);
+                        bridgedCount++;
+
+                        // Add this island to mainlandIds to prevent double bridging if we run multiple passes
+                        island.forEach(id => mainlandIds.add(id));
+                    }
+                }
+            } catch (err) {
+                loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed to bridge island ${centroidId}`, { error: err });
+            }
+        }
+
+        return bridgedCount;
     }
 }
 
