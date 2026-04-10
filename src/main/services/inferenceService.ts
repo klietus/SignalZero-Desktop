@@ -37,13 +37,6 @@ export const getClient = async () => {
   if (provider === 'openai') effectiveEndpoint = 'https://api.openai.com/v1';
   if (provider === 'kimi2') effectiveEndpoint = 'https://api.moonshot.ai/v1';
 
-  loggerService.catInfo(LogCategory.INFERENCE, `getClient called`, {
-    provider,
-    effectiveEndpoint,
-    originalEndpoint: endpoint,
-    hasApiKey: !!apiKey
-  });
-
   if (provider === 'openai') {
     return new OpenAI({
       baseURL: 'https://api.openai.com/v1',
@@ -59,7 +52,7 @@ export const getClient = async () => {
   }
 
   return new OpenAI({
-    baseURL: endpoint,
+    baseURL: effectiveEndpoint,
     apiKey: apiKey || "lm-studio",
   });
 };
