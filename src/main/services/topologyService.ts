@@ -34,6 +34,7 @@ class TopologyService {
     private isAnalyzing = false;
     private lastRunTimestamp: string | null = null;
     private mergeAttemptCache: Map<string, string> = new Map();
+    private linkPromotionCache: Map<string, string> = new Map();
 
     constructor() {}
 
@@ -517,6 +518,16 @@ class TopologyService {
                 if (link.link_type === 'relates_to') {
                     const target = idToSymbol.get(link.id);
                     if (target) {
+                        const promotionKey = `${s.id}:${target.id}`;
+                        const timestampKey = `${s.updated_at || ''}:${target.updated_at || ''}`;
+
+                        if (this.linkPromotionCache.get(promotionKey) === timestampKey) {
+                            continue; // Skip - already tried this pair with these versions
+                        }
+
+                        // Record attempt
+                        this.linkPromotionCache.set(promotionKey, timestampKey);
+
                         const validation = await this.validateLink(s, target);
                         // Only promote if the model suggested a type AND that type is in our canonical taxonomy
                         if (validation.shouldLink && validation.linkType && validation.linkType !== 'relates_to') {
