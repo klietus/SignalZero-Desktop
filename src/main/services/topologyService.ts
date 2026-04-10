@@ -848,10 +848,19 @@ class TopologyService {
     }
 
     private findConnectedComponents(symbols: SymbolDef[]): string[][] {
-        const idToLinks = new Map<string, string[]>();
+        const adjacency = new Map<string, Set<string>>();
+        
+        // Build undirected adjacency map
         for (const s of symbols) {
-            const links = (s.linked_patterns || []).map(l => l.id);
-            idToLinks.set(s.id, links);
+            if (!adjacency.has(s.id)) adjacency.set(s.id, new Set());
+            
+            if (s.linked_patterns) {
+                for (const link of s.linked_patterns) {
+                    if (!adjacency.has(link.id)) adjacency.set(link.id, new Set());
+                    adjacency.get(s.id)!.add(link.id);
+                    adjacency.get(link.id)!.add(s.id); // Undirected
+                }
+            }
         }
 
         const visited = new Set<string>();
@@ -868,9 +877,9 @@ class TopologyService {
                 const currentId = queue.shift()!;
                 component.push(currentId);
 
-                const neighbors = idToLinks.get(currentId) || [];
+                const neighbors = adjacency.get(currentId) || new Set();
                 for (const nextId of neighbors) {
-                    if (!visited.has(nextId) && idToLinks.has(nextId)) {
+                    if (!visited.has(nextId)) {
                         visited.add(nextId);
                         queue.push(nextId);
                     }
@@ -951,18 +960,22 @@ class TopologyService {
 
             // 2. Vector search for docking points in the mainland
             try {
-                // Search against mainland symbols
-                // NEW: Include all mainland symbols OR any symbol from the centroid's domain that is in the mainland
+                // Priority docking points: Lattices from the same domain that are in the mainland
                 const mainlandFilter: any = { 
                     id: Array.from(mainlandIds)
                 };
                 
-                const candidates = await domainService.search(`${centroid.name} ${centroid.role} domain:${centroid.symbol_domain} ${centroid.macro}`, 8, mainlandFilter);
+                // Construct search query favoring dominant domain and lattices
+                const searchQuery = `${centroid.name} ${centroid.role} domain:${centroid.symbol_domain} kind:lattice ${centroid.macro}`;
+                const candidates = await domainService.search(searchQuery, 10, mainlandFilter);
                 
-                if (candidates.length === 0) continue;
+                if (candidates.length === 0) {
+                    loggerService.catDebug(LogCategory.KERNEL, `TopologyService: No mainland candidates found for island centroid ${centroid.id}`);
+                    continue;
+                }
 
-                // 3. Try top 5 candidates for a bridge (expanded from 3)
-                for (const cand of candidates.slice(0, 5)) {
+                // 3. Try top candidates for a bridge
+                for (const cand of candidates) {
                     const dockingSym = await domainService.findById(cand.id);
                     if (dockingSym) {
                         const validation = await this.validateLink(centroid, dockingSym);
