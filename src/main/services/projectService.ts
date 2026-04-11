@@ -13,17 +13,18 @@ const yieldToEventLoop = () => new Promise(resolve => setTimeout(resolve, 0));
 
 export const projectService = {
     async getActiveProjectMeta(): Promise<ProjectMeta> {
-        return { name: 'SignalZero Desktop', version: '1.0', created_at: '', updated_at: '', author: 'klietus' };
+        return { name: 'SignalZero Desktop', version: '1.1.2', created_at: '', updated_at: '', author: 'klietus' };
     },
 
     async export(meta: ProjectMeta, systemPrompt: string, mcpPrompt: string): Promise<Uint8Array> {
-        // ... (keeping export as is)
         const zip = new JSZip();
         
+        // 1. Metadata and Prompts
         zip.file('metadata.json', JSON.stringify(meta, null, 2));
         zip.file('system_prompt.txt', systemPrompt);
         zip.file('mcp_prompt.txt', mcpPrompt);
 
+        // 3. Symbolic Store (Global Domains Only)
         const allDomains = await domainService.listDomains();
         const globalDomains = allDomains.filter(d => d !== 'user' && d !== 'state');
         
@@ -36,11 +37,13 @@ export const projectService = {
             }
         }
 
+        // 4. Test Suites
         const testSets = await testService.listTestSets();
         if (testSets.length > 0) {
             zip.file('tests.json', JSON.stringify(testSets, null, 2));
         }
 
+        // 5. Autonomous Agents
         const agents = await agentService.listAgents();
         if (agents.length > 0) {
             zip.file('agents.json', JSON.stringify(agents, null, 2));
@@ -62,7 +65,7 @@ export const projectService = {
             emitStatus("Parsing project metadata...", 5);
             await yieldToEventLoop();
 
-            let meta: ProjectMeta = { name: 'Imported', version: '1.0', created_at: '', updated_at: '', author: '' };
+            let meta: ProjectMeta = { name: 'Imported', version: '1.1', created_at: '', updated_at: '', author: '' };
             if (zip.file('metadata.json')) {
                 const text = await zip.file('metadata.json')?.async('string');
                 if (text) {
@@ -80,7 +83,7 @@ export const projectService = {
                 systemPrompt = await zip.file('system_prompt.txt')?.async('string');
                 if (systemPrompt) {
                     await systemPromptService.setPrompt(systemPrompt);
-                    loggerService.catInfo(LogCategory.SYSTEM, "System prompt restored from project.");
+                    loggerService.catInfo(LogCategory.SYSTEM, "System prompt restored.");
                 }
             }
 
@@ -89,7 +92,7 @@ export const projectService = {
                 mcpPrompt = await zip.file('mcp_prompt.txt')?.async('string');
                 if (mcpPrompt) {
                     await mcpPromptService.setPrompt(mcpPrompt);
-                    loggerService.catInfo(LogCategory.SYSTEM, "MCP prompt restored from project.");
+                    loggerService.catInfo(LogCategory.SYSTEM, "MCP prompt restored.");
                 }
             }
 
@@ -105,7 +108,6 @@ export const projectService = {
             
             for (let i = 0; i < domainFiles.length; i++) {
                 const file = domainFiles[i];
-                const fileName = file.name.split('/').pop();
                 const text = await file.async('string');
                 try {
                     const data = JSON.parse(text);
@@ -119,10 +121,10 @@ export const projectService = {
                     
                     const domainProgress = 15 + Math.floor(((i + 1) / domainFiles.length) * 15);
                     if (i % 5 === 0 || i === domainFiles.length - 1) {
-                        emitStatus(`Parsing domain: ${dMeta.id} (${symbols?.length || 0} symbols)`, domainProgress);
+                        emitStatus(`Parsing domain: ${dMeta.id}`, domainProgress);
                     }
                 } catch (e) {
-                    loggerService.catError(LogCategory.SYSTEM, `Failed to parse domain file: ${fileName}`, { error: e });
+                    loggerService.catError(LogCategory.SYSTEM, `Failed to parse domain file: ${file.name}`, { error: e });
                 }
                 
                 if (i % 10 === 0) await yieldToEventLoop();
@@ -132,11 +134,11 @@ export const projectService = {
             await yieldToEventLoop();
             await domainService.bulkUpsert('', allSymbolsToUpsert, true); // skipIndexing=true
 
-            emitStatus(`Vectorizing ${allSymbolsToUpsert.length} symbols (this may take a while)...`, 40);
+            emitStatus(`Vectorizing ${allSymbolsToUpsert.length} symbols...`, 40);
             await lancedbService.indexBatch(allSymbolsToUpsert, async (indexed, total) => {
                 const vectorProgress = 40 + Math.floor((indexed / total) * 40);
                 if (indexed % 100 === 0 || indexed === total) {
-                    emitStatus(`Vectorizing: ${indexed}/${total} symbols`, vectorProgress);
+                    emitStatus(`Vectorizing: ${indexed}/${total}`, vectorProgress);
                 }
                 await yieldToEventLoop();
             });
@@ -161,7 +163,7 @@ export const projectService = {
             emitStatus("Restoring autonomous agents...", 95);
             await yieldToEventLoop();
             let agentCount = 0;
-            const agentsFile = zip.file('agents.json') || zip.file('loops.json');
+            const agentsFile = zip.file('agents.json');
             if (agentsFile) {
                 const text = await agentsFile.async('string');
                 if (text) {
@@ -173,7 +175,8 @@ export const projectService = {
                                     agent.id, 
                                     agent.prompt, 
                                     agent.enabled, 
-                                    agent.schedule
+                                    agent.schedule,
+                                    agent.subscriptions
                                 );
                             }
                             agentCount = agents.length;
@@ -204,7 +207,7 @@ export const projectService = {
 
             return { stats, systemPrompt, mcpPrompt };
         } catch (error: any) {
-            loggerService.catError(LogCategory.SYSTEM, "Project import failed", { error: error.message, stack: error.stack });
+            loggerService.catError(LogCategory.SYSTEM, "Project import failed", { error: error.message });
             eventBusService.emitKernelEvent(KernelEventType.PROJECT_IMPORT_STATUS, { 
                 status: "FAILED", 
                 progress: 0,

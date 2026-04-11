@@ -1,6 +1,6 @@
 cask "signalzero-desktop" do
-  version "1.1.1"
-  sha256 "f8f4d5ec44c2802aa88e346645df5c8048019849cc421d25772267d854a6c8c7"
+  version "1.1.2"
+  sha256 "0eb856b63104fe22485ffe1ad305b0bfa96f98cf4128263f1cfc20ab99f5c720"
 
   url "https://github.com/klietus/SignalZero-Desktop/releases/download/v#{version}/SignalZero-Desktop-#{version}-arm64.dmg"
   name "SignalZero-Desktop"

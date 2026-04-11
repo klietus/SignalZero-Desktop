@@ -42,6 +42,39 @@ const migrateSchema = () => {
         }
     }
 
+    // Add missing columns to monitoring_deltas table
+    const deltaTableInfo = db.prepare("PRAGMA table_info(monitoring_deltas)").all() as any[];
+    if (!deltaTableInfo.some(col => col.name === 'metadata')) {
+        loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding metadata column to monitoring_deltas');
+        try {
+            db.exec("ALTER TABLE monitoring_deltas ADD COLUMN metadata TEXT");
+        } catch (err) {
+            loggerService.catError(LogCategory.SQLITE, 'Migration failed for column metadata in monitoring_deltas', { error: err });
+        }
+    }
+
+    // Add missing columns to monitoring_article_cache
+    const cacheTableInfo = db.prepare("PRAGMA table_info(monitoring_article_cache)").all() as any[];
+    if (!cacheTableInfo.some(col => col.name === 'metadata')) {
+        loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding metadata column to monitoring_article_cache');
+        try {
+            db.exec("ALTER TABLE monitoring_article_cache ADD COLUMN metadata TEXT");
+        } catch (err) {
+            loggerService.catError(LogCategory.SQLITE, 'Migration failed for column metadata in monitoring_article_cache', { error: err });
+        }
+    }
+
+    // Add missing columns to attachments table
+    const attTableInfo = db.prepare("PRAGMA table_info(attachments)").all() as any[];
+    if (!attTableInfo.some(col => col.name === 'image_base64')) {
+        loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding image_base64 column to attachments');
+        try {
+            db.exec("ALTER TABLE attachments ADD COLUMN image_base64 TEXT");
+        } catch (err) {
+            loggerService.catError(LogCategory.SQLITE, 'Migration failed for column image_base64 in attachments', { error: err });
+        }
+    }
+
     // Ensure monitoring_article_cache exists
     db.exec(`
         CREATE TABLE IF NOT EXISTS monitoring_article_cache (
