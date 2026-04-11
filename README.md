@@ -14,15 +14,15 @@ SignalZero Desktop is a sophisticated recursive symbolic reasoning engine built 
 
 ## Key Features
 
-- **Recursive Symbolic Reasoning:** Advanced inference engine with multi-step tool integration and trace-based reasoning.
-- **World Monitoring & Data Feeds:** Real-time ingestion of global events and data from sources like ACLED (conflict), GDELT (events), AlphaVantage (markets), and customizable RSS/Web feeds.
-- **Autonomous Synthesis & Rollups:** Automatic synthesis of raw data into hierarchical time periods (hour, day, week, month, year) for efficient AI grounding. Supports on-demand synthesis for missing or stale time ranges.
-- **Symbolic Store & Graph Hygiene:** Integrated knowledge store with vector search. Includes automated "Symbolic Compression" and "Canonical Merging" to maintain a clean, high-signal knowledge graph.
-- **Trace Visualization:** Real-time visualization of the reasoning process, showing activated symbols and tool execution paths.
-- **Context Management:** Persistent conversation sessions with automated "Priming" for pre-caching relevant symbols and world deltas.
-- **MCP Integration:** Native support for the Model Context Protocol (MCP), enabling extensible tool capabilities.
-- **Attachment Support:** Analyze and ground reasoning in local file attachments.
-- **Integrated Search:** Grounded web search and fetch capabilities with automated symbolic extraction.
+- **Autonomous Event-Driven Agents:** Specialized agents (like the *Symbolic Cartographer*) that react to world events in real-time. Supports persistent delta tracking, keyword subscriptions, and automatic state resume.
+- **Neural Gating & Resource Awareness:** High-performance resource management for local hardware. Uses a tiny **0.8B model "Vibe Check"** to gate expensive inference tasks and a **Priority Inference Lock** to ensure smooth UI interaction while agents run in the background.
+- **World Monitoring & Visual Deltas:** Real-time ingestion of global events from conflict, market, and news feeds. Now supports **Article Images** and direct source linking within the monitoring stream.
+- **Interactive AI Regeneration:** Redo any monitoring summary or hierarchical rollup on-demand. Individual hour-deltas are refined, while rollups are re-synthesized from their constituent sub-summaries.
+- **System Tray & Screenshot Tool:** Integrated system bar icon for quick access. Includes a native **Screenshot Capture** tool that automatically processes, analyzes, and attaches visual context to your reasoning turns.
+- **Multimodal Attachment Support:** Deep grounding in local files (PDF, HTML, RSS, JSON) and images. Vision models receive both a **symbolic grounding description** and the **raw base64 pixels** for direct visual reasoning.
+- **Self-Organizing Graph Hygiene:** Continuous background maintenance of the Symbolic Store. Includes automated link refactoring, cross-domain bridge lifting, reciprocal link deletion, and triad-based resonance detection.
+- **Trace Visualization:** Real-time visualization of the reasoning process, showing activated symbols, tool execution paths, and multimodal grounding events.
+- **MCP Integration:** Native support for the Model Context Protocol (MCP), enabling extensible tool capabilities across local and remote servers.
 
 ## Installation
 
@@ -47,11 +47,11 @@ Ensure you have [Node.js](https://nodejs.org/) installed on your system.
 
 ## Technical Architecture
 
-- **Recursive Inference Engine:** Multi-turn tool execution loop with automated context priming.
-- **Monitoring & Synthesis Pipeline:** Parallelized polling, itemization, and LLM-based summarization of world data.
-- **Hierarchical Rollups:** Recursive synthesis of data (e.g., hours -> days -> weeks) with staleness checks for current periods.
-- **Vector Search Store:** Efficient local vector retrieval powered by LanceDB for both symbols and world deltas.
-- **Symbolic Cleanup:** Automated canonical ID selection and graph merging based on semantic and temporal signals.
+- **Hardware-Aware Inference Engine:** Priority-based locking system (User: High, Agent: Background) designed for high-performance Apple Silicon (M4) and local GPU rigs.
+- **Neural Gating Layer:** A 0.8B parameter gating model that validates events against agent subscriptions before waking the heavy reasoning models.
+- **Hierarchical Context Compression:** Multi-layered history management using semantic tool-stripping, 12-round summarization heartbeats, and token-aware sliding windows.
+- **Normalized Persistence Layer:** Structured SQLite storage for relational metadata and attachments, paired with LanceDB for high-dimensional vector retrieval.
+- **Event Bus Backbone:** Real-time communication between the main process (runners, providers) and the renderer (streaming thoughts, trace updates, system events).
 
 ## Data Providers
 
