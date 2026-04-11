@@ -52,6 +52,8 @@ declare global {
             pollSource: (sourceId: string) => Promise<any>;
             listDeltas: (filter?: any) => Promise<any[]>;
             regenerateDelta: (deltaId: string) => Promise<any>;
+            processAttachment: (file: { name: string, path: string, type: string }) => Promise<{ id: string, filename: string, type: string, thumbnail?: string }>;
+            captureScreenshot: () => Promise<{ id: string, filename: string, type: string, thumbnail?: string } | null>;
             getRecentLogs: (limit?: number) => Promise<any[]>;
             getTraces: (sessionId: string) => Promise<any[]>;
             showEmojiPicker: () => Promise<void>;
@@ -72,6 +74,7 @@ declare global {
             onTraceLogged: (callback: (trace: any) => void) => () => void;
             onKernelEvent: (callback: (type: string, data: any) => void) => () => void;
             onNavigate: (callback: (view: string) => void) => () => void;
+            onScreenshotCaptured: (callback: (attachment: any) => void) => () => void;
             removeInferenceListeners: () => void;
             platform: string;
         }
@@ -191,6 +194,7 @@ function App() {
     const defaultUser: UserProfile = { name: "Desktop User", email: "local@signalzero.desktop", picture: "" };
 
     const [appState, setAppState] = useState<'checking' | 'setup' | 'app'>('checking');
+    const [pendingAttachments, setPendingAttachments] = useState<any[]>([]);
     const [activeContextId, setActiveContextId] = useState<string | null>(null);
     const [contexts, setContexts] = useState<ContextSession[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -427,12 +431,19 @@ function App() {
             if (view) setCurrentView(view);
         });
 
+        const removeScreenshotListener = window.api.onScreenshotCaptured((attachment: any) => {
+            if (attachment) {
+                setPendingAttachments(prev => [...prev, attachment]);
+            }
+        });
+
         return () => {
             if (typeof unbindChunk === 'function') unbindChunk();
             if (typeof unbindCompleted === 'function') unbindCompleted();
             if (typeof unbindTrace === 'function') unbindTrace();
             if (typeof unbindKernel === 'function') unbindKernel();
             if (typeof removeNavListener === 'function') removeNavListener();
+            if (typeof removeScreenshotListener === 'function') removeScreenshotListener();
         };
     }, [activeContextId, appState]);
 
@@ -468,13 +479,19 @@ function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    const handleSendMessage = async (text: string) => {
+    const handleSendMessage = async (text: string, options?: { attachments?: { id: string, filename: string, type: string }[] }) => {
         if (!activeContextId || isProcessing) return;
         setIsProcessing(true);
-        const userMsg: Message = { id: 'temp-' + Date.now(), role: Sender.USER, content: text, timestamp: new Date() };
+
+        let finalMessage = text;
+        if (options?.attachments && options.attachments.length > 0) {
+            finalMessage += `\n\n<attachments>${JSON.stringify(options.attachments)}</attachments>`;
+        }
+
+        const userMsg: Message = { id: 'temp-' + Date.now(), role: Sender.USER, content: text, timestamp: new Date(), metadata: { attachments: options?.attachments } };
         setMessages(prev => [...prev, userMsg]);
         try {
-            await window.api.sendMessage(activeContextId, text, systemPrompt);
+            await window.api.sendMessage(activeContextId, finalMessage, systemPrompt);
         } catch (e) {
             setIsProcessing(false);
             console.error(e);
@@ -642,7 +659,13 @@ function App() {
 
                         <div className="p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent">
                             <div className="w-full max-w-full mx-auto">
-                                <ChatInput onSend={handleSendMessage} disabled={isProcessing || !activeContextId} isProcessing={isProcessing} />
+                                <ChatInput 
+                                    onSend={handleSendMessage} 
+                                    disabled={isProcessing || !activeContextId} 
+                                    isProcessing={isProcessing}
+                                    pendingAttachments={pendingAttachments}
+                                    onClearPendingAttachments={() => setPendingAttachments([])}
+                                />
                             </div>
                         </div>
                     </div>

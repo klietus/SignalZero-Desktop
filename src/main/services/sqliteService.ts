@@ -201,6 +201,18 @@ const initDb = () => {
                 PRIMARY KEY (source_id, article_id)
             );
 
+            -- Attachments
+            CREATE TABLE IF NOT EXISTS attachments (
+                id TEXT PRIMARY KEY,
+                filename TEXT NOT NULL,
+                mime_type TEXT,
+                size INTEGER,
+                content TEXT, -- Extracted text content
+                structured_data TEXT, -- JSON vision analysis or other metadata
+                image_base64 TEXT, -- Full image data if applicable
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
             -- Simple Key-Value Store (for legacy/settings support)
             CREATE TABLE IF NOT EXISTS kv_store (
                 key TEXT PRIMARY KEY,

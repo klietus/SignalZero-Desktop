@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Menu, Tray, nativeImage, desktopCapturer } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/cognitav.jpg?asset'
@@ -21,6 +21,7 @@ import { topologyService } from './services/topologyService.js'
 import { monitoringService } from './services/monitoringService.js'
 import { sqliteService } from './services/sqliteService.js'
 import { mcpClientService } from './services/mcpClientService.js'
+import { attachmentService } from './services/attachmentService.js'
 import fs from 'fs'
 import { dialog } from 'electron'
 
@@ -185,7 +186,76 @@ function setupNativeMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+let tray: Tray | null = null;
+
+async function captureScreenshot() {
+  try {
+    const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1920, height: 1080 } });
+    const primarySource = sources[0];
+    if (!primarySource) throw new Error("No screen source found");
+
+    const png = primarySource.thumbnail.toPNG();
+    const tempPath = join(app.getPath('temp'), `screenshot-${Date.now()}.png`);
+    fs.writeFileSync(tempPath, png);
+
+    const attachment = await attachmentService.processAndSave(tempPath, `screenshot-${new Date().toISOString()}.png`, 'image/png');
+    
+    // Notify renderer that a screenshot was taken and is ready to be attached
+    broadcast('screenshot:captured', {
+      id: attachment.id,
+      filename: attachment.filename,
+      type: attachment.mime_type,
+      thumbnail: `data:image/png;base64,${attachment.image_base64}`
+    });
+
+    // Cleanup temp file
+    if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+
+    return attachment;
+  } catch (error: any) {
+    loggerService.catError(LogCategory.SYSTEM, "Failed to capture screenshot", { error: error.message });
+    return null;
+  }
+}
+
+function setupTray() {
+  if (tray) return;
+
+  try {
+    const iconPath = is.dev 
+      ? join(app.getAppPath(), 'resources/cognitav.jpg') 
+      : join(process.resourcesPath, 'cognitav.jpg');
+      
+    let trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+    
+    // On macOS, make it a template image so it works in light/dark mode
+    if (process.platform === 'darwin') {
+      trayIcon.setTemplateImage(true);
+    }
+
+    tray = new Tray(trayIcon);
+  } catch (err) {
+    // Fallback to a placeholder if icon loading fails
+    const emptyIcon = nativeImage.createEmpty();
+    tray = new Tray(emptyIcon);
+  }
+  
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'SignalZero', enabled: false },
+    { type: 'separator' },
+    { label: 'Capture Screenshot', click: () => captureScreenshot() },
+    { label: 'Open Monitor', click: () => createMonitorWindow() },
+    { type: 'separator' },
+    { label: 'Show Main Window', click: () => mainWindow?.show() },
+    { label: 'Quit', click: () => app.quit() }
+  ]);
+
+  tray.setToolTip('SignalZero Recursive Symbolic Kernel');
+  tray.setContextMenu(contextMenu);
+}
+
 function createWindow(): void {
+  setupTray();
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -572,6 +642,26 @@ ipcMain.handle('mcp-prompt:get', async () => {
 
 ipcMain.handle('mcp-prompt:set', async (_, prompt) => {
   return await mcpPromptService.setPrompt(prompt);
+});
+
+ipcMain.handle('system:process-attachment', async (_, file: { name: string, path: string, type: string }) => {
+  const attachment = await attachmentService.processAndSave(file.path, file.name, file.type);
+  return {
+    id: attachment.id,
+    filename: attachment.filename,
+    type: attachment.mime_type
+  };
+});
+
+ipcMain.handle('system:capture-screenshot', async () => {
+  const attachment = await captureScreenshot();
+  if (!attachment) return null;
+  return {
+    id: attachment.id,
+    filename: attachment.filename,
+    type: attachment.mime_type,
+    thumbnail: `data:image/png;base64,${attachment.image_base64}`
+  };
 });
 
 ipcMain.handle('window:open-monitor', async () => {

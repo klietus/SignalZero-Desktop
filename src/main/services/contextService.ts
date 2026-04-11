@@ -1,5 +1,6 @@
 import { sqliteService } from './sqliteService.js';
 import { symbolCacheService } from './symbolCacheService.js';
+import { attachmentService } from './attachmentService.js';
 import { ContextMessage, ContextSession } from '../types.js';
 import { randomUUID } from 'crypto';
 
@@ -80,8 +81,36 @@ export const contextService = {
   },
 
   async deleteSession(id: string): Promise<boolean> {
-    const result = sqliteService.run(`DELETE FROM contexts WHERE id = ?`, [id]);
-    return result.changes > 0;
+    try {
+        // 1. Find all attachments linked to this session's messages
+        const messages = sqliteService.all(`SELECT content FROM messages WHERE context_id = ?`, [id]);
+        const attachmentIds = new Set<string>();
+        
+        for (const msg of messages) {
+            if (!msg.content) continue;
+            const match = msg.content.match(/<attachments>([\s\S]*?)<\/attachments>/);
+            if (match) {
+                try {
+                    const atts = JSON.parse(match[1]);
+                    if (Array.isArray(atts)) {
+                        atts.forEach(a => { if (a.id) attachmentIds.add(a.id); });
+                    }
+                } catch (e) { /* ignore parse errors */ }
+            }
+        }
+
+        // 2. Delete the attachments from the database
+        for (const attId of attachmentIds) {
+            await attachmentService.deleteAttachment(attId);
+        }
+
+        // 3. Delete the session (cascades to messages in DB)
+        const result = sqliteService.run(`DELETE FROM contexts WHERE id = ?`, [id]);
+        return result.changes > 0;
+    } catch (error) {
+        console.error("Failed to delete session and attachments", error);
+        return false;
+    }
   },
 
   async closeSession(id: string): Promise<ContextSession | null> {

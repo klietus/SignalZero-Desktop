@@ -52,6 +52,9 @@ const api = {
   pollSource: (sourceId: string) => ipcRenderer.invoke('monitoring:poll-source', sourceId),
   listDeltas: (filter?: any) => ipcRenderer.invoke('monitoring:list-deltas', filter),
   regenerateDelta: (deltaId: string) => ipcRenderer.invoke('monitoring:regenerate-delta', deltaId),
+  processAttachment: (file: { name: string, path: string, type: string }) => 
+    ipcRenderer.invoke('system:process-attachment', file),
+  captureScreenshot: () => ipcRenderer.invoke('system:capture-screenshot'),
 
   // System
   getRecentLogs: (limit?: number) => ipcRenderer.invoke('system:get-recent-logs', limit),
@@ -101,6 +104,12 @@ const api = {
     const subscription = (_event, view) => callback(view);
     ipcRenderer.on('navigate', subscription);
     return () => ipcRenderer.removeListener('navigate', subscription);
+  },
+
+  onScreenshotCaptured: (callback: (attachment: any) => void) => {
+    const subscription = (_event, attachment) => callback(attachment);
+    ipcRenderer.on('screenshot:captured', subscription);
+    return () => ipcRenderer.removeListener('screenshot:captured', subscription);
   },
   
   removeInferenceListeners: () => {

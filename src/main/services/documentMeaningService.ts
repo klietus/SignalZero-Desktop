@@ -175,7 +175,7 @@ class DocumentMeaningService {
         let visionModel = settings.visionModel;
 
         if (settings.provider === 'gemini') {
-            visionModel = visionModel || 'gemini-1.5-flash';
+            visionModel = visionModel || 'gemini-2.5-flash';
         } else {
             visionModel = visionModel || 'gpt-4o-mini';
         }
@@ -221,7 +221,12 @@ class DocumentMeaningService {
 
             return {
                 type: 'image',
-                metadata: { url, model: visionModel },
+                metadata: { 
+                    url, 
+                    model: visionModel,
+                    base64: buffer.toString('base64'),
+                    mimeType: contentType || 'image/jpeg'
+                },
                 content: this.stripThinking(description),
                 structured_data: { analysis_model: visionModel }
             };

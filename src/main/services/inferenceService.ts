@@ -16,8 +16,8 @@ import { contextService } from './contextService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
 import { contextWindowService } from './contextWindowService.js';
-import { sqliteService } from './sqliteService.js';
 import { lancedbService } from './lancedbService.js';
+import { attachmentService, Attachment } from './attachmentService.js';
 import { mcpClientService } from './mcpClientService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { webSearchService } from './webSearchService.js';
@@ -381,36 +381,33 @@ const _streamAssistantResponseInternal = async function* (
   yield { assistantMessage };
 };
 
-export const resolveAttachments = async (message: string): Promise<{ resolvedContent: string; attachments: any[] }> => {
+export const resolveAttachments = async (message: string): Promise<{ resolvedContent: string; attachments: Attachment[] }> => {
   const attachmentRegex = /<attachments>([\s\S]*?)<\/attachments>/;
   const match = message.match(attachmentRegex);
   if (!match) return { resolvedContent: message, attachments: [] };
 
   try {
     const jsonStr = match[1];
-    const attachments = JSON.parse(jsonStr);
-    if (!Array.isArray(attachments)) return { resolvedContent: message, attachments: [] };
+    const attachmentRefs = JSON.parse(jsonStr);
+    if (!Array.isArray(attachmentRefs)) return { resolvedContent: message, attachments: [] };
 
+    const resolvedAttachments: Attachment[] = [];
     let resolvedContentStr = "\n\n--- Attachments ---\n";
-    for (const att of attachments) {
-      if (att.id) {
-        const stored = await sqliteService.request(['GET', `attachment:${att.id}`]);
-        if (stored) {
-          try {
-            const parsedDoc = JSON.parse(stored);
-            resolvedContentStr += `\n[File: ${att.filename || 'unknown'} (${parsedDoc.type})]\n${parsedDoc.content}\n`;
-            if (parsedDoc.structured_data?.analysis_model) {
-              resolvedContentStr += `(Analysis by ${parsedDoc.structured_data.analysis_model})\n`;
+    for (const ref of attachmentRefs) {
+      if (ref.id) {
+        const attachment = await attachmentService.getAttachment(ref.id);
+        if (attachment) {
+            resolvedAttachments.push(attachment);
+            resolvedContentStr += `\n[File: ${attachment.filename} (${attachment.mime_type})]\n${attachment.content}\n`;
+            if (attachment.structured_data?.analysis_model) {
+              resolvedContentStr += `(Analysis by ${attachment.structured_data.analysis_model})\n`;
             }
-          } catch (e) {
-            resolvedContentStr += `\n[Error reading attachment ${att.id}]\n`;
-          }
         } else {
-          resolvedContentStr += `\n[Attachment ${att.id} not found or expired]\n`;
+          resolvedContentStr += `\n[Attachment ${ref.id} not found or expired]\n`;
         }
       }
     }
-    return { resolvedContent: message.replace(match[0], resolvedContentStr), attachments };
+    return { resolvedContent: message.replace(match[0], resolvedContentStr), attachments: resolvedAttachments };
   } catch (e) {
     loggerService.catWarn(LogCategory.INFERENCE, "Failed to parse attachment block", { error: e });
     return { resolvedContent: message, attachments: [] };
@@ -532,12 +529,72 @@ export async function* sendMessageAndHandleTools(
 
     while (retries < MAX_RETRIES) {
       let contextMessages: ChatCompletionMessageParam[] = [];
+      const settings = await settingsService.getInferenceSettings();
+
       if (contextSessionId) {
         const result = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
         contextMessages = result.messages;
+        
+        // If this is the first loop and we have attachments, we need to find the user message we just recorded
+        // and potentially augment it with vision data if it's the very first turn.
+        // Actually, construction of the context window already pulled the message from the DB.
+        // For vision-capable models, we'll augment the context messages in-memory for this specific turn.
+        if (loops === 0 && attachments.length > 0) {
+            const lastUserMsgIdx = contextMessages.findLastIndex(m => m.role === 'user');
+            if (lastUserMsgIdx !== -1) {
+                const userMsg = contextMessages[lastUserMsgIdx];
+                if (typeof userMsg.content === 'string') {
+                    if (settings.provider === 'gemini') {
+                        const contentParts: any[] = [{ text: userMsg.content }];
+                        for (const att of attachments) {
+                            if (att.image_base64) {
+                                contentParts.push({
+                                    inlineData: {
+                                        data: att.image_base64,
+                                        mimeType: att.mime_type || 'image/jpeg'
+                                    }
+                                });
+                            }
+                        }
+                        contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
+                    } else if (settings.provider === 'openai') {
+                        const contentParts: any[] = [{ type: 'text', text: userMsg.content }];
+                        for (const att of attachments) {
+                            if (att.image_base64) {
+                                contentParts.push({
+                                    type: 'image_url',
+                                    image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` }
+                                });
+                            }
+                        }
+                        contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
+                    }
+                }
+            }
+        }
+
         eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens: result.totalTokens });
       } else {
-        contextMessages = [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: resolvedContent }] as ChatCompletionMessageParam[];
+        // Stateless/No session mode
+        let userContent: any = resolvedContent;
+        if (attachments.length > 0) {
+            if (settings.provider === 'gemini') {
+                userContent = [{ text: resolvedContent }];
+                for (const att of attachments) {
+                    if (att.image_base64) {
+                        userContent.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
+                    }
+                }
+            } else if (settings.provider === 'openai') {
+                userContent = [{ type: 'text', text: resolvedContent }];
+                for (const att of attachments) {
+                    if (att.image_base64) {
+                        userContent.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
+                    }
+                }
+            }
+        }
+        contextMessages = [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: userContent }] as ChatCompletionMessageParam[];
       }
 
       if (transientMessages.length > 0) contextMessages = [...contextMessages, ...transientMessages];
