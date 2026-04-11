@@ -1,8 +1,8 @@
 cask "signalzero-desktop" do
   version "1.1.1"
-  sha256 "0c9064e39e3894710a02661dc4f63ff76738a88f750a549510eb3a946c3cfa01"
+  sha256 "f8f4d5ec44c2802aa88e346645df5c8048019849cc421d25772267d854a6c8c7"
 
-  url "https://github.com/klietus/SignalZero-Desktop/releases/download/v#{version}/SignalZero%20Desktop-#{version}-arm64.dmg"
+  url "https://github.com/klietus/SignalZero-Desktop/releases/download/v#{version}/SignalZero-Desktop-#{version}-arm64.dmg"
   name "SignalZero-Desktop"
   desc "Recursive Symbolic Reasoning Kernel"
   homepage "https://github.com/klietus/SignalZero-Desktop"

@@ -70,7 +70,7 @@
   },
   "build": {
     "appId": "com.signalzero.desktop",
-    "productName": "SignalZero Desktop",
+    "productName": "SignalZero-Desktop",
     "directories": {
       "output": "dist"
     },
