@@ -2,11 +2,11 @@
 
 This log tracks the critical technical pivots and architectural choices made during the development of the SignalZero Kernel.
 
-## 2025-2026: The Core Pivots
+## 2026: The Rapid Desktop Evolution (Jan - Present)
 
-### 1. Transition to Local-First Hardware Scaling
+### 1. Transition to Local-First Hardware Scaling (Jan 2026)
 - **Decision:** Replace Redis and ChromaDB with synchronous SQLite (`better-sqlite3`) and local LanceDB.
-- **Context:** The original server-based architecture added unnecessary async overhead and maintenance complexity for a single-user system.
+- **Context:** The server-based architecture (Dec 2025) was cumbersome to maintain and added unnecessary async overhead for a single-user system.
 - **Logic:** Synchronous SQLite simplifies local state management, while LanceDB enables high-performance vector search directly on the filesystem without a sidecar process.
 
 ### 2. Implementation of "Neural Gating"
@@ -40,34 +40,34 @@ This log tracks the critical technical pivots and architectural choices made dur
 - **Logic:** Every link (e.g., `A part_of B`) automatically triggers its inverse (`B contains A`), ensuring the graph is fully traversable.
 
 ---
-*Entries below are reconstructed from the SignalZero-LocalNode legacy analysis.*
 
-## 2024-2025: The Server-Era Foundations
+## Dec 2025: The Server-Era Foundations (Deprecated)
 
 ### 8. Command-Pattern Database Abstraction
 - **Decision:** Use a `request(['CMD', ...args])` pattern for database interactions.
-- **Logic:** Decoupled core services from the specific database drivers (Redis at the time). This abstraction layer proved critical when pivoting the entire kernel from Redis to SQLite, as the high-level service logic remained largely unchanged.
+- **Logic:** Decoupled core services from the specific database drivers (Redis at the time). This abstraction layer proved critical when pivoting the entire kernel from Redis to SQLite in early 2026, as the high-level service logic remained largely unchanged.
 
 ### 9. Hierarchical Domain Isolation (H-JEPA Influence)
 - **Decision:** Strict separation between Global Shared Domains (`root`, `cyber_sec`) and User-Specific Domains (`user`, `state`).
-- **Logic:** Influenced by Hierarchical Joint-Embedding Predictive Architecture (H-JEPA) theories. Global domains act as the "Shared World Model" (long-term, collective intelligence), while User domains act as "Episodic/Private Memory" (short-term, individual experience).
+- **Logic:** Influenced by Hierarchical Joint-Embedding Predictive Architecture (H-JEPA) theories. Global domains act as the "Shared World Model," while User domains act as "Episodic/Private Memory."
 
 ### 10. Semiotic Machine Framing
 - **Decision:** Defining the system as a "Semiotic Machine" manipulating signs rather than just a "Chatbot."
-- **Logic:** Reconceptualized AI through structuralist linguistic theory. This led to the creation of the **Symbolic Triad** (Data structure, Visual representation, Semantic logic), forcing every system update to respect the relationship between the signifier (ID) and the signified (Role/Facets).
+- **Logic:** Reconceptualized AI through structuralist linguistic theory. This led to the creation of the **Symbolic Triad** (Data structure, Visual representation, Semantic logic).
 
-### 11. Latent Factor Link Prediction (PRD Stage)
-- **Decision:** Proposing a Tensor Network (TN) approach using CP Decomposition for link discovery.
-- **Logic:** Recognizing that LLM inference is too expensive for global graph maintenance. Low-rank approximations allowed the kernel to "predict" missing links by analyzing the mathematical topology of the adjacency tensor $(\mathcal{X})$.
+### 11. Tensor-Based Link Discovery (Abandoned)
+- **Decision:** Attempted a Tensor Network (TN) approach using CP Decomposition for link discovery.
+- **Outcome:** **FAILED**. The approach was too memory-intensive for local execution and did not scale efficiently with the symbol store size.
+- **Pivot:** Reverted to AI-driven hygiene strategies (Lifting, Merging) which provide higher accuracy with manageable resource costs on M4 hardware.
 
 ### 12. "Zero-Infrastructure" Testing Strategy
 - **Decision:** Building comprehensive in-memory mocks for Redis and Vector stores.
-- **Logic:** Realized that development speed is bound by infrastructure overhead. By ensuring the entire kernel could boot and pass 100+ tests without a single external database running, the team achieved an extremely tight iteration loop.
+- **Logic:** Realized that development speed is bound by infrastructure overhead. Ensured the entire kernel could boot and pass 100+ tests without a single external database running.
 
 ### 13. Rich-Text Symbolic Indexing
 - **Decision:** Indexing symbols using a synthesized "Rich Text" document rather than just names or roles.
-- **Logic:** Recognized that semantic retrieval needs high-dimensional surface area. By concatenating the ID, Triad, Domain, Role, and even JSON facets into a single indexable string, the kernel ensures that specific technical details (like CVE numbers or specific facet values) are searchable even if they aren't part of the primary symbol label.
+- **Logic:** Recognized that semantic retrieval needs high-dimensional surface area. Concatenating ID, Triad, Domain, Role, and facets into a single indexable string.
 
 ### 14. Use-Case Driven Lattice Development
 - **Decision:** Architecting high-level Lattices based on "Wicked Problem" archetypes (e.g., Ethical Triangulation, Ecological Cascade Risk).
-- **Logic:** Recognized that raw LLM reasoning often collapses under the weight of competing value systems (e.g., Utilitarianism vs. Deontology). By providing pre-structured Symbolic Lattices, the kernel forces the model to perform "Structured Ethical Synthesis" rather than simple narrative generation.
+- **Logic:** Recognized that raw LLM reasoning often collapses under the weight of competing value systems. Forced the model to perform "Structured Ethical Synthesis."
