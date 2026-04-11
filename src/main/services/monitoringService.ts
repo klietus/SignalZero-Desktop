@@ -213,8 +213,11 @@ class MonitoringService {
                 await settingsService.setMonitoringSettings(settings);
             }
 
-        } catch (error) {
-            loggerService.catError(LogCategory.MONITORING, `Failed to poll source: ${source.name}`, { error });
+        } catch (error: any) {
+            loggerService.catError(LogCategory.MONITORING, `Failed to poll source: ${source.name}`, { 
+                error: error.message,
+                stack: error.stack
+            });
         }
     }
 
