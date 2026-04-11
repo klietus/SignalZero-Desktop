@@ -8,7 +8,7 @@ Every symbol in the kernel follows a strict schema to ensure machine-readability
 
 | Property | Description |
 | :--- | :--- |
-| **ID** | A unique, uppercase identifier (e.g., `LATTICE-CORE-REASONING`). |
+| **ID** | **Descriptive, Deterministic Identifier** (e.g., `LATTICE-CORE-REASONING`). These IDs act as "Semantic Signposts," allowing the AI to perform **Lazy Symbolic Loading**. |
 | **Name** | A natural language name for the symbol. |
 | **Role** | A concise definition of the symbol's function or essence. |
 | **Kind** | The structural category (Pattern, Lattice, Persona, or Data). |
@@ -88,6 +88,12 @@ The `activation_conditions` of a symbol act as a **Semantic Overlay**. This over
 ## 6. Graph Traversal & Macro Execution
 
 Once an LLM has "snapped" to a grounding symbol, it utilizes the relational links to **Traverse the Graph**.
+
+### Lazy Symbolic Loading
+A key feature of the SignalZero Kernel is **Lazy Loading**. Because symbol IDs are highly descriptive and machine-readable (e.g., `VULNERABILITY-RCE-KEEPASSXC`), the LLM can see a list of links *without* loading their full definitions.
+- **Semantic Signposting:** The ID itself provides enough signal for the LLM to decide if following a link is relevant to its current mission.
+- **Context Efficiency:** The model only calls `load_symbols` for the IDs it deems "interesting," keeping the active context window lean.
+- **Traversal Strategy:** The LLM "scouts" the graph using IDs, then "settles" on specific nodes for deep reasoning.
 
 ### The Execution Flow
 1.  **Snap:** The LLM identifies a primary symbol matching the user's intent.
