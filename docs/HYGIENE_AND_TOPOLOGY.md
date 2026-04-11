@@ -14,23 +14,33 @@ To prevent knowledge silos, the system automatically bridges "Islands" to the "M
 - **Centroid Selection:** The system identifies the most representative symbol in an island (preferring those with "CORE" in their ID).
 - **Relational Anchoring:** It creates a `relates_to` link between the island centroid and the mainland centroid.
 
-## 2. Hygiene Strategies
+## 2. Intelligence Automation
 
-### Cross-Domain Bridge Lifting
-When a specific **Pattern** in one domain links to a symbol in another, the kernel uses AI to evaluate if this is a high-level structural dependency.
-- **Action:** If the relationship is generalizable, the kernel "lifts" the link from the specific Pattern to its parent **Lattice**.
-- **Efficiency:** The original specific link is deleted, reducing graph noise and promoting higher-level semantic understanding.
+These strategies use AI models to actively reason about the relationships between symbols.
 
-### Canonical Merging
-The kernel continuously scans for semantic redundancy.
-- **Vector Matching:** It compares the embeddings of all symbols within a domain.
-- **AI Synthesis:** If two symbols are semantically identical, the kernel merges them into a single "Canonical" symbol, re-mapping all existing links to the new ID.
+### Semantic Intelligence (Vector-Based)
+- **Auto-Compress:** Scans for semantically redundant symbols using vector similarity. If two symbols represent the same concept, they are merged into a canonical form.
+- **Auto-Link:** Identifies missing relationships by comparing symbol embeddings. If two symbols are highly similar but unlinked, the kernel proposes a relationship.
 
-### Reflexive Integrity
-To ensure the graph is fully searchable and traversable, the kernel enforces **Bidirectional Reciprocation**.
-- If `A` is linked to `B`, the kernel ensures `B` has the corresponding reciprocal link back to `A` (e.g., `depends_on` <-> `required_by`).
+### Triadic Resonance (Emoji-Based)
+- **Auto-Compress:** Merges symbols that share the same **Semiotic Triad** (3-emoji concept anchor), assuming they occupy the same conceptual space.
+- **Auto-Link:** Creates links between symbols that share overlapping triad components, enabling structural resonance across different domains.
 
-## 3. The 3-Hop Constraint
+## 3. Analysis & Healing Strategies
+
+These are structural background tasks that maintain the graph's health and connectivity.
+
+| Strategy | Function |
+| :--- | :--- |
+| **Canonical Link Refactoring** | Consolidates various specific link types into their most stable canonical forms to reduce taxonomy drift. |
+| **Reflexive Link Synthesis** | Enforces symmetry. If A links to B, this ensures B has the appropriate reciprocal link back to A (e.g., `part_of` ↔ `contains`). |
+| **Island Bridging & Orphan Healing** | Detects disconnected subgraphs and orphaned symbols, creating bridge links to the core "Mainland" to ensure global traversability. |
+| **Domain Lattice Docking** | Anchors floating, unlinked patterns into their most appropriate domain lattices based on metadata and similarity. |
+| **Bridge Lifting** | Elevates cross-domain links from specific patterns to high-level lattices when the relationship is a structural property rather than a local detail. |
+| **Link Promotion** | Upgrades generic `relates_to` links to stronger semantic types (like `depends_on` or `exemplifies`) when high confidence is detected. |
+| **Dead Link Cleanup** | Performs garbage collection by removing links that point to IDs that no longer exist in the symbolic store. |
+
+## 4. The 3-Hop Constraint
 
 To maintain high relational signal and prevent "Graph Bloat," the **Semantic** and **Triadic** auto-linking strategies use a distance check:
 - **Constraint:** A new link is only proposed if the two symbols are currently separated by **at least 3 hops**.
