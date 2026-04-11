@@ -14,15 +14,19 @@ SignalZero Desktop is a sophisticated recursive symbolic reasoning engine built 
 
 ## Key Features
 
+- **Recursive Symbolic Reasoning:** Advanced inference engine with multi-step tool integration and trace-based reasoning.
 - **Autonomous Event-Driven Agents:** Specialized agents (like the *Symbolic Cartographer*) that react to world events in real-time. Supports persistent delta tracking, keyword subscriptions, and automatic state resume.
 - **Neural Gating & Resource Awareness:** High-performance resource management for local hardware. Uses a tiny **0.8B model "Vibe Check"** to gate expensive inference tasks and a **Priority Inference Lock** to ensure smooth UI interaction while agents run in the background.
-- **World Monitoring & Visual Deltas:** Real-time ingestion of global events from conflict, market, and news feeds. Now supports **Article Images** and direct source linking within the monitoring stream.
+- **World Monitoring & Visual Deltas:** Real-time ingestion of global events from conflict, market, and news feeds (ACLED, GDELT, AlphaVantage, RSS). Now supports **Article Images** and direct source linking.
+- **Autonomous Synthesis & Rollups:** Automatic synthesis of raw data into hierarchical time periods (hour, day, week, month, year) for efficient AI grounding.
 - **Interactive AI Regeneration:** Redo any monitoring summary or hierarchical rollup on-demand. Individual hour-deltas are refined, while rollups are re-synthesized from their constituent sub-summaries.
+- **Symbolic Store & Graph Hygiene:** Integrated knowledge store with vector search. Includes automated "Symbolic Compression," "Canonical Merging," and "Bridge Lifting" to maintain a clean, high-signal knowledge graph.
 - **System Tray & Screenshot Tool:** Integrated system bar icon for quick access. Includes a native **Screenshot Capture** tool that automatically processes, analyzes, and attaches visual context to your reasoning turns.
 - **Multimodal Attachment Support:** Deep grounding in local files (PDF, HTML, RSS, JSON) and images. Vision models receive both a **symbolic grounding description** and the **raw base64 pixels** for direct visual reasoning.
-- **Self-Organizing Graph Hygiene:** Continuous background maintenance of the Symbolic Store. Includes automated link refactoring, cross-domain bridge lifting, reciprocal link deletion, and triad-based resonance detection.
 - **Trace Visualization:** Real-time visualization of the reasoning process, showing activated symbols, tool execution paths, and multimodal grounding events.
+- **Context Management:** Persistent conversation sessions with automated "Priming" for pre-caching relevant symbols and world deltas.
 - **MCP Integration:** Native support for the Model Context Protocol (MCP), enabling extensible tool capabilities across local and remote servers.
+- **Integrated Search:** Grounded web search and fetch capabilities with automated symbolic extraction.
 
 ## Installation
 
