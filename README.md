@@ -101,6 +101,30 @@ Run the test suite using Vitest:
 npm test
 ```
 
+## Further Research & Theoretical Foundations
+
+SignalZero is grounded in emerging research at the intersection of semiotics, cognitive science, and autonomous systems.
+
+### 💠 Semiotics & Sign Systems
+- **[Language Models as Semiotic Machines](https://arxiv.org/abs/2410.13065)** - Reconceptualizing AI through structuralist and post-structuralist linguistic theories.
+- **[Not Minds, but Signs: Reframing LLMs through Semiotics](https://arxiv.org/abs/2505.17080)** - Analyzing LLMs as semiotic agents rather than cognitive ones.
+
+### 🧠 Neuro-Symbolic Systems
+- **[Neuro-Symbolic AI in 2024: A Systematic Review](https://arxiv.org/abs/2501.05435)** - The state of the art in integrating symbolic logic with neural networks.
+- **[Neuro-Symbolic Artificial Intelligence: The State of the Art](https://arxiv.org/abs/2109.06133)** - Foundational concepts of hybrid AI architectures.
+
+### 🌍 World Model AIs
+- **[A Path Towards Autonomous Machine Intelligence](https://arxiv.org/abs/2306.02572)** - Yann LeCun's proposal for JEPA (Joint-Embedding Predictive Architecture).
+- **[Mastering Diverse Domains through World Models](https://arxiv.org/abs/2301.04104)** - Detailed overview of the DreamerV3 reinforcement learning framework.
+
+### ♻️ Recursive Context & Memory
+- **[MemGPT: Towards LLMs as Operating Systems](https://arxiv.org/abs/2310.08560)** - Managing infinite context through hierarchical memory and paging.
+- **[Recursive Summarization for Long-Form Comprehension](https://arxiv.org/abs/2109.10686)** - Techniques for hierarchical state compression in LLM contexts.
+
+### ⚓ Semantic Grounding
+- **[Understanding AI: Semantic Grounding in Large Language Models](https://arxiv.org/abs/2402.10992)** - Investigating functional and causal grounding in modern transformers.
+- **[Semantic Partial Grounding via LLMs](https://arxiv.org/abs/2602.22067)** - Using LLMs to prune irrelevant search spaces in classical planning tasks.
+
 ## License
 
 This project is licensed under the **MIT License**. See the `LICENSE` file for more details.
