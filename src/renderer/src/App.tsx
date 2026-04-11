@@ -351,6 +351,9 @@ function App() {
         if (appState !== 'app') return;
 
         const unbindChunk = window.api.onInferenceChunk((chunk: any) => {
+            const sessionId = typeof chunk === 'object' ? chunk.sessionId : activeContextId;
+            if (activeContextId && sessionId !== activeContextId) return;
+
             const text = typeof chunk === 'string' ? chunk : (chunk.text || '');
             const rawToolCalls = typeof chunk === 'object' ? (chunk.toolCalls || []) : [];
             
@@ -388,7 +391,10 @@ function App() {
             });
         });
 
-        const unbindCompleted = window.api.onInferenceCompleted(() => {
+        const unbindCompleted = window.api.onInferenceCompleted((data?: any) => {
+            const sessionId = data?.sessionId || activeContextId;
+            if (activeContextId && sessionId !== activeContextId) return;
+
             setIsProcessing(false);
             if (activeContextId) {
                 window.api.getHistory(activeContextId).then(history => {

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Check, AlertTriangle, GitMerge, Box, X, User, Database, RefreshCcw, Layout } from 'lucide-react';
+import { Plus, Check, AlertTriangle, GitMerge, Box, X, User, Database, RefreshCcw, Layout, Trash2 } from 'lucide-react';
 import { SymbolDef, SymbolFacet } from '../../types';
 import { Header, HeaderProps } from '../Header';
 
@@ -557,6 +557,38 @@ export const SymbolForgeScreen: React.FC<SymbolForgeScreenProps> = ({ initialDom
         }
     };
 
+    const handleDelete = async () => {
+        if (!originalId) return;
+        const targetDomain = currentSymbol.symbol_domain || selectedDomain || 'root';
+        if (targetDomain === 'root') {
+            alert("Cannot delete root symbols.");
+            return;
+        }
+        if (!window.confirm(`Are you sure you want to delete symbol "${originalId}"?`)) return;
+
+        setIsLoading(true);
+        try {
+            await (window.api as any).deleteSymbol(targetDomain, originalId);
+            setSaveMessage({ type: 'success', text: 'Symbol Deleted' });
+            // Refresh the current list
+            const cached = await (window.api as any).getSymbolsByDomain(targetDomain);
+            setSymbolList(cached);
+            // Reset to new state
+            setCurrentSymbol({ 
+                ...DEFAULT_PATTERN, 
+                symbol_domain: selectedDomain || 'root', 
+                id: `NEW-PATTERN` 
+            });
+            setOriginalId(null);
+            setIsDirty(false);
+        } catch (e) {
+            console.error(e);
+            setSaveMessage({ type: 'error', text: 'Delete Failed' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleNew = (template: SymbolDef) => {
         if (isDirty) {
             if (!window.confirm("Unsaved changes detected. Abandon Forge state?")) return;
@@ -578,7 +610,19 @@ export const SymbolForgeScreen: React.FC<SymbolForgeScreenProps> = ({ initialDom
                 <div className="flex items-center gap-4">
                     <button onClick={handleRefresh} className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 hover:bg-gray-800 text-gray-300 rounded-md text-xs font-mono font-bold transition-colors border border-gray-800"><RefreshCcw size={14} className={isLoading ? "animate-spin" : ""} /> Refresh</button>
                     {saveMessage && <span className={`text-[10px] font-mono flex items-center gap-1 ${saveMessage.type === 'success' ? 'text-emerald-500' : 'text-amber-500'}`}>{saveMessage.type === 'success' ? <Check size={12} /> : <AlertTriangle size={12} />}{saveMessage.text}</span>}
-                    <button onClick={handleSave} disabled={!isDirty} className="flex items-center gap-2 px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-mono text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/10">Commit Symbol</button>
+                    
+                    <div className="flex items-center gap-2">
+                        {originalId && (
+                            <button 
+                                onClick={handleDelete}
+                                disabled={isLoading}
+                                className="flex items-center gap-2 px-3 py-2 rounded bg-red-900/20 hover:bg-red-900/40 border border-red-900/50 text-red-400 font-mono text-[10px] font-bold uppercase tracking-widest transition-all"
+                            >
+                                <Trash2 size={14} /> Delete
+                            </button>
+                        )}
+                        <button onClick={handleSave} disabled={!isDirty || isLoading} className="flex items-center gap-2 px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-mono text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/10">Commit Symbol</button>
+                    </div>
                 </div>
             </Header>
 

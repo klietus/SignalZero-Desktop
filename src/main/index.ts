@@ -59,6 +59,14 @@ async function performRecovery() {
         await contextService.setActiveMessage(ctx.id, null);
       }
     }
+
+    // NEW: Clean up malformed symbols (null or empty IDs)
+    loggerService.catInfo(LogCategory.SYSTEM, "Cleaning up malformed symbols...");
+    const result = sqliteService.run(`DELETE FROM symbols WHERE id IS NULL OR id = '' OR id = 'undefined'`);
+    if (result.changes > 0) {
+      loggerService.catInfo(LogCategory.SYSTEM, `Purged ${result.changes} malformed symbols from store.`);
+    }
+
   } catch (error: any) {
     loggerService.catError(LogCategory.SYSTEM, "Recovery process failed", { error: error.message });
   }
@@ -282,11 +290,11 @@ function createWindow(): void {
       if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', data);
       if (type === KernelEventType.INFERENCE_CHUNK) {
         broadcast(`inference:chunk:${data.sessionId}`, data.text);
-        broadcast('inference:chunk', data.text);
+        broadcast('inference:chunk', { sessionId: data.sessionId, text: data.text });
       }
       if (type === KernelEventType.INFERENCE_COMPLETED) {
-        broadcast(`inference:completed:${data.sessionId}`);
-        broadcast('inference:completed');
+        broadcast(`inference:completed:${data.sessionId}`, data);
+        broadcast('inference:completed', { sessionId: data.sessionId });
       }
       if (type === KernelEventType.INFERENCE_ERROR) {
         broadcast(`inference:error:${data.sessionId}`, data.error);
@@ -427,11 +435,11 @@ ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruc
 
     for await (const chunk of stream) {
       if (chunk.text || chunk.toolCalls) {
-        event.sender.send('inference:chunk', chunk);
+        event.sender.send('inference:chunk', { ...chunk, sessionId });
       }
     }
 
-    event.sender.send('inference:completed');
+    event.sender.send('inference:completed', { sessionId });
     return { success: true };
   } catch (error: any) {
     loggerService.error("IPC Inference Error", { error: error.message });
