@@ -12,8 +12,9 @@ Every symbol in the kernel follows a strict schema to ensure machine-readability
 | **Name** | A natural language name for the symbol. |
 | **Role** | A concise definition of the symbol's function or essence. |
 | **Kind** | The structural category (Pattern, Lattice, Persona, or Data). |
-| **Macro** | Higher-level categorical grouping (e.g., `cyber_sec`, `geopolitics`). Used for broad domain isolation. |
-| **Triad** | Seimiotic triangulation using emoji-based resonance (see below). |
+| **Domain** | Categorical grouping (e.g., `cyber_sec`, `geopolitics`). Used for broad domain isolation. |
+| **Macro** | Executable logic or complex protocol code triggered by the symbol. |
+| **Triad** | Semiotic triangulation using emoji-based resonance. |
 | **Facets** | A structured array of key/value pairs defining specific attributes or state. |
 | **Links** | An array of relationships to other symbols. |
 
