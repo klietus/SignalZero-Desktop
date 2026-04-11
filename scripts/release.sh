@@ -12,15 +12,21 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
+# 0. Check for uncommitted changes
+if ! git diff-index --quiet HEAD --; then
+    echo "❌ Error: You have uncommitted changes. Please commit or stash them first."
+    exit 1
+fi
+
 echo "🚀 Starting release process for v$VERSION..."
 
 # 1. Update version in package.json
 echo "📝 Updating package.json..."
-sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
+sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" package.json
 
 # 2. Update version in projectService.ts
 echo "📝 Updating projectService.ts..."
-sed -i '' "s/version: '.*'/version: '$VERSION'/" src/main/services/projectService.ts
+sed -i '' "s/version: '[^']*'/version: '$VERSION'/g" src/main/services/projectService.ts
 
 # 3. Build the macOS DMG
 echo "🏗️  Building macOS DMG (this may take a few minutes)..."
