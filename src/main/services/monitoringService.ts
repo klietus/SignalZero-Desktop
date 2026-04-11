@@ -485,9 +485,9 @@ class MonitoringService {
             const sources = sqliteService.all(`SELECT DISTINCT source_id FROM monitoring_deltas WHERE period = ?`, [p]);
             
             for (const { source_id } of sources) {
-                // Get all deltas in the current window for this period
+                // Get most recent 50 deltas in the current window for this period to prevent context explosion
                 const deltas = sqliteService.all(
-                    `SELECT * FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp > datetime('now', '-${rollupInfo.window}') ORDER BY timestamp DESC`,
+                    `SELECT * FROM monitoring_deltas WHERE source_id = ? AND period = ? AND timestamp > datetime('now', '-${rollupInfo.window}') ORDER BY timestamp DESC LIMIT 50`,
                     [source_id, p]
                 );
 
@@ -525,7 +525,10 @@ class MonitoringService {
         const fastModel = settings.fastModel;
         if (!fastModel) return;
 
-        const combinedContent = deltas.map(d => `[${d.timestamp}] ${d.content}`).join('\n\n---\n\n');
+        const combinedContent = deltas.map(d => {
+            const truncatedContent = (d.content || "").slice(0, 1000);
+            return `[${d.timestamp}] ${truncatedContent}`;
+        }).join('\n\n---\n\n');
         const prompt = `Synthesize the following ${fromPeriod} deltas for "${sourceId}" into a single comprehensive ${toPeriod} summary.
         Focus on identifying long-term trends and major shifts.
         
