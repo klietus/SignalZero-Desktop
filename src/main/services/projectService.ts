@@ -13,7 +13,7 @@ const yieldToEventLoop = () => new Promise(resolve => setTimeout(resolve, 0));
 
 export const projectService = {
     async getActiveProjectMeta(): Promise<ProjectMeta> {
-        return { name: 'SignalZero Desktop', version: '1.1.2', created_at: '', updated_at: '', author: 'klietus' };
+        return { name: 'SignalZero Desktop', version: '1.1.3', created_at: '', updated_at: '', author: 'klietus' };
     },
 
     async export(meta: ProjectMeta, systemPrompt: string, mcpPrompt: string): Promise<Uint8Array> {
