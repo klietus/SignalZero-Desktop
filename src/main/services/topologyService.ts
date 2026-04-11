@@ -1343,7 +1343,7 @@ A Lattice is a high-level abstract container providing structural "docking point
         // Priority: component with USER-RECURSIVE-CORE > largest component
         let mainlandIdx = components.findIndex(c => c.includes('USER-RECURSIVE-CORE'));
         if (mainlandIdx === -1) {
-            mainlandIdx = components.findIndex(c => c.some(id => id.toUpperCase().includes('CORE')));
+            mainlandIdx = components.findIndex(c => c.some(id => (id || '').toUpperCase().includes('CORE')));
         }
         if (mainlandIdx === -1) {
             let maxLen = -1;
@@ -1361,8 +1361,8 @@ A Lattice is a high-level abstract container providing structural "docking point
 
         // Sort islands so that those containing "CORE" or large clusters are processed first
         islands.sort((a, b) => {
-            const aHasCore = a.some(id => id.toUpperCase().includes('CORE'));
-            const bHasCore = b.some(id => id.toUpperCase().includes('CORE'));
+            const aHasCore = a.some(id => (id || '').toUpperCase().includes('CORE'));
+            const bHasCore = b.some(id => (id || '').toUpperCase().includes('CORE'));
             if (aHasCore && !bHasCore) return -1;
             if (!aHasCore && bHasCore) return 1;
             return b.length - a.length;
@@ -1379,10 +1379,10 @@ A Lattice is a high-level abstract container providing structural "docking point
         for (const island of islandsToProcess) {
             // Find the best candidate from the island to bridge (the "Centroid")
             // Priority: any symbol with CORE in the name
-            let centroidId = island.find(id => id.toUpperCase().includes('CORE')) || island[0];
+            let centroidId = island.find(id => (id || '').toUpperCase().includes('CORE')) || island[0];
 
             // If no CORE, find most connected
-            if (!centroidId.toUpperCase().includes('CORE')) {
+            if (centroidId && !(centroidId || '').toUpperCase().includes('CORE')) {
                 let maxLinks = -1;
                 for (const id of island) {
                     const sym = idToSymbol.get(id);

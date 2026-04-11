@@ -306,9 +306,21 @@ const _streamAssistantResponseInternal = async function* (
         if (typeof m.content === 'string') {
           parts.push({ text: m.content || ' ' });
         } else if (Array.isArray(m.content)) {
-          for (const part of m.content) {
-            if (part.type === 'text') parts.push({ text: part.text || ' ' });
-            else if ((part as any).inlineData) parts.push({ inlineData: (part as any).inlineData });
+          for (const part of m.content as any[]) {
+            if (part.text) {
+              parts.push({ text: part.text });
+            } else if (part.type === 'text') {
+              parts.push({ text: part.text || ' ' });
+            } else if (part.inlineData) {
+              parts.push({ inlineData: part.inlineData });
+            } else if (part.type === 'image_url' && part.image_url?.url?.startsWith('data:')) {
+              // Convert OpenAI-style base64 image to Gemini format
+              const dataUrl = part.image_url.url;
+              const matches = dataUrl.match(/^data:(.*);base64,(.*)$/);
+              if (matches) {
+                parts.push({ inlineData: { mimeType: matches[1], data: matches[2] } });
+              }
+            }
           }
         }
 
@@ -326,14 +338,21 @@ const _streamAssistantResponseInternal = async function* (
         if (m.content) parts.push({ text: m.content });
         if (m.tool_calls) {
           m.tool_calls.forEach(tc => {
-            parts.push({
-              functionCall: {
-                name: tc.function.name,
-                args: JSON.parse(tc.function.arguments)
-              }
-            });
+            try {
+              parts.push({
+                functionCall: {
+                  name: tc.function.name,
+                  args: JSON.parse(tc.function.arguments)
+                }
+              });
+            } catch (e) {
+              loggerService.catWarn(LogCategory.INFERENCE, "Failed to parse tool arguments for Gemini history", { tool: tc.function.name });
+            }
           });
         }
+
+        if (parts.length === 0) parts.push({ text: ' ' });
+
         if (lastRole === 'model') {
           const lastMsg = history[history.length - 1];
           lastMsg.parts.push(...parts);
