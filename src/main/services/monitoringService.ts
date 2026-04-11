@@ -2,6 +2,7 @@ import { settingsService } from './settingsService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { sqliteService } from './sqliteService.js';
 import { lancedbService } from './lancedbService.js';
+import { eventBusService } from './eventBusService.js';
 import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
 import { MonitoringSourceConfig, MonitoringDelta, MonitoringPeriod } from '../types.js';
 import { randomUUID } from 'crypto';
@@ -410,6 +411,9 @@ class MonitoringService {
         // Index in LanceDB
         await lancedbService.indexDeltaBatch([delta]);
         
+        // Notify any listeners (e.g. Agents)
+        eventBusService.emitKernelEvent('monitoring:delta-created' as any, delta);
+
         loggerService.catInfo(LogCategory.MONITORING, `Recorded new ${period} delta for ${sourceId} at ${timestamp}`, { metadata });
     }
 

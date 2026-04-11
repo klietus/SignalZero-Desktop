@@ -30,6 +30,18 @@ const migrateSchema = () => {
         }
     }
 
+    // Add missing columns to agents table
+    const agentTableInfo = db.prepare("PRAGMA table_info(agents)").all() as any[];
+    const agentColumnNames = agentTableInfo.map(info => info.name);
+    if (!agentColumnNames.includes('subscriptions')) {
+        loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding subscriptions column to agents table');
+        try {
+            db.exec("ALTER TABLE agents ADD COLUMN subscriptions TEXT");
+        } catch (err) {
+            loggerService.catError(LogCategory.SQLITE, 'Migration failed for column subscriptions', { error: err });
+        }
+    }
+
     // Ensure monitoring_article_cache exists
     db.exec(`
         CREATE TABLE IF NOT EXISTS monitoring_article_cache (
@@ -163,6 +175,7 @@ const initDb = () => {
                 prompt TEXT NOT NULL,
                 schedule TEXT,
                 enabled INTEGER DEFAULT 1,
+                subscriptions TEXT, -- JSON array of keywords/trigger phrases
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
@@ -179,6 +192,16 @@ const initDb = () => {
                 response_preview TEXT,
                 error TEXT,
                 FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
+            );
+
+            -- Track which deltas each agent has already processed
+            CREATE TABLE IF NOT EXISTS agent_processed_deltas (
+                agent_id TEXT NOT NULL,
+                delta_id TEXT NOT NULL,
+                processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (agent_id, delta_id),
+                FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE,
+                FOREIGN KEY (delta_id) REFERENCES monitoring_deltas(id) ON DELETE CASCADE
             );
 
             -- Monitoring Deltas

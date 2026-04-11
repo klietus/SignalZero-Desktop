@@ -234,6 +234,7 @@ export interface AgentDefinition {
     id: string;
     userId?: string;
     schedule?: string;
+    subscriptions?: string[];
     prompt: string;
     enabled: boolean;
     createdAt?: string;

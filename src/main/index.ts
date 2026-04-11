@@ -22,6 +22,7 @@ import { monitoringService } from './services/monitoringService.js'
 import { sqliteService } from './services/sqliteService.js'
 import { mcpClientService } from './services/mcpClientService.js'
 import { attachmentService } from './services/attachmentService.js'
+import { agentRunner } from './services/agentRunner.js'
 import fs from 'fs'
 import { dialog } from 'electron'
 
@@ -360,6 +361,9 @@ app.whenReady().then(async () => {
 
   createWindow()
   await performRecovery();
+  
+  // Initialize background runners
+  agentRunner; 
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -419,7 +423,7 @@ ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruc
     const chat = await getChatSession(systemInstruction || activeSystemPrompt, sessionId);
     const toolExecutor = createToolExecutor(sessionId);
 
-    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, traceNeeded, systemInstruction || activeSystemPrompt, sessionId, undefined, webResults, webBrief);
+    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, traceNeeded, systemInstruction || activeSystemPrompt, sessionId, undefined, webResults, webBrief, undefined, 1);
 
     for await (const chunk of stream) {
       if (chunk.text || chunk.toolCalls) {
@@ -571,8 +575,8 @@ ipcMain.handle('agent:list', async () => {
   return await agentService.listAgents();
 });
 
-ipcMain.handle('agent:upsert', async (_, id, prompt, enabled, schedule) => {
-  return await agentService.upsertAgent(id, prompt, enabled, schedule);
+ipcMain.handle('agent:upsert', async (_, id, prompt, enabled, schedule, subscriptions) => {
+  return await agentService.upsertAgent(id, prompt, enabled, schedule, subscriptions);
 });
 
 ipcMain.handle('agent:delete', async (_, id) => {

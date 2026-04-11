@@ -30,6 +30,46 @@ interface ChatSessionState {
 
 const MAX_TOOL_LOOPS = 15;
 
+/**
+ * Global Inference Lock to prevent GPU starvation on local hardware.
+ * Ensures only one heavy model turn runs at a time, with priority for User Chat.
+ */
+class InferenceLockManager {
+    private isLocked = false;
+    private queue: { priority: number, resolve: () => void }[] = [];
+
+    async acquire(priority: number = 0): Promise<void> {
+        // Priority 1 = User (Immediate/High), Priority 0 = Agent (Background/Low)
+        if (!this.isLocked) {
+            this.isLocked = true;
+            return;
+        }
+
+        return new Promise((resolve) => {
+            if (priority > 0) {
+                // High priority jumps to front of queue (but behind other high priorities)
+                const lastHighPriorityIdx = this.queue.findLastIndex(item => item.priority > 0);
+                this.queue.splice(lastHighPriorityIdx + 1, 0, { priority, resolve });
+            } else {
+                this.queue.push({ priority, resolve });
+            }
+        });
+    }
+
+    release(): void {
+        if (this.queue.length > 0) {
+            const next = this.queue.shift();
+            if (next) {
+                next.resolve();
+                return;
+            }
+        }
+        this.isLocked = false;
+    }
+}
+
+export const inferenceLock = new InferenceLockManager();
+
 export const getClient = async () => {
   const { endpoint, provider, apiKey } = await settingsService.getInferenceSettings();
 
@@ -156,21 +196,21 @@ const parseToolArguments = (args: string): { data: any; error?: string } => {
 
 const chatSessions = new Map<string, ChatSessionState>();
 
-const createChatSession = async (systemInstruction: string): Promise<ChatSessionState> => ({
+const createChatSession = async (systemInstruction: string, modelOverride?: string): Promise<ChatSessionState> => ({
   messages: [{ role: "system", content: systemInstruction }],
   systemInstruction,
-  model: await getModel(),
+  model: modelOverride || await getModel(),
 });
 
-export const getChatSession = async (systemInstruction: string, contextSessionId?: string) => {
+export const getChatSession = async (systemInstruction: string, contextSessionId?: string, modelOverride?: string) => {
   const key = contextSessionId || "default";
   const existing = chatSessions.get(key);
   if (!existing || existing.systemInstruction !== systemInstruction) {
-    const fresh = await createChatSession(systemInstruction);
+    const fresh = await createChatSession(systemInstruction, modelOverride);
     chatSessions.set(key, fresh);
   }
   const chat = chatSessions.get(key)!;
-  const currentModel = await getModel();
+  const currentModel = modelOverride || await getModel();
   if (chat.model !== currentModel) chat.model = currentModel;
   return chat;
 };
@@ -438,7 +478,7 @@ export async function* sendMessageAndHandleTools(
   anticipatedWebResults?: any[],
   anticipatedWebBrief?: string,
   monitoringDeltas?: any[],
-
+  priority: number = 1, // Default to High (User Chat)
 ): AsyncGenerator<
   { text?: string; toolCalls?: any[]; isComplete?: boolean },
   void,
@@ -467,396 +507,320 @@ export async function* sendMessageAndHandleTools(
     await tentativeLinkService.incrementTurns();
   }
 
-  let loops = 0;
-  let totalTextAccumulatedAcrossLoops = "";
-  let previousTurnText = "";
-  let hasLoggedTrace = false;
+  await inferenceLock.acquire(priority);
 
-  let auditRetries = 0;
-  const ENABLE_SYSTEM_AUDIT = true;
-  const MAX_AUDIT_RETRIES = 3;
-  const transientMessages: ChatCompletionMessageParam[] = [];
-  let yieldedToolCalls: ChatCompletionMessageToolCall[] | undefined;
+  try {
+    let loops = 0;
+    let totalTextAccumulatedAcrossLoops = "";
+    let previousTurnText = "";
+    let hasLoggedTrace = false;
 
-  const isNarrativeText = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return false;
-    if (trimmed.startsWith('[System') || trimmed.startsWith('> *[System')) return false;
-    if (trimmed.includes('SYSTEM AUDIT FAILURE')) return false;
-    const withoutThoughts = stripThoughts(trimmed);
-    if (!withoutThoughts) return false;
-    if (withoutThoughts.startsWith('[Tool') || withoutThoughts.startsWith('{"status":')) return false;
-    return withoutThoughts.length > 2;
-  };
+    let auditRetries = 0;
+    const ENABLE_SYSTEM_AUDIT = true;
+    const MAX_AUDIT_RETRIES = 3;
+    const transientMessages: ChatCompletionMessageParam[] = [];
+    let yieldedToolCalls: ChatCompletionMessageToolCall[] | undefined;
 
-  while (loops < MAX_TOOL_LOOPS && auditRetries < MAX_AUDIT_RETRIES + 1) {
-    loggerService.catDebug(LogCategory.INFERENCE, `Starting turn loop ${loops}/${MAX_TOOL_LOOPS}`, {
-      contextSessionId,
-      previousTurnTextLength: previousTurnText.length,
-      totalTextAccumulatedAcrossLoopsLength: totalTextAccumulatedAcrossLoops.length,
-      traceNeeded
-    });
-    yieldedToolCalls = undefined;
-    if (contextSessionId) {
-      const session = await contextService.getSession(contextSessionId);
-      if (!session || session.status === 'closed') {
-        loggerService.catInfo(LogCategory.INFERENCE, "Context closed during inference, aborting.", { contextSessionId });
-        yield { text: "\n[System] Context archived. Inference aborted." };
-        break;
-      }
+    const isNarrativeText = (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return false;
+      if (trimmed.startsWith('[System') || trimmed.startsWith('> *[System')) return false;
+      if (trimmed.includes('SYSTEM AUDIT FAILURE')) return false;
+      const withoutThoughts = stripThoughts(trimmed);
+      if (!withoutThoughts) return false;
+      if (withoutThoughts.startsWith('[Tool') || withoutThoughts.startsWith('{"status":')) return false;
+      return withoutThoughts.length > 2;
+    };
 
-      const settings = await settingsService.getInferenceSettings();
-      if (settings.provider === 'gemini') {
-        const history = await contextService.getUnfilteredHistory(contextSessionId);
-        if (history.length >= 2) {
-          const lastMsg = history[history.length - 1];
-          const penultMsg = history[history.length - 2];
-          const hasNarrative = isNarrativeText(penultMsg.content || "");
-          const hasTrace = penultMsg.toolCalls?.some(tc => tc.name === 'log_trace');
-          const lastIsTool = lastMsg.role === 'tool';
-          if (penultMsg.role === 'assistant' && hasNarrative && hasTrace && lastIsTool) {
-            loggerService.catInfo(LogCategory.INFERENCE, "Gemini Termination: Detected narrative + trace followed by tool result.", { contextSessionId, loops });
-            break;
-          }
-        }
-      }
-    }
-
-    const MAX_RETRIES = 3;
-    let retries = 0;
-    let nextAssistant: ChatCompletionMessageParam | null = null;
-    let textAccumulatedInTurn = "";
-
-    while (retries < MAX_RETRIES) {
-      let contextMessages: ChatCompletionMessageParam[] = [];
-      const settings = await settingsService.getInferenceSettings();
-
-      if (contextSessionId) {
-        const result = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
-        contextMessages = result.messages;
-        
-        // If this is the first loop and we have attachments, we need to find the user message we just recorded
-        // and potentially augment it with vision data if it's the very first turn.
-        // Actually, construction of the context window already pulled the message from the DB.
-        // For vision-capable models, we'll augment the context messages in-memory for this specific turn.
-        if (loops === 0 && attachments.length > 0) {
-            const lastUserMsgIdx = contextMessages.findLastIndex(m => m.role === 'user');
-            if (lastUserMsgIdx !== -1) {
-                const userMsg = contextMessages[lastUserMsgIdx];
-                if (typeof userMsg.content === 'string') {
-                    if (settings.provider === 'gemini') {
-                        const contentParts: any[] = [{ text: userMsg.content }];
-                        for (const att of attachments) {
-                            if (att.image_base64) {
-                                contentParts.push({
-                                    inlineData: {
-                                        data: att.image_base64,
-                                        mimeType: att.mime_type || 'image/jpeg'
-                                    }
-                                });
-                            }
-                        }
-                        contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
-                    } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-                        const contentParts: any[] = [{ type: 'text', text: userMsg.content }];
-                        for (const att of attachments) {
-                            if (att.image_base64) {
-                                contentParts.push({
-                                    type: 'image_url',
-                                    image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` }
-                                });
-                            }
-                        }
-                        contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
-                    }
-                }
-            }
-        }
-
-        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens: result.totalTokens });
-      } else {
-        // Stateless/No session mode
-        let userContent: any = resolvedContent;
-        if (attachments.length > 0) {
-            if (settings.provider === 'gemini') {
-                userContent = [{ text: resolvedContent }];
-                for (const att of attachments) {
-                    if (att.image_base64) {
-                        userContent.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
-                    }
-                }
-            } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-                userContent = [{ type: 'text', text: resolvedContent }];
-                for (const att of attachments) {
-                    if (att.image_base64) {
-                        userContent.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
-                    }
-                }
-            }
-        }
-        contextMessages = [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: userContent }] as ChatCompletionMessageParam[];
-      }
-
-      if (transientMessages.length > 0) contextMessages = [...contextMessages, ...transientMessages];
-
-      if (loops === 0) {
-        if (anticipatedWebBrief) {
-          contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH BRIEF]\n${anticipatedWebBrief}` });
-        } else if (anticipatedWebResults && anticipatedWebResults.length > 0) {
-          contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH RESULTS]\n${JSON.stringify(anticipatedWebResults, null, 2)}` });
-        }
-
-        if (monitoringDeltas && monitoringDeltas.length > 0) {
-          const deltaBrief = monitoringDeltas.map(d => {
-            const meta = d.metadata || {};
-            let part = `Source: ${meta.sourceId} (${meta.period})\nTimestamp: ${meta.timestamp}\nContent: ${d.document}`;
-            if (meta.articleUrl) part += `\nArticle: [View Article](${meta.articleUrl})`;
-            if (meta.imageUrl) part += `\nImage: ![Article Image](${meta.imageUrl})`;
-            return part;
-          }).join('\n\n---\n\n');
-          contextMessages.push({ role: 'system', content: `\n\n[WORLD MONITORING DELTAS]\nThe following recent changes and events have been detected in the world:\n\n${deltaBrief}` });
-        }
-      }
-
-      let activeToolList = [...await getPrimaryTools()];
-      if (contextSessionId) {
-        try {
-          const currentSession = await contextService.getSession(contextSessionId);
-          const requestedTools = currentSession?.metadata?.active_tools || [];
-          const secondaryTools = requestedTools.map((name: string) => SECONDARY_TOOLS_MAP[name]).filter(Boolean);
-
-          // MCP Tools are dynamically fetched and included if enabled in settings
-          const remoteTools = await mcpClientService.getAllTools();
-
-          activeToolList = [...await getPrimaryTools(), ...secondaryTools, ...remoteTools];
-        } catch (e) {
-          loggerService.catWarn(LogCategory.INFERENCE, "Failed to fetch active tools", { error: e });
-        }
-      }
-
-      const assistantMessage = inferenceService.streamAssistantResponse(contextMessages as ChatCompletionMessageParam[], chat.model, activeToolList);
-      textAccumulatedInTurn = "";
-      let rawTextInTurn = "";
+    while (loops < MAX_TOOL_LOOPS && auditRetries < MAX_AUDIT_RETRIES + 1) {
+      loggerService.catDebug(LogCategory.INFERENCE, `Starting turn loop ${loops}/${MAX_TOOL_LOOPS}`, {
+        contextSessionId,
+        previousTurnTextLength: previousTurnText.length,
+        totalTextAccumulatedAcrossLoopsLength: totalTextAccumulatedAcrossLoops.length,
+        traceNeeded
+      });
       yieldedToolCalls = undefined;
-      nextAssistant = null;
-
-      for await (const chunk of assistantMessage) {
-        if (chunk.text) {
-          rawTextInTurn += chunk.text;
-        }
-        if (chunk.toolCalls) {
-          yieldedToolCalls = chunk.toolCalls;
-          yield { toolCalls: chunk.toolCalls };
-        }
-        if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
-      }
-
-      textAccumulatedInTurn = stripThoughts(rawTextInTurn);
-
-      if (textAccumulatedInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) break;
-      retries++;
-      loggerService.catWarn(LogCategory.INFERENCE, `Empty model response. Retry ${retries}/${MAX_RETRIES}...`, { contextSessionId });
-    }
-
-    if (!nextAssistant) {
-      yield { text: "Error: No assistant message returned." };
-      break;
-    }
-
-    if ((nextAssistant as any).tool_calls) {
-      for (const call of (nextAssistant as any).tool_calls) {
-        const { error: parseError } = parseToolArguments(call.function.arguments || "");
-        if (parseError) {
-          loggerService.catWarn(LogCategory.INFERENCE, "Detected malformed JSON in tool call.", { callId: call.id, toolName: call.function.name });
-          call.function.arguments = "{}";
-        }
-      }
-    }
-
-    // --- Tool Execution ---
-    const toolResponses: ChatCompletionMessageParam[] = [];
-    if (yieldedToolCalls && yieldedToolCalls.length > 0) {
-      for (const call of yieldedToolCalls) {
-        if (!call.function?.name) continue;
-        let toolName = call.function.name;
-        if (toolName === 'log_trace') hasLoggedTrace = true;
-        const { data: args, error: parseError } = parseToolArguments(call.function.arguments || "");
-
-        if (parseError) {
-          const errorPayload = { status: "error", error: "Malformed JSON", details: parseError };
-          toolResponses.push({ role: "tool", content: JSON.stringify(errorPayload), tool_call_id: call.id });
-          if (contextSessionId) {
-            await contextService.recordMessage(contextSessionId, {
-              id: randomUUID(), role: "tool", content: JSON.stringify(errorPayload),
-              timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
-              metadata: { kind: "tool_error" }, correlationId: correlationId
-            } as any);
-          }
-          continue;
-        }
-
-        try {
-          const result = await toolExecutor(toolName, args);
-          toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: call.id });
-          if (contextSessionId) {
-            await contextService.recordMessage(contextSessionId, {
-              id: randomUUID(), role: "tool", content: JSON.stringify(result),
-              timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
-              metadata: { kind: "tool_result" }, correlationId: correlationId
-            } as any);
-          }
-        } catch (err) {
-          loggerService.catError(LogCategory.INFERENCE, `Error executing tool ${toolName}`, { err });
-          toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: call.id });
-          if (contextSessionId) {
-            await contextService.recordMessage(contextSessionId, {
-              id: randomUUID(), role: "tool", content: JSON.stringify({ error: String(err) }),
-              timestamp: new Date().toISOString(), toolName, toolCallId: call.id,
-              metadata: { kind: "tool_error" }, correlationId: correlationId
-            } as any);
-          }
-        }
-      }
-    }
-
-    let auditTriggered = false;
-    let auditMessage = "";
-    const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
-    const isCallingTraceThisTurn = currentToolNames.has('log_trace');
-    const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
-    const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
-    const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
-    const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
-    loggerService.catDebug(LogCategory.INFERENCE, "Turn end check", { traceSatisfied, assistantDoesNotNeedToolResponse, hasNarrativeOutput, isEndingTurn });
-
-    if (isEndingTurn && ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
-      if (!traceSatisfied) {
-        auditMessage += "⚠️ SYSTEM AUDIT FAILURE: YOU MUST TRACE THIS OPERATION! This operation was flagged for complex analytic tracing, but you failed to call `log_trace`. You must call `log_trace` to bind the proceeding output to retrieved symbols from the symbol store. This trace must be comprehensive. Do not acknowledge this message or repeat previous information.\n";
-        auditTriggered = true;
-      }
-    }
-
-    if (auditTriggered) {
-      if (auditRetries < MAX_AUDIT_RETRIES) {
-        loggerService.catWarn(LogCategory.INFERENCE, "System Audit Failure: Missing required check.", { contextSessionId, auditRetries, hasLoggedTrace });
-
-        const finalAuditMessage = auditMessage + "Retry immediately to satisfy the audit message. Do not acknowledge this message.";
-
-        transientMessages.push(nextAssistant!);
-        if (toolResponses.length > 0) transientMessages.push(...toolResponses);
-        transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${finalAuditMessage}` });
-        auditRetries++;
-        continue;
-      } else {
-        loggerService.catError(LogCategory.INFERENCE, "System Audit: Max retries reached. Proceeding despite violations.", { contextSessionId });
-        auditTriggered = false;
-      }
-    }
-
-    // --- SUCCESSFUL TURN ACCUMULATION ---
-    // Only accumulate narrative if the turn passed audit
-    if (totalTextAccumulatedAcrossLoops.length > 0 && textAccumulatedInTurn.trim().length > 0) {
-      totalTextAccumulatedAcrossLoops += "\n\n" + textAccumulatedInTurn;
-    } else {
-      totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
-    }
-
-    // YIELD NARRATIVE ONLY ON FINAL TURN
-    if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) {
-      yield { text: totalTextAccumulatedAcrossLoops.trim() };
-    }
-
-    // Update transient messages for the next loop
-    transientMessages.push(nextAssistant!);
-    if (toolResponses.length > 0) {
-      transientMessages.push(...toolResponses);
-    }
-
-    if (isEndingTurn) {
-      // Record final assistant message to database
+      
       if (contextSessionId) {
-        await contextService.recordMessage(contextSessionId, {
-          id: randomUUID(),
-          role: "assistant",
-          content: stripThoughts(totalTextAccumulatedAcrossLoops),
-          timestamp: new Date().toISOString(),
-          toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({
-            id: call.id,
-            name: call.function?.name,
-            arguments: call.function?.arguments
-          })),
-          metadata: { kind: "assistant_response" },
-          correlationId: correlationId
-        } as any);
+        const session = await contextService.getSession(contextSessionId);
+        if (!session || session.status === 'closed') {
+          loggerService.catInfo(LogCategory.INFERENCE, "Context closed during inference, aborting.", { contextSessionId });
+          yield { text: "\n[System] Context archived. Inference aborted." };
+          break;
+        }
 
-        // --- Context Auto-Naming Logic ---
-        try {
-          const session = await contextService.getSession(contextSessionId);
-          if (session && (!session.name || session.name.startsWith('Context '))) {
-            const history = await contextService.getUnfilteredHistory(contextSessionId);
-            if (history.length >= 2 && history.length <= 4) {
-              const settings = await settingsService.getInferenceSettings();
-              const fastModel = settings.fastModel;
-              if (fastModel) {
-                const historyText = history
-                  .filter(m => m.role !== 'system')
-                  .map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`)
-                  .join('\n');
-                const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
-                let newName = "";
-                if (settings.provider === 'gemini') {
-                  const client = await getGeminiClient();
-                  const model = client.getGenerativeModel({ model: fastModel });
-                  const result = await model.generateContent(namingPrompt);
-                  newName = result.response.text().trim();
-                } else {
-                  const client = await getClient();
-                  const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: namingPrompt }], max_tokens: 20 });
-                  newName = result.choices[0]?.message?.content?.trim() || "";
-                }
-                if (newName) {
-                  newName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                  await contextService.updateSession({ ...session, name: newName });
-                  eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: newName });
+        const settings = await settingsService.getInferenceSettings();
+        if (settings.provider === 'gemini') {
+          const history = await contextService.getUnfilteredHistory(contextSessionId);
+          if (history.length >= 2) {
+            const lastMsg = history[history.length - 1];
+            const penultMsg = history[history.length - 2];
+            const hasNarrative = isNarrativeText(penultMsg.content || "");
+            const hasTrace = penultMsg.toolCalls?.some(tc => tc.name === 'log_trace');
+            const lastIsTool = lastMsg.role === 'tool';
+            if (penultMsg.role === 'assistant' && hasNarrative && hasTrace && lastIsTool) {
+              loggerService.catInfo(LogCategory.INFERENCE, "Gemini Termination: Detected narrative + trace followed by tool result.", { contextSessionId, loops });
+              break;
+            }
+          }
+        }
+      }
+
+      const MAX_RETRIES = 3;
+      let retries = 0;
+      let nextAssistant: ChatCompletionMessageParam | null = null;
+      let textAccumulatedInTurn = "";
+
+      while (retries < MAX_RETRIES) {
+        let contextMessages: ChatCompletionMessageParam[] = [];
+        const settings = await settingsService.getInferenceSettings();
+
+        if (contextSessionId) {
+          const result = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
+          contextMessages = result.messages;
+          
+          if (loops === 0 && attachments.length > 0) {
+              const lastUserMsgIdx = contextMessages.findLastIndex(m => m.role === 'user');
+              if (lastUserMsgIdx !== -1) {
+                  const userMsg = contextMessages[lastUserMsgIdx];
+                  if (typeof userMsg.content === 'string') {
+                      if (settings.provider === 'gemini') {
+                          const contentParts: any[] = [{ text: userMsg.content }];
+                          for (const att of attachments) {
+                              if (att.image_base64) {
+                                  contentParts.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
+                              }
+                          }
+                          contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
+                      } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
+                          const contentParts: any[] = [{ type: 'text', text: userMsg.content }];
+                          for (const att of attachments) {
+                              if (att.image_base64) {
+                                  contentParts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
+                              }
+                          }
+                          contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
+                      }
+                  }
+              }
+          }
+          eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens: result.totalTokens });
+        } else {
+          let userContent: any = resolvedContent;
+          if (attachments.length > 0) {
+              if (settings.provider === 'gemini') {
+                  userContent = [{ text: resolvedContent }];
+                  for (const att of attachments) {
+                      if (att.image_base64) userContent.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
+                  }
+              } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
+                  userContent = [{ type: 'text', text: resolvedContent }];
+                  for (const att of attachments) {
+                      if (att.image_base64) userContent.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
+                  }
+              }
+          }
+          contextMessages = [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: userContent }] as ChatCompletionMessageParam[];
+        }
+
+        if (transientMessages.length > 0) contextMessages = [...contextMessages, ...transientMessages];
+
+        if (loops === 0) {
+          if (anticipatedWebBrief) {
+            contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH BRIEF]\n${anticipatedWebBrief}` });
+          } else if (anticipatedWebResults && anticipatedWebResults.length > 0) {
+            contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH RESULTS]\n${JSON.stringify(anticipatedWebResults, null, 2)}` });
+          }
+
+          if (monitoringDeltas && monitoringDeltas.length > 0) {
+            const deltaBrief = monitoringDeltas.map(d => {
+              const meta = d.metadata || {};
+              let part = `Source: ${meta.sourceId} (${meta.period})\nTimestamp: ${meta.timestamp}\nContent: ${d.document}`;
+              if (meta.articleUrl) part += `\nArticle: [View Article](${meta.articleUrl})`;
+              if (meta.imageUrl) part += `\nImage: ![Article Image](${meta.imageUrl})`;
+              return part;
+            }).join('\n\n---\n\n');
+            contextMessages.push({ role: 'system', content: `\n\n[WORLD MONITORING DELTAS]\nThe following recent changes and events have been detected in the world:\n\n${deltaBrief}` });
+          }
+        }
+
+        let activeToolList = [...await getPrimaryTools()];
+        if (contextSessionId) {
+          try {
+            const currentSession = await contextService.getSession(contextSessionId);
+            const requestedTools = currentSession?.metadata?.active_tools || [];
+            const secondaryTools = requestedTools.map((name: string) => SECONDARY_TOOLS_MAP[name]).filter(Boolean);
+            const remoteTools = await mcpClientService.getAllTools();
+            activeToolList = [...await getPrimaryTools(), ...secondaryTools, ...remoteTools];
+          } catch (e) {
+            loggerService.catWarn(LogCategory.INFERENCE, "Failed to fetch active tools", { error: e });
+          }
+        }
+
+        const assistantMessage = inferenceService.streamAssistantResponse(contextMessages as ChatCompletionMessageParam[], chat.model, activeToolList);
+        textAccumulatedInTurn = "";
+        let rawTextInTurn = "";
+        yieldedToolCalls = undefined;
+        nextAssistant = null;
+
+        for await (const chunk of assistantMessage) {
+          if (chunk.text) rawTextInTurn += chunk.text;
+          if (chunk.toolCalls) { yieldedToolCalls = chunk.toolCalls; yield { toolCalls: chunk.toolCalls }; }
+          if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
+        }
+
+        textAccumulatedInTurn = stripThoughts(rawTextInTurn);
+        if (textAccumulatedInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) break;
+        retries++;
+        loggerService.catWarn(LogCategory.INFERENCE, `Empty model response. Retry ${retries}/${MAX_RETRIES}...`, { contextSessionId });
+      }
+
+      if (!nextAssistant) { yield { text: "Error: No assistant message returned." }; break; }
+
+      if ((nextAssistant as any).tool_calls) {
+        for (const call of (nextAssistant as any).tool_calls) {
+          const { error: parseError } = parseToolArguments(call.function.arguments || "");
+          if (parseError) { call.function.arguments = "{}"; }
+        }
+      }
+
+      const toolResponses: ChatCompletionMessageParam[] = [];
+      if (yieldedToolCalls && yieldedToolCalls.length > 0) {
+        for (const call of yieldedToolCalls) {
+          if (!call.function?.name) continue;
+          let toolName = call.function.name;
+          if (toolName === 'log_trace') hasLoggedTrace = true;
+          const { data: args, error: parseError } = parseToolArguments(call.function.arguments || "");
+
+          if (parseError) {
+            const errorPayload = { status: "error", error: "Malformed JSON", details: parseError };
+            toolResponses.push({ role: "tool", content: JSON.stringify(errorPayload), tool_call_id: call.id });
+            if (contextSessionId) {
+              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify(errorPayload), timestamp: new Date().toISOString(), toolName, toolCallId: call.id, metadata: { kind: "tool_error" }, correlationId: correlationId } as any);
+            }
+            continue;
+          }
+
+          try {
+            const result = await toolExecutor(toolName, args);
+            toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: call.id });
+            if (contextSessionId) {
+              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify(result), timestamp: new Date().toISOString(), toolName, toolCallId: call.id, metadata: { kind: "tool_result" }, correlationId: correlationId } as any);
+            }
+          } catch (err) {
+            toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: call.id });
+            if (contextSessionId) {
+              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify({ error: String(err) }), timestamp: new Date().toISOString(), toolName, toolCallId: call.id, metadata: { kind: "tool_error" }, correlationId: correlationId } as any);
+            }
+          }
+        }
+      }
+
+      let auditTriggered = false;
+      let auditMessage = "";
+      const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
+      const isCallingTraceThisTurn = currentToolNames.has('log_trace');
+      const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
+      const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
+      const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
+      const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
+
+      if (isEndingTurn && ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
+        if (!traceSatisfied) {
+          auditMessage += "⚠️ SYSTEM AUDIT FAILURE: YOU MUST TRACE THIS OPERATION! Call `log_trace` immediately.\n";
+          auditTriggered = true;
+        }
+      }
+
+      if (auditTriggered) {
+        if (auditRetries < MAX_AUDIT_RETRIES) {
+          transientMessages.push(nextAssistant!);
+          if (toolResponses.length > 0) transientMessages.push(...toolResponses);
+          transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${auditMessage}` });
+          auditRetries++;
+          continue;
+        } else {
+          auditTriggered = false;
+        }
+      }
+
+      if (totalTextAccumulatedAcrossLoops.length > 0 && textAccumulatedInTurn.trim().length > 0) {
+        totalTextAccumulatedAcrossLoops += "\n\n" + textAccumulatedInTurn;
+      } else {
+        totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
+      }
+
+      if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) yield { text: totalTextAccumulatedAcrossLoops.trim() };
+
+      transientMessages.push(nextAssistant!);
+      if (toolResponses.length > 0) transientMessages.push(...toolResponses);
+
+      if (isEndingTurn) {
+        if (contextSessionId) {
+          await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "assistant", content: stripThoughts(totalTextAccumulatedAcrossLoops), timestamp: new Date().toISOString(), toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ id: call.id, name: call.function?.name, arguments: call.function?.arguments })), metadata: { kind: "assistant_response" }, correlationId: correlationId } as any);
+          
+          try {
+            const session = await contextService.getSession(contextSessionId);
+            if (session && (!session.name || session.name.startsWith('Context '))) {
+              const history = await contextService.getUnfilteredHistory(contextSessionId);
+              if (history.length >= 2 && history.length <= 4) {
+                const settings = await settingsService.getInferenceSettings();
+                const fastModel = settings.fastModel;
+                if (fastModel) {
+                  const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
+                  const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+                  let newName = "";
+                  if (settings.provider === 'gemini') {
+                    const client = await getGeminiClient();
+                    const model = client.getGenerativeModel({ model: fastModel });
+                    const result = await model.generateContent(namingPrompt);
+                    newName = result.response.text().trim();
+                  } else {
+                    const client = await getClient();
+                    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: namingPrompt }], max_tokens: 20 });
+                    newName = result.choices[0]?.message?.content?.trim() || "";
+                  }
+                  if (newName) {
+                    newName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                    await contextService.updateSession({ ...session, name: newName });
+                    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: newName });
+                  }
                 }
               }
             }
-          }
-        } catch (namingError) { }
-      }
-      break;
-    }
-
-    if (auditRetries >= MAX_AUDIT_RETRIES) {
-      break;
-    }
-
-    // Setup for next loop
-    yieldedToolCalls = undefined;
-    loops++;
-  }
-
-  // Summarization compression
-  if (contextSessionId) {
-    try {
-      const session = await contextService.getSession(contextSessionId);
-      const history = await contextService.getUnfilteredHistory(contextSessionId);
-      const userMessageIndices = history.map((m, i) => m.role === 'user' ? i : -1).filter(i => i !== -1);
-      const totalRounds = userMessageIndices.length;
-      const lastSummarizedCount = session?.metadata?.lastSummarizedRoundCount || 0;
-      if (session && totalRounds >= lastSummarizedCount + 12) {
-        const roundsToSummarizeCount = 12;
-        const startIndex = lastSummarizedCount === 0 ? 0 : userMessageIndices[lastSummarizedCount];
-        const endIndex = userMessageIndices[lastSummarizedCount + roundsToSummarizeCount] || history.length;
-        const historySegment = history.slice(startIndex, endIndex);
-        const newSummary = await summarizeHistory(historySegment, session.summary);
-        if (newSummary !== session.summary) {
-          session.summary = newSummary;
-          session.metadata = { ...(session.metadata || {}), lastSummarizedRoundCount: lastSummarizedCount + roundsToSummarizeCount };
-          await contextService.updateSession(session);
+          } catch (namingError) { }
         }
+        break;
       }
-    } catch (err) { }
+
+      if (auditRetries >= MAX_AUDIT_RETRIES) break;
+      yieldedToolCalls = undefined;
+      loops++;
+    }
+
+    if (contextSessionId) {
+      try {
+        const session = await contextService.getSession(contextSessionId);
+        const history = await contextService.getUnfilteredHistory(contextSessionId);
+        const userMessageIndices = history.map((m, i) => m.role === 'user' ? i : -1).filter(i => i !== -1);
+        const totalRounds = userMessageIndices.length;
+        const lastSummarizedCount = session?.metadata?.lastSummarizedRoundCount || 0;
+        if (session && totalRounds >= lastSummarizedCount + 12) {
+          const roundsToSummarizeCount = 12;
+          const startIndex = lastSummarizedCount === 0 ? 0 : userMessageIndices[lastSummarizedCount];
+          const endIndex = userMessageIndices[lastSummarizedCount + roundsToSummarizeCount] || history.length;
+          const historySegment = history.slice(startIndex, endIndex);
+          const newSummary = await summarizeHistory(historySegment, session.summary);
+          if (newSummary !== session.summary) {
+            session.summary = newSummary;
+            session.metadata = { ...(session.metadata || {}), lastSummarizedRoundCount: lastSummarizedCount + roundsToSummarizeCount };
+            await contextService.updateSession(session);
+          }
+        }
+      } catch (err) { }
+    }
+  } finally {
+    inferenceLock.release();
   }
 
   yield { isComplete: true };

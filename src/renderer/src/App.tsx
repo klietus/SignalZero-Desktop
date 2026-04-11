@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { MessageSquare, Loader2, Activity } from 'lucide-react';
 import { Message, Sender, UserProfile, ContextSession, ContextMessage, ProjectMeta, SymbolDef } from './types';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
@@ -8,6 +8,7 @@ import { SettingsScreen } from './components/screens/SettingsScreen';
 import { DomainScreen } from './components/screens/DomainScreen';
 import { ProjectScreen } from './components/screens/ProjectScreen';
 import { MonitoringScreen } from './components/screens/MonitoringScreen';
+import { AgentScreen } from './components/screens/AgentScreen';
 import { SymbolForgeScreen } from './components/screens/SymbolForgeScreen';
 import { CinematicView } from './components/screens/CinematicView';
 import { LogsScreen } from './components/screens/LogsScreen';
@@ -58,7 +59,7 @@ declare global {
             getTraces: (sessionId: string) => Promise<any[]>;
             showEmojiPicker: () => Promise<void>;
             listAgents: () => Promise<any[]>;
-            upsertAgent: (id: string, prompt: string, enabled: boolean, schedule?: string) => Promise<any>;
+            upsertAgent: (id: string, prompt: string, enabled: boolean, schedule?: string, subscriptions?: string[]) => Promise<any>;
             deleteAgent: (id: string) => Promise<boolean>;
             getAgentLogs: (agentId?: string, limit?: number, includeTraces?: boolean) => Promise<any[]>;
             getSystemPrompt: () => Promise<string>;
@@ -200,7 +201,7 @@ function App() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor'>('chat');
+    const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor' | 'agents'>('chat');
     const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
     const [selectedSymbol, setSelectedSymbol] = useState<SymbolDef | null>(null);
     const [isGraphView, setIsGraphView] = useState(false);
@@ -555,6 +556,8 @@ function App() {
                 return <LogsScreen headerProps={getHeaderProps('System Logs')} />;
             case 'world-monitor':
                 return <MonitoringScreen headerProps={getHeaderProps('World Monitoring')} />;
+            case 'agents':
+                return <AgentScreen headerProps={getHeaderProps('Agent Orchestrator')} />;
             default:
                 return <div className="flex-1 flex items-center justify-center text-gray-500 font-mono uppercase tracking-[0.3em]">Module_Loading: {currentView}</div>;
         }
@@ -596,7 +599,19 @@ function App() {
 
                 {/* Kernel Header */}
                 <div className="z-50 pointer-events-auto relative">
-                    <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)} />
+                    <Header {...getHeaderProps('Kernel', <MessageSquare size={18} className="text-indigo-400" />)}>
+                        <button 
+                            onClick={() => setCurrentView('agents')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all ${
+                                currentView === 'agents' 
+                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' 
+                                : 'bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-emerald-400 border border-gray-800'
+                            }`}
+                        >
+                            <Activity size={14} />
+                            Agents
+                        </button>
+                    </Header>
                 </div>
 
                 <div className={`flex-1 flex min-h-0 relative transition-all duration-300 ${isGraphView ? 'z-10 pointer-events-none' : 'z-30 pointer-events-auto'}`}>

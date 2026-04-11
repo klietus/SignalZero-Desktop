@@ -63,8 +63,8 @@ const api = {
   
   // Agent Management
   listAgents: () => ipcRenderer.invoke('agent:list'),
-  upsertAgent: (id: string, prompt: string, enabled: boolean, schedule?: string) => 
-    ipcRenderer.invoke('agent:upsert', id, prompt, enabled, schedule),
+  upsertAgent: (id: string, prompt: string, enabled: boolean, schedule?: string, subscriptions?: string[]) => 
+    ipcRenderer.invoke('agent:upsert', id, prompt, enabled, schedule, subscriptions),
   deleteAgent: (id: string) => ipcRenderer.invoke('agent:delete', id),
   getAgentLogs: (agentId?: string, limit?: number, includeTraces?: boolean) => 
     ipcRenderer.invoke('agent:logs', agentId, limit, includeTraces),
