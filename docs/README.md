@@ -12,7 +12,10 @@ Detailed list of the libraries, frameworks, and databases (SQLite, LanceDB) that
 Step-by-step lifecycles for user messaging, world monitoring, and autonomous agent triggers.
 
 ## 💠 [Symbolic System](SYMBOLIC_SYSTEM.md)
-Explanation of the recursive symbolic language, symbol structures, and the relational link taxonomy.
+Explanation of the recursive symbolic language, reduced resolution formatting, and semiotic triads.
+
+## 🧠 [Inference & Context](INFERENCE_AND_CONTEXT.md)
+Multi-model orchestration (4+1), context window compression, and AI tooling.
 
 ## 🤖 [Autonomous Agents](AUTONOMOUS_AGENTS.md)
 Guide to the event-driven agent runner, neural gating (vibe checks), and priority-aware inference.

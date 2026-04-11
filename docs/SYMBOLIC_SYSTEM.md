@@ -12,9 +12,39 @@ Every symbol in the kernel follows a strict schema to ensure machine-readability
 | **Name** | A natural language name for the symbol. |
 | **Role** | A concise definition of the symbol's function or essence. |
 | **Kind** | The structural category (Pattern, Lattice, Persona, or Data). |
-| **Triad** | Optional 3-way grouping identifier for dialectic resonance. |
-| **Facets** | Key/Value pairs defining specific attributes or state. |
+| **Macro** | Higher-level categorical grouping (e.g., `cyber_sec`, `geopolitics`). Used for broad domain isolation. |
+| **Triad** | Seimiotic triangulation using emoji-based resonance (see below). |
+| **Facets** | A structured array of key/value pairs defining specific attributes or state. |
 | **Links** | An array of relationships to other symbols. |
+
+## 2. Facets Structure (`SymbolFacet`)
+
+Facets are the granular "sensors" or "properties" of a symbol. Unlike the `Role` (which is the essence), Facets are data-driven attributes used by the AI to perform precise logical matching.
+
+- **Key:** The identifier for the attribute (e.g., `cvss_score`, `location`, `status`).
+- **Value:** The data itself (String, Number, or Boolean).
+- **Inference:** Agents use Facets to pivot reasoning—for example, a security agent may only act on symbols where the `facet.severity` is `critical`.
+
+## 3. Semiotic Triads (Triangulation)
+
+SignalZero uses **Triads** to achieve concept stability. A Triad is a three-way semiotic grouping that creates a "conceptual anchor" using emojis to represent abstract concepts.
+
+- **Structure:** `[Emoji 1] - [Emoji 2] - [Emoji 3]`
+- **Function:** By triangulating a symbol between three distinct emojis, the kernel provides the LLM with a multi-dimensional "vibe" that transcends natural language ambiguity.
+- **Example:** A "Fragile Peace" symbol might be triangulated as `🕊️ - 🧊 - ⚖️` (Peace - Frozen - Balance).
+
+## 4. Hyper-Compressed Reduced Resolution
+
+A key innovation of the SignalZero Kernel is its **Reduced Resolution Formatting**. When symbols are injected into the context window, they are transformed from bulky JSON into a dense, semiotic representation.
+
+### The Compression Ratio
+This process achieves an approximate **75% reduction** in token usage compared to standard narrative history.
+
+### Formatting Algorithm
+Instead of listing every symbol property in full, the `contextWindowService` renders them as:
+`💠 [ID] ([KIND]) :: [TRIAD] :: [ROLE] {FACETS} -> [LINKS]`
+
+This allows the kernel to pack hundreds of complex relationships into a prompt that would normally only fit a few dozen sentences.
 
 ## 2. Symbol Kinds
 
