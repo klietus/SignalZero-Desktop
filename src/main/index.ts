@@ -320,6 +320,39 @@ function createWindow(): void {
 }
 
 app.whenReady().then(async () => {
+  // --- KERNEL BOOT DIAGNOSTICS ---
+  try {
+    const diagnosticInfo = {
+      version: app.getVersion(),
+      isDev: is.dev,
+      arch: process.arch,
+      platform: process.platform,
+      appPath: app.getAppPath(),
+      resourcesPath: process.resourcesPath,
+      userData: app.getPath('userData'),
+      execPath: process.execPath
+    };
+    loggerService.catInfo(LogCategory.SYSTEM, "Kernel Diagnostic Header", diagnosticInfo);
+
+    const checkPaths = [
+      join(app.getAppPath(), 'node_modules/@lancedb/lancedb'),
+      join(app.getAppPath(), 'node_modules/apache-arrow'),
+      join(app.getAppPath(), 'node_modules/better-sqlite3')
+    ];
+
+    for (const p of checkPaths) {
+      const exists = fs.existsSync(p);
+      loggerService.catInfo(LogCategory.SYSTEM, `Path Check: ${p} - Exists: ${exists}`);
+      if (exists && fs.lstatSync(p).isDirectory()) {
+        const contents = fs.readdirSync(p).slice(0, 5);
+        loggerService.catDebug(LogCategory.SYSTEM, `Directory Content (${p}): ${contents.join(', ')}`);
+      }
+    }
+  } catch (err: any) {
+    loggerService.catError(LogCategory.SYSTEM, "Diagnostics failed to run fully", { error: err.message });
+  }
+  // --- END DIAGNOSTICS ---
+
   setupNativeMenu();
   await settingsService.initialize();
 
