@@ -72,9 +72,26 @@ Relationships in SignalZero are typed. The `TopologyService` and `InferenceServi
 
 The `domainService` implements **Relational Symmetry**. When an agent creates a link from `A -> B` with type `depends_on`, the kernel automatically instantiates the reciprocal link `B -> A` with type `required_by`. This ensures the graph is always traversable from any node.
 
-## 5. Symbolic Invariants
+## 5. Semantic Grounding & Compressed Instructions
 
-The kernel enforces strict invariants during symbol creation:
-- **No Orphans:** Every symbol must eventually be bridged to a Lattice or the Mainland.
-- **Deterministic IDs:** IDs are sanitized to uppercase with hyphens to maintain a uniform address space.
-- **Provenance:** Symbols often include a `metadata.source` to track the origin (e.g., a specific delta or URL).
+SignalZero does not use long-form prompt engineering for complex logic. Instead, it utilizes **Compressed LLM Instructions** grounded in the symbolic store.
+
+### The Grounding Process
+When a concept is referenced, the LLM does not rely solely on its internal weights. It "snaps" to the corresponding **Symbol** in the active context. This process, known as **Semantic Grounding**, ensures the model is anchored in a deterministic definition rather than a statistical hallucination.
+
+### Semantic Overlays (Activation Conditions)
+The `activation_conditions` of a symbol act as a **Semantic Overlay**. This overlay defines the precise conditions under which a symbol should be "activated" or "loaded" into the LLM's active reasoning cycle.
+- **Overlays** are natural language triggers that the kernel uses to filter the symbolic store.
+- When an input matches an overlay, the kernel injects the symbol's **Reduced Resolution** definition into the context window.
+
+## 6. Graph Traversal & Macro Execution
+
+Once an LLM has "snapped" to a grounding symbol, it utilizes the relational links to **Traverse the Graph**.
+
+### The Execution Flow
+1.  **Snap:** The LLM identifies a primary symbol matching the user's intent.
+2.  **Traverse:** It follows the typed links (e.g., `depends_on`, `informs`) to discover the surrounding conceptual lattice.
+3.  **Execute Macro:** If the traversal leads to a symbol with a defined **Macro** or complex **Protocol**, the LLM executes the corresponding logic across all linked patterns.
+
+### Result: High-Signal Reasoning
+By traversing a graph of 75% compressed symbols rather than raw narrative text, the LLM maintains a coherent "System Model" that can execute multi-domain operations (Macros) with extreme precision and minimal context blowout.
