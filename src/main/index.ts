@@ -628,8 +628,9 @@ ipcMain.handle('project:import', async () => {
 });
 
 ipcMain.handle('project:import-sample', async () => {
-  const workspaceRoot = join(app.getAppPath(), is.dev ? '../..' : '../../..');
-  const samplePath = join(workspaceRoot, 'signalzero_sample.szproject');
+  const samplePath = is.dev 
+    ? join(app.getAppPath(), '../../signalzero_sample.szproject')
+    : join(process.resourcesPath, 'signalzero_sample.szproject');
 
   if (fs.existsSync(samplePath)) {
     const buffer = fs.readFileSync(samplePath);
