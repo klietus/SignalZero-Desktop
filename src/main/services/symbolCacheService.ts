@@ -40,7 +40,7 @@ export class SymbolCacheService {
         if (!cache) return [];
 
         const entries = Array.from(cache.values());
-        entries.sort((a, b) => a.symbol.id.localeCompare(b.symbol.id));
+        entries.sort((a, b) => (a.symbol?.id || '').localeCompare(b.symbol?.id || ''));
         return entries.map(e => e.symbol);
     }
 
@@ -57,8 +57,8 @@ export class SymbolCacheService {
         const matureEntries = entries.filter(e => e.turnCount > 3);
         const newEntries = entries.filter(e => e.turnCount <= 3);
 
-        matureEntries.sort((a, b) => a.symbol.id.localeCompare(b.symbol.id));
-        newEntries.sort((a, b) => a.symbol.id.localeCompare(b.symbol.id));
+        matureEntries.sort((a, b) => (a.symbol?.id || '').localeCompare(b.symbol?.id || ''));
+        newEntries.sort((a, b) => (a.symbol?.id || '').localeCompare(b.symbol?.id || ''));
 
         return {
             mature: matureEntries.map(e => e.symbol),

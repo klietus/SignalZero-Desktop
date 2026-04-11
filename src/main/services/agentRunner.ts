@@ -1,6 +1,8 @@
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { agentService } from './agentService.js';
 import { contextService } from './contextService.js';
+import { systemPromptService } from './systemPromptService.js';
+import { ACTIVATION_PROMPT } from '../symbolic_system/activation_prompt.js';
 import { sendMessageAndHandleTools, getChatSession, getGeminiClient, getClient, extractJson } from './inferenceService.js';
 import { createToolExecutor } from './toolsService.js';
 import { settingsService } from './settingsService.js';
@@ -141,7 +143,10 @@ class AgentRunner {
             const settings = await settingsService.getInferenceSettings();
             const agentModel = settings.agentModel || settings.model;
             
-            const chat = await getChatSession(agent.prompt, session.id, agentModel);
+            const baseSystemPrompt = await systemPromptService.loadPrompt(ACTIVATION_PROMPT);
+            const fullAgentPrompt = `${baseSystemPrompt}\n\n[AGENT_SPECIFIC_PROTOCOL]\n${agent.prompt}`;
+
+            const chat = await getChatSession(fullAgentPrompt, session.id, agentModel);
             const toolExecutor = createToolExecutor(session.id);
 
             const message = `[AUTONOMOUS EVENT TRIGGER]\nA new delta has been detected: \n\nSource: ${delta.sourceId}\nContent: ${delta.content}\n\nExecute your cognitive protocol based on this event. Use tools if necessary to investigate or update the symbolic graph.`;

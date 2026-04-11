@@ -36,22 +36,33 @@ const MAX_TOOL_LOOPS = 15;
  */
 class InferenceLockManager {
     private isLocked = false;
-    private queue: { priority: number, resolve: () => void }[] = [];
+    private runningProvider: string | null = null;
+    private queue: { priority: number, model: string, provider: string, resolve: () => void }[] = [];
 
-    async acquire(priority: number = 0): Promise<void> {
-        // Priority 1 = User (Immediate/High), Priority 0 = Agent (Background/Low)
-        if (!this.isLocked) {
+    async acquire(priority: number = 0, model: string, provider: string): Promise<void> {
+        // LOCK LOGIC:
+        // We only lock if:
+        // 1. The provider is 'local' (Hardware Bound)
+        // 2. AND something is already running on that local provider.
+        // If it's Gemini or OpenAI, we don't care about the lock (Cloud Scaled).
+        
+        const isConflict = this.isLocked && 
+                          this.runningProvider === 'local' && 
+                          provider === 'local';
+
+        if (!isConflict) {
             this.isLocked = true;
+            this.runningProvider = provider;
             return;
         }
 
+        // It's a local hardware conflict, must queue.
         return new Promise((resolve) => {
             if (priority > 0) {
-                // High priority jumps to front of queue (but behind other high priorities)
                 const lastHighPriorityIdx = this.queue.findLastIndex(item => item.priority > 0);
-                this.queue.splice(lastHighPriorityIdx + 1, 0, { priority, resolve });
+                this.queue.splice(lastHighPriorityIdx + 1, 0, { priority, model, provider, resolve });
             } else {
-                this.queue.push({ priority, resolve });
+                this.queue.push({ priority, model, provider, resolve });
             }
         });
     }
@@ -60,11 +71,13 @@ class InferenceLockManager {
         if (this.queue.length > 0) {
             const next = this.queue.shift();
             if (next) {
+                this.runningProvider = next.provider;
                 next.resolve();
                 return;
             }
         }
         this.isLocked = false;
+        this.runningProvider = null;
     }
 }
 
@@ -289,11 +302,23 @@ const _streamAssistantResponseInternal = async function* (
     for (const m of messages) {
       if (m.role === 'system') continue;
       if (m.role === 'user') {
+        const parts: any[] = [];
+        if (typeof m.content === 'string') {
+          parts.push({ text: m.content || ' ' });
+        } else if (Array.isArray(m.content)) {
+          for (const part of m.content) {
+            if (part.type === 'text') parts.push({ text: part.text || ' ' });
+            else if ((part as any).inlineData) parts.push({ inlineData: (part as any).inlineData });
+          }
+        }
+
+        if (parts.length === 0) parts.push({ text: ' ' });
+
         if (lastRole === 'user') {
           const lastMsg = history[history.length - 1];
-          lastMsg.parts[0].text += `\n\n${typeof m.content === 'string' ? m.content : ''}`;
+          lastMsg.parts.push(...parts);
         } else {
-          history.push({ role: 'user', parts: [{ text: typeof m.content === 'string' ? m.content : '' }] });
+          history.push({ role: 'user', parts });
           lastRole = 'user';
         }
       } else if (m.role === 'assistant') {
@@ -507,7 +532,8 @@ export async function* sendMessageAndHandleTools(
     await tentativeLinkService.incrementTurns();
   }
 
-  await inferenceLock.acquire(priority);
+  const settings = await settingsService.getInferenceSettings();
+  await inferenceLock.acquire(priority, chat.model, settings.provider || 'local');
 
   try {
     let loops = 0;

@@ -253,7 +253,7 @@ export class ContextWindowService {
         const uniqueSymbols = Array.from(uniqueMap.values());
 
         // Sort by ID to ensure deterministic output for cache stability
-        uniqueSymbols.sort((a, b) => a.id.localeCompare(b.id));
+        uniqueSymbols.sort((a, b) => (a?.id || '').localeCompare(b?.id || ''));
 
         const TOPOLOGY_MAP: Record<string, string> = {
             'inductive': '♻️',
