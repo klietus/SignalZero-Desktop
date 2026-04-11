@@ -32,7 +32,11 @@ SignalZero Desktop is a sophisticated recursive symbolic reasoning engine built 
 
 ### Via Homebrew (macOS)
 ```bash
-brew install --cask ./signalzero-desktop.rb
+# Add the tap
+brew tap klietus/signalzero-desktop https://github.com/klietus/SignalZero-Desktop.git
+
+# Install the cask
+brew install --cask klietus/signalzero-desktop/signalzero-desktop
 ```
 
 ### From Source
