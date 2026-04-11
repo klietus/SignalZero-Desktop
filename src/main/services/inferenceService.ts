@@ -557,7 +557,7 @@ export async function* sendMessageAndHandleTools(
                             }
                         }
                         contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
-                    } else if (settings.provider === 'openai') {
+                    } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
                         const contentParts: any[] = [{ type: 'text', text: userMsg.content }];
                         for (const att of attachments) {
                             if (att.image_base64) {
@@ -585,7 +585,7 @@ export async function* sendMessageAndHandleTools(
                         userContent.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
                     }
                 }
-            } else if (settings.provider === 'openai') {
+            } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
                 userContent = [{ type: 'text', text: resolvedContent }];
                 for (const att of attachments) {
                     if (att.image_base64) {
