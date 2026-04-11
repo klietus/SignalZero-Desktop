@@ -65,9 +65,25 @@ export const projectService = {
             emitStatus("Parsing project metadata...", 5);
             await yieldToEventLoop();
 
-            let meta: ProjectMeta = { name: 'Imported', version: '1.1', created_at: '', updated_at: '', author: '' };
-            if (zip.file('metadata.json')) {
-                const text = await zip.file('metadata.json')?.async('string');
+            // --- NESTED FOLDER DETECTION ---
+            // Some zip tools wrap the export in a folder. We detect this by finding if all meaningful paths share a common root.
+            const allPaths = Object.keys(zip.files).filter(p => !p.includes('__MACOSX') && !p.includes('.DS_Store'));
+            let prefix = "";
+            const firstPath = allPaths.find(p => p.includes('/'));
+            if (firstPath) {
+                const potentialPrefix = firstPath.split('/')[0] + '/';
+                if (allPaths.every(p => p.startsWith(potentialPrefix))) {
+                    prefix = potentialPrefix;
+                    loggerService.catInfo(LogCategory.SYSTEM, `Detected nested archive. Using prefix: ${prefix}`);
+                }
+            }
+
+            const getZipFile = (name: string) => zip.file(prefix + name);
+
+            let meta: ProjectMeta = { name: 'Imported', version: '1.1.4', created_at: '', updated_at: '', author: '' };
+            const metaFile = getZipFile('metadata.json');
+            if (metaFile) {
+                const text = await metaFile.async('string');
                 if (text) {
                     try {
                         meta = JSON.parse(text);
@@ -79,8 +95,9 @@ export const projectService = {
             }
 
             let systemPrompt: string | undefined;
-            if (zip.file('system_prompt.txt')) {
-                systemPrompt = await zip.file('system_prompt.txt')?.async('string');
+            const spFile = getZipFile('system_prompt.txt');
+            if (spFile) {
+                systemPrompt = await spFile.async('string');
                 if (systemPrompt) {
                     await systemPromptService.setPrompt(systemPrompt);
                     loggerService.catInfo(LogCategory.SYSTEM, "System prompt restored.");
@@ -88,8 +105,9 @@ export const projectService = {
             }
 
             let mcpPrompt: string | undefined;
-            if (zip.file('mcp_prompt.txt')) {
-                mcpPrompt = await zip.file('mcp_prompt.txt')?.async('string');
+            const mcpFile = getZipFile('mcp_prompt.txt');
+            if (mcpFile) {
+                mcpPrompt = await mcpFile.async('string');
                 if (mcpPrompt) {
                     await mcpPromptService.setPrompt(mcpPrompt);
                     loggerService.catInfo(LogCategory.SYSTEM, "MCP prompt restored.");
@@ -101,30 +119,72 @@ export const projectService = {
             await yieldToEventLoop();
 
             const domains: Array<{ id: string; name: string; symbolCount: number }> = [];
-            const domainFiles = zip.folder('domains')?.filter((path) => path.endsWith('.json')) || [];
+            
+            // --- DOMAIN DISCOVERY ---
+            const domainsPath = prefix + 'domains/';
+            const domainFiles = Object.keys(zip.files).filter(path => 
+                path.startsWith(domainsPath) && 
+                path.endsWith('.json') && 
+                !zip.files[path].dir &&
+                !path.includes('__MACOSX') &&
+                !path.includes('.DS_Store')
+            );
+            
             const allSymbolsToUpsert: SymbolDef[] = [];
 
             emitStatus(`Preparing to import ${domainFiles.length} domains...`, 15);
+            loggerService.catInfo(LogCategory.SYSTEM, `Found ${domainFiles.length} domain files.`);
             
             for (let i = 0; i < domainFiles.length; i++) {
-                const file = domainFiles[i];
-                const text = await file.async('string');
+                const filePath = domainFiles[i];
+                const file = zip.file(filePath);
+                if (!file) continue;
+
                 try {
+                    const text = await file.async('string');
                     const data = JSON.parse(text);
-                    const { meta: dMeta, symbols } = data;
                     
+                    // Support both current format { meta, symbols } and legacy { domain, items }
+                    let dMeta = data.meta;
+                    let symbols = data.symbols;
+
+                    if (!dMeta && data.domain) {
+                        dMeta = {
+                            id: data.domain,
+                            name: data.name || data.domain,
+                            description: data.description,
+                            invariants: data.invariants,
+                            enabled: data.enabled !== false,
+                            read_only: data.readOnly === true
+                        };
+                    }
+
+                    if (!symbols && Array.isArray(data.items)) {
+                        symbols = data.items;
+                    }
+                    
+                    if (!dMeta || !dMeta.id) {
+                        loggerService.catWarn(LogCategory.SYSTEM, `Domain file ${filePath} is missing valid metadata. Skipping.`);
+                        continue;
+                    }
+
+                    // Skip user/state domains to prevent overriding local session identity
+                    if (dMeta.id === 'user' || dMeta.id === 'state') {
+                        continue;
+                    }
+
                     await domainService.createDomain(dMeta.id, dMeta);
                     if (Array.isArray(symbols)) {
                         allSymbolsToUpsert.push(...symbols);
-                        domains.push({ id: dMeta.id, name: dMeta.name, symbolCount: symbols.length });
+                        domains.push({ id: dMeta.id, name: dMeta.name || dMeta.id, symbolCount: symbols.length });
                     }
                     
                     const domainProgress = 15 + Math.floor(((i + 1) / domainFiles.length) * 15);
                     if (i % 5 === 0 || i === domainFiles.length - 1) {
                         emitStatus(`Parsing domain: ${dMeta.id}`, domainProgress);
                     }
-                } catch (e) {
-                    loggerService.catError(LogCategory.SYSTEM, `Failed to parse domain file: ${file.name}`, { error: e });
+                } catch (e: any) {
+                    loggerService.catError(LogCategory.SYSTEM, `Failed to parse domain: ${filePath}`, { error: e.message || e });
                 }
                 
                 if (i % 10 === 0) await yieldToEventLoop();
@@ -143,11 +203,13 @@ export const projectService = {
                 await yieldToEventLoop();
             });
 
+            // --- TEST SUITES ---
             emitStatus("Restoring test suites...", 85);
             await yieldToEventLoop();
             let testCaseCount = 0;
-            if (zip.file('tests.json')) {
-                const text = await zip.file('tests.json')?.async('string');
+            const testsFile = getZipFile('tests.json');
+            if (testsFile) {
+                const text = await testsFile.async('string');
                 if (text) {
                     try {
                         const sets = JSON.parse(text);
@@ -160,10 +222,11 @@ export const projectService = {
                 }
             }
 
+            // --- AUTONOMOUS AGENTS ---
             emitStatus("Restoring autonomous agents...", 95);
             await yieldToEventLoop();
             let agentCount = 0;
-            const agentsFile = zip.file('agents.json');
+            const agentsFile = getZipFile('agents.json') || getZipFile('loops.json');
             if (agentsFile) {
                 const text = await agentsFile.async('string');
                 if (text) {
