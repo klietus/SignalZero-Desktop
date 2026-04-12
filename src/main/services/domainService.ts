@@ -484,6 +484,56 @@ export const domainService = {
     await this.deleteSymbol(redundant.symbol_domain, redundantId);
   },
 
+  async renameSymbol(domainId: string, oldId: string, newId: string): Promise<void> {
+    if (oldId === newId) return;
+    loggerService.catInfo(LogCategory.DOMAIN, `Renaming symbol ${oldId} -> ${newId} in domain ${domainId}`);
+
+    const symbol = await this.findById(oldId);
+    if (!symbol) throw new Error(`Symbol ${oldId} not found.`);
+
+    const newSymbol = { ...symbol, id: newId };
+
+    sqliteService.transaction(() => {
+        // 1. Create the new symbol
+        this.addSymbol(domainId, newSymbol);
+
+        // 2. Move incoming links
+        sqliteService.run(`
+            UPDATE symbol_links SET target_id = ? WHERE target_id = ?
+        `, [newId, oldId]);
+
+        // 3. Move outgoing links (source_id is part of PK)
+        sqliteService.run(`
+            INSERT OR IGNORE INTO symbol_links (source_id, target_id, link_type)
+            SELECT ? as source_id, target_id, link_type 
+            FROM symbol_links 
+            WHERE source_id = ?
+        `, [newId, oldId]);
+
+        // 4. Delete the old symbol (cascades its outgoing links)
+        sqliteService.run(`DELETE FROM symbols WHERE id = ?`, [oldId]);
+    });
+
+    // 5. Re-index
+    await lancedbService.deleteSymbol(oldId);
+    await lancedbService.indexBatch([newSymbol]);
+  },
+
+  async relocateSymbol(symbolId: string, oldDomainId: string, newDomainId: string): Promise<void> {
+    if (oldDomainId === newDomainId) return;
+    loggerService.catInfo(LogCategory.DOMAIN, `Relocating symbol ${symbolId} from ${oldDomainId} to ${newDomainId}`);
+
+    const symbol = await this.findById(symbolId);
+    if (!symbol) throw new Error(`Symbol ${symbolId} not found.`);
+
+    sqliteService.run(`
+        UPDATE symbols SET domain_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `, [newDomainId, symbolId]);
+
+    // Update vector store metadata
+    await lancedbService.indexBatch([{ ...symbol, symbol_domain: newDomainId }]);
+  },
+
   async deleteSymbol(domainId: string, symbolId: string): Promise<boolean> {
     const domain = await this.get(domainId);
     if (domain?.readOnly) throw new Error(`Domain '${domainId}' is read-only.`);
