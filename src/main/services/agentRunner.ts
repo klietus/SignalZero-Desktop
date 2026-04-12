@@ -11,7 +11,7 @@ import { MonitoringDelta, AgentDefinition } from '../types.js';
 
 class AgentRunner {
     private isGating = false;
-    private processingDeltas = new Set<string>(); // "agentId:deltaId"
+    private processingDeltas = new Set<string>(); // "deltaId"
 
     constructor() {
         // Listen for new world-monitoring deltas
@@ -32,81 +32,102 @@ class AgentRunner {
             const agents = await agentService.listAgents();
             const activeAgents = agents.filter(a => a.enabled && a.subscriptions && a.subscriptions.length > 0);
             
-            for (const agent of activeAgents) {
-                // Get up to 5 unprocessed deltas per catch-up cycle to prevent GPU overload
-                const unprocessed = await agentService.getUnprocessedDeltas(agent.id, 5);
-                if (unprocessed.length > 0) {
-                    loggerService.catInfo(LogCategory.AGENT, `Agent ${agent.id} catching up on ${unprocessed.length} deltas`);
-                    for (const delta of unprocessed) {
-                        await this.handleNewDelta(delta as MonitoringDelta, agent);
-                    }
-                }
+            if (activeAgents.length === 0) return;
+
+            // Simple catchup logic: get the 5 most recent deltas and route them
+            // In a real WTA scenario, catchup is slightly different but we follow the same routing logic.
+            const allUnprocessed = await agentService.getUnprocessedDeltas(activeAgents[0].id, 5); // Just a heuristic to get recently arrived deltas
+            
+            for (const delta of allUnprocessed) {
+                await this.handleNewDelta(delta as MonitoringDelta);
             }
         } catch (error) {
             loggerService.catError(LogCategory.AGENT, "Catch-up processing failed", { error });
         }
     }
 
-    private async handleNewDelta(delta: MonitoringDelta, specificAgent?: AgentDefinition) {
-        if (this.isGating && !specificAgent) return; // Only allow specificAgent (catch-up) or first-time
-        
+    private async handleNewDelta(delta: MonitoringDelta) {
+        if (this.isGating) return;
+        if (this.processingDeltas.has(delta.id)) return;
+
         try {
-            const agents = specificAgent ? [specificAgent] : await agentService.listAgents();
+            this.isGating = true;
+            this.processingDeltas.add(delta.id);
+
+            const agents = await agentService.listAgents();
             const activeAgents = agents.filter(a => a.enabled && a.subscriptions && a.subscriptions.length > 0);
             
-            if (activeAgents.length === 0) return;
-
-            for (const agent of activeAgents) {
-                const lockKey = `${agent.id}:${delta.id}`;
-                
-                // 1. Double check we haven't already processed this or aren't CURRENTLY processing it
-                const alreadyDone = await agentService.isDeltaProcessed(agent.id, delta.id);
-                if (alreadyDone || this.processingDeltas.has(lockKey)) continue;
-
-                // 2. Lock it
-                this.processingDeltas.add(lockKey);
-
-                try {
-                    // 3. Perform Neural Gating
-                    const shouldWake = await this.vibeCheck(agent, delta);
-                    if (shouldWake) {
-                        loggerService.catInfo(LogCategory.AGENT, `Gating PASS: Agent ${agent.id} waking for delta ${delta.id}`);
-                        await this.executeAgentTurn(agent, delta);
-                    }
-
-                    // 4. Mark as processed even if Vibe Check failed (to avoid redundant checks)
-                    await agentService.markDeltaProcessed(agent.id, delta.id);
-                } finally {
-                    // 5. Always release the in-memory lock
-                    this.processingDeltas.delete(lockKey);
-                }
+            if (activeAgents.length === 0) {
+                // No one can handle this, mark as "processed" globally (simulated by marking for all agents)
+                // In this simplified WTA model, we just stop.
+                return;
             }
+
+            // --- WINNER TAKES ALL ROUTING ---
+            const winner = await this.routeDeltaToBestAgent(activeAgents, delta);
+
+            if (winner) {
+                loggerService.catInfo(LogCategory.AGENT, `WTA Routing: Delta ${delta.id} routed to agent ${winner.id}`);
+                await this.executeAgentTurn(winner, delta);
+            } else {
+                loggerService.catDebug(LogCategory.AGENT, `WTA Routing: No relevant agent found for delta ${delta.id}`);
+            }
+
+            // Mark this delta as processed for ALL active agents to prevent redundant routing attempts
+            for (const agent of activeAgents) {
+                await agentService.markDeltaProcessed(agent.id, delta.id);
+            }
+
         } catch (error) {
-            loggerService.catError(LogCategory.AGENT, "Neural Gating failed", { error });
+            loggerService.catError(LogCategory.AGENT, "Neural Gating / WTA Routing failed", { error });
+        } finally {
+            this.isGating = false;
+            this.processingDeltas.delete(delta.id);
         }
     }
 
     /**
-     * The Gating Layer (0.8B Vibe Check)
-     * Extremely lightweight check to see if we should spend GPU cycles on a full turn.
+     * WTA Router (0.8B Model)
+     * Evaluates all agents and selects the SINGLE best one to handle the delta.
      */
-    private async vibeCheck(agent: AgentDefinition, delta: MonitoringDelta): Promise<boolean> {
+    private async routeDeltaToBestAgent(agents: AgentDefinition[], delta: MonitoringDelta): Promise<AgentDefinition | null> {
         const settings = await settingsService.getInferenceSettings();
         const fastModel = settings.fastModel;
-        if (!fastModel) return false;
+        if (!fastModel) return null;
 
-        const prompt = `Neural Gating Protocol. 
-        Agent Subscriptions: ${JSON.stringify(agent.subscriptions)}
-        New World Delta: ${delta.content.slice(0, 2000)}
+        const agentMetadata = agents.map(a => ({
+            id: a.id,
+            subscriptions: a.subscriptions
+        }));
 
-        Question: Does this delta contain information that matches or is highly relevant to the agent's subscriptions? 
-        Respond with JSON: { "relevant": boolean, "reason": "short explanation" }`;
+        const prompt = `### AUTONOMOUS DELTA ROUTER (WTA)
+
+You are the central nervous system of a symbolic reasoning kernel.
+Your goal is to route the following "World Delta" to the SINGLE most appropriate agent.
+
+WORLD DELTA:
+${delta.content.slice(0, 3000)}
+
+AVAILABLE AGENTS & SUBSCRIPTIONS:
+${JSON.stringify(agentMetadata, null, 2)}
+
+#### MISSION GOAL:
+Select the ONE agent whose subscriptions and expertise most closely align with this delta. If multiple agents match, choose the most specific one. If NO agents are relevant, set "winnerId" to null.
+
+#### OUTPUT SCHEMA:
+{
+  "winnerId": "agent_id_here",
+  "reason": "Brief explanation of why this agent is the best fit."
+}`;
 
         try {
             let result: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel });
+                const model = client.getGenerativeModel({ 
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 200, temperature: 0.1 }
+                });
                 const response = await model.generateContent(prompt);
                 result = extractJson(response.response.text());
             } else {
@@ -114,13 +135,19 @@ class AgentRunner {
                 const response = await client.chat.completions.create({
                     model: fastModel,
                     messages: [{ role: "user", content: prompt }],
-                    max_tokens: 100
+                    max_tokens: 200,
+                    temperature: 0.1
                 });
                 result = extractJson(response.choices[0]?.message?.content || "{}");
             }
-            return !!result.relevant;
+
+            if (result.winnerId) {
+                return agents.find(a => a.id === result.winnerId) || null;
+            }
+            return null;
         } catch (e) {
-            return false;
+            loggerService.catError(LogCategory.AGENT, "WTA Router model failure", { error: e });
+            return null;
         }
     }
 
@@ -128,12 +155,10 @@ class AgentRunner {
         try {
             // 1. Ensure a dedicated OPEN context session exists for this agent
             const contexts = await contextService.listSessions();
-            // Only find 'open' sessions. If it's closed/archived, we ignore it and create a fresh one.
             let session = contexts.find(c => c.name === `Agent: ${agent.id}` && c.status === 'open');
             
             if (!session) {
                 session = await contextService.createSession('agent', {}, `Agent: ${agent.id}`);
-                // Notify UI that a new context was created so it appears in the sidebar
                 eventBusService.emitKernelEvent(KernelEventType.CONTEXT_CREATED, session);
             }
 
@@ -173,14 +198,12 @@ class AgentRunner {
             for await (const chunk of stream) {
                 if (chunk.text) {
                     fullResponse += chunk.text;
-                    // Stream progress to the UI if this context is currently active
                     eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { 
                         sessionId: session.id, 
                         text: chunk.text 
                     });
                 }
                 
-                // Count log_trace calls from either provider format
                 if (chunk.toolCalls) {
                     for (const call of chunk.toolCalls) {
                         if (call.function?.name === 'log_trace') {
