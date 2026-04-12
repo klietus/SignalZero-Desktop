@@ -57,6 +57,25 @@ git push origin main
 
 # 7. Create GitHub Release
 echo "📦 Creating GitHub release and uploading DMG..."
-gh release create "v$VERSION" "$DMG_FILE" --title "v$VERSION" --notes "Release v$VERSION"
+
+RELEASE_NOTES="### 💠 Signal Zero v$VERSION - The Efficiency Update
+
+This release focuses on optimizing the kernel's autonomous reasoning engine and structural integrity.
+
+#### 🤖 Autonomous Agent Evolution
+- **Winner-Takes-All (WTA) Routing**: Incoming world deltas are now intelligently routed to the SINGLE most appropriate agent based on subscription relevance, eliminating redundant GPU cycles.
+- **Batched Execution Heartbeat**: Agents now operate on a 5-minute 'Batch Round' cycle. Multiple routed events are synthesized into a single, comprehensive reasoning turn rather than triggering individual inferences.
+
+#### ♻️ Graph Hygiene Enhancements
+- **Symbol Domain Refactor**: New background task that automatically normalizes symbol IDs (uppercasing/sanitization) and uses AI to relocate symbols into their most semantically appropriate domains.
+- **Relational Integrity**: Improved `renameSymbol` and `relocateSymbol` logic ensuring all links and vector embeddings are preserved during graph self-organization.
+
+#### 🏗️ System & UI
+- **Signal Zero Rebranding**: Unified all UI labels, window titles, and binary naming under the clean 'Signal Zero' brand.
+- **Agent Audit Restoration**: Fixed data mapping for timestamps, trace counts, and response previews in the Agent Orchestrator history.
+- **Boot Diagnostics**: Added a comprehensive startup diagnostic sequence to verify native dependency integrity (LanceDB, SQLite, Arrow) in production bundles.
+- **Startup Resilience**: Implemented a 5-second 'warm-up' delay for monitoring services to prevent OS-level network jitters during boot."
+
+gh release create "v$VERSION" "$DMG_FILE" --title "v$VERSION" --notes "$RELEASE_NOTES"
 
 echo "✅ Release v$VERSION successfully deployed and live on Homebrew!"
