@@ -63,7 +63,17 @@ export const agentService = {
             `SELECT * FROM agent_execution_logs WHERE agent_id = ? ORDER BY started_at DESC LIMIT ?`,
             [agentId, limit]
         );
-        return rows as AgentExecutionLog[];
+        return rows.map(r => ({
+            id: r.id,
+            agentId: r.agent_id,
+            startedAt: r.started_at,
+            finishedAt: r.finished_at,
+            status: r.status,
+            traceCount: r.trace_count,
+            logFilePath: r.log_file_path,
+            responsePreview: r.response_preview,
+            error: r.error
+        }));
     },
 
     async isDeltaProcessed(agentId: string, deltaId: string): Promise<boolean> {

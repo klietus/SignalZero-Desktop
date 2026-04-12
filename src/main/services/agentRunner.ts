@@ -169,6 +169,7 @@ class AgentRunner {
             );
 
             let fullResponse = "";
+            let traceCount = 0;
             for await (const chunk of stream) {
                 if (chunk.text) {
                     fullResponse += chunk.text;
@@ -177,6 +178,15 @@ class AgentRunner {
                         sessionId: session.id, 
                         text: chunk.text 
                     });
+                }
+                
+                // Count log_trace calls from either provider format
+                if (chunk.toolCalls) {
+                    for (const call of chunk.toolCalls) {
+                        if (call.function?.name === 'log_trace') {
+                            traceCount++;
+                        }
+                    }
                 }
             }
 
@@ -188,8 +198,8 @@ class AgentRunner {
                 startedAt: startTime,
                 finishedAt: new Date().toISOString(),
                 status: 'completed',
-                traceCount: 0,
-                responsePreview: fullResponse.slice(0, 200)
+                traceCount,
+                responsePreview: fullResponse.slice(0, 200).replace(/\n/g, ' ').trim()
             });
 
         } catch (error: any) {

@@ -21,11 +21,11 @@ const migrateSchema = () => {
 
     for (const col of requiredColumns) {
         if (!columnNames.includes(col.name)) {
-            loggerService.catInfo(LogCategory.SQLITE, `Migrating: Adding ${col.name} column to symbols table`);
+            if (loggerService) loggerService.catInfo(LogCategory.SQLITE, `Migrating: Adding ${col.name} column to symbols table`);
             try {
                 db.exec(`ALTER TABLE symbols ADD COLUMN ${col.name} ${col.type}`);
             } catch (err) {
-                loggerService.catError(LogCategory.SQLITE, `Migration failed for column ${col.name}`, { error: err });
+                if (loggerService) loggerService.catError(LogCategory.SQLITE, `Migration failed for column ${col.name}`, { error: err });
             }
         }
     }
@@ -34,44 +34,44 @@ const migrateSchema = () => {
     const agentTableInfo = db.prepare("PRAGMA table_info(agents)").all() as any[];
     const agentColumnNames = agentTableInfo.map(info => info.name);
     if (!agentColumnNames.includes('subscriptions')) {
-        loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding subscriptions column to agents table');
+        if (loggerService) loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding subscriptions column to agents table');
         try {
             db.exec("ALTER TABLE agents ADD COLUMN subscriptions TEXT");
         } catch (err) {
-            loggerService.catError(LogCategory.SQLITE, 'Migration failed for column subscriptions', { error: err });
+            if (loggerService) loggerService.catError(LogCategory.SQLITE, 'Migration failed for column subscriptions', { error: err });
         }
     }
 
     // Add missing columns to monitoring_deltas table
     const deltaTableInfo = db.prepare("PRAGMA table_info(monitoring_deltas)").all() as any[];
     if (!deltaTableInfo.some(col => col.name === 'metadata')) {
-        loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding metadata column to monitoring_deltas');
+        if (loggerService) loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding metadata column to monitoring_deltas');
         try {
             db.exec("ALTER TABLE monitoring_deltas ADD COLUMN metadata TEXT");
         } catch (err) {
-            loggerService.catError(LogCategory.SQLITE, 'Migration failed for column metadata in monitoring_deltas', { error: err });
+            if (loggerService) loggerService.catError(LogCategory.SQLITE, 'Migration failed for column metadata in monitoring_deltas', { error: err });
         }
     }
 
     // Add missing columns to monitoring_article_cache
     const cacheTableInfo = db.prepare("PRAGMA table_info(monitoring_article_cache)").all() as any[];
     if (!cacheTableInfo.some(col => col.name === 'metadata')) {
-        loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding metadata column to monitoring_article_cache');
+        if (loggerService) loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding metadata column to monitoring_article_cache');
         try {
             db.exec("ALTER TABLE monitoring_article_cache ADD COLUMN metadata TEXT");
         } catch (err) {
-            loggerService.catError(LogCategory.SQLITE, 'Migration failed for column metadata in monitoring_article_cache', { error: err });
+            if (loggerService) loggerService.catError(LogCategory.SQLITE, 'Migration failed for column metadata in monitoring_article_cache', { error: err });
         }
     }
 
     // Add missing columns to attachments table
     const attTableInfo = db.prepare("PRAGMA table_info(attachments)").all() as any[];
     if (!attTableInfo.some(col => col.name === 'image_base64')) {
-        loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding image_base64 column to attachments');
+        if (loggerService) loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding image_base64 column to attachments');
         try {
             db.exec("ALTER TABLE attachments ADD COLUMN image_base64 TEXT");
         } catch (err) {
-            loggerService.catError(LogCategory.SQLITE, 'Migration failed for column image_base64 in attachments', { error: err });
+            if (loggerService) loggerService.catError(LogCategory.SQLITE, 'Migration failed for column image_base64 in attachments', { error: err });
         }
     }
 
@@ -93,12 +93,12 @@ const initDb = () => {
     const isTest = process.env.NODE_ENV === 'test';
     
     if (isTest) {
-        loggerService.catInfo(LogCategory.SQLITE, 'Initializing In-Memory SQLite Database for Tests');
+        if (loggerService) loggerService.catInfo(LogCategory.SQLITE, 'Initializing In-Memory SQLite Database for Tests');
         db = new BetterSqlite3(':memory:');
     } else {
         const userDataPath = app.getPath('userData');
         const dbPath = join(userDataPath, 'signalzero.db');
-        loggerService.catInfo(LogCategory.SQLITE, 'Initializing SQLite Database', { dbPath });
+        if (loggerService) loggerService.catInfo(LogCategory.SQLITE, 'Initializing SQLite Database', { dbPath });
         
         if (!fs.existsSync(userDataPath)) {
             fs.mkdirSync(userDataPath, { recursive: true });
@@ -111,7 +111,7 @@ const initDb = () => {
         db.pragma('foreign_keys = ON');
 
         if (!isTest) {
-            loggerService.catDebug(LogCategory.SQLITE, 'Database connected');
+            if (loggerService) loggerService.catDebug(LogCategory.SQLITE, 'Database connected');
         }
 
         // Normalized Schema
@@ -280,10 +280,10 @@ const initDb = () => {
         // Migration for existing tables
         migrateSchema();
 
-        loggerService.catInfo(LogCategory.SQLITE, 'Database schema initialized');
+        if (loggerService) loggerService.catInfo(LogCategory.SQLITE, 'Database schema initialized');
         isInitialized = true;
     } catch (error) {
-        loggerService.catError(LogCategory.SQLITE, 'Failed to initialize database', { error });
+        if (loggerService) loggerService.catError(LogCategory.SQLITE, 'Failed to initialize database', { error });
         throw error;
     }
 };
@@ -301,7 +301,7 @@ export const sqliteService = {
         try {
             return db.prepare(sql).run(params);
         } catch (error) {
-            loggerService.catError(LogCategory.SQLITE, 'SQL RUN ERROR', { sql, params, error });
+            if (loggerService) loggerService.catError(LogCategory.SQLITE, 'SQL RUN ERROR', { sql, params, error });
             throw error;
         }
     },
@@ -316,7 +316,7 @@ export const sqliteService = {
             }
             return result;
         } catch (error) {
-            loggerService.catError(LogCategory.SQLITE, 'SQL GET ERROR', { sql, params, error });
+            if (loggerService) loggerService.catError(LogCategory.SQLITE, 'SQL GET ERROR', { sql, params, error });
             throw error;
         }
     },
@@ -329,7 +329,7 @@ export const sqliteService = {
             // loggerService.catDebug(LogCategory.SQLITE, `SQL ALL: Returned ${results.length} rows`);
             return results;
         } catch (error) {
-            loggerService.catError(LogCategory.SQLITE, 'SQL ALL ERROR', { sql, params, error });
+            if (loggerService) loggerService.catError(LogCategory.SQLITE, 'SQL ALL ERROR', { sql, params, error });
             throw error;
         }
     },
