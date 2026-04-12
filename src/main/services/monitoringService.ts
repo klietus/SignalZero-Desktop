@@ -130,8 +130,8 @@ class MonitoringService {
                 this.intervals.set(source.id, interval);
                 loggerService.catInfo(LogCategory.MONITORING, `Started monitoring source: ${source.name} (${source.id})`, { interval: source.pollingIntervalMs });
                 
-                // Initial poll
-                this.pollSource(source);
+                // Initial poll with a small settle-delay to avoid first-run network jitter
+                setTimeout(() => this.pollSource(source), 5000);
             }
         }
     }
