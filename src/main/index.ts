@@ -84,7 +84,7 @@ function createMonitorWindow(): void {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#000000',
-    title: 'SignalZero Monitor',
+    title: 'Signal Zero Monitor',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -105,7 +105,7 @@ function createMonitorWindow(): void {
 function setupNativeMenu() {
   const template: any[] = [
     {
-      label: 'SignalZero',
+      label: 'Signal Zero',
       submenu: [
         { role: 'about' },
         { type: 'separator' },
@@ -250,7 +250,7 @@ function setupTray() {
   }
   
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'SignalZero', enabled: false },
+    { label: 'Signal Zero', enabled: false },
     { type: 'separator' },
     { label: 'Capture Screenshot', click: () => captureScreenshot() },
     { label: 'Open Monitor', click: () => createMonitorWindow() },
@@ -259,7 +259,7 @@ function setupTray() {
     { label: 'Quit', click: () => app.quit() }
   ]);
 
-  tray.setToolTip('SignalZero Recursive Symbolic Kernel');
+  tray.setToolTip('Signal Zero');
   tray.setContextMenu(contextMenu);
 }
 

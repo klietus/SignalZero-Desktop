@@ -32,7 +32,7 @@ sed -i '' "s/version: '[^']*'/version: '$VERSION'/g" src/main/services/projectSe
 echo "🏗️  Building macOS DMG (this may take a few minutes)..."
 npm run build:mac
 
-DMG_FILE="dist/SignalZero-Desktop-$VERSION-arm64.dmg"
+DMG_FILE="dist/Signal Zero-$VERSION-arm64.dmg"
 
 if [ ! -f "$DMG_FILE" ]; then
     echo "❌ Error: DMG file not found at $DMG_FILE"
