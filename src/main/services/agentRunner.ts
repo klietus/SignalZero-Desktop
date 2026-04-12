@@ -10,7 +10,6 @@ import { loggerService, LogCategory } from './loggerService.js';
 import { MonitoringDelta, AgentDefinition } from '../types.js';
 
 class AgentRunner {
-    private isGating = false;
     private isProcessingBatch = false;
     private pendingBatches = new Map<string, MonitoringDelta[]>(); // agentId -> deltas[]
     private routedDeltas = new Set<string>(); // deltaId (to prevent double routing in same cycle)
