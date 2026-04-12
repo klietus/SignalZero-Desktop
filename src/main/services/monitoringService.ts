@@ -216,6 +216,7 @@ class MonitoringService {
         } catch (error: any) {
             loggerService.catError(LogCategory.MONITORING, `Failed to poll source: ${source.name}`, { 
                 error: error.message,
+                cause: error.cause,
                 stack: error.stack
             });
         }
