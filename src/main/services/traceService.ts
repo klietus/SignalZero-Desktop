@@ -29,9 +29,15 @@ export const traceService = {
             );
 
             eventBusService.emitKernelEvent(KernelEventType.TRACE_LOGGED, trace);
-            loggerService.catDebug(LogCategory.SYSTEM, "Trace logged", { traceId: id, sessionId: trace.sessionId });
+            if (loggerService) {
+                loggerService.catDebug(LogCategory.SYSTEM, "Trace logged", { traceId: id, sessionId: trace.sessionId });
+            }
         } catch (error: any) {
-            loggerService.catError(LogCategory.SYSTEM, 'TraceService: Failed to add trace', { error: error.message, traceId: id });
+            if (loggerService) {
+                loggerService.catError(LogCategory.SYSTEM, 'TraceService: Failed to add trace', { error: error.message, traceId: id });
+            } else {
+                console.error(`[TraceService] Failed to add trace ${id}: ${error.message}`);
+            }
         }
     },
 
