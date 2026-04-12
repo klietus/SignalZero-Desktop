@@ -13,7 +13,7 @@ const yieldToEventLoop = () => new Promise(resolve => setTimeout(resolve, 0));
 
 export const projectService = {
     async getActiveProjectMeta(): Promise<ProjectMeta> {
-        return { name: 'SignalZero Desktop', version: '1.1.8', created_at: '', updated_at: '', author: 'klietus' };
+        return { name: 'SignalZero Desktop', version: '1.1.9', created_at: '', updated_at: '', author: 'klietus' };
     },
 
     async export(meta: ProjectMeta, systemPrompt: string, mcpPrompt: string): Promise<Uint8Array> {
@@ -80,7 +80,7 @@ export const projectService = {
 
             const getZipFile = (name: string) => zip.file(prefix + name);
 
-            let meta: ProjectMeta = { name: 'Imported', version: '1.1.8', created_at: '', updated_at: '', author: '' };
+            let meta: ProjectMeta = { name: 'Imported', version: '1.1.9', created_at: '', updated_at: '', author: '' };
             const metaFile = getZipFile('metadata.json');
             if (metaFile) {
                 const text = await metaFile.async('string');
