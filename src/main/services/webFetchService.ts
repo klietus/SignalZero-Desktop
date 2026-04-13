@@ -15,6 +15,7 @@ export interface WebFetchResult {
         summary: string;
         events: string[];
         time: string;
+        imageUrl?: string;
     };
 }
 
@@ -35,15 +36,37 @@ export const webFetchService = {
 
             const html = await resp.text();
             const dom = new JSDOM(html, { url });
-            const reader = new Readability(dom.window.document);
+            const doc = dom.window.document;
+
+            // --- IMAGE EXTRACTION (Efficient, single-pass) ---
+            const imageCandidates: string[] = [];
+            
+            // 1. OG/Twitter Meta Tags
+            const og = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+            if (og) imageCandidates.push(og);
+            const twitter = doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+            if (twitter) imageCandidates.push(twitter);
+
+            // 2. Readability parsing
+            const reader = new Readability(doc);
             const article = reader.parse();
 
             if (!article || !article.textContent) {
                 throw new Error("Failed to parse article content from HTML");
             }
 
+            // 3. Fallback heuristic: First large image in article or main
+            const mainImg = doc.querySelector('article img, main img, #content img');
+            if (mainImg) {
+                const src = mainImg.getAttribute('src');
+                if (src && (src.startsWith('http') || src.startsWith('//'))) {
+                    const finalSrc = src.startsWith('//') ? `https:${src}` : src;
+                    if (!imageCandidates.includes(finalSrc)) imageCandidates.push(finalSrc);
+                }
+            }
+
             const cleanText = article.textContent.trim().replace(/\s+/g, ' ');
-            const metadata = await this.extractMetadata(cleanText, url);
+            const metadata = await this.extractMetadata(cleanText, url, imageCandidates);
 
             return {
                 url,
@@ -59,7 +82,7 @@ export const webFetchService = {
         }
     },
 
-    async extractMetadata(text: string, url: string): Promise<any> {
+    async extractMetadata(text: string, url: string, imageCandidates: string[] = []): Promise<any> {
         const settings = await settingsService.getInferenceSettings();
         const fastModel = settings.fastModel;
         if (!fastModel) throw new Error("Fast model not configured");
@@ -69,15 +92,19 @@ export const webFetchService = {
         TEXT:
         ${text.slice(0, 10000)}
 
+        IMAGE CANDIDATES FOUND IN HTML:
+        ${imageCandidates.join('\n')}
+
         Return ONLY valid JSON matching this schema. 
-        CRITICAL: All double quotes INSIDE string values must be properly escaped with backslashes (e.g., "He said \\"Hello\\"").
+        CRITICAL: All double quotes INSIDE string values must be properly escaped with backslashes.
         
         {
             "actors": ["List of primary entities/people involved"],
             "verbatim_statements": ["Key direct quotes or specific declarations"],
             "summary": "Concise summary of the core information",
             "events": ["Timeline of specific events mentioned"],
-            "time": "The primary timeframe of the content"
+            "time": "The primary timeframe of the content",
+            "imageUrl": "The most relevant hero/primary image URL from the candidates provided above. If none are relevant, leave null."
         }`;
 
         try {
@@ -103,7 +130,8 @@ export const webFetchService = {
                 verbatim_statements: [],
                 summary: "Extraction failed",
                 events: [],
-                time: "Unknown"
+                time: "Unknown",
+                imageUrl: imageCandidates[0] || null
             };
         }
     }
