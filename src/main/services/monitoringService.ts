@@ -251,7 +251,13 @@ class MonitoringService {
         if (source.type === 'api') {
             try {
                 const data = JSON.parse(rawData);
-                // ...
+                
+                // ACLED: { data: [...] }
+                if (source.id === 'acled' && Array.isArray(data.data)) {
+                    loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.data.length} items from ACLED API`);
+                    return data.data;
+                }
+
                 // GDELT Artlist: { articles: [...] }
                 if (source.id === 'gdelt' && Array.isArray(data.articles)) {
                     const articles = data.articles.map((a: any) => ({
