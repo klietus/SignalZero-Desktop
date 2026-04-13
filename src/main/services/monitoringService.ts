@@ -239,7 +239,7 @@ class MonitoringService {
                     content: item.contentSnippet || item.content || item.summary,
                     link: item.link,
                     pubDate: item.pubDate,
-                    image: item.enclosure?.url || (item as any).itunes?.image || (item as any).mediaContent?.$?.url
+                    image: item.enclosure?.url || (item as any).itunes?.image || (item as any).mediaContent?.$?.url || (item as any).image?.url
                 }));
                 loggerService.catInfo(LogCategory.MONITORING, `Itemized ${items.length} items from RSS feed for ${source.name}`);
                 return items;
@@ -251,15 +251,15 @@ class MonitoringService {
         if (source.type === 'api') {
             try {
                 const data = JSON.parse(rawData);
-                // ACLED: { data: [...] }
-                if (source.id === 'acled' && Array.isArray(data.data)) {
-                    loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.data.length} items from ACLED API`);
-                    return data.data;
-                }
+                // ...
                 // GDELT Artlist: { articles: [...] }
                 if (source.id === 'gdelt' && Array.isArray(data.articles)) {
-                    loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.articles.length} articles from GDELT API`);
-                    return data.articles;
+                    const articles = data.articles.map((a: any) => ({
+                        ...a,
+                        image: a.socialimage || a.image
+                    }));
+                    loggerService.catInfo(LogCategory.MONITORING, `Itemized ${articles.length} articles from GDELT API`);
+                    return articles;
                 }
                 // Aviation Stack: { data: [...] }
                 if (source.id.includes('stack') && Array.isArray(data.data)) {

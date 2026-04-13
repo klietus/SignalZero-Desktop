@@ -172,8 +172,16 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
             const chat = await getChatSession(fullAgentPrompt, session.id, agentModel);
             const toolExecutor = createToolExecutor(session.id);
 
-            const deltaSummary = deltas.map((d, i) => `[EVENT ${i+1}]\nSource: ${d.sourceId}\nContent: ${d.content}`).join('\n\n---\n\n');
-            const message = `[AUTONOMOUS BATCH TRIGGER]\n${deltas.length} new events have been detected:\n\n${deltaSummary}\n\nSynthesize these events into your symbolic graph.`;
+            const deltaSummary = deltas.map((d, i) => {
+                let header = `[EVENT ${i+1}]\nSource: ${d.sourceId}\nContent: ${d.content}`;
+                if (d.metadata) {
+                    if (d.metadata.articleUrl) header += `\nArticle URL: ${d.metadata.articleUrl}`;
+                    if (d.metadata.imageUrl) header += `\nImage URL: ${d.metadata.imageUrl}`;
+                }
+                return header;
+            }).join('\n\n---\n\n');
+            
+            const message = `[AUTONOMOUS BATCH TRIGGER]\n${deltas.length} new events have been detected:\n\n${deltaSummary}\n\nSynthesize these events into your symbolic graph. Use the provided URLs for grounding if needed.`;
 
             const startTime = new Date().toISOString();
             const stream = sendMessageAndHandleTools(chat, message, toolExecutor, true, agent.prompt, session.id, undefined, undefined, undefined, undefined, 0);
