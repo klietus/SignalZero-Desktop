@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "id": "state",
+    "name": "State",
+    "description": "This domain is for system state. It may be freely written to. Each turn includes a parallel write to the state domain to record current state.",
+    "invariants": [
+      "All state records must be non-repudiable and directly attributable to the specific turn and causal process that generated them.",
+      "State domain writes must be a verifiable representation of the actual system state at the time of recording and may not store speculative or counterfactual states.",
+      "Once written, a state record is immutable; new states are appended and may not alter the historical record.",
+      "The state domain is a passive record and may not contain executable logic or directly trigger actions in other domains.",
+      "The schema and content of the state domain must remain fully inspectable and may not be obfuscated."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-14T11:35:00.000Z",
+    "symbolCount": 0
+  },
+  "symbols": []
+}
