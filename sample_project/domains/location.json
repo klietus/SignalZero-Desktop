@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "id": "location",
+    "name": "Locations",
+    "description": "Spatial and administrative entities, including geographical coordinates, political jurisdictions, and historical territories.",
+    "invariants": [
+      "Locations MUST be grounded in verifiable geographical coordinates or established naming conventions.",
+      "Hierarchical relationships (e.g., containment, jurisdiction) MUST be explicitly defined and traversable.",
+      "Historical changes to borders, names, or administrative status MUST be tracked and versioned.",
+      "Links to events, people, and organizations occurring at or based in a location MUST be auditable.",
+      "Locations MUST be tagged by their nature (e.g., physical, political, jurisdictional, or digital).",
+      "Each location symbol MUST represent a distinct entity to prevent spatial ambiguity or duplication."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-14T11:55:00.000Z",
+    "symbolCount": 0
+  },
+  "symbols": []
+}
