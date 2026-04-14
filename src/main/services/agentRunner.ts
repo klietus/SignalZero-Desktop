@@ -86,6 +86,7 @@ class AgentRunner {
 
     /**
      * Batch Execution Round: Every 5 minutes, all agents with pending deltas run a turn.
+     * We chunk these into groups of 15 to avoid overwhelming the model.
      */
     private async runBatchRound() {
         if (this.isProcessingBatch) return;
@@ -93,27 +94,35 @@ class AgentRunner {
         try {
             this.isProcessingBatch = true;
             const agents = await agentService.listAgents();
+            const BATCH_CHUNK_SIZE = 15;
 
             for (const agent of agents) {
                 const deltas = this.pendingBatches.get(agent.id);
                 if (!deltas || deltas.length === 0) continue;
 
-                loggerService.catInfo(LogCategory.AGENT, `Batch Round: Agent ${agent.id} processing ${deltas.length} deltas`);
+                loggerService.catInfo(LogCategory.AGENT, `Batch Round: Agent ${agent.id} has ${deltas.length} deltas pending.`);
 
-                // Clear the batch before starting to avoid race conditions if new deltas arrive during turn
+                // Clear the pending batch before starting
                 this.pendingBatches.set(agent.id, []);
 
-                try {
-                    await this.executeAgentBatchTurn(agent, deltas);
+                // Process in chunks of 15
+                for (let i = 0; i < deltas.length; i += BATCH_CHUNK_SIZE) {
+                    const chunk = deltas.slice(i, i + BATCH_CHUNK_SIZE);
+                    loggerService.catInfo(LogCategory.AGENT, `Agent ${agent.id}: Processing chunk ${Math.floor(i / BATCH_CHUNK_SIZE) + 1} (${chunk.length} deltas)`);
 
-                    // Mark all as processed in DB
-                    for (const delta of deltas) {
-                        await agentService.markDeltaProcessed(agent.id, delta.id);
-                        this.routedDeltas.delete(delta.id); // Safe to remove from memory now
+                    try {
+                        await this.executeAgentBatchTurn(agent, chunk);
+
+                        // Mark this chunk as processed in DB
+                        for (const delta of chunk) {
+                            await agentService.markDeltaProcessed(agent.id, delta.id);
+                            this.routedDeltas.delete(delta.id);
+                        }
+                    } catch (err) {
+                        loggerService.catError(LogCategory.AGENT, `Chunk execution failed for agent ${agent.id}`, { error: err });
+                        // Re-add failed deltas to the front of the batch for next round?
+                        // For now we skip them to avoid infinite failure loops.
                     }
-                } catch (err) {
-                    loggerService.catError(LogCategory.AGENT, `Batch execution failed for agent ${agent.id}`, { error: err });
-                    // Re-add to batch for next round if needed? For now we just log failure.
                 }
             }
         } finally {
