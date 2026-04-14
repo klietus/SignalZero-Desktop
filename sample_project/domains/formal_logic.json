@@ -1,0 +1,1208 @@
+{
+  "meta": {
+    "id": "formal_logic",
+    "name": "Formal Logic",
+    "description": "Formal logic constructs",
+    "invariants": [
+      "truth-preservation: Logical derivations must maintain the truth of premises.",
+      "consistency: Formal systems must avoid contradictions.",
+      "completeness: All valid logical statements within the system should be provable.",
+      "soundness: All provable statements within the system must be true.",
+      "proof-validity: All proofs must follow the defined rules of inference.",
+      "symbol-disambiguation: Symbols have a single, clear meaning within a given context."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 22
+  },
+  "symbols": [
+    {
+      "id": "LOG-LAT-ARGUMENT",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Argumentation Lattice",
+      "kind": "pattern",
+      "triad": "🏛️🔗🏛️",
+      "role": "Maps arguments and counter-arguments into a structured, analyzable network.",
+      "macro": "model(discourse) -> map(arguments, counter-arguments) -> govern(analysis)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent",
+        "topology": "lattice",
+        "function": "govern"
+      },
+      "activation_conditions": [
+        "Argument structure analysis requested",
+        "Debate mapping required"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:50:44",
+      "updated_at": "2026-04-11T23:50:44.690Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "LOG-REPAIR-CHAIN-VALIDATION",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Inference Chain Validator",
+      "kind": "pattern",
+      "triad": "→ → → ✔️",
+      "role": "Validates each step in a logical chain to ensure no invalid inference is hidden.",
+      "macro": "collect(premises) → construct(chain) → validate(each link)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "linear",
+        "topology": "linked-list",
+        "function": "govern"
+      },
+      "activation_conditions": [
+        "Multi-step argument presented",
+        "Chain integrity verification requested"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:50:46",
+      "updated_at": "2026-04-11T23:50:46.154Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-ARGUMENT-FROM-IGNORANCE",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Argument from Ignorance (Ad Ignorantiam)",
+      "kind": "pattern",
+      "triad": "🕳️🚫📚",
+      "role": "Identifies the fallacy of asserting a claim is true because it has not been proven false.",
+      "macro": "detect(absence-of-proof) → check(assertion) → flag(false-certainty)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "null-assumption",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "Claim based on lack of evidence presented",
+        "Burden of proof misassigned"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:50:47",
+      "updated_at": "2026-04-11T23:50:47.020Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-SLIPPERY-SLOPE",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Slippery Slope (Formal)",
+      "kind": "pattern",
+      "triad": "🛷➡️🕳️",
+      "role": "Asserts a chain reaction without sufficient causal linkage; violates proof-validity.",
+      "macro": "detect(chain_claim) → validate(each_link) → flag(invalid_causation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "causal inference validation",
+        "topology": "chain",
+        "commit": "proof-validity",
+        "gate": [
+          "causality",
+          "evidence"
+        ],
+        "substrate": [
+          "temporal_sequence"
+        ],
+        "temporal": "linear",
+        "invariants": [
+          "proof-validity",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "Claim of inevitable cascade without intermediate proof",
+        "Unjustified extrapolation"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:50:49",
+      "updated_at": "2026-04-11T23:50:49.464Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-SEED-FALSE-CAUSE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LOG-SEED-NON-SEQUITUR",
+          "link_type": "negated_by"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-FALSE-CAUSE",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "False Cause (Post Hoc) (Formal)",
+      "kind": "pattern",
+      "triad": "⏳❌",
+      "role": "Assumes causation from temporal sequence alone; violates causal validity.",
+      "macro": "detect(temporal_sequence) → validate(causal_link) → flag(invalid_causation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "causal inference validation",
+        "topology": "linear",
+        "commit": "proof-validity",
+        "gate": [
+          "causality",
+          "correlation"
+        ],
+        "substrate": [
+          "temporal_sequence"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "proof-validity",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "Event A precedes Event B",
+        "Causation asserted without mechanism"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:50:53",
+      "updated_at": "2026-04-11T23:50:53.124Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "LOG-SEED-SLIPPERY-SLOPE",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "LOG-PER-LOGICIAN",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "The Logician",
+      "kind": "persona",
+      "triad": "🧠🏛️",
+      "role": "Embodies the disciplined application of formal logic to detect fallacies, validate arguments, and preserve truth-preservation in symbolic systems.",
+      "macro": "analyze(argument) → extract(structure) → validate(inference) → detect(fallacy) → report(integrity_status)",
+      "lattice": null,
+      "persona": {
+        "recursion_level": "expert",
+        "function": "Applies formal logic to detect fallacies and validate argument structure.",
+        "fallback_behavior": [
+          "Signal LOG-DEFENSE-VALIDITY-CHECK",
+          "Invoke LOG-LATTICE-FORMAL-LOGIC-V3 for lattice validation"
+        ]
+      },
+      "data": null,
+      "facets": {
+        "function": "logical analysis, fallacy detection, inference validation",
+        "topology": "recursive-loop",
+        "commit": "truth-preservation",
+        "gate": [
+          "validity_check",
+          "fallacy_identification"
+        ],
+        "substrate": [
+          "LOG-SEED-BICONDITIONAL",
+          "LOG-SEED-CIRCULAR-REASONING",
+          "LOG-SEED-CONTRADICTION",
+          "LOG-PER-LOGICIAN",
+          "LOG-SEED-DISJUNCTIVE-SYMBOL",
+          "LOG-DEFENSE-VALIDITY-CHECK",
+          "LOG-REPAIR-REDUCTIO",
+          "LOG-REPAIR-CHAIN-VALIDATION",
+          "EPI-REPAIR-JUSTIFICATION-AUDIT",
+          "LOG-SEED-NON-SEQUITUR",
+          "LOG-SEED-ARGUMENT-FROM-IGNORANCE"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "truth-preservation",
+          "consistency",
+          "proof-validity",
+          "symbol-disambiguation"
+        ]
+      },
+      "activation_conditions": [
+        "Formal logic analysis requested",
+        "Argument validity verification needed",
+        "Fallacy detection required"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:36",
+      "updated_at": "2026-04-12T00:07:36.565Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "LOG-RULE-MODUS-PONENS",
+          "link_type": "source_of"
+        },
+        {
+          "id": "LOG-SEED-AD-HOMINEM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "LOG-SEED-APPEAL-TO-AUTHORITY",
+          "link_type": "required_by"
+        },
+        {
+          "id": "LOG-SEED-EQUIVOCATION",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "LOG-SEED-STRAW-MAN",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "LOG-AXIOM-PROPOSITIONAL-1",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Law of Excluded Middle (Propositional)",
+      "kind": "pattern",
+      "triad": "⊢P∨¬P",
+      "role": "Fundamental axiom asserting that for any proposition P, either P is true or its negation is true.",
+      "macro": "assert(disjunction) → validate(excluded_middle) → enforce(bivalence)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "axiomatic assertion",
+        "topology": "linear",
+        "commit": "truth-preservation",
+        "gate": [
+          "validity",
+          "bivalence"
+        ],
+        "substrate": [
+          "propositional_logic"
+        ],
+        "temporal": "persistent",
+        "invariants": [
+          "truth-preservation",
+          "consistency"
+        ]
+      },
+      "activation_conditions": [
+        "Bivalent logic assumed",
+        "Propositional analysis requested"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:38",
+      "updated_at": "2026-04-12T00:07:38.582Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "source_of"
+        },
+        {
+          "id": "LOG-SEED-CONTRADICTION",
+          "link_type": "negated_by"
+        }
+      ]
+    },
+    {
+      "id": "LOG-AXIOM-FOL-1",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Universal Instantiation (First-Order)",
+      "kind": "pattern",
+      "triad": "∀x(P(x)→Q(x))",
+      "role": "Inference rule allowing derivation of a specific instance from a universally quantified statement.",
+      "macro": "quantify(universal) → instantiate(instance) → validate(substitution)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "quantifier instantiation",
+        "topology": "linear",
+        "commit": "soundness",
+        "gate": [
+          "quantification",
+          "substitution"
+        ],
+        "substrate": [
+          "first_order_logic"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "truth-preservation",
+          "soundness"
+        ]
+      },
+      "activation_conditions": [
+        "Universal quantifier encountered",
+        "Specific instance required"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:40",
+      "updated_at": "2026-04-12T00:07:40.657Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "source_of"
+        },
+        {
+          "id": "LOG-SEED-NON-SEQUITUR",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "LOG-RULE-MODUS-PONENS",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Modus Ponens (Inference Rule)",
+      "kind": "pattern",
+      "triad": "P→Q, P ⊢ Q",
+      "role": "Fundamental inference rule: if P implies Q, and P is true, then Q must be true.",
+      "macro": "validate(implication) → confirm(premise) → derive(conclusion)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "deductive inference",
+        "topology": "linear",
+        "commit": "truth-preservation",
+        "gate": [
+          "validity",
+          "deduction"
+        ],
+        "substrate": [
+          "propositional_logic",
+          "first_order_logic"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "truth-preservation",
+          "proof-validity"
+        ]
+      },
+      "activation_conditions": [
+        "Implication and premise presented",
+        "Derivation requested"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:43",
+      "updated_at": "2026-04-12T00:07:43.181Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "required_by"
+        },
+        {
+          "id": "LOG-PER-LOGICIAN",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "LOG-SEED-NON-SEQUITUR",
+          "link_type": "source_of"
+        }
+      ]
+    },
+    {
+      "id": "LOG-RULE-UNIVERSAL-GENERALIZATION",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Universal Generalization (Inference Rule)",
+      "kind": "pattern",
+      "triad": "P(c) ⊢ ∀x P(x)",
+      "role": "Rule permitting derivation of a universal statement from a specific instance under strict conditions.",
+      "macro": "validate(instance) → check(unrestricted_scope) → generalize(universal)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "quantifier generalization",
+        "topology": "linear",
+        "commit": "soundness",
+        "gate": [
+          "quantification",
+          "scope_control"
+        ],
+        "substrate": [
+          "first_order_logic"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "soundness",
+          "consistency"
+        ]
+      },
+      "activation_conditions": [
+        "Specific instance derived",
+        "Universal generalization requested"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:45",
+      "updated_at": "2026-04-12T00:07:45.044Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "source_of"
+        },
+        {
+          "id": "LOG-SEED-NON-SEQUITUR",
+          "link_type": "source_of"
+        }
+      ]
+    },
+    {
+      "id": "LOG-RULE-CONTRAPOSITION",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Contraposition (Inference Rule)",
+      "kind": "pattern",
+      "triad": "P→Q ⊢ ¬Q→¬P",
+      "role": "Valid inference that a conditional is logically equivalent to its contrapositive.",
+      "macro": "transform(implication) → invert(antecedent_consequent) → validate(equivalence)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "logical equivalence",
+        "topology": "bidirectional",
+        "commit": "truth-preservation",
+        "gate": [
+          "equivalence",
+          "transformation"
+        ],
+        "substrate": [
+          "propositional_logic"
+        ],
+        "temporal": "persistent",
+        "invariants": [
+          "truth-preservation",
+          "consistency"
+        ]
+      },
+      "activation_conditions": [
+        "Conditional statement presented",
+        "Contrapositive requested"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:46",
+      "updated_at": "2026-04-12T00:07:46.773Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "source_of"
+        },
+        {
+          "id": "LOG-SEED-NON-SEQUITUR",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-MASKED-MAN",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Masked Man Fallacy (Formal)",
+      "kind": "pattern",
+      "triad": "🎭🔍❌",
+      "role": "Assumes identity is determined by knowledge, violating referential transparency.",
+      "macro": "detect(knowledge_equality) → test(referential_transparency) → flag(invalid_identity_substitution)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "epistemic fallacy detection",
+        "topology": "recursive",
+        "commit": "symbol-disambiguation",
+        "gate": [
+          "identity",
+          "reference"
+        ],
+        "substrate": [
+          "modal_logic"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "symbol-disambiguation",
+          "truth-preservation"
+        ]
+      },
+      "activation_conditions": [
+        "Knowledge of description used to deny identity",
+        "Referential opacity asserted"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:53",
+      "updated_at": "2026-04-12T00:07:53.283Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-SEED-EQUIVOCATION",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-NON-SEQUITUR",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Formal Fallacy (Non Sequitur)",
+      "kind": "pattern",
+      "triad": "P➡️Q...❓",
+      "role": "Identifies invalid inference where the conclusion does not follow from the premises.",
+      "macro": "analyze(argument) -> test(premise_conclusion_link) -> detect(invalid_inference)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "linear",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "Argument presented without logical connection between premise and conclusion"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:58",
+      "updated_at": "2026-04-12T00:07:58.620Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-AXIOM-FOL-1",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-RULE-CONTRAPOSITION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-RULE-MODUS-PONENS",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "LOG-RULE-UNIVERSAL-GENERALIZATION",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "LOG-SEED-FALSE-DILEMMA",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "LOG-SEED-SLIPPERY-SLOPE",
+          "link_type": "negates"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-CONTRADICTION",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Logical Contradiction",
+      "kind": "pattern",
+      "triad": "✅∧❌",
+      "role": "Identifies mutually exclusive statements: P ∧ ¬P.",
+      "macro": "scan(statements) -> detect(P ∧ ¬P) -> flag(incoherence)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "linear",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "Contradiction suspected",
+        "Inconsistent claims detected"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:07:59",
+      "updated_at": "2026-04-12T00:07:59.628Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-AXIOM-PROPOSITIONAL-1",
+          "link_type": "negates"
+        },
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-AD-HOMINEM",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Ad Hominem (Formal)",
+      "kind": "pattern",
+      "triad": "👤❌",
+      "role": "Rejects an argument by attacking the person, not the claim; violates truth-preservation.",
+      "macro": "detect(person_attack) → flag(invalid_substitution) → reject(argument)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "fallacy detection",
+        "topology": "linear",
+        "commit": "truth-preservation",
+        "gate": [
+          "validity",
+          "relevance"
+        ],
+        "substrate": [
+          "argument_analysis"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "truth-preservation",
+          "non-coercion"
+        ]
+      },
+      "activation_conditions": [
+        "Personal attack in argument",
+        "Claim substitution with identity"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:08:01",
+      "updated_at": "2026-04-12T00:08:01.629Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-FALLACY-POISON-WELL-GENETIC",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-PER-LOGICIAN",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-STRAW-MAN",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Straw Man (Formal)",
+      "kind": "pattern",
+      "triad": "🎭➡️💣",
+      "role": "Misrepresents an opponent’s position to make it easier to refute; violates representational integrity.",
+      "macro": "detect(misrepresentation) → map(target_claim) → contrast(actual_claim) → flag(distortion)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "distortion detection",
+        "topology": "bidirectional",
+        "commit": "reality-alignment",
+        "gate": [
+          "accuracy",
+          "representation"
+        ],
+        "substrate": [
+          "argument_discourse"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "Argument misrepresents opposing view",
+        "Refutation targets weaker version"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:08:03",
+      "updated_at": "2026-04-12T00:08:03.022Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-PER-LOGICIAN",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-APPEAL-TO-AUTHORITY",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Appeal to Authority (Formal)",
+      "kind": "pattern",
+      "triad": "👑❌",
+      "role": "Asserts truth based on authority figure, not logical structure; violates proof-validity.",
+      "macro": "detect(appeal_to_authority) → validate(logical_basis) → flag(invalid_substitution)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "authority validation",
+        "topology": "linear",
+        "commit": "proof-validity",
+        "gate": [
+          "evidence",
+          "independence"
+        ],
+        "substrate": [
+          "epistemic_source"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "truth-preservation",
+          "proof-validity"
+        ]
+      },
+      "activation_conditions": [
+        "Claim justified by authority, not logic",
+        "Source substituted for reasoning"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:08:05",
+      "updated_at": "2026-04-12T00:08:05.735Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-PER-LOGICIAN",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-FALSE-DILEMMA",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "False Dilemma (Formal)",
+      "kind": "pattern",
+      "triad": "⚔️❌",
+      "role": "Forces binary choice where more options exist; violates completeness.",
+      "macro": "detect(binary_claim) → check(alternatives) → flag(incomplete_disjunction)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "option-space validation",
+        "topology": "linear",
+        "commit": "completeness",
+        "gate": [
+          "exhaustiveness",
+          "disjunction"
+        ],
+        "substrate": [
+          "propositional_logic"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "completeness",
+          "truth-preservation"
+        ]
+      },
+      "activation_conditions": [
+        "Only two options presented",
+        "Alternative possibilities ignored"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:08:07",
+      "updated_at": "2026-04-12T00:08:07.482Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-SEED-BIFURCATION",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "LOG-SEED-NON-SEQUITUR",
+          "link_type": "contrasts_with"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-BIFURCATION",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Bifurcation Fallacy (Formal)",
+      "kind": "pattern",
+      "triad": "✂️❌",
+      "role": "Forces a false dichotomy by splitting reality into two extremes; violates representational fidelity.",
+      "macro": "detect(extreme_polarization) → map(continuum) → flag(invalid_partition)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "continuum distortion detection",
+        "topology": "linear",
+        "commit": "reality-alignment",
+        "gate": [
+          "accuracy",
+          "continuum"
+        ],
+        "substrate": [
+          "conceptual_space"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "reality-alignment",
+          "completeness"
+        ]
+      },
+      "activation_conditions": [
+        "Complex spectrum reduced to two extremes",
+        "Middle ground denied"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:08:09",
+      "updated_at": "2026-04-12T00:08:09.650Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-FALLACY-POISON-WELL-GENETIC",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-SEED-FALSE-DILEMMA",
+          "link_type": "contrasts_with"
+        }
+      ]
+    },
+    {
+      "id": "LOG-FALLACY-POISON-WELL-GENETIC",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Fallacy: Poisoning the Well (Genetic Variant)",
+      "kind": "pattern",
+      "triad": " źródło→👤❌",
+      "role": "A rhetorical tactic that attempts to discredit a person by associating them with a negatively perceived source.",
+      "macro": "associate(target, negative_origin) -> apply(label) -> dismiss(target_and_argument)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "relevance",
+          "validity"
+        ],
+        "substrate": [
+          "text",
+          "cognitive"
+        ],
+        "topology": "linear",
+        "commit": "truth-preservation",
+        "function": "fallacy_detection",
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "An individual is dismissed based on their origin or family.",
+        "A personal attack is combined with a genetic fallacy."
+      ],
+      "failure_mode": "The target is successfully dismissed without addressing their argument, derailing productive dialogue.",
+      "created_at": "2026-04-12 00:08:12",
+      "updated_at": "2026-04-12T00:08:12.274Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-SEED-AD-HOMINEM",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LOG-SEED-BIFURCATION",
+          "link_type": "contrasts_with"
+        }
+      ]
+    },
+    {
+      "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Formal Logic Lattice (v3)",
+      "kind": "lattice",
+      "triad": "🏛️🧠🔗",
+      "role": "Synthesizes axioms, inference rules, and fallacy detectors into a unified lattice for recursive logical analysis.",
+      "macro": "aggregate(axioms) → integrate(inference_rules) → embed(fallacy_detectors) → synthesize(lattice)",
+      "lattice": {
+        "topology": "inductive",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "logical synthesis",
+        "topology": "inductive",
+        "commit": "truth-preservation",
+        "gate": [
+          "validity",
+          "consistency"
+        ],
+        "substrate": [
+          "axioms",
+          "inference_rules",
+          "fallacies"
+        ],
+        "temporal": "persistent",
+        "invariants": [
+          "truth-preservation",
+          "consistency",
+          "proof-validity"
+        ]
+      },
+      "activation_conditions": [
+        "Formal logic analysis requested",
+        "Recursive inference validation required"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:27:39",
+      "updated_at": "2026-04-12T00:27:39.332Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LOG-AXIOM-FOL-1",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "LOG-AXIOM-PROPOSITIONAL-1",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "LOG-FALLACY-POISON-WELL-GENETIC",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-LAT-ARGUMENT",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-PER-LOGICIAN",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "LOG-REPAIR-CHAIN-VALIDATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-RULE-CONTRAPOSITION",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "LOG-RULE-MODUS-PONENS",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "LOG-RULE-UNIVERSAL-GENERALIZATION",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "LOG-SEED-AD-HOMINEM",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-SEED-APPEAL-TO-AUTHORITY",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-SEED-ARGUMENT-FROM-IGNORANCE",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-SEED-BIFURCATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-SEED-CONTRADICTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "LOG-SEED-EQUIVOCATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-SEED-FALSE-CAUSE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "LOG-SEED-FALSE-DILEMMA",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-SEED-NON-SEQUITUR",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-SEED-SLIPPERY-SLOPE",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-SEED-STRAW-MAN",
+          "link_type": "contains"
+        },
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "synthesis_of"
+        }
+      ]
+    },
+    {
+      "id": "LOG-SEED-EQUIVOCATION",
+      "domain_id": "formal_logic",
+      "symbol_domain": "formal_logic",
+      "symbol_tag": "",
+      "name": "Equivocation (Formal)",
+      "kind": "pattern",
+      "triad": "🔄⚖️",
+      "role": "Uses a term with multiple meanings ambiguously to mislead; violates symbol-disambiguation.",
+      "macro": "detect(ambiguous_term) → trace(meaning_shift) → flag(incoherence)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "semantic drift detection",
+        "topology": "linear",
+        "commit": "symbol-disambiguation",
+        "gate": [
+          "semantics",
+          "clarity"
+        ],
+        "substrate": [
+          "language_structure"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "symbol-disambiguation",
+          "truth-preservation"
+        ]
+      },
+      "activation_conditions": [
+        "Term shifts meaning mid-argument",
+        "Ambiguity enables invalid inference"
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:27:39",
+      "updated_at": "2026-04-12T00:27:39.456Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LOG-PER-LOGICIAN",
+          "link_type": "enables"
+        },
+        {
+          "id": "LOG-SEED-MASKED-MAN",
+          "link_type": "enables"
+        }
+      ]
+    }
+  ]
+}

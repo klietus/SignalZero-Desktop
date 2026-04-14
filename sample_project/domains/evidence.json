@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "id": "evidence",
+    "name": "Evidence",
+    "description": "This domain collects and stores symbolic representations of observations, data, or results used to confirm or refute hypotheses.",
+    "invariants": [
+      "Evidence MUST align with reality, representing accurate observations.",
+      "All evidence MUST be auditable, tracking its creation, modification, and usage.",
+      "Evidence MUST NOT be subject to silent mutation; changes require explicit action.",
+      "The source or origin of evidence MUST be traceable (Provenance).",
+      "Evidence collection and interpretation MUST be explicit choices.",
+      "Evidence MUST maintain baseline integrity; preventing corruption or unauthorized alteration.",
+      "Deviations in evidence (e.g., unexpected data) MUST trigger drift detection mechanisms.",
+      "The system MUST respect the agency of the source of the evidence.",
+      "Evidence MUST be capable of confirming or refuting hypotheses (Testability, Falsifiability)."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 0
+  },
+  "symbols": []
+}

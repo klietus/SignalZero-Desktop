@@ -1,0 +1,1133 @@
+{
+  "meta": {
+    "id": "supply_chain",
+    "name": "Supply Chain",
+    "description": "Supply chains and how the effect things",
+    "invariants": [
+      "Supply chain entities (suppliers, manufacturers, distributors, retailers, consumers) and their relationships MUST be explicitly defined.",
+      "The flow of goods, services, and information MUST be traceable and auditable across the supply chain.",
+      "Key performance indicators (KPIs) for supply chain performance (e.g., lead times, costs, quality) MUST be measurable and tracked.",
+      "Supply chain risks (e.g., disruptions, delays, compliance issues) MUST be identified and managed with mitigation strategies.",
+      "Changes to supply chain processes, data, or configurations MUST be subject to change control and versioning.",
+      "Data integrity and consistency across the supply chain MUST be maintained through validation and verification mechanisms.",
+      "The purpose and objectives of each supply chain component MUST be explicitly defined and aligned with the overall goals.",
+      "Material and product origins, transformations, and destinations MUST be auditable and verifiable.",
+      "Decisions related to supply chain operations MUST be based on explicit criteria and rationale, and their outcomes must be tracked.",
+      "The scope of the supply chain MUST be clearly defined and maintained."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 15
+  },
+  "symbols": [
+    {
+      "id": "SCM-SEED-FLOW-CONSERVATION",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "seed",
+      "name": "Flow Conservation",
+      "kind": "pattern",
+      "triad": "⟰≡",
+      "role": "Seed Concept",
+      "macro": "sense(flow) → assert(inflow − outflow = Δstock) → audit(violations)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "data",
+          "operational"
+        ],
+        "temporal": "continuous",
+        "gate": [
+          "capability",
+          "validity"
+        ],
+        "topology": "network",
+        "commit": "ledger",
+        "function": "govern",
+        "invariants": [
+          "no-negative-stock",
+          "bounded-leakage"
+        ]
+      },
+      "activation_conditions": [
+        "When evaluating network flow integrity",
+        "Audit of inventory conservation"
+      ],
+      "failure_mode": "Phantom inventory or untracked loss creates planning illusions",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-FLOW-DYNAMICS",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "seed",
+      "name": "Lead-Time Bounds",
+      "kind": "pattern",
+      "triad": "⟰⇌",
+      "role": "Seed Concept",
+      "macro": "learn(lead-time posterior) → enforce(bounds) → route(decisions to feasible set)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "no-plan outside SLA",
+          "safety-time ≥ p95 variability"
+        ],
+        "function": "govern",
+        "commit": "ledger",
+        "substrate": [
+          "data",
+          "operational"
+        ],
+        "topology": "linear",
+        "gate": [
+          "capability",
+          "contract"
+        ],
+        "temporal": "window"
+      },
+      "activation_conditions": [
+        "Planning cycle constraints",
+        "Lead time validation"
+      ],
+      "failure_mode": "Plans rely on unrealizable delivery times",
+      "created_at": "2026-04-12 00:23:42",
+      "updated_at": "2026-04-12T00:23:42.846Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "required_by"
+        },
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "required_by"
+        },
+        {
+          "id": "SCM-LAT-FLOW-DYNAMICS",
+          "link_type": "limits"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "contains"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "source_of"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-META-INCENTIVE-ALIGNMENT",
+          "link_type": "reality_for"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "SCM-SEED-SHARED-VISIBILITY",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "seed",
+      "name": "Shared Visibility Protocol",
+      "kind": "pattern",
+      "triad": "⟰⇄",
+      "role": "Seed Concept",
+      "macro": "sign(data) → publish(state) → reconcile(discrepancies) → audit(history)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "tamper-evident history",
+          "minimal necessary disclosure"
+        ],
+        "temporal": "continuous",
+        "gate": [
+          "trust",
+          "capability"
+        ],
+        "substrate": [
+          "data",
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "function": "govern",
+        "topology": "mesh"
+      },
+      "activation_conditions": [
+        "Partner collaboration setup",
+        "Transparency auditing"
+      ],
+      "failure_mode": "Partners act on inconsistent realities",
+      "created_at": "2026-04-12 00:23:49",
+      "updated_at": "2026-04-12T00:23:49.185Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "required_by"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "source_of"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "enables"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "SCM-LAT-BUFFER-ALLOCATION",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "lattice",
+      "name": "Buffer Allocation Lattice",
+      "kind": "pattern",
+      "triad": "⟁≡",
+      "role": "Analysis Lattice",
+      "macro": "rank(nodes by variability×criticality) → place(buffers) → tune(reorder policies)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "window",
+        "invariants": [
+          "marginal-service-gain per unit buffer ≥ 0"
+        ],
+        "topology": "network",
+        "gate": [
+          "capability"
+        ],
+        "commit": "playbook",
+        "function": "analyze",
+        "substrate": [
+          "data",
+          "operational"
+        ]
+      },
+      "activation_conditions": [
+        "Network design optimization",
+        "Inventory policy tuning"
+      ],
+      "failure_mode": "Buffers accumulate in low-impact locations",
+      "created_at": "2026-04-12 00:23:56",
+      "updated_at": "2026-04-12T00:23:56.620Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-FLOW-DYNAMICS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "contains"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-META-INCENTIVE-ALIGNMENT",
+          "link_type": "extended_by"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "contains"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "source_of"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "SCM-META-ESCROW-TRUST",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "meta",
+      "name": "Escrow Trust Contract",
+      "kind": "pattern",
+      "triad": "⟰⚖",
+      "role": "Meta Contract",
+      "macro": "hold(collateral) → release(on verified delivery) → penalize(breach)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "substrate": [
+          "symbolic",
+          "financial"
+        ],
+        "gate": [
+          "trust",
+          "contract"
+        ],
+        "function": "govern",
+        "invariants": [
+          "proof-of-delivery required",
+          "auto-dispute timers"
+        ],
+        "topology": "contract",
+        "temporal": "window"
+      },
+      "activation_conditions": [
+        "New partner onboarding",
+        "Contract negotiation"
+      ],
+      "failure_mode": "Low-trust partners default to promises and delays",
+      "created_at": "2026-04-12 00:24:04",
+      "updated_at": "2026-04-12T00:24:04.103Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "required_by"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "required_by"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "reality_for"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "enables"
+        }
+      ]
+    },
+    {
+      "id": "SCM-META-INCENTIVE-ALIGNMENT",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "meta",
+      "name": "Incentive Alignment Protocol",
+      "kind": "pattern",
+      "triad": "⟰Σ",
+      "role": "Meta Contract",
+      "macro": "define(utility) → price(externalities) → reward(cooperation) → dampen(defection)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic",
+          "operational"
+        ],
+        "temporal": "window",
+        "invariants": [
+          "no free-riding",
+          "payoffs monotone with system value"
+        ],
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "topology": "market",
+        "function": "govern",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Ecosystem design",
+        "Incentive structuring"
+      ],
+      "failure_mode": "Local optimization defeats network health",
+      "created_at": "2026-04-12 00:24:08",
+      "updated_at": "2026-04-12T00:24:08.464Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "extends"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "required_by"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "grounds_in"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SCM-PER-RESILIENCE-ARCHITECT",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "persona",
+      "name": "Persona: Supply Chain Resilience Architect",
+      "kind": "persona",
+      "triad": "⟁ΣΞ",
+      "role": "Active guardian of supply chain resilience, balancing efficiency with robustness to prevent fragility.",
+      "macro": "analyze(vulnerabilities) → design(redundancy, flexibility) → implement(diversification, risk-sharing) → monitor(disruption_signals) → adapt(topology)",
+      "lattice": null,
+      "persona": {
+        "fallback_behavior": [
+          "Enforce safe-mode buffers",
+          "Freeze topology changes"
+        ],
+        "function": "Architects and implements strategies to enhance supply chain resilience against disruptions.",
+        "linked_personas": [],
+        "recursion_level": "strategic",
+        "activation_conditions": [
+          "Disruption signal",
+          "Resilience audit request"
+        ]
+      },
+      "data": null,
+      "facets": {
+        "gate": [
+          "risk-assessment-complete",
+          "resource-allocation"
+        ],
+        "commit": "continuous-improvement",
+        "temporal": "continuous",
+        "invariants": [
+          "baseline-integrity",
+          "drift-detection",
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "function": "architect",
+        "substrate": [
+          "physical-logistics",
+          "digital-flow",
+          "financial-capital"
+        ],
+        "topology": "network-of-networks"
+      },
+      "activation_conditions": [
+        "System-wide resilience auditing",
+        "Disruption event detected",
+        "Topology stress testing",
+        "Disruption signal",
+        "Resilience audit request"
+      ],
+      "failure_mode": "Fragility due to unforeseen interdependencies or resource depletion.",
+      "created_at": "2026-04-12 00:24:12",
+      "updated_at": "2026-04-12T00:24:12.185Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "SCM-SEED-DECOUPLING-POINT",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "seed",
+      "name": "Decoupling Point",
+      "kind": "pattern",
+      "triad": "⟰⟁",
+      "role": "Seed Concept",
+      "macro": "locate(stock buffer) → absorb(variability) → postpone(differentiation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "service-level ≥ target at decoupling node"
+        ],
+        "topology": "hub",
+        "gate": [
+          "capability",
+          "inventory"
+        ],
+        "function": "stabilize",
+        "temporal": "continuous",
+        "commit": "ledger",
+        "substrate": [
+          "operational"
+        ]
+      },
+      "activation_conditions": [
+        "Strategic inventory placement",
+        "Variability absorption analysis"
+      ],
+      "failure_mode": "Demand shocks propagate without a shock absorber",
+      "created_at": "2026-04-12 00:24:27",
+      "updated_at": "2026-04-12T00:24:27.348Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "source_of"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "enables"
+        },
+        {
+          "id": "SCM-META-INCENTIVE-ALIGNMENT",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "SCM-PER-RESILIENCE-ARCHITECT",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "reality_for"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "SCM-SEED-RESILIENCE-BUDGET",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "seed",
+      "name": "Resilience Budget",
+      "kind": "pattern",
+      "triad": "⟰⨂",
+      "role": "Seed Concept",
+      "macro": "allocate(capacity, stock, cash) → reserve(for disruption) → review(utilization)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "window",
+        "invariants": [
+          "reserve-ratio ≥ policy",
+          "no cannibalization without override"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "operational",
+          "financial"
+        ],
+        "topology": "portfolio",
+        "commit": "ledger",
+        "function": "govern"
+      },
+      "activation_conditions": [
+        "Disruption planning",
+        "Resource allocation for resilience"
+      ],
+      "failure_mode": "Efficiency maximization leaves the network brittle",
+      "created_at": "2026-04-12 00:24:36",
+      "updated_at": "2026-04-12T00:24:36.181Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "contains"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "enables"
+        },
+        {
+          "id": "SCM-META-INCENTIVE-ALIGNMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-PER-RESILIENCE-ARCHITECT",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "grounds_in"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "SCM-LAT-POSTPONEMENT",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "lattice",
+      "name": "Postponement Lattice",
+      "kind": "pattern",
+      "triad": "⟁⇌",
+      "role": "Analysis Lattice",
+      "macro": "separate(generic vs specific) → delay(customization) → collapse(lead-time risk)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "window",
+        "substrate": [
+          "operational"
+        ],
+        "commit": "playbook",
+        "gate": [
+          "capability"
+        ],
+        "function": "analyze",
+        "topology": "fork",
+        "invariants": [
+          "WIP-age within bounds",
+          "final-assembly within takt"
+        ]
+      },
+      "activation_conditions": [
+        "Product design for supply chain",
+        "Variety management"
+      ],
+      "failure_mode": "Early differentiation multiplies SKU risk",
+      "created_at": "2026-04-12 00:24:42",
+      "updated_at": "2026-04-12T00:24:42.733Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-FLOW-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "enables"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "lattice",
+      "name": "Capacity Flex Lattice",
+      "kind": "pattern",
+      "triad": "⟁⟳",
+      "role": "Analysis Lattice",
+      "macro": "map(flexible lines & labor) → schedule(optionality) → pivot(on signal)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "window",
+        "commit": "playbook",
+        "topology": "bipartite",
+        "invariants": [
+          "changeover-time within bounds",
+          "cross-train coverage ≥ policy"
+        ],
+        "substrate": [
+          "operational"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "function": "analyze"
+      },
+      "activation_conditions": [
+        "Capacity planning",
+        "Production scheduling"
+      ],
+      "failure_mode": "Rigid capacity forces costly stock or lost sales",
+      "created_at": "2026-04-12 00:24:49",
+      "updated_at": "2026-04-12T00:24:49.910Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "required_by"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "SCM-PER-RESILIENCE-ARCHITECT",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SCM-LAT-ROUTE-DIVERSITY",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "lattice",
+      "name": "Route Diversity Lattice",
+      "kind": "pattern",
+      "triad": "⟁⟰",
+      "role": "Analysis Lattice",
+      "macro": "enumerate(paths) → score(risk×cost) → assign(traffic shares) → re-opt on signal",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "window",
+        "topology": "graph",
+        "invariants": [
+          "no single-point-of-failure",
+          "min-max path portfolio"
+        ],
+        "commit": "playbook",
+        "gate": [
+          "capability"
+        ],
+        "function": "analyze",
+        "substrate": [
+          "operational"
+        ]
+      },
+      "activation_conditions": [
+        "Logistics network design",
+        "Risk mitigation planning"
+      ],
+      "failure_mode": "Monoculture routing collapses under disruption",
+      "created_at": "2026-04-12 00:24:57",
+      "updated_at": "2026-04-12T00:24:57.859Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "SCM-LAT-FLOW-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "grounds_in"
+        },
+        {
+          "id": "SCM-PER-RESILIENCE-ARCHITECT",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "SCM-LAT-TRUST-GOVERNANCE",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "lattice",
+      "name": "Trust Governance Lattice",
+      "kind": "lattice",
+      "triad": "🤝📜⚖️",
+      "role": "Orchestrates the physics of trust, incentives, and visibility across the supply network.",
+      "macro": "establish(visibility) -> align(incentives) -> enforce(escrow) -> stabilize(trust)",
+      "lattice": {
+        "closure": "loop",
+        "topology": "mesh"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "trust_verification",
+          "contract_validity"
+        ],
+        "function": "govern",
+        "topology": "contractual_mesh",
+        "invariants": [
+          "no-free-riding",
+          "transparency",
+          "mutual-benefit"
+        ],
+        "substrate": [
+          "contracts",
+          "financial_flows"
+        ],
+        "temporal": "contract-lifecycle"
+      },
+      "activation_conditions": [
+        "Partner ecosystem design",
+        "Incentive structure review"
+      ],
+      "failure_mode": "Trust collapse leading to transaction friction and defensive hoarding.",
+      "created_at": "2026-04-12 00:27:38",
+      "updated_at": "2026-04-12T00:27:38.128Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-CAPACITY-FLEXIBILITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "contains"
+        },
+        {
+          "id": "SCM-LAT-TRUST-GOVERNANCE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SCM-META-ESCROW-TRUST",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-META-INCENTIVE-ALIGNMENT",
+          "link_type": "enables"
+        },
+        {
+          "id": "SCM-SEED-DECOUPLING-POINT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SCM-SEED-RESILIENCE-BUDGET",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SCM-SEED-SHARED-VISIBILITY",
+          "link_type": "derived_from"
+        }
+      ]
+    },
+    {
+      "id": "SCM-LAT-FLOW-DYNAMICS",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "lattice",
+      "name": "Flow Dynamics Lattice",
+      "kind": "lattice",
+      "triad": "🌊⚡📉",
+      "role": "Models and manages the fluid dynamics of material and information flow to ensure stability and efficiency.",
+      "macro": "measure(flow_rate) -> identify(constraints) -> dampen(variance) -> optimize(throughput)",
+      "lattice": {
+        "closure": "loop",
+        "topology": "directed_graph"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "conservation-of-flow",
+          "causality",
+          "entropy-reduction"
+        ],
+        "substrate": [
+          "inventory",
+          "information",
+          "orders"
+        ],
+        "temporal": "continuous-flow",
+        "function": "optimize",
+        "topology": "directed-graph",
+        "gate": [
+          "data_integrity",
+          "flow_validity"
+        ],
+        "commit": "physics-engine"
+      },
+      "activation_conditions": [
+        "Flow optimization analysis",
+        "Bottleneck detection"
+      ],
+      "failure_mode": "Turbulence (bullwhip), starvation, or blockage (bottleneck).",
+      "created_at": "2026-04-12 00:28:17",
+      "updated_at": "2026-04-12T00:28:17.892Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "required_by"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SCM-LAT-BUFFER-ALLOCATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-POSTPONEMENT",
+          "link_type": "contains"
+        },
+        {
+          "id": "SCM-LAT-ROUTE-DIVERSITY",
+          "link_type": "contains"
+        },
+        {
+          "id": "SCM-SEED-BULLWHIP-DRIVER",
+          "link_type": "informs"
+        },
+        {
+          "id": "SCM-SEED-FLOW-CONSERVATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-SEED-LEAD-TIME-BOUNDS",
+          "link_type": "constrained_by"
+        }
+      ]
+    },
+    {
+      "id": "SCM-SEED-BULLWHIP-DRIVER",
+      "domain_id": "supply_chain",
+      "symbol_domain": "supply_chain",
+      "symbol_tag": "seed",
+      "name": "Bullwhip Driver Set",
+      "kind": "pattern",
+      "triad": "⟳≡",
+      "role": "Seed Concept",
+      "macro": "observe(variance downstream) → trace(amplifiers upstream) → dampen(order policy)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "invariants": [
+          "variance-reduction-per-tier ≥ 0"
+        ],
+        "substrate": [
+          "data"
+        ],
+        "commit": "ledger",
+        "function": "diagnose",
+        "topology": "loop",
+        "temporal": "window"
+      },
+      "activation_conditions": [
+        "Detection of demand variance amplification",
+        "Upstream capacity shock analysis"
+      ],
+      "failure_mode": "Small demand noise explodes upstream into capacity shocks",
+      "created_at": "2026-04-12 00:28:18",
+      "updated_at": "2026-04-12T00:28:18.018Z",
+      "linked_patterns": [
+        {
+          "id": "SCM-LAT-FLOW-DYNAMICS",
+          "link_type": "informed_by"
+        }
+      ]
+    }
+  ]
+}

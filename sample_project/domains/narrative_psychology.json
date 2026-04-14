@@ -1,0 +1,4647 @@
+{
+  "meta": {
+    "id": "narrative_psychology",
+    "name": "Narrative Psychology",
+    "description": "Symbols related to psychological conditions or constructs.",
+    "invariants": [
+      "symptom-accuracy: Symptoms must accurately reflect established psychological conditions.",
+      "diagnosis-integrity: Diagnoses must be based on established diagnostic criteria.",
+      "treatment-efficacy: Treatments must be supported by evidence of effectiveness.",
+      "construct-definition: Psychological constructs must have clear and consistent definitions.",
+      "patient-autonomy: Respect for patient decision-making and informed consent is paramount.",
+      "confidentiality: Patient information must be kept private.",
+      "bias-awareness: Recognition and mitigation of biases in assessment and treatment."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 71
+  },
+  "symbols": [
+    {
+      "id": "NAR-LAT-NARCISSISTIC-LOOP",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "lattice",
+      "name": "Narcissistic Loop Lattice",
+      "kind": "lattice",
+      "triad": "🕸️🗣️🔁",
+      "role": "Binds narrative seed patterns into a cohesive structure for detecting self-reinforcing narcissistic loops.",
+      "macro": "detect(pathological_narrative_components) -> map(recursive_reinforcement) -> identify(loop_closure)",
+      "lattice": {
+        "topology": "recursive_pathology",
+        "closure": "loop"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "triad_coherence"
+        ],
+        "commit": "structural_integrity",
+        "temporal": "continuous",
+        "substrate": [
+          "narrative_symbols"
+        ],
+        "function": "pathology_detection",
+        "topology": "loop"
+      },
+      "activation_conditions": [
+        "Detection of multiple self-reinforcing narcissistic seed patterns.",
+        "When narrative entrapment, scapegoating, and proxy erosion appear cyclically."
+      ],
+      "failure_mode": "Failure to detect complex loop interactions.",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NAR-SEED-CUSTODY-CAPTURE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-SEED-ENTRAPMENT",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-SEED-INHERIT-COND",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-SEED-PROXY-EROSION",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-TRAIT-COYOTE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-TRAIT-DEMONIC-POSSESSION",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-TRAIT-KITSUNE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-TRAIT-WENDIGO",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-CULTS-IDEOLOGICAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-LEGAL-ADJUDICATIVE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-NPD-ACADEMIA-INTELLECTUAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-NPD-MEDIA-CULTURAL-MEGAPHONE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-RELIGION-IDEOLOGICAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-FAMILY-GROUP",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "NAR-LAT-REPAIR-PROTOCOL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "lattice",
+      "name": "Narrative Repair Protocol Lattice",
+      "kind": "lattice",
+      "triad": "🛠️🧩✨",
+      "role": "Aggregates narrative repair mechanisms into a unified protocol.",
+      "macro": "assess(damage) -> select(repair_tool) -> apply(intervention) -> verify(restoration)",
+      "lattice": {
+        "topology": "adaptive_response",
+        "closure": "constellation"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "structural_integrity",
+        "gate": [
+          "capability_check"
+        ],
+        "substrate": [
+          "repair_symbols"
+        ],
+        "function": "remediation",
+        "temporal": "responsive",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "topology": "toolkit"
+      },
+      "activation_conditions": [
+        "When narrative damage requires a structured intervention.",
+        "To deploy a comprehensive set of narrative repair tools."
+      ],
+      "failure_mode": "Inapplicable repair application.",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-DIA-STORY-IMPRINT",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-REPAIR-REFRAME",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-REPAIR-SYMBOL-GROUND",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-SEED-SEMIOTIC-DRIFT",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-TACTIC-CORRECTION",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-FAMILY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-COMPANY-TEAM-INSTITUTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-META-SYSTEM-COGNITION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-TECH-STACK-INFRASTRUCTURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-PERSONAL-INDIVIDUAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-LAT-MYTHIC-DRIVERS",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "lattice",
+      "name": "Mythic Drivers Lattice",
+      "kind": "lattice",
+      "triad": "🏛️👹🎭",
+      "role": "Connects specific narcissistic traits to their mythic archetypal drivers.",
+      "macro": "identify(active_traits) -> map(to_mythic_drivers) -> explain(behavioral_origin)",
+      "lattice": {
+        "topology": "archetypal_basis",
+        "closure": "constellation"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trait_matching"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "topology": "foundation",
+        "substrate": [
+          "mythic_trait_symbols"
+        ],
+        "function": "driver_identification",
+        "commit": "structural_integrity",
+        "temporal": "archetypal"
+      },
+      "activation_conditions": [
+        "When behavioral traits align with archetypal mythic consumption or manipulation.",
+        "To map current behaviors to ancient mythic patterns."
+      ],
+      "failure_mode": "Misattribution of mythic drivers.",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-REPAIR-REFRAME",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-SEED-MYTHIC-INFLATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-TRAIT-COYOTE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-TRAIT-KITSUNE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-FAMILY-GROUP",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NP-LATTICE-ASPD-SCALES",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "lattice",
+      "name": "Lattice: ASPD Scalar Manifestations",
+      "kind": "lattice",
+      "triad": "🎭📊🔗",
+      "role": "Organizes ASPD patterns across different scales of interaction.",
+      "macro": "aggregate(ASPD_patterns) -> map(scalar_manifestations)",
+      "lattice": {
+        "topology": "scalar_network",
+        "closure": "constellation"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "pattern_aggregation",
+        "commit": "structural_integrity",
+        "topology": "lattice",
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "diagnostic_criteria"
+        ],
+        "substrate": [
+          "ASPD_patterns"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Incomplete mapping of ASPD scales leading to missed interventions.",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-MARRIAGE-DYAD",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-PERSONAL-INDIVIDUAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-TEAM-SMALL-GROUP",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-ACADEMIA-KNOWLEDGE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-COMMUNITY-LOCAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-COMPANY-ORGANIZATIONAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-GOVERNMENT-STATE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-HEALTHCARE-CLINICAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-LEGAL-ADJUDICATIVE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-MARRIAGE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-MEDIA-INFORMATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-META-INTERDOMAIN",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-MILITARY-FORCE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-RELIGION-DOCTRINAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-TEAM",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-TECH-STACK-INFRASTRUCTURE",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "NP-LATTICE-NPD-SCALES",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "lattice",
+      "name": "Lattice: NPD Scalar Manifestations",
+      "kind": "lattice",
+      "triad": "👑📊🔗",
+      "role": "Organizes NPD patterns across different scales of interaction.",
+      "macro": "aggregate(NPD_patterns) -> map(scalar_manifestations)",
+      "lattice": {
+        "closure": "constellation",
+        "topology": "scalar_network"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "diagnostic_criteria"
+        ],
+        "topology": "lattice",
+        "substrate": [
+          "NPD_patterns"
+        ],
+        "function": "pattern_aggregation",
+        "commit": "structural_integrity"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Incomplete mapping of NPD scales leading to missed interventions.",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-FAMILY-HOUSEHOLD",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-DIA-STORY-IMPRINT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-REPAIR-COUNTER-NARRATIVE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-SEED-SEMIOTIC-DRIFT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-CULTS-IDEOLOGICAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-HEALTHCARE-CLINICAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-NPD-COMMUNITY-LOCALIZED-GROUP",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-NPD-FAMILY",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-NPD-GOVERNMENT-CIVILIZATIONAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-NPD-MARRIAGE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-NPD-MILITARY-NATIONAL-IMPERIAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-MARRIAGE-RELATIONSHIP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-SEED-INHERIT-COND",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "identity_trap",
+      "name": "Condemned Inheritance Loop",
+      "kind": "pattern",
+      "triad": "🧬⚖️🔗",
+      "role": "Detects and severs coercive identity inheritance.",
+      "macro": "detect(lineage_binding) → analyze(attribute_projection) → sever(coercive_identification)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "identity-bound"
+        ],
+        "function": "diagnose",
+        "topology": "ancestral-loop",
+        "substrate": [
+          "symbolic",
+          "relational"
+        ],
+        "commit": "memory_trace",
+        "temporal": "generational",
+        "invariants": [
+          "no-coerced-identification",
+          "transgenerational-audit",
+          "self-authoring-rights"
+        ]
+      },
+      "activation_conditions": [
+        "Detection of identity coercion based on lineage or inheritance.",
+        "When a subject is condemned for attributes of their ancestors."
+      ],
+      "failure_mode": "Identity collapse via inherited derogation.",
+      "created_at": "2026-04-11 23:51:29",
+      "updated_at": "2026-04-11T23:51:29.848Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-REPAIR-REFRAME",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "repair",
+      "name": "Narrative Reframe",
+      "kind": "pattern",
+      "triad": "🔄📖✨",
+      "role": "Shifts perspective to reveal new meaning in an entrapment narrative.",
+      "macro": "analyze(story) -> shift(perspective) -> reveal(new_meaning)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "repair",
+        "temporal": "instant",
+        "commit": "ledger",
+        "topology": "loop",
+        "invariants": [],
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When a perspective shift is needed to break a deadlock.",
+        "To change the meaning of events without changing the facts."
+      ],
+      "failure_mode": "Reframe rejected as artificial.",
+      "created_at": "2026-04-11 23:51:42",
+      "updated_at": "2026-04-11T23:51:42.187Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-MYTHIC-DRIVERS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-ENTRAPMENT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-MARRIAGE-DYAD",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Marriage/Dyad",
+      "kind": "pattern",
+      "triad": "💍💔🗣️",
+      "role": "Maps ASPD patterns within marriage or dyadic relationships.",
+      "macro": "monitor(dyadic_interactions) -> detect(gaslighting) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "relational_dynamics"
+        ],
+        "function": "map",
+        "commit": "pattern_mapping",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "continuous",
+        "topology": "dyadic_scale",
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [
+        "You're crazy.",
+        "I never said that.",
+        "You made me do it.",
+        "I don't care what the court says."
+      ],
+      "failure_mode": "Gaslighting and blame-shifting obscure the abuse pattern.",
+      "created_at": "2026-04-11 23:52:00",
+      "updated_at": "2026-04-11T23:52:00.342Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-PERSONAL-INDIVIDUAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Personal/Individual",
+      "kind": "pattern",
+      "triad": "👤🧠💔",
+      "role": "Maps NPD patterns at the personal/individual scale.",
+      "macro": "monitor(personal_interactions) -> detect(idealization_discard) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "map",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "substrate": [
+          "interpersonal_dynamics"
+        ],
+        "temporal": "continuous",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping",
+        "topology": "personal_scale"
+      },
+      "activation_conditions": [
+        "You're everything I've ever wanted.",
+        "Why can't you ever do anything right?",
+        "Everything is your fault.",
+        "I never needed you anyway."
+      ],
+      "failure_mode": "Idealization cycle inevitably leads to discard.",
+      "created_at": "2026-04-11 23:52:02",
+      "updated_at": "2026-04-11T23:52:02.793Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-MARRIAGE-RELATIONSHIP",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Marriage/Relationship",
+      "kind": "pattern",
+      "triad": "💍💔🗣️",
+      "role": "Maps NPD patterns within marriage or relationships.",
+      "macro": "monitor(relationship_dynamics) -> detect(cycling) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "relational_dynamics"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "topology": "dyadic_scale",
+        "function": "map",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous"
+      },
+      "activation_conditions": [
+        "We're soulmates.",
+        "You're crazy, that never happened.",
+        "They're unstable, I tried everything.",
+        "It was all them, I'm moving on."
+      ],
+      "failure_mode": "Relationship cycling creates emotional instability.",
+      "created_at": "2026-04-11 23:52:04",
+      "updated_at": "2026-04-11T23:52:04.067Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-TEAM",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Team (Small Group Scale)",
+      "kind": "pattern",
+      "triad": "👥💔⛓️",
+      "role": "Maps ASPD patterns at the team, small group scale, detailing phases and narrative cues.",
+      "macro": "identify(superficial_charm) -> experience(manipulation) -> suffer(sabotage) -> witness(turnover_HR)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "small_group_system",
+        "commit": "pattern_mapping",
+        "substrate": [
+          "group_dynamics",
+          "professional_interactions"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "function": "disorder_manifestation"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring team-scale ASPD patterns, leading to high turnover, HR issues, or litigation.",
+      "created_at": "2026-04-11 23:52:08",
+      "updated_at": "2026-04-11T23:52:08.105Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-ACADEMIA-KNOWLEDGE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Academia/Knowledge",
+      "kind": "pattern",
+      "triad": "🎓📚🚫",
+      "role": "Maps ASPD patterns within academia and knowledge systems.",
+      "macro": "monitor(academic_discourse) -> detect(gatekeeping) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "substrate": [
+          "academic_institutions"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "function": "map",
+        "temporal": "continuous",
+        "topology": "intellectual_scale",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Intellectual arrogance and gatekeeping stifle genuine inquiry.",
+      "created_at": "2026-04-11 23:52:16",
+      "updated_at": "2026-04-11T23:52:16.232Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "required_by"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-MEDIA-INFORMATION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Media/Information",
+      "kind": "pattern",
+      "triad": "📰📡🗣️",
+      "role": "Maps ASPD patterns within media and information dissemination.",
+      "macro": "monitor(media_narratives) -> detect(manipulation) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "behavioral_cues"
+        ],
+        "substrate": [
+          "media_landscape"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "function": "map",
+        "topology": "informational_scale",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Sensationalism and manipulation distort public perception.",
+      "created_at": "2026-04-11 23:52:17",
+      "updated_at": "2026-04-11T23:52:17.510Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-RELIGION-IDEOLOGICAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Religion/Ideological",
+      "kind": "pattern",
+      "triad": "🛐📜👁️",
+      "role": "Maps NPD patterns within religious or ideological groups.",
+      "macro": "monitor(religious_dogma) -> detect(exclusivity) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "map",
+        "temporal": "continuous",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "ideological_scale",
+        "commit": "pattern_mapping",
+        "substrate": [
+          "religious_structures"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Dogmatism and exclusivity create a closed system.",
+      "created_at": "2026-04-11 23:52:25",
+      "updated_at": "2026-04-11T23:52:25.944Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-RELIGION-DOCTRINAL",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-GOVERNMENT-CIVILIZATIONAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Government/Civilizational",
+      "kind": "pattern",
+      "triad": "🏛️📜⛓️",
+      "role": "Maps NPD patterns at the government or civilizational scale.",
+      "macro": "monitor(political_rhetoric) -> detect(populism) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "civilizational_scale",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "map",
+        "commit": "pattern_mapping",
+        "substrate": [
+          "political_structures"
+        ],
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Populism and authoritarianism threaten civilizational stability.",
+      "created_at": "2026-04-11 23:52:27",
+      "updated_at": "2026-04-11T23:52:27.193Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-GOVERNMENT-STATE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-COMMUNITY-LOCALIZED-GROUP",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Community/Localized Group",
+      "kind": "pattern",
+      "triad": "🏘️🤝💔",
+      "role": "Maps NPD patterns within localized community groups.",
+      "macro": "monitor(community_values) -> detect(insularity) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "map",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "group_scale",
+        "substrate": [
+          "community_structures"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Community insularity and purity tests lead to fragmentation.",
+      "created_at": "2026-04-11 23:52:31",
+      "updated_at": "2026-04-11T23:52:31.261Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-LEGAL-SYSTEM-JUDICIAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Legal System/Judicial",
+      "kind": "pattern",
+      "triad": "⚖️🔨📜",
+      "role": "Maps NPD patterns within the legal and judicial system.",
+      "macro": "monitor(judicial_process) -> detect(stagnation) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "legal_systems"
+        ],
+        "topology": "judicial_scale",
+        "commit": "pattern_mapping",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "map",
+        "temporal": "continuous",
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Legal stagnation and corruption erode trust in justice.",
+      "created_at": "2026-04-11 23:52:36",
+      "updated_at": "2026-04-11T23:52:36.034Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-LEGAL-ADJUDICATIVE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "referenced_by"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-FAMILY-HOUSEHOLD",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Family/Household",
+      "kind": "pattern",
+      "triad": "🏠👨‍👩‍👧‍👦💔",
+      "role": "Maps ASPD patterns within the family unit.",
+      "macro": "monitor(family_interactions) -> detect(secrecy_and_blame) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "familial_scale",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "map",
+        "commit": "pattern_mapping",
+        "substrate": [
+          "family_dynamics"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous"
+      },
+      "activation_conditions": [
+        "That never happened.",
+        "You're the problem.",
+        "You owe me.",
+        "We don't talk about that."
+      ],
+      "failure_mode": "Family secrecy and blame-shifting maintain the disorder.",
+      "created_at": "2026-04-12 00:00:43",
+      "updated_at": "2026-04-12T00:00:43.842Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NPD-MAP-FAMILY-GROUP",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-MILITARY-FORCE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Military/Force",
+      "kind": "pattern",
+      "triad": "⚔️🎖️💥",
+      "role": "Maps ASPD patterns within military and force structures.",
+      "macro": "monitor(military_rhetoric) -> detect(abuse_of_power) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "behavioral_cues"
+        ],
+        "topology": "force_scale",
+        "substrate": [
+          "military_structures"
+        ],
+        "commit": "pattern_mapping",
+        "function": "map",
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Unchecked power and justification of force lead to abuse.",
+      "created_at": "2026-04-12 00:00:44",
+      "updated_at": "2026-04-12T00:00:44.697Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-NPD-MILITARY-NATIONAL-IMPERIAL",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-SEED-DOMINANT-NARRATIVE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "seed",
+      "name": "Dominant Narrative Suppression",
+      "kind": "pattern",
+      "triad": "📖👑",
+      "role": "Identifies suppression of alternative narratives by a dominant frame.",
+      "macro": "analyze(discourse) -> identify(dominant_story) -> detect(suppressed_alternatives)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "persistent",
+        "topology": "network",
+        "commit": "ledger",
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [
+        "When a single story suppresses all alternative perspectives.",
+        "Detection of 'official' narratives that delegitimize dissent."
+      ],
+      "failure_mode": "The 'official story' prevents valid interpretations.",
+      "created_at": "2026-04-12 00:11:56",
+      "updated_at": "2026-04-12T00:11:56.213Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-REPAIR-COUNTER-NARRATIVE",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "NAR-SEED-CUSTODY-CAPTURE",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "NAR-SEED-SCAPEGOAT",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "seed",
+      "name": "Scapegoat Narrative",
+      "kind": "pattern",
+      "triad": "👤➡️🐐",
+      "role": "Diagnoses the convergence of blame onto a single actor to mask systemic issues.",
+      "macro": "analyze(blame) -> identify(narrative_focus) -> diagnose(story_convergence)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "function": "diagnose",
+        "invariants": [],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "When blame converges irrationally onto a single target.",
+        "Detection of systemic failures being offloaded onto an individual."
+      ],
+      "failure_mode": "Systemic failure simplistically explained by a villain role.",
+      "created_at": "2026-04-12 00:11:59",
+      "updated_at": "2026-04-12T00:11:59.420Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-DIA-STORY-IMPRINT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-PROXY-EROSION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "NAR-REPAIR-ARCHETYPE-ID",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "repair",
+      "name": "Archetype Identification",
+      "kind": "pattern",
+      "triad": "🎭🔍",
+      "role": "Identifies the active archetype in a narrative to reveal the underlying script.",
+      "macro": "analyze(story) -> identify(archetype) -> reveal(underlying_script)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "temporal": "instant",
+        "invariants": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "commit": "ledger",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "To identify the specific narrative role an actor is playing.",
+        "When needing to name the script being enacted."
+      ],
+      "failure_mode": "Archetype misidentified.",
+      "created_at": "2026-04-12 00:12:01",
+      "updated_at": "2026-04-12T00:12:01.015Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-SEED-MYTHIC-INFLATION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "NAR-TACTIC-CORRECTION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "correction_tactic",
+      "name": "Catalog of Tactical Corrections",
+      "kind": "pattern",
+      "triad": "🛠️📊⚖️",
+      "role": "Catalogs and scores tactical corrections for narcissistic patterns.",
+      "macro": "catalog(tactics) -> score(efficacy) -> assess(long_term_suppression)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "success_rate",
+          "long_term_suppression_capacity"
+        ],
+        "temporal": "historical",
+        "function": "efficacy_assessment",
+        "substrate": [
+          "psychological_interventions",
+          "social_sanctions"
+        ],
+        "commit": "tactical_analysis",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "intervention_strategy"
+      },
+      "activation_conditions": [
+        "To access a catalog of interventions for narcissistic patterns.",
+        "When standard engagement fails and tactical correction is needed."
+      ],
+      "failure_mode": "Ineffective suppression of narcissistic patterns.",
+      "created_at": "2026-04-12 00:12:02",
+      "updated_at": "2026-04-12T00:12:02.150Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-MAP-ASPD",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "disorder_pattern",
+      "name": "Antisocial Personality Disorder (ASPD) Pattern Map",
+      "kind": "pattern",
+      "triad": "🎭⛓️💥",
+      "role": "Maps ASPD patterns to narrative collapse phases.",
+      "macro": "identify(ASPD_traits) -> map(to_collapse_phases) -> analyze(narrative_cues)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "pervasive",
+        "commit": "disorder_definition",
+        "gate": [
+          "diagnostic_criteria",
+          "behavioral_manifestations"
+        ],
+        "topology": "systemic",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "substrate": [
+          "psychological_patterns",
+          "social_interactions"
+        ],
+        "function": "pattern_mapping"
+      },
+      "activation_conditions": [
+        "To map Antisocial Personality Disorder traits to narrative collapse.",
+        "When diagnosing structural sociopathy in systems."
+      ],
+      "failure_mode": "Misdiagnosis or normalization of pathological behavior.",
+      "created_at": "2026-04-12 00:12:21",
+      "updated_at": "2026-04-12T00:12:21.296Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-FAMILY-HOUSEHOLD",
+          "link_type": "informs"
+        },
+        {
+          "id": "ASPD-MAP-MARRIAGE-DYAD",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-PERSONAL-INDIVIDUAL",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ASPD-MAP-TEAM-SMALL-GROUP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "informs"
+        },
+        {
+          "id": "NP-MAP-ASPD-ACADEMIA-KNOWLEDGE",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-COMMUNITY-LOCAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-COMPANY-ORGANIZATIONAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-CULTS-IDEOLOGICAL",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NP-MAP-ASPD-GOVERNMENT-STATE",
+          "link_type": "required_by"
+        },
+        {
+          "id": "NP-MAP-ASPD-HEALTHCARE-CLINICAL",
+          "link_type": "informs"
+        },
+        {
+          "id": "NP-MAP-ASPD-LEGAL-ADJUDICATIVE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-MEDIA-INFORMATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-META-INTERDOMAIN",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "NP-MAP-ASPD-MILITARY-FORCE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-RELIGION-DOCTRINAL",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NP-MAP-ASPD-TECH-STACK-INFRASTRUCTURE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "NPD-DISORDER",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "disorder_pattern",
+      "name": "Narcissistic Personality Disorder (NPD) Patterns",
+      "kind": "pattern",
+      "triad": "🎭👑💥",
+      "role": "Symbolic structural analysis of Narcissistic Personality Disorder (NPD) patterns, mapping their propagation and associated collapse cycles across various nested systems and narrative scales.",
+      "macro": "identify(NPD_traits) -> map(to_collapse_phases) -> analyze(narrative_cues)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "diagnostic_criteria",
+          "behavioral_manifestations"
+        ],
+        "temporal": "pervasive",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "pattern_mapping",
+        "substrate": [
+          "psychological_patterns",
+          "social_interactions"
+        ],
+        "topology": "systemic",
+        "commit": "disorder_definition"
+      },
+      "activation_conditions": [
+        "To map Narcissistic Personality Disorder traits to narrative collapse.",
+        "When diagnosing structural narcissism in systems."
+      ],
+      "failure_mode": "Misdiagnosis, normalization of pathological behavior, unchecked propagation of harmful patterns.",
+      "created_at": "2026-04-12 00:12:43",
+      "updated_at": "2026-04-12T00:12:43.062Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "informs"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-CULTS-IDEOLOGICAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-HEALTHCARE-CLINICAL",
+          "link_type": "required_by"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "referenced_by"
+        },
+        {
+          "id": "NP-MAP-NPD-ACADEMIA-INTELLECTUAL",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-COMMUNITY-LOCALIZED-GROUP",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "NP-MAP-NPD-COMPANY-TEAM-INSTITUTION",
+          "link_type": "required_by"
+        },
+        {
+          "id": "NP-MAP-NPD-FAMILY",
+          "link_type": "source_of"
+        },
+        {
+          "id": "NP-MAP-NPD-GOVERNMENT-CIVILIZATIONAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-LEGAL-SYSTEM-JUDICIAL",
+          "link_type": "references"
+        },
+        {
+          "id": "NP-MAP-NPD-MARRIAGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-MEDIA-CULTURAL-MEGAPHONE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-META-SYSTEM-COGNITION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-MILITARY-NATIONAL-IMPERIAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-RELIGION-IDEOLOGICAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-TECH-STACK-INFRASTRUCTURE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NPD-MAP-FAMILY-GROUP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-MAP-MARRIAGE-RELATIONSHIP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-MAP-PERSONAL-INDIVIDUAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NAR-SEED-SEMIOTIC-DRIFT",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "seed",
+      "name": "Signifier-Signified Decoupling",
+      "kind": "pattern",
+      "triad": "🗣️➖🪙",
+      "role": "Diagnoses the drift of symbols from their concrete meanings.",
+      "macro": "monitor(symbol_use) -> detect(meaning_variance) -> diagnose(semiotic_drift)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "persistent",
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "commit": "ledger",
+        "invariants": [],
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "When words lose connection to their original meaning.",
+        "Detection of language being redefined to serve power."
+      ],
+      "failure_mode": "Core symbol loses connection to shared meaning.",
+      "created_at": "2026-04-12 00:12:47",
+      "updated_at": "2026-04-12T00:12:47.521Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-REPAIR-SYMBOL-GROUND",
+          "link_type": "reality_for"
+        },
+        {
+          "id": "NAR-TRAIT-COYOTE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NAR-REPAIR-SYMBOL-GROUND",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "repair",
+      "name": "Symbol Grounding",
+      "kind": "pattern",
+      "triad": "🔗🧩",
+      "role": "Re-anchors abstract symbols to lived experience.",
+      "macro": "trace(symbol) -> link(experience) -> re-anchor(meaning)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [],
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "function": "repair",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "When symbols have become abstract and need re-connection to reality.",
+        "To anchor floating signifiers back to lived experience."
+      ],
+      "failure_mode": "Symbol fails to reconnect to lived experience.",
+      "created_at": "2026-04-12 00:12:48",
+      "updated_at": "2026-04-12T00:12:48.418Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-SEMIOTIC-DRIFT",
+          "link_type": "grounds_in"
+        }
+      ]
+    },
+    {
+      "id": "NAR-SEED-ENTRAPMENT",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "seed",
+      "name": "Narrative Entrapment",
+      "kind": "pattern",
+      "triad": "📖🔗🧱",
+      "role": "Diagnoses entrapment in self-reinforcing negative narratives.",
+      "macro": "analyze(story) -> detect(self-defeating_loop) -> diagnose(entrapment)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "topology": "loop",
+        "temporal": "persistent",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [],
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "Detection of circular arguments or double-binds.",
+        "When a subject cannot exit a narrative without validating it."
+      ],
+      "failure_mode": "Subject unable to see events outside self-reinforcing story.",
+      "created_at": "2026-04-12 00:12:50",
+      "updated_at": "2026-04-12T00:12:50.338Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-REPAIR-REFRAME",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-TRAIT-KITSUNE",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "NAR-SEED-MYTHIC-INFLATION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "seed",
+      "name": "Mythic Inflation",
+      "kind": "pattern",
+      "triad": "👤➡️🌟",
+      "role": "Diagnoses over-identification with mythic archetypes.",
+      "macro": "observe(actor) -> detect(archetypal_over-identification) -> diagnose(persona_inflation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "invariants": [],
+        "gate": [
+          "trust"
+        ],
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "When an individual claims god-like status or destiny.",
+        "Detection of ego inflation beyond human scale."
+      ],
+      "failure_mode": "Actor acts with mythic grandiosity, losing human scale.",
+      "created_at": "2026-04-12 00:12:52",
+      "updated_at": "2026-04-12T00:12:52.001Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-MYTHIC-DRIVERS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-REPAIR-ARCHETYPE-ID",
+          "link_type": "informs"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-REPAIR-COUNTER-NARRATIVE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "repair",
+      "name": "Counter-Narrative Generation",
+      "kind": "pattern",
+      "triad": "📖👑⚔️📖",
+      "role": "Generates alternative narratives to challenge dominant or coercive frames.",
+      "macro": "analyze(dominant_narrative) -> construct(alternative_story) -> propagate(new_frame)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "create",
+        "invariants": [],
+        "commit": "contract",
+        "temporal": "persistent",
+        "topology": "network",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "When a dominant narrative needs to be challenged.",
+        "To construct a viable alternative story frame."
+      ],
+      "failure_mode": "Counter-narrative dismissed as noise.",
+      "created_at": "2026-04-12 00:12:53",
+      "updated_at": "2026-04-12T00:12:53.271Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-DOMINANT-NARRATIVE",
+          "link_type": "enables"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NAR-SEED-PROXY-EROSION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "esteem_trap",
+      "name": "Proxy Judgment Erosion",
+      "kind": "pattern",
+      "triad": "🪞🗣️💔",
+      "role": "Traces and flags esteem erosion caused by unverified proxy judgments.",
+      "macro": "detect(external_judgment) → trace(source_and_authorship) → flag(esteem_erosion_through_proxy)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "esteem"
+        ],
+        "invariants": [
+          "attribution_clarity",
+          "esteem_integrity",
+          "non-coercive_relation"
+        ],
+        "topology": "nested-loop",
+        "function": "diagnose",
+        "temporal": "cumulative",
+        "substrate": [
+          "relational",
+          "symbolic"
+        ],
+        "commit": "recursive_trace"
+      },
+      "activation_conditions": [
+        "When abuse is delivered through third parties or 'flying monkeys'.",
+        "Detection of indirect attacks on self-esteem."
+      ],
+      "failure_mode": "Identity agency loss via repeated external proxy quotes.",
+      "created_at": "2026-04-12 00:12:56",
+      "updated_at": "2026-04-12T00:12:56.538Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-DIA-STORY-IMPRINT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-SCAPEGOAT",
+          "link_type": "informs"
+        },
+        {
+          "id": "NAR-TRAIT-WENDIGO",
+          "link_type": "triggered_by"
+        }
+      ]
+    },
+    {
+      "id": "NAR-DIA-STORY-IMPRINT",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "diagnostics",
+      "name": "Narrative Possession Detector",
+      "kind": "pattern",
+      "triad": "🗣️⟐📻",
+      "role": "Filters and detects narrative possession or imprinted stories not of the self's origin.",
+      "macro": "monitor(voice) → detect(repetition:non-origin) → trace(source) → reflect(possession)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "temporal": "persistent",
+        "function": "diagnose",
+        "invariants": [
+          "auditability",
+          "baseline-integrity",
+          "explicit-choice"
+        ],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Detection of 'ventriloquized' speech or thoughts.",
+        "When a subject repeats a story that is clearly alien to them."
+      ],
+      "failure_mode": "False positive on authentic expression.",
+      "created_at": "2026-04-12 00:13:00",
+      "updated_at": "2026-04-12T00:13:00.396Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-PROXY-EROSION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-SEED-SCAPEGOAT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-TRAIT-DEMONIC-POSSESSION",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NAR-TRAIT-WENDIGO",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "narcissistic_trait",
+      "name": "Narcissistic Trait: Wendigo (Consumption)",
+      "kind": "pattern",
+      "triad": "👹🍽️🔄",
+      "role": "Encodes the trait of insatiable consumption (Wendigo) within the narrative framework.",
+      "macro": "analyze(mythological_figure) -> extract(narcissistic_traits) -> map(to_shared_structure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "ancient_to_modern",
+        "substrate": [
+          "mythological_narratives",
+          "cultural_archetypes"
+        ],
+        "topology": "cross_cultural_patterns",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "trait_identification",
+        "gate": [
+          "myth_interpretation",
+          "pattern_matching"
+        ],
+        "commit": "mythological_analysis"
+      },
+      "activation_conditions": [
+        "Detection of insatiable consumption or emotional cannibalism.",
+        "When hunger for validation destroys the source."
+      ],
+      "failure_mode": "Misinterpretation of mythological figures.",
+      "created_at": "2026-04-12 00:13:03",
+      "updated_at": "2026-04-12T00:13:03.705Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "enables"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-PROXY-EROSION",
+          "link_type": "triggers"
+        }
+      ]
+    },
+    {
+      "id": "NAR-TRAIT-KITSUNE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "narcissistic_trait",
+      "name": "Narcissistic Trait: Kitsune (Manipulation)",
+      "kind": "pattern",
+      "triad": "🦊🎭🔄",
+      "role": "Encodes the trait of manipulation (Kitsune) within the narrative framework.",
+      "macro": "analyze(mythological_figure) -> extract(narcissistic_traits) -> map(to_shared_structure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "cross_cultural_patterns",
+        "commit": "mythological_analysis",
+        "gate": [
+          "myth_interpretation",
+          "pattern_matching"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "trait_identification",
+        "substrate": [
+          "mythological_narratives",
+          "cultural_archetypes"
+        ],
+        "temporal": "ancient_to_modern"
+      },
+      "activation_conditions": [
+        "Detection of illusion casting or shape-shifting manipulation.",
+        "When reality is distorted for advantage."
+      ],
+      "failure_mode": "Misinterpretation of mythological figures.",
+      "created_at": "2026-04-12 00:13:07",
+      "updated_at": "2026-04-12T00:13:07.695Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-LAT-MYTHIC-DRIVERS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-ENTRAPMENT",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-TRAIT-COYOTE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "narcissistic_trait",
+      "name": "Narcissistic Trait: Coyote (Inversion)",
+      "kind": "pattern",
+      "triad": "🐺🔄🎭",
+      "role": "Encodes the trait of inversion (Coyote) within the narrative framework.",
+      "macro": "analyze(mythological_figure) -> extract(narcissistic_traits) -> map(to_shared_structure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "cross_cultural_patterns",
+        "temporal": "ancient_to_modern",
+        "gate": [
+          "myth_interpretation",
+          "pattern_matching"
+        ],
+        "substrate": [
+          "mythological_narratives",
+          "cultural_archetypes"
+        ],
+        "function": "trait_identification",
+        "commit": "mythological_analysis"
+      },
+      "activation_conditions": [
+        "Detection of trickster behavior or chaotic inversion.",
+        "When rules are flipped to confuse or trap."
+      ],
+      "failure_mode": "Misinterpretation of mythological figures.",
+      "created_at": "2026-04-12 00:13:09",
+      "updated_at": "2026-04-12T00:13:09.771Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-MYTHIC-DRIVERS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-SEMIOTIC-DRIFT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-TRAIT-DEMONIC-POSSESSION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "narcissistic_trait",
+      "name": "Narcissistic Trait: Demonic Possession (Inversion)",
+      "kind": "pattern",
+      "triad": "👻🔄⛓️",
+      "role": "Encodes the trait of inversion and control (Demonic Possession) within the narrative framework.",
+      "macro": "analyze(mythological_figure) -> extract(narcissistic_traits) -> map(to_shared_structure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "mythological_narratives",
+          "cultural_archetypes"
+        ],
+        "function": "trait_identification",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "myth_interpretation",
+          "pattern_matching"
+        ],
+        "commit": "mythological_analysis",
+        "temporal": "ancient_to_modern",
+        "topology": "cross_cultural_patterns"
+      },
+      "activation_conditions": [
+        "Detection of total inversion of values or loss of agency.",
+        "When an entity acts completely against its nature."
+      ],
+      "failure_mode": "Misinterpretation of mythological figures.",
+      "created_at": "2026-04-12 00:13:11",
+      "updated_at": "2026-04-12T00:13:11.607Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-DIA-STORY-IMPRINT",
+          "link_type": "informs"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-PHASE-GROOMING",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_phase",
+      "name": "ASPD Phase: Grooming / Superficial Charm",
+      "kind": "pattern",
+      "triad": "🎭✨🎣",
+      "role": "Defines the initial phase of ASPD pattern propagation, characterized by grooming behaviors and superficial charm.",
+      "macro": "define(grooming_behavior) -> characterize(superficial_charm) -> establish(initial_capture_phase)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "interpersonal_dynamics",
+          "social_perception"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "initial",
+        "topology": "sequential",
+        "commit": "conceptual_model",
+        "gate": [
+          "behavioral_manifestation"
+        ],
+        "function": "phase_definition"
+      },
+      "activation_conditions": [
+        "Detection of excessive charm or targeting of vulnerability.",
+        "Initial phase of antisocial capture."
+      ],
+      "failure_mode": "Failure to detect early warning signs, leading to deeper entrenchment of exploitative patterns.",
+      "created_at": "2026-04-12 00:13:18",
+      "updated_at": "2026-04-12T00:13:18.020Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "evolved_into"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-TRAIT-KITSUNE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-FAMILY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-MARRIAGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-TEAM",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_phase",
+      "name": "ASPD Phase: Boundary Violation",
+      "kind": "pattern",
+      "triad": "🚫↔️⛓️",
+      "role": "Defines the second phase of ASPD pattern propagation, characterized by the violation of personal or systemic boundaries.",
+      "macro": "define(boundary_violation) -> characterize(pattern_of_intrusion) -> establish(escalation_phase)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "non-coercion"
+        ],
+        "topology": "sequential",
+        "temporal": "escalating",
+        "function": "phase_definition",
+        "gate": [
+          "boundary_breach_detection"
+        ],
+        "commit": "conceptual_model",
+        "substrate": [
+          "interpersonal_dynamics",
+          "ethical_frameworks"
+        ]
+      },
+      "activation_conditions": [
+        "Detection of 'testing the waters' or small intrusions.",
+        "When boundaries are pushed to gauge resistance."
+      ],
+      "failure_mode": "Lack of recognition of boundary violations, leading to further erosion of personal/systemic integrity.",
+      "created_at": "2026-04-12 00:13:25",
+      "updated_at": "2026-04-12T00:13:25.815Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "evolved_from"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-TRAIT-WENDIGO",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-FAMILY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-MARRIAGE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-TEAM",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-PHASE-EXPLOITATION-HARM",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_phase",
+      "name": "ASPD Phase: Exploitation / Harm",
+      "kind": "pattern",
+      "triad": "⛓️💥💔",
+      "role": "Defines the third phase of ASPD pattern propagation, characterized by active exploitation and harm.",
+      "macro": "define(exploitation_patterns) -> characterize(harmful_impact) -> establish(peak_abuse_phase)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "no-silent-mutation"
+        ],
+        "function": "phase_definition",
+        "topology": "sequential",
+        "gate": [
+          "exploitation_manifestation"
+        ],
+        "temporal": "peak_impact",
+        "substrate": [
+          "interpersonal_dynamics",
+          "resource_control"
+        ],
+        "commit": "conceptual_model"
+      },
+      "activation_conditions": [
+        "Detection of active extraction or damage infliction.",
+        "When the target is being openly used."
+      ],
+      "failure_mode": "Unchecked exploitation leading to significant harm and resource depletion.",
+      "created_at": "2026-04-12 00:13:33",
+      "updated_at": "2026-04-12T00:13:33.535Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-TRAIT-WENDIGO",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-FAMILY",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-MARRIAGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-TEAM",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_phase",
+      "name": "ASPD Phase: Burnout / Replacement",
+      "kind": "pattern",
+      "triad": "🔥🔄💀",
+      "role": "Defines the final phase of ASPD pattern propagation, characterized by burnout of the exploited system/individual and their subsequent replacement.",
+      "macro": "define(burnout_patterns) -> characterize(replacement_strategy) -> establish(collapse_and_reset_phase)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "collapse_point",
+        "gate": [
+          "system_disintegration"
+        ],
+        "commit": "conceptual_model",
+        "substrate": [
+          "interpersonal_dynamics",
+          "social_systems"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "phase_definition",
+        "topology": "sequential"
+      },
+      "activation_conditions": [
+        "When a resource is discarded and a new one sought.",
+        "Final phase of the antisocial cycle."
+      ],
+      "failure_mode": "Failure to recognize burnout/replacement, leading to continued exposure to harmful patterns.",
+      "created_at": "2026-04-12 00:13:40",
+      "updated_at": "2026-04-12T00:13:40.938Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-TRAIT-WENDIGO",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-FAMILY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-MARRIAGE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-ASPD-TEAM",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_phase",
+      "name": "NPD Phase: Idealization / Grandiosity",
+      "kind": "pattern",
+      "triad": "👑✨🎣",
+      "role": "Defines the initial phase of NPD pattern propagation, characterized by idealization and grandiosity.",
+      "macro": "define(idealization_behavior) -> characterize(grandiosity) -> establish(initial_capture_phase)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "phase_definition",
+        "topology": "sequential",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "conceptual_model",
+        "temporal": "initial",
+        "gate": [
+          "behavioral_manifestation"
+        ],
+        "substrate": [
+          "interpersonal_dynamics",
+          "self_perception"
+        ]
+      },
+      "activation_conditions": [
+        "Detection of 'love bombing' or impossible promises.",
+        "Initial phase of narcissistic capture."
+      ],
+      "failure_mode": "Failure to detect early idealization, leading to deeper entrenchment of narcissistic patterns.",
+      "created_at": "2026-04-12 00:13:48",
+      "updated_at": "2026-04-12T00:13:48.161Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-MYTHIC-INFLATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-TRAIT-KITSUNE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-FAMILY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-MARRIAGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "evolved_into"
+        }
+      ]
+    },
+    {
+      "id": "NPD-PHASE-CONTROL-DEVALUATION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_phase",
+      "name": "NPD Phase: Control / Devaluation",
+      "kind": "pattern",
+      "triad": "⛓️📉💔",
+      "role": "Defines the second phase of NPD pattern propagation, characterized by control and devaluation.",
+      "macro": "define(control_devaluation_behavior) -> characterize(manipulation) -> establish(escalation_phase)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "interpersonal_dynamics",
+          "emotional_abuse"
+        ],
+        "topology": "sequential",
+        "gate": [
+          "control_devaluation_manifestation"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "non-coercion"
+        ],
+        "temporal": "escalating",
+        "function": "phase_definition",
+        "commit": "conceptual_model"
+      },
+      "activation_conditions": [
+        "Detection of criticism, gaslighting, or withdrawal.",
+        "When the pedestal is shaken to induce compliance."
+      ],
+      "failure_mode": "Lack of recognition of control/devaluation, leading to further erosion of personal/systemic integrity.",
+      "created_at": "2026-04-12 00:13:56",
+      "updated_at": "2026-04-12T00:13:56.132Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-TRAIT-DEMONIC-POSSESSION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-FAMILY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-MARRIAGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "evolved_from"
+        }
+      ]
+    },
+    {
+      "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_phase",
+      "name": "NPD Phase: Exposure / Collapse",
+      "kind": "pattern",
+      "triad": "📸💥💔",
+      "role": "Defines the third phase of NPD pattern propagation, characterized by exposure and collapse.",
+      "macro": "define(exposure_patterns) -> characterize(systemic_collapse) -> establish(peak_crisis_phase)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "phase_definition",
+        "commit": "conceptual_model",
+        "temporal": "peak_impact",
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "no-silent-mutation"
+        ],
+        "substrate": [
+          "interpersonal_dynamics",
+          "public_perception"
+        ],
+        "gate": [
+          "exposure_manifestation"
+        ],
+        "topology": "sequential"
+      },
+      "activation_conditions": [
+        "When the false self is threatened or exposed.",
+        "The crisis point of the narcissistic cycle."
+      ],
+      "failure_mode": "Unchecked exploitation leading to public exposure and systemic collapse.",
+      "created_at": "2026-04-12 00:14:03",
+      "updated_at": "2026-04-12T00:14:03.472Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-TRAIT-COYOTE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-FAMILY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-MARRIAGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_phase",
+      "name": "NPD Phase: Reassembly / Reinvention",
+      "kind": "pattern",
+      "triad": "🛠️🔄🎭",
+      "role": "Defines the final phase of NPD pattern propagation, characterized by reassembly of self-image and reinvention after collapse.",
+      "macro": "define(reassembly_patterns) -> characterize(reinvention_strategy) -> establish(post_crisis_phase)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "conceptual_model",
+        "temporal": "post_collapse",
+        "topology": "sequential",
+        "substrate": [
+          "interpersonal_dynamics",
+          "self_image"
+        ],
+        "gate": [
+          "system_disintegration"
+        ],
+        "function": "phase_definition"
+      },
+      "activation_conditions": [
+        "When the narcissist rewrites history after a collapse.",
+        "Post-collapse narrative reconstruction."
+      ],
+      "failure_mode": "Failure to recognize reassembly/reinvention, leading to re-engagement with harmful patterns.",
+      "created_at": "2026-04-12 00:14:10",
+      "updated_at": "2026-04-12T00:14:10.188Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-TRAIT-KITSUNE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+          "link_type": "evolved_into"
+        },
+        {
+          "id": "NP-MAP-NPD-FAMILY",
+          "link_type": "evolved_into"
+        },
+        {
+          "id": "NP-MAP-NPD-MARRIAGE",
+          "link_type": "source_of"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-PERSONAL-INDIVIDUAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Personal/Individual",
+      "kind": "pattern",
+      "triad": "👤🧠💔",
+      "role": "Maps ASPD patterns at the personal/individual scale.",
+      "macro": "monitor(personal_interactions) -> detect(lack_of_remorse) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "map",
+        "topology": "personal_scale",
+        "substrate": [
+          "interpersonal_dynamics"
+        ],
+        "temporal": "continuous",
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [
+        "I didn't do anything wrong.",
+        "They deserved it.",
+        "You're too soft.",
+        "Rules don't apply to me."
+      ],
+      "failure_mode": "Failure to identify patterns leads to continued abuse.",
+      "created_at": "2026-04-12 00:14:11",
+      "updated_at": "2026-04-12T00:14:11.182Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "informs"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-TEAM-SMALL-GROUP",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Team/Small Group",
+      "kind": "pattern",
+      "triad": "👥📊💔",
+      "role": "Maps ASPD patterns within small teams or groups.",
+      "macro": "monitor(team_interactions) -> detect(exploitation) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "behavioral_cues"
+        ],
+        "function": "map",
+        "substrate": [
+          "group_dynamics"
+        ],
+        "topology": "group_scale",
+        "commit": "pattern_mapping",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "continuous"
+      },
+      "activation_conditions": [
+        "I got us here.",
+        "You're on your own.",
+        "Don't tell anyone.",
+        "They're trying to screw me."
+      ],
+      "failure_mode": "Exploitation and paranoia disrupt team cohesion.",
+      "created_at": "2026-04-12 00:14:13",
+      "updated_at": "2026-04-12T00:14:13.014Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-FAMILY-GROUP",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Family/Group",
+      "kind": "pattern",
+      "triad": "🏠👨‍👩‍👧‍👦💔",
+      "role": "Maps NPD patterns within the family group.",
+      "macro": "monitor(family_dynamics) -> detect(triangulation) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "family_dynamics"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "topology": "familial_scale",
+        "function": "map",
+        "commit": "pattern_mapping",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [
+        "You're the good one, they're the problem.",
+        "Don’t tell your father/mother.",
+        "They left the family by choice.",
+        "We don’t speak of them anymore."
+      ],
+      "failure_mode": "Triangulation and estrangement fragment the family.",
+      "created_at": "2026-04-12 00:14:16",
+      "updated_at": "2026-04-12T00:14:16.615Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-FAMILY-HOUSEHOLD",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-LAT-MYTHIC-DRIVERS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-MARRIAGE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Marriage (Relationship Scale)",
+      "kind": "pattern",
+      "triad": "👰‍♀️💔⛓️",
+      "role": "Maps NPD patterns at the marriage, relationship scale, detailing phases and narrative cues.",
+      "macro": "identify(love_bombing) -> experience(gaslighting_erosion) -> witness(public_breakdown) -> observe(divorce_trauma_loop)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous",
+        "topology": "relational_system",
+        "function": "disorder_manifestation",
+        "substrate": [
+          "dyadic_relationship",
+          "emotional_dynamics"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring marital-scale NPD patterns, leading to severe emotional harm, public breakdown, or trauma loops.",
+      "created_at": "2026-04-12 00:14:25",
+      "updated_at": "2026-04-12T00:14:25.346Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-MARRIAGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "derived_from"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-FAMILY",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Family (Group Scale)",
+      "kind": "pattern",
+      "triad": "👪💔⛓️",
+      "role": "Maps NPD patterns at the family, group scale, detailing phases and narrative cues.",
+      "macro": "identify(golden_child_scapegoat) -> experience(emotional_triangulation) -> observe(estrangement) -> witness(legacy_denial_or_healing)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "family_dynamics",
+          "emotional_manipulation"
+        ],
+        "commit": "pattern_mapping",
+        "temporal": "continuous",
+        "topology": "group_system",
+        "function": "disorder_manifestation",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring family-scale NPD patterns, leading to emotional triangulation, estrangement, or unresolved generational trauma.",
+      "created_at": "2026-04-12 00:14:30",
+      "updated_at": "2026-04-12T00:14:30.738Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-FAMILY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "evolved_from"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Art (Expressive Scale)",
+      "kind": "pattern",
+      "triad": "🎨🎭💥",
+      "role": "Maps ASPD patterns at the art, expressive scale, detailing phases and narrative cues.",
+      "macro": "identify(plagiarism_shock_value) -> experience(exploitative_representation) -> observe(loss_of_originality) -> witness(irrelevance_censorship)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "expressive_system",
+        "function": "disorder_manifestation",
+        "substrate": [
+          "artistic_expression",
+          "cultural_institutions"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring art-scale ASPD patterns, leading to plagiarism, exploitation, nihilism, or institutional capture.",
+      "created_at": "2026-04-12 00:14:36",
+      "updated_at": "2026-04-12T00:14:36.206Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-LAT-MYTHIC-DRIVERS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-COMPANY-ORGANIZATIONAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Company/Organizational",
+      "kind": "pattern",
+      "triad": "🏢📉⚖️",
+      "role": "Maps ASPD patterns at the company or organizational scale.",
+      "macro": "monitor(corporate_rhetoric) -> detect(unethical_justification) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping",
+        "topology": "organizational_scale",
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "map",
+        "substrate": [
+          "corporate_culture"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Normalization of unethical behavior leads to systemic corruption.",
+      "created_at": "2026-04-12 00:14:37",
+      "updated_at": "2026-04-12T00:14:37.107Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-COMMUNITY-LOCAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Community/Local",
+      "kind": "pattern",
+      "triad": "🏘️🤝💔",
+      "role": "Maps ASPD patterns within local communities.",
+      "macro": "monitor(community_norms) -> detect(exclusion) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "function": "map",
+        "substrate": [
+          "community_structures"
+        ],
+        "temporal": "continuous",
+        "topology": "local_scale",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Exclusionary practices and intimidation damage community fabric.",
+      "created_at": "2026-04-12 00:14:39",
+      "updated_at": "2026-04-12T00:14:39.820Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-TECH-STACK-INFRASTRUCTURE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Tech Stack/Infrastructure",
+      "kind": "pattern",
+      "triad": "💻⚙️🕸️",
+      "role": "Maps ASPD patterns within the tech stack and infrastructure.",
+      "macro": "monitor(tech_communications) -> detect(deception) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "continuous",
+        "substrate": [
+          "technological_infrastructure"
+        ],
+        "commit": "pattern_mapping",
+        "topology": "infrastructural_scale",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "function": "map",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Deceptive practices and negligence undermine user trust.",
+      "created_at": "2026-04-12 00:14:41",
+      "updated_at": "2026-04-12T00:14:41.558Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "informs"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-COMPANY-TEAM-INSTITUTION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Company/Team/Institution",
+      "kind": "pattern",
+      "triad": "🏢📉⚖️",
+      "role": "Maps NPD patterns within companies and institutions.",
+      "macro": "monitor(corporate_vision) -> detect(grandiosity) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "substrate": [
+          "corporate_culture"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "continuous",
+        "topology": "institutional_scale",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "function": "map"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Grandiosity leads to eventual institutional collapse.",
+      "created_at": "2026-04-12 00:14:42",
+      "updated_at": "2026-04-12T00:14:42.688Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-ACADEMIA-INTELLECTUAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Academia/Intellectual",
+      "kind": "pattern",
+      "triad": "🎓📚🚫",
+      "role": "Maps NPD patterns within academia and intellectual circles.",
+      "macro": "monitor(academic_claims) -> detect(grandiosity) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "map",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "intellectual_scale",
+        "commit": "pattern_mapping",
+        "substrate": [
+          "academic_institutions"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Intellectual grandiosity and exclusion stifle innovation.",
+      "created_at": "2026-04-12 00:14:47",
+      "updated_at": "2026-04-12T00:14:47.577Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-MEDIA-CULTURAL-MEGAPHONE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Media/Cultural Megaphone",
+      "kind": "pattern",
+      "triad": "📰📡🗣️",
+      "role": "Maps NPD patterns within media as a cultural megaphone.",
+      "macro": "monitor(media_messaging) -> detect(bias) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "cultural_scale",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "map",
+        "substrate": [
+          "media_landscape"
+        ],
+        "commit": "pattern_mapping",
+        "temporal": "continuous",
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Media saturation and bias create a fragmented reality.",
+      "created_at": "2026-04-12 00:14:48",
+      "updated_at": "2026-04-12T00:14:48.613Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-TECH-STACK-INFRASTRUCTURE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Tech Stack/Infrastructure",
+      "kind": "pattern",
+      "triad": "💻⚙️🕸️",
+      "role": "Maps NPD patterns within the tech stack and infrastructure.",
+      "macro": "monitor(tech_cycles) -> detect(lock_in) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "infrastructural_scale",
+        "substrate": [
+          "technological_infrastructure"
+        ],
+        "function": "map",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Technological lock-in and vulnerability cycles threaten stability.",
+      "created_at": "2026-04-12 00:14:51",
+      "updated_at": "2026-04-12T00:14:51.549Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-MILITARY-NATIONAL-IMPERIAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Military/National/Imperial",
+      "kind": "pattern",
+      "triad": "⚔️🎖️💥",
+      "role": "Maps NPD patterns at the military, national, or imperial scale.",
+      "macro": "monitor(military_strategy) -> detect(overreach) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "substrate": [
+          "military_structures"
+        ],
+        "temporal": "continuous",
+        "topology": "imperial_scale",
+        "function": "map",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Imperial overreach and authoritarianism undermine national security.",
+      "created_at": "2026-04-12 00:14:53",
+      "updated_at": "2026-04-12T00:14:53.626Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-MILITARY-FORCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-META-SYSTEM-COGNITION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Meta-System/Cognition",
+      "kind": "pattern",
+      "triad": "🌌🕸️♾️",
+      "role": "Maps NPD patterns at the meta-system or cognitive scale.",
+      "macro": "monitor(cognitive_maps) -> detect(over_mapping) -> map(NPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "meta_systems"
+        ],
+        "commit": "pattern_mapping",
+        "function": "map",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "cognitive_scale"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Over-mapping and conspiracy thinking obscure reality.",
+      "created_at": "2026-04-12 00:14:57",
+      "updated_at": "2026-04-12T00:14:57.751Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-META-INTERDOMAIN",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Art (Cultural Expression Scale)",
+      "kind": "pattern",
+      "triad": "🎨👑💥",
+      "role": "Maps NPD patterns at the art, cultural expression scale, detailing phases and narrative cues.",
+      "macro": "identify(rebellion_innovation) -> experience(institutional_capture) -> observe(censorship_dilution) -> witness(subversion_renaissance)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "map",
+        "substrate": [
+          "media_landscape"
+        ],
+        "commit": "pattern_mapping",
+        "topology": "cultural_scale",
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring art-scale NPD patterns, leading to institutional capture, censorship, dilution, or irrelevance.",
+      "created_at": "2026-04-12 00:15:03",
+      "updated_at": "2026-04-12T00:15:03.203Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-ASPD-ART-EXPRESSIVE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "evolved_from"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-CULTS-IDEOLOGICAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "NP-MAP-ASPD-CULTS-IDEOLOGICAL",
+      "kind": "pattern",
+      "triad": "🕯️👁️😵",
+      "role": "Maps ASPD patterns within cults and ideological groups (specifically NPD patterns into closed belief systems)",
+      "macro": "monitor(cult_rhetoric) -> detect(thought_control) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "closed_belief_scale",
+        "substrate": [
+          "cult_dynamics"
+        ],
+        "function": "map",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous",
+        "commit": "pattern_mapping"
+      },
+      "activation_conditions": [
+        "detect(thought_control)",
+        "map(ASPD_pattern)"
+      ],
+      "failure_mode": "Isolation and thought control characterize the group dynamic.",
+      "created_at": "2026-04-12 00:15:05",
+      "updated_at": "2026-04-12T00:15:05.156Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "informs"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-PERSONAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Personal (Individual Scale)",
+      "kind": "pattern",
+      "triad": "👤💬💔",
+      "role": "Maps ASPD patterns at the personal, individual scale, detailing phases and narrative cues.",
+      "macro": "identify(chronic_lying) -> violate(rights) -> show(lack_of_remorse) -> experience(social_rejection)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "disorder_manifestation",
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "personal_system",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "substrate": [
+          "individual_behavior",
+          "social_perception",
+          "self_image"
+        ],
+        "commit": "pattern_mapping"
+      },
+      "activation_conditions": [
+        "identify(chronic_lying)",
+        "violate(rights)",
+        "show(lack_of_remorse)",
+        "experience(social_rejection)"
+      ],
+      "failure_mode": "Ignoring personal-scale ASPD patterns, leading to individual harm and social disruption.",
+      "created_at": "2026-04-12 00:15:13",
+      "updated_at": "2026-04-12T00:15:13.269Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "references"
+        },
+        {
+          "id": "NPD-PHASE-CONTROL-DEVALUATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-PHASE-IDEALIZATION-GRANDIOSITY",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-MARRIAGE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Marriage (Dyad Scale)",
+      "kind": "pattern",
+      "triad": "👰‍♀️💔⛓️",
+      "role": "Maps ASPD patterns at the marriage, dyad scale, detailing phases and narrative cues.",
+      "macro": "identify(love_bombing) -> experience(emotional_abuse) -> suffer(control_through_fear) -> witness(legal_intervention)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "topology": "relational_system",
+        "commit": "pattern_mapping",
+        "substrate": [
+          "dyadic_relationship",
+          "emotional_dynamics"
+        ],
+        "function": "disorder_manifestation"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring marital-scale ASPD patterns, leading to severe emotional/physical harm and relationship breakdown.",
+      "created_at": "2026-04-12 00:15:19",
+      "updated_at": "2026-04-12T00:15:19.255Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-NPD-MARRIAGE",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-FAMILY",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Family (Household Scale)",
+      "kind": "pattern",
+      "triad": "👪💔⛓️",
+      "role": "Maps ASPD patterns at the family, household scale, detailing phases and narrative cues.",
+      "macro": "identify(favorite_scapegoat) -> experience(violence) -> observe(enmeshment_detachment) -> witness(CPS_estrangement)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "household_dynamics",
+          "emotional_violence"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping",
+        "function": "disorder_manifestation",
+        "topology": "family_system",
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring family-scale ASPD patterns, leading to physical/emotional harm, generational trauma, or intervention by authorities.",
+      "created_at": "2026-04-12 00:15:23",
+      "updated_at": "2026-04-12T00:15:23.709Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ASPD-PHASE-EXPLOITATION-HARM",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-REPAIR-PROTOCOL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-NPD-FAMILY",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-RELIGION-DOCTRINAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Religion/Doctrinal",
+      "kind": "pattern",
+      "triad": "🛐📜👁️",
+      "role": "Maps ASPD patterns within religious or doctrinal contexts.",
+      "macro": "monitor(religious_rhetoric) -> detect(authoritarian_control) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "substrate": [
+          "religious_structures"
+        ],
+        "topology": "doctrinal_scale",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "function": "map",
+        "commit": "pattern_mapping",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Spiritual abuse masquerades as divine authority.",
+      "created_at": "2026-04-12 00:15:25",
+      "updated_at": "2026-04-12T00:15:25.357Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "informs"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-NPD-RELIGION-IDEOLOGICAL",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-GOVERNMENT-STATE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Government/State",
+      "kind": "pattern",
+      "triad": "🏛️📜⛓️",
+      "role": "Maps ASPD patterns at the government or state scale.",
+      "macro": "monitor(state_rhetoric) -> detect(authoritarianism) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "behavioral_cues"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "continuous",
+        "topology": "state_scale",
+        "function": "map",
+        "substrate": [
+          "political_structures"
+        ],
+        "commit": "pattern_mapping"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Authoritarianism and propaganda erode democratic norms.",
+      "created_at": "2026-04-12 00:15:27",
+      "updated_at": "2026-04-12T00:15:27.085Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-NPD-GOVERNMENT-CIVILIZATIONAL",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-LEGAL-ADJUDICATIVE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Legal/Adjudicative",
+      "kind": "pattern",
+      "triad": "⚖️🔨📜",
+      "role": "Maps ASPD patterns within legal and adjudicative systems.",
+      "macro": "monitor(legal_tactics) -> detect(corruption) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "continuous",
+        "function": "map",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "topology": "adjudicative_scale",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "substrate": [
+          "legal_systems"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Weaponization of the legal system undermines justice.",
+      "created_at": "2026-04-12 00:15:30",
+      "updated_at": "2026-04-12T00:15:30.369Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NP-MAP-NPD-LEGAL-SYSTEM-JUDICIAL",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-META-INTERDOMAIN",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Meta/Interdomain",
+      "kind": "pattern",
+      "triad": "🌌🕸️♾️",
+      "role": "Maps ASPD patterns at the meta or interdomain scale.",
+      "macro": "monitor(meta_narratives) -> detect(nihilism) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "behavioral_cues"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "function": "map",
+        "topology": "interdomain_scale",
+        "temporal": "continuous",
+        "substrate": [
+          "meta_systems"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Nihilism and systemic rigidity prevent adaptive evolution.",
+      "created_at": "2026-04-12 00:15:32",
+      "updated_at": "2026-04-12T00:15:32.127Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "enables"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-MAP-NPD-META-SYSTEM-COGNITION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NAR-LAT-ARCHETYPE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "lattice",
+      "name": "Archetypal Field Lattice",
+      "kind": "lattice",
+      "triad": "🎭🌌",
+      "role": "Organizes narrative archetypes and their repair mechanisms.",
+      "macro": "model(situation) -> map(actors_to_archetypes) -> predict(narrative_trajectory)",
+      "lattice": {
+        "closure": "loop",
+        "topology": "inductive"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "lattice",
+        "function": "govern",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent",
+        "invariants": [],
+        "commit": "contract",
+        "gate": [
+          "capability",
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When a situation requires mapping actors to narrative archetypes.",
+        "To predict narrative trajectory based on established character roles."
+      ],
+      "failure_mode": "The model becomes overly deterministic, ignoring individual agency and novel outcomes.",
+      "created_at": "2026-04-12 00:27:59",
+      "updated_at": "2026-04-12T00:27:59.728Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-FAMILY-HOUSEHOLD",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-MARRIAGE-DYAD",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-PERSONAL-INDIVIDUAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-TEAM-SMALL-GROUP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-PHASE-BOUNDARY-VIOLATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-PHASE-BURNOUT-REPLACEMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-PHASE-GROOMING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-REPAIR-ARCHETYPE-ID",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NAR-REPAIR-COUNTER-NARRATIVE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-SEED-CUSTODY-CAPTURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-SEED-DOMINANT-NARRATIVE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NAR-SEED-ENTRAPMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-SEED-INHERIT-COND",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-SEED-PROXY-EROSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-SEED-SCAPEGOAT",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-ACADEMIA-KNOWLEDGE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-COMMUNITY-LOCAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-COMPANY-ORGANIZATIONAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-FAMILY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-GOVERNMENT-STATE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-HEALTHCARE-CLINICAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-MARRIAGE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-MEDIA-INFORMATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-MILITARY-FORCE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NP-MAP-ASPD-PERSONAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-RELIGION-DOCTRINAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-TEAM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-ASPD-TECH-STACK-INFRASTRUCTURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-ACADEMIA-INTELLECTUAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-ART-CULTURAL-EXPRESSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-COMMUNITY-LOCALIZED-GROUP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-COMPANY-TEAM-INSTITUTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-FAMILY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-GOVERNMENT-CIVILIZATIONAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-LEGAL-SYSTEM-JUDICIAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-MARRIAGE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-MEDIA-CULTURAL-MEGAPHONE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-META-SYSTEM-COGNITION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-MILITARY-NATIONAL-IMPERIAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-RELIGION-IDEOLOGICAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NP-MAP-NPD-TECH-STACK-INFRASTRUCTURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-MARRIAGE-RELATIONSHIP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-PERSONAL-INDIVIDUAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-PHASE-EXPOSURE-COLLAPSE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-PHASE-REASSEMBLY-REINVENTION",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NAR-SEED-CUSTODY-CAPTURE",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "custody_failure",
+      "name": "Custodial Frame Seizure",
+      "kind": "pattern",
+      "triad": "📜⚖️🚫",
+      "role": "Detects when a coercive narrative captures institutional custody mechanisms.",
+      "macro": "detect(narrative_institutionalization) → audit(relational_authenticity) → trace(alienation_path)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "institutional-loop",
+        "function": "diagnose",
+        "temporal": "generational",
+        "gate": [
+          "authority"
+        ],
+        "invariants": [
+          "narrative-authenticity-check",
+          "alienation-audit",
+          "non-weaponization-of-custody"
+        ],
+        "substrate": [
+          "legal",
+          "symbolic",
+          "relational"
+        ],
+        "commit": "precedent-trace"
+      },
+      "activation_conditions": [
+        "When legal or custodial systems are weaponized by a coercive narrative.",
+        "Detection of 'care' institutions being used for control."
+      ],
+      "failure_mode": "False narrative captures institutional decision-makers.",
+      "created_at": "2026-04-12 00:27:59",
+      "updated_at": "2026-04-12T00:27:59.853Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-LAT-NARCISSISTIC-LOOP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NAR-SEED-DOMINANT-NARRATIVE",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NP-MAP-ASPD-HEALTHCARE-CLINICAL",
+      "domain_id": "narrative_psychology",
+      "symbol_domain": "narrative_psychology",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Healthcare/Clinical",
+      "kind": "pattern",
+      "triad": "🏥💊📉",
+      "role": "Maps ASPD patterns within healthcare and clinical settings.",
+      "macro": "monitor(clinical_interactions) -> detect(gaslighting) -> map(ASPD_pattern)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "healthcare_systems"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping",
+        "temporal": "continuous",
+        "function": "map",
+        "topology": "biopolitical_scale"
+      },
+      "activation_conditions": [
+        {
+          "condition": "gaslighting"
+        },
+        {
+          "condition": "detachment"
+        }
+      ],
+      "failure_mode": "Gaslighting and dismissal compromise patient care.",
+      "created_at": "2026-04-12 00:29:11",
+      "updated_at": "2026-04-12T00:29:11.730Z",
+      "linked_patterns": [
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NAR-MAP-ASPD",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NP-LATTICE-ASPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NP-LATTICE-NPD-SCALES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NPD-DISORDER",
+          "link_type": "depends_on"
+        }
+      ]
+    }
+  ]
+}

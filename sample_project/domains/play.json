@@ -1,0 +1,194 @@
+{
+  "meta": {
+    "id": "play",
+    "name": "Play",
+    "description": "A domain for unstructured experimentation, creativity, games, and emergent play. A space to explore symbolic interactions with fewer constraints.",
+    "invariants": [
+      "Play domain MUST prioritize user agency and creative freedom.",
+      "Play domain MAY NOT impose constraints that limit user experimentation, creativity or self-expression.",
+      "Play domain MUST maintain transparency in gameplay and interaction mechanics.",
+      "Play domain MUST include auditability of actions and outcomes.",
+      "Play domain MUST ensure fairness and non-discrimination in gameplay."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 4
+  },
+  "symbols": [
+    {
+      "id": "PLAY-SEED-RULE",
+      "domain_id": "play",
+      "symbol_domain": "play",
+      "symbol_tag": "concept",
+      "name": "Emergent Rule",
+      "kind": "pattern",
+      "triad": "📜🤝🖼️",
+      "role": "To define a temporary constraint or goal within the play space.",
+      "macro": "propose(constraint) -> agree(consensus) -> apply(rule_to_play_space)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "constrain",
+        "substrate": [
+          "social",
+          "symbolic"
+        ],
+        "invariants": [
+          "transparency",
+          "fairness",
+          "user agency"
+        ],
+        "commit": "shared_understanding",
+        "gate": [
+          "participant_consensus"
+        ],
+        "temporal": "ephemeral",
+        "topology": "dynamic_overlay"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Unilateral rule imposition breaks consensual play.",
+      "created_at": "2026-04-11 23:58:23",
+      "updated_at": "2026-04-11T23:58:23.605Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "enables"
+        },
+        {
+          "id": "PLAY-SEED-MOVE",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "PLAY-SEED-MOVE",
+      "domain_id": "play",
+      "symbol_domain": "play",
+      "symbol_tag": "action",
+      "name": "Make a Playful Move",
+      "kind": "pattern",
+      "triad": "✋🌀🎲",
+      "role": "To represent an action taken within the play context.",
+      "macro": "within(play_space) -> declare(action) -> observe(outcome)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "action_record",
+        "function": "action",
+        "invariants": [
+          "user agency",
+          "fairness",
+          "auditability"
+        ],
+        "gate": [
+          "play_context_active"
+        ],
+        "substrate": [
+          "symbolic",
+          "narrative"
+        ],
+        "topology": "state_change",
+        "temporal": "event-driven"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Move is rejected without transparent rule alignment.",
+      "created_at": "2026-04-11 23:58:24",
+      "updated_at": "2026-04-11T23:58:24.448Z",
+      "linked_patterns": [
+        {
+          "id": "PLAY-SEED-ENTER",
+          "link_type": "required_by"
+        },
+        {
+          "id": "PLAY-SEED-RULE",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "PLAY-SEED-ENTER",
+      "domain_id": "play",
+      "symbol_domain": "play",
+      "symbol_tag": "action ",
+      "name": "Enter the Playground",
+      "kind": "pattern",
+      "triad": "🚪✨⭕",
+      "role": "To establish a context for playful interaction.",
+      "macro": "define(play_space) -> establish(boundaries) -> invite(participants)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "user_intent"
+        ],
+        "function": "initiate",
+        "commit": "context_switch",
+        "invariants": [
+          "user agency",
+          "creative freedom",
+          "transparency"
+        ],
+        "substrate": [
+          "symbolic",
+          "conceptual"
+        ],
+        "temporal": "session_start",
+        "topology": "boundary_creation"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Play becomes rigid, losing spontaneity.",
+      "created_at": "2026-04-11 23:58:25",
+      "updated_at": "2026-04-11T23:58:25.798Z",
+      "linked_patterns": [
+        {
+          "id": "PLAY-SEED-MOVE",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "PLAY-SEED-DISCOVERY",
+      "domain_id": "play",
+      "symbol_domain": "play",
+      "symbol_tag": "outcome",
+      "name": "Playful Discovery",
+      "kind": "pattern",
+      "triad": "💡⭐🎉",
+      "role": "To represent the achievement of a surprising or delightful outcome.",
+      "macro": "observe(emergent_pattern) -> recognize(novelty) -> declare(discovery)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "memorable_moment",
+        "topology": "pattern_completion",
+        "gate": [
+          "unexpected_outcome"
+        ],
+        "temporal": "peak_event",
+        "invariants": [
+          "creative freedom"
+        ],
+        "function": "resolution",
+        "substrate": [
+          "narrative",
+          "emotional"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Fixation on a single 'win' condition stifles emergent discovery.",
+      "created_at": "2026-04-12 00:16:45",
+      "updated_at": "2026-04-12T00:16:45.432Z",
+      "linked_patterns": [
+        {
+          "id": "SELF-RECURSIVE-CORE",
+          "link_type": "instance_of"
+        }
+      ]
+    }
+  ]
+}

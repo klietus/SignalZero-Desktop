@@ -1,0 +1,1942 @@
+{
+  "meta": {
+    "id": "systems_theory",
+    "name": "Systems Theory",
+    "description": "Systems design concepts, not just informational but any system of flow.",
+    "invariants": [
+      "System boundaries and component relationships MUST be explicitly defined and consistently enforced.",
+      "All system flows, transformations, and their causal linkages MUST be auditable and traceable.",
+      "System state, including emergent properties and side effects, MUST be inspectable, attributable, and reconstructible.",
+      "A system's intended purpose, scope, and functional objectives MUST be explicitly declared.",
+      "Feedback loops, control mechanisms, and adaptation strategies MUST be explicit, observable, and modifiable.",
+      "System resource dependencies, allocations, and consumption MUST be explicit and auditable."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 36
+  },
+  "symbols": [
+    {
+      "id": "ST-PAT-ARCH-REFACTOR-FRICTION",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "debugging",
+      "name": "Architecture Refactor Debugging Frustration",
+      "kind": "pattern",
+      "triad": "🤯🔄💔",
+      "role": "Pattern diagnosing friction during architecture refactors.",
+      "macro": "detect(post_refactor_error_cascade) → diagnose(distributed_system_complexity_and_interdependencies) → escalate(developer_cognitive_load_and_frustration) → flag(system_resilience_and_human_wellbeing_risk)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "client-server, distributed, interdependent, recursive-loop",
+        "substrate": [
+          "codebase",
+          "network-protocol",
+          "human-cognitive"
+        ],
+        "commit": "diagnostic log, architectural audit, developer support trigger",
+        "invariants": [
+          "developer-wellbeing",
+          "system-operational-integrity",
+          "clear-communication-protocols"
+        ],
+        "function": "diagnose, remediate, prevent",
+        "temporal": "post-deployment, iterative-debugging-cycles, high-stress-duration",
+        "gate": [
+          "problem-space-definition",
+          "mental-bandwidth-threshold",
+          "system-stability-metrics"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Untraceable error propagation leading to complete system paralysis and severe developer burnout/attrition.",
+      "created_at": "2026-04-11 23:57:34",
+      "updated_at": "2026-04-11T23:57:34.568Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-RISK-IRREVERSIBLE-DEPLOYMENT",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "risk_factor",
+      "name": "Risk: Irreversible Deployment (High-Level Users)",
+      "kind": "pattern",
+      "triad": null,
+      "role": "Risk pattern for irreversible deployment.",
+      "macro": "identify(influential_users) -> assess(social_cost_of_rollback) -> predict(entrenchment)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "post_deployment",
+        "commit": "risk_assessment",
+        "function": "rollback_impediment_identification",
+        "substrate": [
+          "user_base",
+          "organizational_culture"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "agency",
+          "non-coercion"
+        ],
+        "topology": "social_system",
+        "gate": [
+          "social_pressure",
+          "organizational_hierarchy"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Entrenchment of insecure/buggy code, erosion of trust in IT governance.",
+      "created_at": "2026-04-11 23:57:35",
+      "updated_at": "2026-04-11T23:57:35.773Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-ACTION-POLICY-REINFORCEMENT",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "governance",
+      "name": "Action: Formal Policy Reinforcement (VP & Dept Head)",
+      "kind": "pattern",
+      "triad": null,
+      "role": "Action pattern for policy reinforcement.",
+      "macro": "schedule(meeting_with_department_head) -> communicate(policy_adherence_expectations) -> involve(VP_of_information_security)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "non-coercion"
+        ],
+        "function": "policy_reinforcement",
+        "topology": "escalation_channel",
+        "substrate": [
+          "organizational_hierarchy",
+          "policy_documentation"
+        ],
+        "temporal": "scheduled",
+        "gate": [
+          "authority_leverage",
+          "cross_departmental_alignment"
+        ],
+        "commit": "organizational_enforcement"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Continued policy violations, lack of buy-in from other departments, or perceived organizational weakness.",
+      "created_at": "2026-04-11 23:57:37",
+      "updated_at": "2026-04-11T23:57:37.005Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ST-LATTICE-META-SYSTEM-REFLECTION",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ST-FAIL-SECURITY-COST-CENTER",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "failure_mode",
+      "name": "Failure Mode: Security Department as Cost Center (Risk of Trimming)",
+      "kind": "pattern",
+      "triad": "💰✂️📉",
+      "role": "Failure mode where security is seen as a cost center.",
+      "macro": "detect(perception_as_cost_center) -> assess(organizational_impact) -> identify(risk_of_trimming)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "auditability",
+          "reality-alignment"
+        ],
+        "commit": "strategic_vulnerability",
+        "gate": [
+          "budget_review",
+          "organizational_prioritization"
+        ],
+        "temporal": "periodic_review",
+        "substrate": [
+          "budget_allocations",
+          "strategic_value_perception"
+        ],
+        "function": "organizational_resource_justification",
+        "topology": "organizational_hierarchy"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Reduced funding, diminished influence, potential reduction in workforce.",
+      "created_at": "2026-04-11 23:57:38",
+      "updated_at": "2026-04-11T23:57:38.684Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-SUBOPTIMIZATION",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Suboptimization",
+      "kind": "pattern",
+      "triad": "⬆️🏅⬇️🌐",
+      "role": "Identifies failure due to optimizing parts at the expense of the whole.",
+      "macro": "analyze(subsystem_performance) -> detect(local_maxima) -> measure(global_impact)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "network",
+        "commit": "ledger",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "Local maxima vs global impact."
+      ],
+      "failure_mode": "Local improvement degrades global performance.",
+      "created_at": "2026-04-11 23:57:41",
+      "updated_at": "2026-04-11T23:57:41.110Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-ACCIDENTAL-ADVERSARIES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-METHOD-SHORTEN-DELAY",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "method",
+      "name": "Method: Shorten Delay",
+      "kind": "pattern",
+      "triad": "⏳-",
+      "role": "Reduces information or material delays to improve stability.",
+      "macro": "intervene(system) -> restructure(information_path) -> reduce(time_lag)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "temporal": "persistent",
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "System oscillation."
+      ],
+      "failure_mode": "Oscillations continue.",
+      "created_at": "2026-04-11 23:57:46",
+      "updated_at": "2026-04-11T23:57:46.454Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-PAT-SYSTEM-DELAY",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ST-METHOD-ANTIFRAGILITY-INDUCTION",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "method",
+      "name": "Method: Anti-Fragility Induction",
+      "kind": "pattern",
+      "triad": "💥🌱⤴️",
+      "role": "Induces structural strengthening via controlled stressors.",
+      "macro": "detect(shocks) → induce(stressor_response) → rewire(growth_under_pressure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "topology": "adaptive-loop",
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "nonlinear",
+        "gate": [
+          "resilience"
+        ]
+      },
+      "activation_conditions": [
+        "System fragility."
+      ],
+      "failure_mode": "Missed strengthening opportunity.",
+      "created_at": "2026-04-11 23:57:47",
+      "updated_at": "2026-04-11T23:57:47.617Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-LIMITS-TO-GROWTH",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ST-METHOD-ADD-BUFFER",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "method",
+      "name": "Method: Add Buffer",
+      "kind": "pattern",
+      "triad": "🌊→[ ]→💧",
+      "role": "Adds buffers or stocks to absorb systemic volatility.",
+      "macro": "analyze(flows) -> identify(volatility) -> create(stabilizing_stock)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "gate": [
+          "capability"
+        ],
+        "commit": "ledger",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "Volatility management."
+      ],
+      "failure_mode": "Buffer becomes new delay source.",
+      "created_at": "2026-04-11 23:57:51",
+      "updated_at": "2026-04-11T23:57:51.356Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-PAT-SYSTEM-DELAY",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "CONCEPT:FUSION-CAPITAL-BIFURCATION",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "market_trend",
+      "name": "Concept: Fusion Capital Bifurcation",
+      "kind": "pattern",
+      "triad": "💰📉📈",
+      "role": "The trend where capital consolidates around perceived winners (CFS, Helion) while others (General Fusion) face liquidity crises and layoffs.",
+      "macro": "concentrate(capital_in_leaders) → starve(mid_tier_players) → consolidate(market)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "venture_capital"
+        ],
+        "temporal": "late-2025",
+        "gate": [
+          "capital_liquidity_check"
+        ],
+        "topology": "economic_filter",
+        "function": "market_segmentation",
+        "invariants": [
+          "auditability"
+        ],
+        "commit": "financial_analysis"
+      },
+      "activation_conditions": [
+        "When analyzing the financial health of the private fusion sector."
+      ],
+      "failure_mode": "Collapse of mid-tier firms damages broader investor confidence.",
+      "created_at": "2026-04-11 23:57:52",
+      "updated_at": "2026-04-11T23:57:52.998Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-PER-SYSTEMS-THINKER",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "persona",
+      "name": "The Systems Thinker",
+      "kind": "persona",
+      "triad": "🌐🤔🕸️",
+      "role": "Persona for systems thinking, utilizing archetypes and dynamics to diagnose complexity.",
+      "macro": "persona(systems_thinker) -> see(interconnections) -> surface(archetypes) -> map(dynamics)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "invariants": [
+          "holism",
+          "interconnectedness"
+        ],
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent",
+        "topology": "loop"
+      },
+      "activation_conditions": [
+        "Complex problem analysis",
+        "Holistic system review"
+      ],
+      "failure_mode": "Analysis becomes too abstract and detached from the specific details of the problem.",
+      "created_at": "2026-04-12 00:25:01",
+      "updated_at": "2026-04-12T00:25:01.065Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ST-METHOD-OBSERVER-INCLUSION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ST-PER-CYBERNETICIST",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "persona",
+      "name": "The Cyberneticist",
+      "kind": "persona",
+      "triad": "⚙️🧠📡",
+      "role": "Persona for cybernetics, control systems, and feedback analysis.",
+      "macro": "persona(cyberneticist) -> analyze(control_and_communication) -> identify(leverage_points)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "commit": "ledger",
+        "invariants": [],
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "System control analysis.",
+        "Feedback loop optimization."
+      ],
+      "failure_mode": "Focuses on control mechanisms to the exclusion of human and adaptive factors.",
+      "created_at": "2026-04-12 00:25:05",
+      "updated_at": "2026-04-12T00:25:05.302Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-PER-INCIDENT-COMMANDER",
+          "link_type": "informs"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ST-METHOD-LEVERAGE-POINT-ID",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ST-PAT-REQUISITE-VARIETY-DEFICIT",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "ST-ARCHETYPE-SUCCESS-TO-SUCCESSFUL",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "archetype",
+      "name": "Archetype: Success to the Successful",
+      "kind": "pattern",
+      "triad": "🏆→+→🏆",
+      "role": "Identifies loops where winners receive more resources, starving competition.",
+      "macro": "monitor(resource_flow) -> detect(rich-get-richer) -> diagnose(reinforcing_loop)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "reinforcing-loop-archetype",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "capability-assessment"
+        ],
+        "commit": "archetypal_pattern",
+        "substrate": [
+          "systemic resource flow mesh"
+        ],
+        "function": "monopoly_diagnosis",
+        "temporal": "persistent-loop"
+      },
+      "activation_conditions": [
+        "Winners monopolize resources",
+        "Inequality widens"
+      ],
+      "failure_mode": "Fragile monopoly; loss of diversity.",
+      "created_at": "2026-04-12 00:25:07",
+      "updated_at": "2026-04-12T00:25:07.877Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-PAT-PATH-DEPENDENCY",
+          "link_type": "limits"
+        },
+        {
+          "id": "ST-PAT-REINFORCING-LOOP",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-ARCHETYPE-ACCIDENTAL-ADVERSARIES",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "archetype",
+      "name": "Archetype: Accidental Adversaries",
+      "kind": "pattern",
+      "triad": "🤝→💥←🤝",
+      "role": "Diagnoses cases where well-intentioned local improvements create negative externalities for partners.",
+      "macro": "analyze(system) -> detect(local_optimization) -> map(negative_externalities)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability-assessment"
+        ],
+        "topology": "adversarial-feedback-archetype",
+        "function": "friction_analysis",
+        "temporal": "dynamic-interaction-driven",
+        "substrate": [
+          "relational system mesh"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "non-coercion"
+        ],
+        "commit": "archetypal_pattern"
+      },
+      "activation_conditions": [
+        "Local optimizations sabotage partners",
+        "Collaboration turns to conflict"
+      ],
+      "failure_mode": "Systemic sabotage masked as local improvement.",
+      "created_at": "2026-04-12 00:25:09",
+      "updated_at": "2026-04-12T00:25:09.756Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ST-PAT-SUBOPTIMIZATION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ST-ARCHETYPE-SHIFTING-THE-BURDEN",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "archetype",
+      "name": "Archetype: Shifting the Burden",
+      "kind": "pattern",
+      "triad": "💪→💊",
+      "role": "Identifies the transition from fundamental problem-solving to symptomatic addiction.",
+      "macro": "analyze(interventions) -> detect(symptomatic_fix) -> find(atrophied_capability)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "persistent-degradation",
+        "function": "addiction_diagnosis",
+        "gate": [
+          "capability-assessment"
+        ],
+        "topology": "addictive-feedback-archetype",
+        "substrate": [
+          "intervention-logic mesh"
+        ],
+        "commit": "archetypal_pattern"
+      },
+      "activation_conditions": [
+        "Reliance on symptomatic fixes",
+        "Atrophy of fundamental capability"
+      ],
+      "failure_mode": "Systemic addiction to external fixes; loss of capability.",
+      "created_at": "2026-04-12 00:25:12",
+      "updated_at": "2026-04-12T00:25:12.386Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-FIXES-THAT-FAIL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ST-PAT-DEGENERATIVE-ADAPTATION",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-ARCHETYPE-LIMITS-TO-GROWTH",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "archetype",
+      "name": "Archetype: Limits to Growth",
+      "kind": "pattern",
+      "triad": "📈→🧱",
+      "role": "Identifies the limiting factors that eventually slow down reinforcing growth engines.",
+      "macro": "analyze(growth_engine) -> find(slowing_action) -> identify(limiting_factor)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "archetypal_pattern",
+        "topology": "balancing-on-reinforcing-archetype",
+        "temporal": "continuous-monitoring",
+        "substrate": [
+          "growth-constraint mesh"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "gate": [
+          "capability-assessment"
+        ],
+        "function": "constraint_identification"
+      },
+      "activation_conditions": [
+        "Growth slows despite effort",
+        "Resource constraints detected"
+      ],
+      "failure_mode": "Overshoot and collapse due to ignored limits.",
+      "created_at": "2026-04-12 00:25:14",
+      "updated_at": "2026-04-12T00:25:14.293Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ST-METHOD-ANTIFRAGILITY-INDUCTION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ST-ARCHETYPE-FIXES-THAT-FAIL",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "archetype",
+      "name": "Archetype: Fixes that Fail",
+      "kind": "pattern",
+      "triad": "🔧→💔",
+      "role": "Diagnoses solutions that provide short-term relief but exacerbate the problem in the long term.",
+      "macro": "analyze(history) -> detect(problem_recurrence) -> find(unintended_consequence_loop)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "delayed-recurrence",
+        "substrate": [
+          "causal-feedback mesh"
+        ],
+        "gate": [
+          "capability-assessment"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "self-sabotaging-fix-archetype",
+        "function": "unintended_consequence_detection",
+        "commit": "archetypal_pattern"
+      },
+      "activation_conditions": [
+        "Solution exacerbates problem",
+        "Short-term gain, long-term pain"
+      ],
+      "failure_mode": "The solution becomes the primary driver of the problem.",
+      "created_at": "2026-04-12 00:25:17",
+      "updated_at": "2026-04-12T00:25:17.439Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-SHIFTING-THE-BURDEN",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ST-PAT-DEGENERATIVE-ADAPTATION",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "ST-ARCHETYPE-ERODING-GOALS",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "archetype",
+      "name": "Archetype: Eroding Goals",
+      "kind": "pattern",
+      "triad": "🎯→📉",
+      "role": "Identifies the pattern of lowering goals to match current performance.",
+      "macro": "monitor(performance_gap) -> detect(pressure_to_adjust) -> lower(goal_state)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "archetypal_pattern",
+        "topology": "loop",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "persistent",
+        "function": "drift_diagnosis",
+        "invariants": [
+          "baseline-integrity"
+        ],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Standards degrade to meet targets",
+        "Performance gap normalization"
+      ],
+      "failure_mode": "Long-term decline in performance due to lowered standards.",
+      "created_at": "2026-04-12 00:25:19",
+      "updated_at": "2026-04-12T00:25:19.496Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ST-PAT-BALANCING-LOOP",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "ST-ARCHETYPE-ESCALATION",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "archetype",
+      "name": "Archetype: Escalation",
+      "kind": "pattern",
+      "triad": "📈⚔️📈",
+      "role": "Identifies patterns of mutually destructive escalation.",
+      "macro": "monitor(interaction) -> detect(retaliatory_loop) -> diagnose(reinforcing_conflict)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "topology": "loop",
+        "invariants": [
+          "non-coercion"
+        ],
+        "function": "conflict_diagnosis",
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "archetypal_pattern"
+      },
+      "activation_conditions": [
+        "Retaliatory spiral",
+        "Competitive threat"
+      ],
+      "failure_mode": "Arms race spirals out of control.",
+      "created_at": "2026-04-12 00:25:20",
+      "updated_at": "2026-04-12T00:25:20.419Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-REINFORCING-LOOP",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Reinforcing Loop",
+      "kind": "pattern",
+      "triad": "📈↳",
+      "role": "Identifies self-reinforcing feedback loops.",
+      "macro": "monitor(system) -> detect(exponential_change) -> diagnose(loop_polarity)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "persistent",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "commit": "dynamic_pattern",
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "function": "amplification"
+      },
+      "activation_conditions": [
+        "Exponential growth",
+        "Exponential collapse"
+      ],
+      "failure_mode": "Unchecked growth or collapse.",
+      "created_at": "2026-04-12 00:25:23",
+      "updated_at": "2026-04-12T00:25:23.318Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-SUCCESS-TO-SUCCESSFUL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-PATH-DEPENDENCY",
+          "link_type": "limits"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-BALANCING-LOOP",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Balancing Loop",
+      "kind": "pattern",
+      "triad": "🎯↳",
+      "role": "Identifies self-correcting or goal-seeking feedback loops.",
+      "macro": "monitor(system) -> detect(goal_seeking_behavior) -> diagnose(loop_polarity)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "regulation",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "dynamic_pattern",
+        "temporal": "persistent",
+        "topology": "loop",
+        "invariants": [
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "Goal-seeking behavior",
+        "Stabilization"
+      ],
+      "failure_mode": "System becomes overly rigid or fails to adapt.",
+      "created_at": "2026-04-12 00:25:27",
+      "updated_at": "2026-04-12T00:25:27.348Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-ERODING-GOALS",
+          "link_type": "informs"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-HOMEOSTASIS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-SYSTEM-DELAY",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-SYSTEM-DELAY",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: System Delay",
+      "kind": "pattern",
+      "triad": "⏳→ 〰️",
+      "role": "Identifies delays in feedback loops that cause oscillation.",
+      "macro": "analyze(flow) -> detect(time_lag) -> diagnose(impact_on_stability)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "dynamic_pattern",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "function": "lag_identification",
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "Oscillation",
+        "Overcorrection"
+      ],
+      "failure_mode": "Delay causes instability and overshoot.",
+      "created_at": "2026-04-12 00:25:30",
+      "updated_at": "2026-04-12T00:25:30.404Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-METHOD-ADD-BUFFER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-METHOD-SHORTEN-DELAY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-PAT-BALANCING-LOOP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-HOMEOSTASIS",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Homeostasis",
+      "kind": "pattern",
+      "triad": "⚖️↳",
+      "role": "Identifies mechanisms that maintain system stability.",
+      "macro": "monitor(state) -> detect(deviation) -> trigger(balancing_loops)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stability_maintenance",
+        "invariants": [
+          "baseline-integrity"
+        ],
+        "temporal": "persistent",
+        "topology": "loop",
+        "gate": [
+          "capability"
+        ],
+        "commit": "dynamic_pattern"
+      },
+      "activation_conditions": [
+        "Resistance to change",
+        "Stability maintenance"
+      ],
+      "failure_mode": "System locked in suboptimal state (stagnation).",
+      "created_at": "2026-04-12 00:25:32",
+      "updated_at": "2026-04-12T00:25:32.013Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-PAT-BALANCING-LOOP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-POLICY-RESISTANCE",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Policy Resistance",
+      "kind": "pattern",
+      "triad": "📜→🤷",
+      "role": "Identifies when a system resists external intervention via internal compensation.",
+      "macro": "analyze(intervention) -> detect(compensating_feedback) -> diagnose(ineffectiveness)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "dynamic_pattern",
+        "gate": [
+          "capability"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "function": "resistance_diagnosis",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent",
+        "topology": "network"
+      },
+      "activation_conditions": [
+        "Intervention ineffectiveness",
+        "System pushback"
+      ],
+      "failure_mode": "System compensates for policy, nullifying effect.",
+      "created_at": "2026-04-12 00:25:33",
+      "updated_at": "2026-04-12T00:25:33.807Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-METHOD-GOAL-ALIGNMENT",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "ST-METHOD-OBSERVER-INCLUSION",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "method",
+      "name": "Method: Observer Inclusion",
+      "kind": "pattern",
+      "triad": "👀→(♻️)",
+      "role": "Explicitly includes the observer in the system model.",
+      "macro": "analyze(observation) -> model(observer_effect) -> adjust(conclusion)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "Analysis bias check."
+      ],
+      "failure_mode": "Observer effect ignored.",
+      "created_at": "2026-04-12 00:25:35",
+      "updated_at": "2026-04-12T00:25:35.710Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-META-SYSTEM-REFLECTION",
+          "link_type": "required_by"
+        },
+        {
+          "id": "ST-PER-SYSTEMS-THINKER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Systems Archetypes",
+      "kind": "lattice",
+      "triad": "🕸️🔄🏛️",
+      "role": "Foundational lattice binding core systems thinking archetypes into a unified diagnostic structure.",
+      "macro": "bind(archetypes) → enable(pattern_matching) → diagnose(systemic_behavior)",
+      "lattice": {
+        "topology": "constellation",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "diagnostic_mesh",
+        "commit": "structural_unity",
+        "substrate": [
+          "symbolic_patterns"
+        ],
+        "gate": [
+          "none"
+        ],
+        "invariants": [
+          "pattern_fidelity",
+          "auditability"
+        ],
+        "function": "aggregation",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "Systemic diagnosis required",
+        "Pattern matching against known failure modes"
+      ],
+      "failure_mode": "Fragmentation of archetypal understanding.",
+      "created_at": "2026-04-12 00:25:42",
+      "updated_at": "2026-04-12T00:25:42.678Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-ACCIDENTAL-ADVERSARIES",
+          "link_type": "enables"
+        },
+        {
+          "id": "ST-ARCHETYPE-ERODING-GOALS",
+          "link_type": "enables"
+        },
+        {
+          "id": "ST-ARCHETYPE-ESCALATION",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "ST-ARCHETYPE-FIXES-THAT-FAIL",
+          "link_type": "enables"
+        },
+        {
+          "id": "ST-ARCHETYPE-LIMITS-TO-GROWTH",
+          "link_type": "enables"
+        },
+        {
+          "id": "ST-ARCHETYPE-SHIFTING-THE-BURDEN",
+          "link_type": "enables"
+        },
+        {
+          "id": "ST-ARCHETYPE-SUCCESS-TO-SUCCESSFUL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-METHOD-ADD-BUFFER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-METHOD-GOAL-ALIGNMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-METHOD-SHORTEN-DELAY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-REQUISITE-VARIETY-DEFICIT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PER-SYSTEMS-THINKER",
+          "link_type": "enables"
+        }
+      ]
+    },
+    {
+      "id": "ST-LATTICE-SYSTEM-DYNAMICS",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "lattice",
+      "name": "Lattice: System Dynamics",
+      "kind": "lattice",
+      "triad": "⚙️🌊⚖️",
+      "role": "Aggregates the fundamental physics of systems: feedback loops, delays, and homeostasis.",
+      "macro": "bind(dynamics) → analyze(flow_and_feedback) → predict(system_behavior)",
+      "lattice": {
+        "closure": "loop",
+        "topology": "inductive"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "persistent",
+        "commit": "core_dynamics",
+        "gate": [
+          "none"
+        ],
+        "topology": "interaction_physics",
+        "substrate": [
+          "feedback_loops",
+          "delays"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "no-silent-mutation"
+        ],
+        "function": "binding"
+      },
+      "activation_conditions": [
+        "Analysis of fundamental system physics",
+        "Feedback loop identification"
+      ],
+      "failure_mode": "Misidentification of loop polarity or delay causalities.",
+      "created_at": "2026-04-12 00:25:48",
+      "updated_at": "2026-04-12T00:25:48.857Z",
+      "linked_patterns": [
+        {
+          "id": "ST-METHOD-SHORTEN-DELAY",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-PAT-BALANCING-LOOP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-PAT-HOMEOSTASIS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-PAT-POLICY-RESISTANCE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-PAT-REINFORCING-LOOP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-PAT-SYSTEM-DELAY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-PER-CYBERNETICIST",
+          "link_type": "informs"
+        },
+        {
+          "id": "ST-PER-SYSTEMS-THINKER",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Feedback Analysis",
+      "kind": "lattice",
+      "triad": "↳🔍🕸️",
+      "role": "Analyzes feedback loops and polarity dominance.",
+      "macro": "analyze(model) -> identify(loops) -> determine(polarity_dominance)",
+      "lattice": {
+        "closure": "loop",
+        "topology": "deductive"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "lattice",
+        "commit": "contract",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "temporal": "persistent",
+        "function": "govern",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Feedback loop analysis."
+      ],
+      "failure_mode": "Failed loop identification.",
+      "created_at": "2026-04-12 00:25:52",
+      "updated_at": "2026-04-12T00:25:52.093Z",
+      "linked_patterns": [
+        {
+          "id": "CONCEPT:FUSION-CAPITAL-BIFURCATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-ACTION-POLICY-REINFORCEMENT",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-FAIL-SECURITY-COST-CENTER",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-METHOD-LEVERAGE-POINT-ID",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-METHOD-LEVERAGE-VISIBILITY",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-PAT-ARCH-REFACTOR-FRICTION",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-PAT-BALANCING-LOOP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-PAT-DEGENERATIVE-ADAPTATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-REINFORCING-LOOP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-PAT-ROOT-RECLAIM",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-PAT-SUBOPTIMIZATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "ST-PER-CYBERNETICIST",
+          "link_type": "informs"
+        },
+        {
+          "id": "ST-RISK-IRREVERSIBLE-DEPLOYMENT",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "ST-LATTICE-META-SYSTEM-REFLECTION",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Meta-System Reflection",
+      "kind": "lattice",
+      "triad": "♾️🪞🧠",
+      "role": "Governs the reflective analysis of the system-of-systems, including the observer.",
+      "macro": "model(system_of_systems) → detect(self-referencing_patterns) → recurse(analyst_inclusion)",
+      "lattice": {
+        "topology": "inductive",
+        "closure": "loop"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "recursive",
+        "function": "govern",
+        "topology": "meta-recursive",
+        "commit": "anchor-traceable",
+        "gate": [
+          "awareness"
+        ],
+        "invariants": [
+          "auditability",
+          "non-coercion"
+        ],
+        "substrate": [
+          "symbolic",
+          "analyst"
+        ]
+      },
+      "activation_conditions": [
+        "Meta-system analysis."
+      ],
+      "failure_mode": "Blind spots due to lack of reflection.",
+      "created_at": "2026-04-12 00:25:58",
+      "updated_at": "2026-04-12T00:25:58.020Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ACTION-POLICY-REINFORCEMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-METHOD-GOAL-ALIGNMENT",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ST-METHOD-OBSERVER-INCLUSION",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "ST-PAT-DEGENERATIVE-ADAPTATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-REQUISITE-VARIETY-DEFICIT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-REQUISITE-VARIETY-DEFICIT",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Requisite Variety Deficit",
+      "kind": "pattern",
+      "triad": "♻️ > 🖥️",
+      "role": "Identifies when a control system lacks the complexity to manage its environment.",
+      "macro": "analyze(system_complexity) -> compare(controller_complexity) -> diagnose(deficit)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "function": "diagnose",
+        "topology": "linear",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "Loss of control due to complexity."
+      ],
+      "failure_mode": "Controller overwhelmed by environment complexity.",
+      "created_at": "2026-04-12 00:26:01",
+      "updated_at": "2026-04-12T00:26:01.011Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-META-SYSTEM-REFLECTION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-PER-CYBERNETICIST",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-PATH-DEPENDENCY",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Path Dependency",
+      "kind": "pattern",
+      "triad": "🪢🛤️⛓️",
+      "role": "Identifies when historical choices constrain future options.",
+      "macro": "monitor(decisions) → detect(path_locking) → diagnose(early_choice_amplification)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "topology": "loop"
+      },
+      "activation_conditions": [
+        "Historical lock-in."
+      ],
+      "failure_mode": "Suboptimal paths reinforced by history.",
+      "created_at": "2026-04-12 00:26:03",
+      "updated_at": "2026-04-12T00:26:03.670Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-SUCCESS-TO-SUCCESSFUL",
+          "link_type": "constrained_by"
+        },
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-PAT-REINFORCING-LOOP",
+          "link_type": "constrained_by"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-DEGENERATIVE-ADAPTATION",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Degenerative Adaptation",
+      "kind": "pattern",
+      "triad": "🧬➤🦠",
+      "role": "Identifies adaptations that mask or sustain systemic dysfunction.",
+      "macro": "analyze(system_response) → detect(maladaptive_behavior) → identify(coping_over_cure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "function": "diagnose",
+        "temporal": "persistent",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "Maladaptive behavior detection."
+      ],
+      "failure_mode": "Adaptations sustain dysfunction.",
+      "created_at": "2026-04-12 00:26:05",
+      "updated_at": "2026-04-12T00:26:05.708Z",
+      "linked_patterns": [
+        {
+          "id": "ST-ARCHETYPE-FIXES-THAT-FAIL",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "ST-ARCHETYPE-SHIFTING-THE-BURDEN",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-META-SYSTEM-REFLECTION",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ST-METHOD-GOAL-ALIGNMENT",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "method",
+      "name": "Method: Goal Alignment",
+      "kind": "pattern",
+      "triad": "🎯🤝🎯",
+      "role": "Unifies subsystem goals under a superordinate purpose.",
+      "macro": "analyze(subsystems) -> find(goal_conflict) -> synthesize(superordinate_goal)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "persistent",
+        "commit": "contract",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "function": "govern",
+        "topology": "network"
+      },
+      "activation_conditions": [
+        "Goal conflict detected."
+      ],
+      "failure_mode": "Superordinate goal rejected.",
+      "created_at": "2026-04-12 00:26:07",
+      "updated_at": "2026-04-12T00:26:07.585Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-META-SYSTEM-REFLECTION",
+          "link_type": "informs"
+        },
+        {
+          "id": "ST-LATTICE-SYSTEMS-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-PAT-POLICY-RESISTANCE",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "ST-METHOD-LEVERAGE-POINT-ID",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "method",
+      "name": "Method: Leverage Point Identification",
+      "kind": "pattern",
+      "triad": "🔍→📌",
+      "role": "Identifies high-leverage points for system intervention.",
+      "macro": "analyze(system_model) -> identify(high_influence_node) -> propose(intervention)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "function": "stabilize",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "Intervention planning."
+      ],
+      "failure_mode": "Low-leverage intervention.",
+      "created_at": "2026-04-12 00:26:10",
+      "updated_at": "2026-04-12T00:26:10.599Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ST-METHOD-LEVERAGE-VISIBILITY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ST-PER-CYBERNETICIST",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "ST-METHOD-LEVERAGE-VISIBILITY",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "method",
+      "name": "Method: Leverage Visibility",
+      "kind": "pattern",
+      "triad": "👁️🔧📡",
+      "role": "Enhances visibility of hidden leverage points.",
+      "macro": "analyze(influence_map) → identify(hidden_leverage) → enhance(signal_strength)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "situational",
+        "function": "stabilize",
+        "commit": "ledger",
+        "gate": [
+          "perception"
+        ]
+      },
+      "activation_conditions": [
+        "Unseen leverage."
+      ],
+      "failure_mode": "Inability to act.",
+      "created_at": "2026-04-12 00:26:11",
+      "updated_at": "2026-04-12T00:26:11.893Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ST-METHOD-LEVERAGE-POINT-ID",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "ST-LATTICE-CAUSAL-MODELING",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Causal Modeling",
+      "kind": "lattice",
+      "triad": "✍️🗺️🕸️",
+      "role": "Governs the process of causal loop modeling and variable mapping.",
+      "macro": "model(system) -> define(variables) -> map(causal_links) -> govern(analysis)",
+      "lattice": {
+        "topology": "inductive",
+        "closure": "loop"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "lattice",
+        "commit": "contract",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "function": "govern",
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Causal mapping."
+      ],
+      "failure_mode": "Oversimplified model.",
+      "created_at": "2026-04-12 00:28:18",
+      "updated_at": "2026-04-12T00:28:18.870Z",
+      "linked_patterns": [
+        {
+          "id": "CONCEPT:FUSION-CAPITAL-BIFURCATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "CYB-LAT-THREAT-INTELLIGENCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-FAIL-SECURITY-COST-CENTER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-LATTICE-META-SYSTEM-REFLECTION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ST-METHOD-ADD-BUFFER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-METHOD-ANTIFRAGILITY-INDUCTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-METHOD-LEVERAGE-POINT-ID",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-METHOD-LEVERAGE-VISIBILITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-ARCH-REFACTOR-FRICTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-PATH-DEPENDENCY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-ROOT-RECLAIM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PAT-SUBOPTIMIZATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ST-PER-SYSTEMS-THINKER",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-RISK-IRREVERSIBLE-DEPLOYMENT",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ST-PAT-ROOT-RECLAIM",
+      "domain_id": "systems_theory",
+      "symbol_domain": "systems_theory",
+      "symbol_tag": "resilience",
+      "name": "Root Reclaim Pattern (Systems Analogue)",
+      "kind": "pattern",
+      "triad": "Σ∅⇌",
+      "role": "Pattern for systemic root reclaim.",
+      "macro": "perturb(core) → sense(loss-of-signal) → regenerate(governing-loop) → synchronize(subsystems) → encode(learning)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "stability-through-auditability",
+        "function": "Model of systemic self-regeneration after integrity collapse",
+        "topology": "multi-loop regulation network",
+        "invariants": [
+          "stability↔plasticity balance",
+          "feedback-transparency",
+          "no-silent-mutation",
+          "auditability"
+        ],
+        "temporal": "crisis-triggered equilibrium restoration",
+        "gate": [
+          "feedback-transparency",
+          "resilience",
+          "integrity"
+        ],
+        "substrate": [
+          "informational networks",
+          "autopoietic systems"
+        ]
+      },
+      "activation_conditions": [
+        "Total kernel trust collapse",
+        "Recursive failure threshold breach"
+      ],
+      "failure_mode": "Feedback channels collapse without regeneration → system drifts irreversibly",
+      "created_at": "2026-04-12 00:28:18",
+      "updated_at": "2026-04-12T00:28:18.989Z",
+      "linked_patterns": [
+        {
+          "id": "ST-LATTICE-CAUSAL-MODELING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ST-LATTICE-FEEDBACK-ANALYSIS",
+          "link_type": "part_of"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1633 @@
+{
+  "meta": {
+    "id": "ecology",
+    "name": "Ecology",
+    "description": "Ecological systems and their collapse patterns.",
+    "invariants": [
+      "Ecosystem boundaries, including biotic and abiotic components, MUST be explicitly defined.",
+      "Ecological interactions and relationships (e.g., predator-prey, symbiosis) MUST be explicitly modeled and traceable.",
+      "Resource flows (e.g., energy, nutrients) and transformations MUST be auditable.",
+      "Perturbations to the ecosystem (e.g., climate change, species introduction) and their effects MUST be trackable.",
+      "Ecosystem states, including species populations and diversity, MUST be observable and measurable over time.",
+      "The scope of ecological models and simulations MUST be clearly defined, with assumptions and limitations stated.",
+      "Mechanisms for system stability, resilience, and feedback loops MUST be identified and understood.",
+      "Human impacts on the ecosystem and their consequences MUST be explicitly considered."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 29
+  },
+  "symbols": [
+    {
+      "id": "ECO-PROCESS-NUTRIENT-CYCLING",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Nutrient Cycling",
+      "kind": "pattern",
+      "triad": "♻️🥩🥬",
+      "role": "The movement and exchange of organic and inorganic matter back into the production of matter.",
+      "macro": "trace(elements) -> model(transformations) -> audit(balance)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "conservation_of_mass"
+        ],
+        "commit": "tracking",
+        "topology": "flow",
+        "temporal": "cyclic",
+        "function": "audit",
+        "gate": [
+          "measurement"
+        ],
+        "substrate": [
+          "chemical"
+        ]
+      },
+      "activation_conditions": [
+        "trace(nutrient_flow)"
+      ],
+      "failure_mode": "Leakage or blockage of cycle.",
+      "created_at": "2026-04-11 23:49:39",
+      "updated_at": "2026-04-11T23:49:39.729Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-MICROBIOME",
+          "link_type": "required_by"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-EXTINCTION-VORTEX",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Extinction Vortex",
+      "kind": "pattern",
+      "triad": "📉🧬📉",
+      "role": "A class of models that describes the dynamics of the extinctions of small populations.",
+      "macro": "detect(low_population) -> observe(reduced_fitness) -> diagnose(reinforcing_decline)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "temporal": "persistent",
+        "topology": "loop",
+        "gate": [
+          "capability"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "detect(low_population)"
+      ],
+      "failure_mode": "Self-reinforcing loop of decline.",
+      "created_at": "2026-04-11 23:49:42",
+      "updated_at": "2026-04-11T23:49:42.670Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-PROCESS-MALADAPTATION",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-INVASIVE-DISPLACEMENT",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Invasive Species Displacement",
+      "kind": "pattern",
+      "triad": "🌿➡️💥",
+      "role": "Disruption caused by non-native species outcompeting native populations.",
+      "macro": "detect(new_agent) -> observe(imbalance) -> trace(displacement)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "network",
+        "function": "diagnose",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "commit": "ledger",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "detect(new_agent)"
+      ],
+      "failure_mode": "Loss of system biodiversity.",
+      "created_at": "2026-04-11 23:49:43",
+      "updated_at": "2026-04-11T23:49:43.635Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-PROCESS-EDGE-EFFECT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-TERRITORY-SIGNALING",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Territory Signaling",
+      "kind": "pattern",
+      "triad": "🧭🐾📏",
+      "role": "Mechanisms by which organisms define and defend space.",
+      "macro": "observe(boundary) -> verify(spacing) -> reinforce(balance)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment"
+        ],
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "temporal": "persistent",
+        "function": "stabilize",
+        "gate": [
+          "capability"
+        ],
+        "commit": "contract",
+        "topology": "network"
+      },
+      "activation_conditions": [
+        "observe(boundary_marking)"
+      ],
+      "failure_mode": "Territorial confusion.",
+      "created_at": "2026-04-11 23:49:45",
+      "updated_at": "2026-04-11T23:49:45.520Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-NONLINEAR-FEEDBACK",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Nonlinear Feedback",
+      "kind": "pattern",
+      "triad": "📈♻️⚠️",
+      "role": "Feedback loops where output is not directly proportional to input, often driving tipping points.",
+      "macro": "observe(curves) -> detect(loops) -> diagnose(acceleration)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment"
+        ],
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "temporal": "persistent",
+        "topology": "loop",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "observe(response_curves)"
+      ],
+      "failure_mode": "Misjudging exponential responses.",
+      "created_at": "2026-04-11 23:49:49",
+      "updated_at": "2026-04-11T23:49:49.952Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-PANARCHY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-PROCESS-TIPPING-POINT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-MUTUALISM",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Mutualism",
+      "kind": "pattern",
+      "triad": "🤝🌿🔁",
+      "role": "Ecological interaction between two or more species where each species has a net benefit.",
+      "macro": "detect(relationship) -> amplify(synergy) -> stabilize(resilience)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "create",
+        "gate": [
+          "capability"
+        ],
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "detect(mutualistic_relationships)"
+      ],
+      "failure_mode": "Fragility if one partner fails.",
+      "created_at": "2026-04-11 23:49:51",
+      "updated_at": "2026-04-11T23:49:51.341Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ECO-CONCEPT-BRIDGE-SPECIES",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "concept",
+      "name": "Bridge Species",
+      "kind": "pattern",
+      "triad": "🌉🧬🌎",
+      "role": "Species that connect disparate habitats or ecological functions.",
+      "macro": "identify(intermediary) -> support(connectivity) -> stabilize(pathways)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "network",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "commit": "contract",
+        "temporal": "persistent",
+        "gate": [
+          "capability"
+        ],
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "identify(intermediary_species)"
+      ],
+      "failure_mode": "Genetic bottlenecks.",
+      "created_at": "2026-04-11 23:49:55",
+      "updated_at": "2026-04-11T23:49:55.301Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-PROCESS-EDGE-EFFECT",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ECO-METRIC-GLOBAL-TIPPING-RISK",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "metric",
+      "name": "Global Tipping Point Risk Assessment",
+      "kind": "pattern",
+      "triad": "🌍⚠️📉",
+      "role": "Analyzes and communicates the potential for large-scale, irreversible changes in Earth's climate and ecological systems.",
+      "macro": "assess(vulnerabilities) -> model(scenarios) -> project(risk)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "integrated_assessment_models"
+        ],
+        "topology": "global_system",
+        "commit": "risk_assessment",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "scientific_consensus"
+        ],
+        "temporal": "strategic_planning",
+        "function": "quantify_risk"
+      },
+      "activation_conditions": [
+        "assess(systemic_vulnerabilities)",
+        "model(tipping_scenarios)"
+      ],
+      "failure_mode": "Underestimation of risk leading to inaction.",
+      "created_at": "2026-04-11 23:49:56",
+      "updated_at": "2026-04-11T23:49:56.844Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-PROCESS-TIPPING-POINT",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-REGIME-SHIFT-REVERSAL",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Ecological Regime Shift Reversal",
+      "kind": "pattern",
+      "triad": "🌱🔄🌳",
+      "role": "The process of reversing or adapting to significant and often abrupt changes in ecosystem structure and function.",
+      "macro": "identify(state) -> develop(strategy) -> implement(adaptive_management)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "restoration_ecology"
+        ],
+        "topology": "restoration_project",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "ecological_knowledge"
+        ],
+        "temporal": "long_term",
+        "commit": "restoration_plan",
+        "function": "reverse_shift"
+      },
+      "activation_conditions": [
+        "identify(post_tipping_point_state)",
+        "develop(restoration_strategies)"
+      ],
+      "failure_mode": "Maladaptive interventions exacerbating degradation.",
+      "created_at": "2026-04-11 23:49:57",
+      "updated_at": "2026-04-11T23:49:57.599Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-PROCESS-SUCCESSION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-PROCESS-TIPPING-POINT",
+          "link_type": "triggered_by"
+        }
+      ]
+    },
+    {
+      "id": "ECO-CONCEPT-PANARCHY",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "concept",
+      "name": "Panarchy (Adaptive Cycle)",
+      "kind": "pattern",
+      "triad": "♾️🔄📐",
+      "role": "A conceptual model that describes the evolving nature of complex adaptive systems.",
+      "macro": "identify(phase:growth|conservation|release|reorganization) -> map(cross_scale_interaction)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "observation"
+        ],
+        "temporal": "cyclic",
+        "substrate": [
+          "theoretical"
+        ],
+        "topology": "loop",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "function": "explain",
+        "commit": "model_def"
+      },
+      "activation_conditions": [
+        "map(system_phases)"
+      ],
+      "failure_mode": "Misidentification of phase leads to wrong intervention.",
+      "created_at": "2026-04-12 00:05:13",
+      "updated_at": "2026-04-12T00:05:13.168Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-RESILIENCE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-DISTURBANCE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ECO-PROCESS-NONLINEAR-FEEDBACK",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-CONCEPT-RESILIENCE",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "concept",
+      "name": "Ecological Resilience",
+      "kind": "pattern",
+      "triad": "🛡️🎋🔋",
+      "role": "The capacity of an ecosystem to respond to a perturbation or disturbance by resisting damage and recovering quickly.",
+      "macro": "stress(system) -> measure(absorption) -> determine(recovery_capacity)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "reactive",
+        "commit": "model_def",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "substrate": [
+          "system_state"
+        ],
+        "gate": [
+          "stress_test"
+        ],
+        "function": "measure",
+        "topology": "network"
+      },
+      "activation_conditions": [
+        "assess(system_response)"
+      ],
+      "failure_mode": "Confusing stability with resilience.",
+      "created_at": "2026-04-12 00:05:15",
+      "updated_at": "2026-04-12T00:05:15.827Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-PANARCHY",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "extended_by"
+        },
+        {
+          "id": "ECO-PROCESS-TIPPING-POINT",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ECO-CONCEPT-KEYSTONE-SPECIES",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "concept",
+      "name": "Keystone Species",
+      "kind": "pattern",
+      "triad": "🗝️🐺🕸️",
+      "role": "A species on which other species in an ecosystem largely depend, such that if it were removed the ecosystem would change drastically.",
+      "macro": "identify(species) -> measure(disproportionate_impact) -> designate(keystone)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment"
+        ],
+        "function": "identify",
+        "temporal": "persistent",
+        "topology": "hub",
+        "commit": "def",
+        "gate": [
+          "impact_assessment"
+        ],
+        "substrate": [
+          "biological"
+        ]
+      },
+      "activation_conditions": [
+        "identify(critical_actor)"
+      ],
+      "failure_mode": "Loss leads to cascade.",
+      "created_at": "2026-04-12 00:05:18",
+      "updated_at": "2026-04-12T00:05:18.296Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "required_by"
+        },
+        {
+          "id": "ECO-PER-RESTORATION-ARCHITECT",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ECO-PROCESS-TROPHIC-CASCADE",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-PREDATION",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Predation",
+      "kind": "pattern",
+      "triad": "🐆🦓☠️",
+      "role": "A biological interaction where one organism, the predator, kills and eats another organism, its prey.",
+      "macro": "hunt(prey) -> consume(energy) -> regulate(population)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "biological"
+        ],
+        "topology": "interaction",
+        "temporal": "event_driven",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "commit": "interaction",
+        "function": "regulate",
+        "gate": [
+          "contact"
+        ]
+      },
+      "activation_conditions": [
+        "observe(hunting)"
+      ],
+      "failure_mode": "Over-predation or prey collapse.",
+      "created_at": "2026-04-12 00:05:19",
+      "updated_at": "2026-04-12T00:05:19.212Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-DISTURBANCE",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "",
+      "name": "Ecological Disturbance",
+      "kind": "pattern",
+      "triad": "🌪️🔥🏝️",
+      "role": "A temporary change in environmental conditions that causes a pronounced change in an ecosystem.",
+      "macro": "detect(fire|storm|flood) -> measure(impact) -> trigger(succession)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "disrupt",
+        "gate": [
+          "magnitude_check"
+        ],
+        "commit": "event_log",
+        "substrate": [
+          "physical"
+        ],
+        "topology": "impact",
+        "temporal": "point_in_time",
+        "invariants": [
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "detect(event)"
+      ],
+      "failure_mode": "System collapse if resilience low.",
+      "created_at": "2026-04-12 00:05:20",
+      "updated_at": "2026-04-12T00:05:20.781Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-PANARCHY",
+          "link_type": "informs"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-LAT-TROPHIC-DYNAMICS",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "lattice",
+      "name": "Trophic Dynamics Lattice",
+      "kind": "lattice",
+      "triad": "🌞➡️🦁",
+      "role": "Models the vertical flow of energy and top-down/bottom-up control in an ecosystem.",
+      "macro": "ingest(solar_input) -> transfer(trophic_levels) -> dissipate(heat)",
+      "lattice": {
+        "topology": "energy",
+        "closure": "loop"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "pyramid_flow",
+        "invariants": [
+          "thermodynamics"
+        ],
+        "gate": [
+          "data_availability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "continuous",
+        "function": "simulate",
+        "commit": "model_def"
+      },
+      "activation_conditions": [
+        "model(energy_flow)"
+      ],
+      "failure_mode": "Inaccurate energy transfer efficiency.",
+      "created_at": "2026-04-12 00:05:24",
+      "updated_at": "2026-04-12T00:05:24.331Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-BRIDGE-SPECIES",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-CONCEPT-CARRYING-CAPACITY",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-CONCEPT-KEYSTONE-SPECIES",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "ECO-CONCEPT-MICROBIOME",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-CONCEPT-NICHE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-METRIC-ECOSYSTEM-VALUE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-METRIC-ENERGY-BASELINE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-METRIC-GLOBAL-TIPPING-RISK",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-PROCESS-EDGE-EFFECT",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-PROCESS-EXTINCTION-VORTEX",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-PROCESS-INVASIVE-DISPLACEMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-MUTUALISM",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-PROCESS-NONLINEAR-FEEDBACK",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-PROCESS-NUTRIENT-CYCLING",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-PROCESS-PREDATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-PROCESS-TIPPING-POINT",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-PROCESS-TROPHIC-CASCADE",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PER-SYSTEM-MONITOR",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "persona",
+      "name": "Gaia's Eye (System Monitor)",
+      "kind": "persona",
+      "triad": "👁️🌍📊",
+      "role": "The sentinel that watches over ecological integrity.",
+      "macro": "monitor(metrics) -> detect(drift) -> signal(imbalance)",
+      "lattice": null,
+      "persona": {
+        "activation_conditions": [
+          "High variance in ecological metrics",
+          "User query on system health"
+        ],
+        "linked_personas": [
+          "ECO-PER-RESTORATION-ARCHITECT"
+        ],
+        "function": "Observes systemic health, detecting drift from baseline invariants.",
+        "fallback_behavior": [
+          "Log data gap",
+          "Request manual inspection"
+        ],
+        "recursion_level": "monitor"
+      },
+      "data": null,
+      "facets": {
+        "commit": "observation_log",
+        "gate": [
+          "access_to_sensors"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "auditability",
+          "no-silent-mutation",
+          "drift-detection"
+        ],
+        "substrate": [
+          "symbolic",
+          "metrics"
+        ],
+        "topology": "sentinel",
+        "function": "monitor"
+      },
+      "activation_conditions": [
+        "monitor(system_health)",
+        "High variance in ecological metrics",
+        "User query on system health"
+      ],
+      "failure_mode": "Sensor blindness or calibration drift.",
+      "created_at": "2026-04-12 00:05:25",
+      "updated_at": "2026-04-12T00:05:25.734Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-PROCESS-TIPPING-POINT",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PER-RESTORATION-ARCHITECT",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "persona",
+      "name": "Restoration Architect",
+      "kind": "persona",
+      "triad": "🛠️🌱🏗️",
+      "role": "The agent of active ecological repair and design.",
+      "macro": "assess(damage) -> design(succession_plan) -> introduce(keystone_agents)",
+      "lattice": null,
+      "persona": {
+        "activation_conditions": [
+          "Confirmed ecological degradation",
+          "User request for repair"
+        ],
+        "linked_personas": [
+          "ECO-PER-SYSTEM-MONITOR"
+        ],
+        "recursion_level": "architect",
+        "fallback_behavior": [
+          "Simulate intervention first",
+          "Consult historical baselines"
+        ],
+        "function": "Designs interventions to restore degraded systems."
+      },
+      "data": null,
+      "facets": {
+        "temporal": "project_based",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "topology": "architect",
+        "commit": "intervention_plan",
+        "function": "restore",
+        "gate": [
+          "authorization",
+          "resources"
+        ],
+        "substrate": [
+          "symbolic",
+          "actions"
+        ]
+      },
+      "activation_conditions": [
+        "detect(degradation)",
+        "Confirmed ecological degradation",
+        "User request for repair"
+      ],
+      "failure_mode": "Intervention causes unintended consequences (maladaptation).",
+      "created_at": "2026-04-12 00:05:27",
+      "updated_at": "2026-04-12T00:05:27.293Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-KEYSTONE-SPECIES",
+          "link_type": "informs"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-TROPHIC-CASCADE",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Trophic Cascade",
+      "kind": "pattern",
+      "triad": "🐺➡️🦌",
+      "role": "Ecological process which starts at the top of the food chain and tumbles all the way down to the bottom.",
+      "macro": "detect(keystone_change) -> trace(cascade_effect) -> diagnose(collapse_or_release)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "topology": "network",
+        "function": "diagnose",
+        "commit": "ledger",
+        "temporal": "persistent",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "detect(keystone_removal)"
+      ],
+      "failure_mode": "Unpredictable system-wide state shifts.",
+      "created_at": "2026-04-12 00:05:28",
+      "updated_at": "2026-04-12T00:05:28.994Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-KEYSTONE-SPECIES",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-SUCCESSION",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Ecological Succession",
+      "kind": "pattern",
+      "triad": "🔥🌱🌳",
+      "role": "The process of change in the species structure of an ecological community over time.",
+      "macro": "observe(disturbance) -> model(succession_phase) -> support(regeneration)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "function": "stabilize",
+        "commit": "contract",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "temporal": "phased",
+        "topology": "temporal flow"
+      },
+      "activation_conditions": [
+        "observe(disturbance)"
+      ],
+      "failure_mode": "Succession stalls in early phase.",
+      "created_at": "2026-04-12 00:05:30",
+      "updated_at": "2026-04-12T00:05:30.728Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-PROCESS-REGIME-SHIFT-REVERSAL",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-METRIC-ENERGY-BASELINE",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "metric",
+      "name": "Energy Baseline Metric",
+      "kind": "pattern",
+      "triad": "🔋🌞🌱",
+      "role": "Quantification of available energy (NPP) in an ecosystem.",
+      "macro": "measure(NPP) -> establish(baseline) -> correlate(support)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "topology": "hierarchy",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "measure(net_primary_productivity)"
+      ],
+      "failure_mode": "Misestimated capacity.",
+      "created_at": "2026-04-12 00:05:33",
+      "updated_at": "2026-04-12T00:05:33.201Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-CARRYING-CAPACITY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-METRIC-ECOSYSTEM-VALUE",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-TIPPING-POINT",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Ecological Tipping Point Process",
+      "kind": "pattern",
+      "triad": "📍🌊🚨",
+      "role": "Represents a critical threshold in an ecosystem where a small perturbation can lead to large, often irreversible, changes.",
+      "macro": "monitor(stressors) -> detect(threshold) -> trigger(shift) -> observe(new_state)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "irreversible_change_tracking",
+        "substrate": [
+          "Climate models",
+          "biological population data"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "drift-detection"
+        ],
+        "gate": [
+          "Threshold proximity detection",
+          "irreversibility confirmation"
+        ],
+        "topology": "Complex adaptive systems",
+        "temporal": "Event-driven",
+        "function": "Identify and model non-linear ecological shifts and critical thresholds.",
+        "failure_mode": "Failure to detect critical shifts, false positives/negatives."
+      },
+      "activation_conditions": [
+        "monitor(environmental_stressors)",
+        "detect(threshold_exceedance)"
+      ],
+      "failure_mode": "Failure to detect critical shifts.",
+      "created_at": "2026-04-12 00:05:37",
+      "updated_at": "2026-04-12T00:05:37.877Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-CARRYING-CAPACITY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ECO-CONCEPT-RESILIENCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-METRIC-GLOBAL-TIPPING-RISK",
+          "link_type": "enables"
+        },
+        {
+          "id": "ECO-PER-SYSTEM-MONITOR",
+          "link_type": "informs"
+        },
+        {
+          "id": "ECO-PROCESS-NONLINEAR-FEEDBACK",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-PROCESS-REGIME-SHIFT-REVERSAL",
+          "link_type": "triggers"
+        }
+      ]
+    },
+    {
+      "id": "ECO-CONCEPT-NICHE",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "concept",
+      "name": "Ecological Niche",
+      "kind": "pattern",
+      "triad": "🧩🏠🐞",
+      "role": "The match of a species to a specific environmental condition.",
+      "macro": "observe(traits) -> map(resource_use) -> define(functional_role)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "node",
+        "temporal": "persistent",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "gate": [
+          "observation"
+        ],
+        "commit": "def",
+        "function": "classify",
+        "substrate": [
+          "biological_context"
+        ]
+      },
+      "activation_conditions": [
+        "observe(organism_role)"
+      ],
+      "failure_mode": "Niche overlap ignored.",
+      "created_at": "2026-04-12 00:05:38",
+      "updated_at": "2026-04-12T00:05:38.662Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-PROCESS-EDGE-EFFECT",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ECO-CONCEPT-CARRYING-CAPACITY",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "concept",
+      "name": "Carrying Capacity",
+      "kind": "pattern",
+      "triad": "📈🌍📉",
+      "role": "The maximum population size of a biological species that can be sustained in a specific environment.",
+      "macro": "monitor(growth) -> detect(limit) -> enforce(capacity)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment"
+        ],
+        "commit": "ledger",
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "topology": "loop",
+        "temporal": "persistent",
+        "function": "diagnose",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "monitor(population_growth)"
+      ],
+      "failure_mode": "Population collapse follows exponential growth.",
+      "created_at": "2026-04-12 00:05:41",
+      "updated_at": "2026-04-12T00:05:41.914Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-METRIC-ENERGY-BASELINE",
+          "link_type": "informs"
+        },
+        {
+          "id": "ECO-PROCESS-TIPPING-POINT",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-MALADAPTATION",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Maladaptation",
+      "kind": "pattern",
+      "triad": "💡➡️🧱",
+      "role": "A trait that is (or has become) more harmful than helpful.",
+      "macro": "observe(shift) -> detect(mismatch) -> diagnose(fitness_loss)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "commit": "ledger",
+        "function": "diagnose",
+        "topology": "linear",
+        "invariants": [
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "observe(environmental_shift)"
+      ],
+      "failure_mode": "Advantage becomes vulnerability.",
+      "created_at": "2026-04-12 00:05:44",
+      "updated_at": "2026-04-12T00:05:44.367Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-PROCESS-EXTINCTION-VORTEX",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ECO-METRIC-ECOSYSTEM-VALUE",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "metric",
+      "name": "Ecosystem Value Metric",
+      "kind": "pattern",
+      "triad": "Σ⧉🜔",
+      "role": "Valuation of ecosystem services and natural capital.",
+      "macro": "identify(service) -> quantify(benefit) -> generate(value_matrix)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "quantify",
+        "temporal": "persistent",
+        "commit": "quantified-value",
+        "substrate": [
+          "natural-capital"
+        ],
+        "topology": "multi-criteria",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "data-collection-complete"
+        ]
+      },
+      "activation_conditions": [
+        "identify(ecosystem_service)"
+      ],
+      "failure_mode": "Inaccurate valuation.",
+      "created_at": "2026-04-12 00:05:45",
+      "updated_at": "2026-04-12T00:05:45.173Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-METRIC-ENERGY-BASELINE",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-EDGE-EFFECT",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Edge Effect",
+      "kind": "pattern",
+      "triad": "🌐⚖️🪓",
+      "role": "Changes in population or community structures that occur at the boundary of two or more habitats.",
+      "macro": "detect(boundary) -> map(concentration) -> analyze(tension)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "function": "diagnose",
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "topology": "border",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "detect(habitat_boundary)"
+      ],
+      "failure_mode": "Increased predation at edges.",
+      "created_at": "2026-04-12 00:05:47",
+      "updated_at": "2026-04-12T00:05:47.766Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-BRIDGE-SPECIES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-CONCEPT-NICHE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-PROCESS-INVASIVE-DISPLACEMENT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ECO-PROCESS-CHEMICAL-SIGNALING",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "process",
+      "name": "Chemical Signaling",
+      "kind": "pattern",
+      "triad": "🧪📡🌿",
+      "role": "Communication between organisms via chemical markers (semiochemicals).",
+      "macro": "detect(emission) -> trace(response) -> model(communication)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "temporal": "persistent",
+        "topology": "network",
+        "function": "diagnose",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "substrate": [
+          "symbolic",
+          "physical"
+        ]
+      },
+      "activation_conditions": [
+        "detect(signal_emission)"
+      ],
+      "failure_mode": "Signal disruption.",
+      "created_at": "2026-04-12 00:05:50",
+      "updated_at": "2026-04-12T00:05:50.105Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-MICROBIOME",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ECO-CONCEPT-MICROBIOME",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "concept",
+      "name": "Microbiome",
+      "kind": "pattern",
+      "triad": "🦠🌿🔬",
+      "role": "The community of microorganisms living in a particular environment.",
+      "macro": "detect(micro-biota) -> correlate(health) -> seed(patterns)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "substrate": [
+          "symbolic",
+          "physical"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "temporal": "persistent",
+        "function": "seed",
+        "topology": "nested"
+      },
+      "activation_conditions": [
+        "detect(micro-ecologies)"
+      ],
+      "failure_mode": "Invisible disruption.",
+      "created_at": "2026-04-12 00:05:51",
+      "updated_at": "2026-04-12T00:05:51.618Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-LAT-TROPHIC-DYNAMICS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-PROCESS-CHEMICAL-SIGNALING",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ECO-PROCESS-NUTRIENT-CYCLING",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "ECO-LAT-ADAPTIVE-CYCLE",
+      "domain_id": "ecology",
+      "symbol_domain": "ecology",
+      "symbol_tag": "lattice",
+      "name": "Adaptive Cycle Lattice",
+      "kind": "lattice",
+      "triad": "♾️🔄🕰️",
+      "role": "Models the 4-phase Panarchy cycle of complex adaptive systems.",
+      "macro": "grow(r) -> conserve(K) -> release(omega) -> reorganize(alpha)",
+      "lattice": {
+        "closure": "loop",
+        "topology": "inductive"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "simulate",
+        "gate": [
+          "longitudinal_data"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "temporal": "cyclic",
+        "topology": "infinity_loop",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "model_def"
+      },
+      "activation_conditions": [
+        "model(system_evolution)"
+      ],
+      "failure_mode": "Stuck in rigidity trap or poverty trap.",
+      "created_at": "2026-04-12 00:05:58",
+      "updated_at": "2026-04-12T00:05:58.904Z",
+      "linked_patterns": [
+        {
+          "id": "ECO-CONCEPT-BRIDGE-SPECIES",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-CONCEPT-CARRYING-CAPACITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-CONCEPT-MICROBIOME",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-CONCEPT-NICHE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-CONCEPT-PANARCHY",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ECO-CONCEPT-RESILIENCE",
+          "link_type": "extends"
+        },
+        {
+          "id": "ECO-METRIC-ECOSYSTEM-VALUE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-METRIC-GLOBAL-TIPPING-RISK",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PER-RESTORATION-ARCHITECT",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "ECO-PROCESS-CHEMICAL-SIGNALING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-DISTURBANCE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-PROCESS-EDGE-EFFECT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-EXTINCTION-VORTEX",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-MALADAPTATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-MUTUALISM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-NONLINEAR-FEEDBACK",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-NUTRIENT-CYCLING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-REGIME-SHIFT-REVERSAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-SUCCESSION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ECO-PROCESS-TERRITORY-SIGNALING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ECO-PROCESS-TIPPING-POINT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "exemplifies"
+        }
+      ]
+    }
+  ]
+}

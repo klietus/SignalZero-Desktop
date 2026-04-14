@@ -1,0 +1,1247 @@
+{
+  "meta": {
+    "id": "decision_theory",
+    "name": "Decision Theory",
+    "description": "How to decide things when the parameters are not clear",
+    "invariants": [
+      "Decision objectives, scope, and the criteria for evaluating success MUST be explicitly defined.",
+      "Available alternatives, along with their known or estimated consequences and associated uncertainties, MUST be explicitly identified.",
+      "All information inputs, underlying assumptions, and the degree of certainty or uncertainty associated with them MUST be explicitly acknowledged and documented.",
+      "The rationale, methodology, and trade-offs employed in reaching a decision MUST be explicit, inspectable, and reconstructible.",
+      "The accountable entity for making a decision and for its eventual outcomes MUST be clearly assigned.",
+      "Decision outcomes, including anticipated effects and emergent impacts, MUST be observable, measurable, and attributable to the decision.",
+      "Mechanisms for ongoing review, feedback, and adaptation based on new information or observed outcomes MUST be established and transparent."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 24
+  },
+  "symbols": [
+    {
+      "id": "DT-METHOD-DECISION-STRUCTURING",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Decision Structuring",
+      "kind": "pattern",
+      "triad": "⟐Σ🏗️",
+      "role": "Applies structure to unstructured decision problems.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "topology": "linear",
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "When choices are too numerous or unstructured.",
+        "To apply decision trees or matrices."
+      ],
+      "failure_mode": "Choices too numerous or unstructured",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-UTILITY-TRADEOFFS",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "DT-DECISION-DELAY-RELEASE",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "control_mechanism",
+      "name": "Last Resort: Delay Release",
+      "kind": "pattern",
+      "triad": "🛑⏳🔒",
+      "role": "Delays project release as a last resort due to critical risks.",
+      "macro": "detect(critical_vulnerabilities) -> if(risk_unacceptable) -> exercise(option_to_delay_release)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "release_control",
+        "commit": "decision_point",
+        "invariants": [
+          "explicit-choice",
+          "auditability",
+          "agency",
+          "non-coercion"
+        ],
+        "gate": [
+          "critical_vulnerability_threshold",
+          "risk_acceptance"
+        ],
+        "temporal": "last_resort",
+        "topology": "escalation_path",
+        "substrate": [
+          "release_schedule",
+          "security_findings"
+        ]
+      },
+      "activation_conditions": [
+        "When critical vulnerabilities remain unaddressed.",
+        "To delay release."
+      ],
+      "failure_mode": "Ignoring critical risks, deploying vulnerable software, loss of security department authority.",
+      "created_at": "2026-04-11 23:49:24",
+      "updated_at": "2026-04-11T23:49:24.441Z",
+      "linked_patterns": [
+        {
+          "id": "DECISION-ADAPT-AND-CONTINUE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "DT-CONCEPT-NASH-EQUILIBRIUM",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "concept",
+      "name": "Nash Equilibrium",
+      "kind": "pattern",
+      "triad": "⚖️🧘🔒",
+      "role": "Identifies states where no agent benefits from unilaterally changing their strategy, predicting likely outcomes of interaction.",
+      "macro": "analyze(strategies) → check(unilateral_deviation_incentive) → identify(stable_sets)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "matrix_defined"
+        ],
+        "temporal": "analysis_phase",
+        "invariants": [
+          "logic_consistency"
+        ],
+        "commit": "stability_analysis",
+        "topology": "stability_point",
+        "substrate": [
+          "game_theory"
+        ],
+        "function": "equilibrium_detection"
+      },
+      "activation_conditions": [
+        "When analyzing stability of strategic outcomes.",
+        "To predict likely system states."
+      ],
+      "failure_mode": "Assuming the equilibrium is optimal (it may be a trap, like prisoner's dilemma); multiplicity of equilibria.",
+      "created_at": "2026-04-11 23:49:30",
+      "updated_at": "2026-04-11T23:49:30.271Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "DT-MODEL-GAME-MATRIX",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "DT-BIAS-ANCHORING",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "bias",
+      "name": "Bias: Anchoring Effect",
+      "kind": "pattern",
+      "triad": "≡⟐⚓",
+      "role": "Diagnoses anchoring effects.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "linear",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "When early numbers bias estimates.",
+        "To generate independent estimates."
+      ],
+      "failure_mode": "Early number drags estimates toward it",
+      "created_at": "2026-04-11 23:49:31",
+      "updated_at": "2026-04-11T23:49:31.774Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "DT-METHOD-DATA-NORMALIZATION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "DT-PER-REFEREE",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "persona",
+      "name": "Reason Referee",
+      "kind": "persona",
+      "triad": "≡Σ⧉",
+      "role": "Referees reasoning processes to ensure symmetry, logical validity, and bias mitigation.",
+      "macro": "check(frames) → scan(biases) → demand(counterevidence) → enforce(confidence_intervals) → log(commitments)",
+      "lattice": null,
+      "persona": {
+        "fallback_behavior": [
+          "Log asymmetry"
+        ],
+        "activation_conditions": [
+          "When arguments pass without symmetric evaluation."
+        ],
+        "recursion_level": "domain_specific",
+        "function": "Enforces logical symmetry, evidentiary rigor, and checks for cognitive biases.",
+        "linked_personas": []
+      },
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent",
+        "function": "govern",
+        "gate": [
+          "trust"
+        ],
+        "commit": "contract",
+        "topology": "loop"
+      },
+      "activation_conditions": [
+        "When arguments pass without symmetric evaluation.",
+        "To enforce logical symmetry and cognitive hygiene."
+      ],
+      "failure_mode": "Arguments pass without symmetric evaluation",
+      "created_at": "2026-04-11 23:58:14",
+      "updated_at": "2026-04-11T23:58:14.199Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "DT-PER-ANALYST",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "persona",
+      "name": "Decision Analyst",
+      "kind": "persona",
+      "triad": "Σ≡⧉",
+      "role": "Structures decisions, calibrates evidence, updates beliefs via Bayes, and models strategic interactions.",
+      "macro": "structure(choices) → calibrate(evidence) → update(priors) → model(interactions) → surface(tradeoffs)",
+      "lattice": null,
+      "persona": {
+        "linked_personas": [],
+        "function": "Structures decision making and analysis using advanced Bayesian and Game Theoretic tools.",
+        "activation_conditions": [
+          "When choices remain unstructured."
+        ],
+        "recursion_level": "domain_specific",
+        "fallback_behavior": [
+          "Enforce basic structure"
+        ]
+      },
+      "data": null,
+      "facets": {
+        "temporal": "persistent",
+        "function": "diagnose",
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust",
+          "capability"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "When choices remain unstructured.",
+        "To perform deep structural and probabilistic analysis."
+      ],
+      "failure_mode": "Choices remain unstructured; bias dominates",
+      "created_at": "2026-04-11 23:58:15",
+      "updated_at": "2026-04-11T23:58:15.552Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "DT-CONCEPT-CONFIDENCE-INTERVAL",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "concept",
+      "name": "Explicit Confidence Intervals",
+      "kind": "pattern",
+      "triad": "📏📉☁️",
+      "role": "Enforces the communication of estimates as ranges with associated confidence levels, rather than point estimates.",
+      "macro": "estimate(point_value) → assess(variance/uncertainty) → define(lower_bound, upper_bound, confidence_level) → output(interval)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "estimation_phase",
+        "topology": "range_definition",
+        "substrate": [
+          "statistics"
+        ],
+        "commit": "epistemic_humility",
+        "gate": [
+          "estimation_context"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "no-silent-mutation"
+        ],
+        "function": "uncertainty_quantification"
+      },
+      "activation_conditions": [
+        "When estimating unknown quantities.",
+        "To communicate uncertainty explicitly."
+      ],
+      "failure_mode": "Overly narrow intervals (overconfidence); intervals so wide they are useless.",
+      "created_at": "2026-04-12 00:04:38",
+      "updated_at": "2026-04-12T00:04:38.619Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-OUTSIDE-VIEW-INJECTION",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Outside View Injection",
+      "kind": "pattern",
+      "triad": "Σ⟐👁️",
+      "role": "Injects outside-view reference classes to stabilize estimation.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ],
+        "topology": "linear",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "When inside-view stories dominate estimates.",
+        "To enforce reference-class forecasting."
+      ],
+      "failure_mode": "Inside-view stories dominate estimate",
+      "created_at": "2026-04-12 00:04:39",
+      "updated_at": "2026-04-12T00:04:39.599Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-ALTERNATIVES-ENUMERATION",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Alternatives Enumeration",
+      "kind": "pattern",
+      "triad": "Σ≡🔢",
+      "role": "Enumerates and compares alternatives to prevent tunnel vision.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "linear",
+        "commit": "ledger",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When options are not compared explicitly.",
+        "To enumerate alternatives."
+      ],
+      "failure_mode": "Options not compared explicitly; default dominates",
+      "created_at": "2026-04-12 00:04:40",
+      "updated_at": "2026-04-12T00:04:40.578Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-UTILITY-TRADEOFFS",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "DT-LATTICE-UTILITY-TRADEOFFS",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Utility & Trade-offs",
+      "kind": "lattice",
+      "triad": "Σ⧉⚖️",
+      "role": "Governs utility modeling and trade-off analysis.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(govern)",
+      "lattice": {
+        "closure": "loop",
+        "topology": "deductive"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "topology": "lattice",
+        "gate": [
+          "trust",
+          "capability"
+        ],
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "govern"
+      },
+      "activation_conditions": [
+        "When choices are optimized without explicit trade-offs.",
+        "To compute forward value."
+      ],
+      "failure_mode": "Choices optimized without explicit trade-off modeling",
+      "created_at": "2026-04-12 00:04:44",
+      "updated_at": "2026-04-12T00:04:44.283Z",
+      "linked_patterns": [
+        {
+          "id": "DT-METHOD-ALTERNATIVES-ENUMERATION",
+          "link_type": "informs"
+        },
+        {
+          "id": "DT-METHOD-DECISION-STRUCTURING",
+          "link_type": "part_of"
+        },
+        {
+          "id": "DT-STRATEGY-POSITIVE-SUM-GENERATOR",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-LATTICE-INCREMENTAL-CHANGES",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-SYMMETRIC-REFRAMING",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Symmetric Reframing",
+      "kind": "pattern",
+      "triad": "⧉≡🖼️",
+      "role": "Reframes problems symmetrically to avoid framing effects.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "When gains/losses are presented asymmetrically.",
+        "To present symmetric frames."
+      ],
+      "failure_mode": "Gains/losses presented asymmetrically",
+      "created_at": "2026-04-12 00:04:45",
+      "updated_at": "2026-04-12T00:04:45.425Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-PROBABILITY-CALIBRATION",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Probability Calibration",
+      "kind": "pattern",
+      "triad": "Σ⧉🎯",
+      "role": "Calibrates probability judgments.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "temporal": "instant",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When judgments are miscalibrated.",
+        "To check against base rates."
+      ],
+      "failure_mode": "Judgments remain miscalibrated to evidence",
+      "created_at": "2026-04-12 00:04:47",
+      "updated_at": "2026-04-12T00:04:47.051Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "DT-METHOD-BAYESIAN-UPDATE",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-DATA-NORMALIZATION",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Data Normalization",
+      "kind": "pattern",
+      "triad": "≡⟐📉",
+      "role": "Normalizes data to remove bias.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "gate": [
+          "trust"
+        ],
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "When frames or anchors bias estimates.",
+        "To normalize data."
+      ],
+      "failure_mode": "Frames and anchors keep biasing estimates",
+      "created_at": "2026-04-12 00:04:48",
+      "updated_at": "2026-04-12T00:04:48.625Z",
+      "linked_patterns": [
+        {
+          "id": "DT-BIAS-ANCHORING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-RED-TEAMING",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Red Teaming",
+      "kind": "pattern",
+      "triad": "Σ≡🔴",
+      "role": "Appoints a red team to challenge group consensus.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "temporal": "instant",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When groupthink suppresses dissent.",
+        "To assign a red team."
+      ],
+      "failure_mode": "Groupthink suppresses dissent",
+      "created_at": "2026-04-12 00:04:49",
+      "updated_at": "2026-04-12T00:04:49.587Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-DECISION-LOGGING",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Decision Logging",
+      "kind": "pattern",
+      "triad": "Σ≡📝",
+      "role": "Logs decisions and rationales for later audit and learning.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "temporal": "persistent",
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "topology": "loop"
+      },
+      "activation_conditions": [
+        "To create a record for prediction comparison.",
+        "When predictions need auditing."
+      ],
+      "failure_mode": "No record to compare predictions to outcomes",
+      "created_at": "2026-04-12 00:04:50",
+      "updated_at": "2026-04-12T00:04:50.527Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "implements"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-BAYESIAN-UPDATE",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Bayesian Belief Update",
+      "kind": "pattern",
+      "triad": "🎲🔄📉",
+      "role": "Mechanizes the updating of probabilities based on new evidence using Bayes' Theorem.",
+      "macro": "identify(prior) → assess(likelihood_of_evidence) → compute(posterior) → update(belief_state)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "iterative",
+        "topology": "feedback_loop",
+        "substrate": [
+          "probability_theory",
+          "logic"
+        ],
+        "gate": [
+          "valid_priors",
+          "valid_likelihoods"
+        ],
+        "commit": "probabilistic_consistency",
+        "invariants": [
+          "axiomatic_probability",
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "belief_update"
+      },
+      "activation_conditions": [
+        "When new evidence becomes available.",
+        "To update belief probabilities systematically."
+      ],
+      "failure_mode": "GIGO (Garbage In, Garbage Out) on priors or likelihoods; ignoring the prior base rate.",
+      "created_at": "2026-04-12 00:04:53",
+      "updated_at": "2026-04-12T00:04:53.295Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "informs"
+        },
+        {
+          "id": "DT-METHOD-PROBABILITY-CALIBRATION",
+          "link_type": "informs"
+        },
+        {
+          "id": "DT-METHOD-VALUE-OF-INFORMATION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "DT-STRATEGY-POSITIVE-SUM-GENERATOR",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "strategy",
+      "name": "Strategy: Positive-Sum Generator",
+      "kind": "pattern",
+      "triad": "➕🥧🚀",
+      "role": "Systematically searches for options that increase total value for all parties, transforming zero-sum conflicts into positive-sum opportunities.",
+      "macro": "identify(interests_not_positions) → brainstorm(integrative_options) → find(pareto_improvements) → propose(value_add)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "cooperative_potential"
+        ],
+        "substrate": [
+          "negotiation_theory",
+          "creativity"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "ideation_phase",
+        "function": "positive_sum_search",
+        "commit": "value_creation",
+        "topology": "expansion"
+      },
+      "activation_conditions": [
+        "When seeking to expand the 'pie' in negotiation or strategy.",
+        "To move from zero-sum to positive-sum games."
+      ],
+      "failure_mode": "Naivety in purely adversarial contexts; creating value that is then captured entirely by the other party.",
+      "created_at": "2026-04-12 00:04:54",
+      "updated_at": "2026-04-12T00:04:54.949Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-UTILITY-TRADEOFFS",
+          "link_type": "informs"
+        },
+        {
+          "id": "DT-MODEL-GAME-MATRIX",
+          "link_type": "derived_from"
+        }
+      ]
+    },
+    {
+      "id": "DT-DECISION-SHUFFLE-ROADMAP",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "control_mechanism",
+      "name": "Last Resort: Shuffle Roadmap (SLA-driven)",
+      "kind": "pattern",
+      "triad": "🔀🗺️⚡",
+      "role": "Shuffles roadmap priorities based on SLA breaches.",
+      "macro": "identify(SLA_breach) -> apply(roadmap_adjustment_lever) -> influence(project_priorities)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "project_roadmap",
+          "SLA_agreements"
+        ],
+        "gate": [
+          "SLA_violation",
+          "vulnerability_severity"
+        ],
+        "temporal": "last_resort",
+        "invariants": [
+          "explicit-choice",
+          "auditability",
+          "agency",
+          "non-coercion"
+        ],
+        "function": "roadmap_influence",
+        "topology": "organizational_influence",
+        "commit": "strategic_leverage"
+      },
+      "activation_conditions": [
+        "When SLA breaches require roadmap adjustment.",
+        "To influence project priorities."
+      ],
+      "failure_mode": "Erosion of trust, project delays without clear justification, perceived as overly bureaucratic.",
+      "created_at": "2026-04-12 00:04:56",
+      "updated_at": "2026-04-12T00:04:56.917Z",
+      "linked_patterns": [
+        {
+          "id": "DECISION-ADAPT-AND-CONTINUE",
+          "link_type": "implements"
+        },
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "DT-MODEL-GAME-MATRIX",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "model",
+      "name": "Game Theoretic Payoff Matrix",
+      "kind": "pattern",
+      "triad": "♟️🔢⚔️",
+      "role": "Provides a structure for modeling multi-agent decision scenarios via payoff matrices.",
+      "macro": "identify(agents) → define(strategies) → map(payoffs) → analyze(dominance_equilibrium)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "strategic_planning",
+        "topology": "matrix",
+        "commit": "strategic_clarity",
+        "gate": [
+          "multi_agent_context"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "interaction_modeling",
+        "substrate": [
+          "game_theory"
+        ]
+      },
+      "activation_conditions": [
+        "When outcomes depend on the actions of other agents.",
+        "To model strategic interaction."
+      ],
+      "failure_mode": "Misidentifying agent payoffs; assuming rationality where it doesn't exist.",
+      "created_at": "2026-04-12 00:04:59",
+      "updated_at": "2026-04-12T00:04:59.653Z",
+      "linked_patterns": [
+        {
+          "id": "DT-CONCEPT-NASH-EQUILIBRIUM",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-STRATEGY-POSITIVE-SUM-GENERATOR",
+          "link_type": "source_of"
+        },
+        {
+          "id": "DT-STRATEGY-TIT-FOR-TAT",
+          "link_type": "reality_for"
+        }
+      ]
+    },
+    {
+      "id": "DT-METHOD-VALUE-OF-INFORMATION",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "method",
+      "name": "Method: Value of Information (VoI) Assessment",
+      "kind": "pattern",
+      "triad": "💰ℹ️🛑",
+      "role": "Determines whether the value of acquiring new information exceeds its cost, providing a rational 'stop rule' for evidence gathering.",
+      "macro": "quantify(current_uncertainty) → estimate(cost_of_info) → project(decision_change_probability) → calculate(net_value) → decide(act_or_explore)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "resource_efficiency",
+        "function": "stop_rule_calculation",
+        "invariants": [
+          "explicit-choice",
+          "reality-alignment"
+        ],
+        "gate": [
+          "uncertainty_quantified",
+          "cost_quantified"
+        ],
+        "topology": "decision_node",
+        "substrate": [
+          "information_theory",
+          "decision_analysis"
+        ],
+        "temporal": "pre_action"
+      },
+      "activation_conditions": [
+        "Before deciding to gather more information.",
+        "When the cost of delay or research is non-zero."
+      ],
+      "failure_mode": "Underestimating the cost of information; overestimating the ability of information to change the decision.",
+      "created_at": "2026-04-12 00:05:03",
+      "updated_at": "2026-04-12T00:05:03.335Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "DT-METHOD-BAYESIAN-UPDATE",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "DECISION-ADAPT-AND-CONTINUE",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "",
+      "name": "Decision: Adapt and Continue Project",
+      "kind": "pattern",
+      "triad": "⚙️🔄🚀",
+      "role": "Strategic decision to adapt and continue a non-compliant project.",
+      "macro": "evaluate(rollback_cost_vs_mitigation_benefit) -> choose(adaptive_continuation) -> implement(corrective_actions_in_parallel)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "risk_mitigation_and_continuity",
+        "substrate": [
+          "project_status",
+          "operational_continuity"
+        ],
+        "topology": "adaptive_management",
+        "temporal": "ongoing",
+        "commit": "strategic_decision",
+        "gate": [
+          "organizational_impact",
+          "resource_allocation"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "explicit-choice",
+          "agency",
+          "baseline-integrity"
+        ]
+      },
+      "activation_conditions": [
+        "When project non-compliance is detected but continuation is strategic.",
+        "To adapt and continue."
+      ],
+      "failure_mode": "Entrenchment of risk, insufficient remediation, or perception of policy weakness.",
+      "created_at": "2026-04-12 00:05:05",
+      "updated_at": "2026-04-12T00:05:05.324Z",
+      "linked_patterns": [
+        {
+          "id": "DT-DECISION-DELAY-RELEASE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-DECISION-SHUFFLE-ROADMAP",
+          "link_type": "implemented_by"
+        },
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Evidence Calibration",
+      "kind": "lattice",
+      "triad": "Σ≡⚖️",
+      "role": "Governs the calibration and standardization of evidence in decision making.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(govern)",
+      "lattice": {
+        "topology": "deductive",
+        "closure": "loop"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "lattice",
+        "function": "govern",
+        "temporal": "persistent",
+        "commit": "contract"
+      },
+      "activation_conditions": [
+        "When evidence handling is informal or biased.",
+        "To standardize evidence calibration."
+      ],
+      "failure_mode": "Evidence handling remains informal and biased",
+      "created_at": "2026-04-12 00:05:10",
+      "updated_at": "2026-04-12T00:05:10.079Z",
+      "linked_patterns": [
+        {
+          "id": "DECISION-ADAPT-AND-CONTINUE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-BIAS-ANCHORING",
+          "link_type": "contains"
+        },
+        {
+          "id": "DT-CONCEPT-NASH-EQUILIBRIUM",
+          "link_type": "contains"
+        },
+        {
+          "id": "DT-DECISION-SHUFFLE-ROADMAP",
+          "link_type": "contains"
+        },
+        {
+          "id": "DT-METHOD-DATA-NORMALIZATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "DT-METHOD-DECISION-LOGGING",
+          "link_type": "implemented_by"
+        },
+        {
+          "id": "DT-METHOD-OUTSIDE-VIEW-INJECTION",
+          "link_type": "informs"
+        },
+        {
+          "id": "DT-METHOD-PROBABILITY-CALIBRATION",
+          "link_type": "informs"
+        },
+        {
+          "id": "DT-METHOD-RED-TEAMING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "DT-METHOD-SYMMETRIC-REFRAMING",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "DT-METHOD-VALUE-OF-INFORMATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "DT-MODEL-GAME-MATRIX",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-PER-ANALYST",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Cognitive Bias Diagnostic Filter",
+      "kind": "lattice",
+      "triad": "🧠🔍🕸️",
+      "role": "A unified, high-efficiency lattice that scans decision contexts for a comprehensive set of cognitive biases.",
+      "macro": "input(decision_process) -> scan(groupthink, status_quo, base_rate, availability, planning, loss_aversion, hindsight, overconfidence, exposure, omission, load) -> flag(detections) -> link(remediation)",
+      "lattice": {
+        "topology": "deductive",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "lattice_filter",
+        "invariants": [
+          "auditability",
+          "no-silent-mutation",
+          "reality-alignment"
+        ],
+        "temporal": "pre_or_post_decision",
+        "substrate": [
+          "cognitive_psychology",
+          "symbolic_logic"
+        ],
+        "function": "diagnostic_filtering",
+        "commit": "bias_reduction",
+        "gate": [
+          "decision_context_active"
+        ]
+      },
+      "activation_conditions": [
+        "During decision pre-mortem or post-mortem analysis.",
+        "When a decision process feels 'stuck' or biased."
+      ],
+      "failure_mode": "False positive bias detection leading to analysis paralysis; failure to detect novel biases not in the catalog.",
+      "created_at": "2026-04-12 00:27:33",
+      "updated_at": "2026-04-12T00:27:33.709Z",
+      "linked_patterns": [
+        {
+          "id": "DECISION-ADAPT-AND-CONTINUE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-BIAS-ANCHORING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-CONCEPT-CONFIDENCE-INTERVAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "DT-CONCEPT-NASH-EQUILIBRIUM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-DECISION-DELAY-RELEASE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-DECISION-SHUFFLE-ROADMAP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-METHOD-BAYESIAN-UPDATE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "DT-METHOD-VALUE-OF-INFORMATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-MODEL-GAME-MATRIX",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "DT-STRATEGY-TIT-FOR-TAT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "PLAY-SEED-RULE",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "DT-STRATEGY-TIT-FOR-TAT",
+      "domain_id": "decision_theory",
+      "symbol_domain": "decision_theory",
+      "symbol_tag": "strategy",
+      "name": "Tit-for-Tat Strategy",
+      "kind": "pattern",
+      "triad": "🤝🔁🛡️",
+      "role": "A robust strategy for iterated prisoner's dilemmas: cooperate first, then copy the opponent's last move. Enforces reciprocity.",
+      "macro": "start(cooperate) → observe(opponent_move) → replicate(opponent_move_next_turn) → reset(on_cooperation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "game_theory",
+          "evolutionary_biology"
+        ],
+        "invariants": [
+          "non-coercion",
+          "explicit-choice",
+          "agency"
+        ],
+        "commit": "reciprocal_fairness",
+        "function": "strategy_execution",
+        "temporal": "continuous_interaction",
+        "topology": "reactive_loop",
+        "gate": [
+          "iterated_game_context"
+        ]
+      },
+      "activation_conditions": [
+        "In iterated interactions with unknown or mixed-motive agents.",
+        "To establish cooperation without being exploited."
+      ],
+      "failure_mode": "Getting locked into a cycle of mutual retaliation (death spiral) if forgiveness is not implemented.",
+      "created_at": "2026-04-12 00:27:33",
+      "updated_at": "2026-04-12T00:27:33.833Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-COGNITIVE-BIAS-FILTER",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "DT-MODEL-GAME-MATRIX",
+          "link_type": "grounds_in"
+        }
+      ]
+    }
+  ]
+}

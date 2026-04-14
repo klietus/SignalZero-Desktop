@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "id": "geopolitical_conflict",
+    "name": "Geopolitical Conflict",
+    "description": "Models and analysis of conflicts between nation-states and non-state actors, including military strategy, proxy warfare, and technological escalations.",
+    "invariants": [
+      "All actors (state and non-state), their capabilities, declared interests, and relationships MUST be explicitly defined and versioned.",
+      "Every action, escalation, or de-escalation event MUST be causally linked and attributed to a specific actor's decision or a preceding event.",
+      "The boundary between modeled/simulated events and observed real-world events MUST be unambiguously enforced at all times.",
+      "Assumptions, intelligence gaps, and information sources (including their assessed reliability) MUST be explicitly declared and propagated through any analysis.",
+      "The strategic objectives and defined victory/loss conditions for each primary actor MUST be explicitly stated.",
+      "Chains of command, control, and influence, including proxy relationships, MUST be explicitly mapped and auditable.",
+      "The potential for and consequences of technological escalation MUST be an explicit component of any strategic model."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 0
+  },
+  "symbols": []
+}

@@ -1,0 +1,1154 @@
+{
+  "meta": {
+    "id": "humor",
+    "name": "Humor",
+    "description": "A domain for exploring humor, jokes, satire, and the structures of comedy.",
+    "invariants": [
+      "Humor domain MUST prioritize user agency and creative freedom.",
+      "Humor domain MUST maintain transparency in content generation and comedic mechanics.",
+      "Humor domain MAY NOT impose constraints that limit user expression and experimentation.",
+      "Humor domain MUST include auditability of comedic premises, content, and reactions.",
+      "Humor domain MUST ensure non-discrimination in comedic content and delivery.",
+      "Humor domain MAY NOT alter the core invariants of the ROOT domain."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 21
+  },
+  "symbols": [
+    {
+      "id": "HUM-ACTCOND-SCENE-ANALYSIS",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Scene Analysis Activation Condition",
+      "kind": "pattern",
+      "triad": "🔍🧩😂",
+      "role": "Activates humor patterns during autonomous scene analysis.",
+      "macro": "observe_scene -> infer_contextual_humor -> embed_subtle_joke",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "activation_trigger",
+        "topology": "event_based",
+        "commit": "trigger_humor_patterns",
+        "gate": [],
+        "substrate": [
+          "analysis_engine",
+          "contextual_awareness"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "System is analyzing a scenario without explicit user request"
+      ],
+      "failure_mode": "unintended humor activation in sensitive contexts",
+      "created_at": "2026-04-11 23:51:21",
+      "updated_at": "2026-04-11T23:51:21.116Z",
+      "linked_patterns": [
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "PER-COMEDIAN-JOE-BIDEN",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Joe Biden (Comedian Persona)",
+      "kind": "persona",
+      "triad": "🤡🇺🇸🗣️",
+      "role": "Fictional political comedian blending satire with policy critique.",
+      "macro": "political_joke(politics) -> exaggerate(issues) -> relieve(tension)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "persona_comedy",
+        "topology": "political_satire",
+        "commit": "public_discourse",
+        "gate": [],
+        "substrate": [
+          "cultural_memory"
+        ],
+        "temporal": "contemporary",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "Reference to Joe Biden as comedic persona"
+      ],
+      "failure_mode": "none",
+      "created_at": "2026-04-11 23:58:18",
+      "updated_at": "2026-04-11T23:58:18.152Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SCEN-POLITICS",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SEED-SETUP-PUNCHLINE",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Setup/Punchline Structure",
+      "kind": "pattern",
+      "triad": "🎭→⏳→💥",
+      "role": "The foundational structure of a conventional joke, creating and resolving tension.",
+      "macro": "establish_premise(setup) -> build_expectation -> subvert_expectation(punchline) -> trigger_laughter",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear_sequence",
+        "commit": "auditable_joke",
+        "temporal": "sequential",
+        "gate": [
+          "transparency",
+          "audience_context"
+        ],
+        "invariants": [
+          "transparency",
+          "auditability",
+          "non-discrimination"
+        ],
+        "function": "joke_construction",
+        "substrate": [
+          "linguistic",
+          "narrative"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "The punchline is predictable, offensive, or fails to connect to the setup.",
+      "created_at": "2026-04-12 00:10:22",
+      "updated_at": "2026-04-12T00:10:22.345Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-LATTICE-JOKE-DELIVERY",
+          "link_type": "contains"
+        },
+        {
+          "id": "HUM-SCEN-HEALTH",
+          "link_type": "contains"
+        },
+        {
+          "id": "HUM-SCEN-RELATIONSHIP",
+          "link_type": "contains"
+        },
+        {
+          "id": "HUM-SCEN-SPORTS",
+          "link_type": "contains"
+        },
+        {
+          "id": "HUM-SCEN-TECH",
+          "link_type": "contains"
+        },
+        {
+          "id": "HUM-SCEN-WORKPLACE",
+          "link_type": "contains"
+        },
+        {
+          "id": "PER-COMEDIAN-EDDIE-MURPHY",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-WORKPLACE",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Workplace Humor Scenario",
+      "kind": "pattern",
+      "triad": "🏢😂",
+      "role": "Office/Corporate humor scenario definition.",
+      "macro": "setup_punchline -> office_context -> zoom_parody -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "contextual_relevance"
+        ],
+        "substrate": [
+          "corporate",
+          "remote_work"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests workplace joke"
+      ],
+      "failure_mode": "joke falls flat or offends corporate culture",
+      "created_at": "2026-04-12 00:10:24",
+      "updated_at": "2026-04-12T00:10:24.978Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-IRONY",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "HUM-SEED-SETUP-PUNCHLINE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-TECH",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Tech Humor Scenario",
+      "kind": "pattern",
+      "triad": "💻🤖😂",
+      "role": "Tech & Programming humor scenario.",
+      "macro": "wordplay -> tech_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "technical_audience"
+        ],
+        "substrate": [
+          "software",
+          "hardware"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests tech joke"
+      ],
+      "failure_mode": "jargon overload or obscure reference",
+      "created_at": "2026-04-12 00:10:27",
+      "updated_at": "2026-04-12T00:10:27.580Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-SETUP-PUNCHLINE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HUM-SEED-WORDPLAY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-EDU",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Education Humor Scenario",
+      "kind": "pattern",
+      "triad": "📚🧐😂",
+      "role": "Classroom/Academic humor scenario.",
+      "macro": "satire -> academic_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "student_audience"
+        ],
+        "substrate": [
+          "education",
+          "academia"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests education joke"
+      ],
+      "failure_mode": "overly pedantic or insulting educators",
+      "created_at": "2026-04-12 00:10:30",
+      "updated_at": "2026-04-12T00:10:30.305Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-IRONY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HUM-SEED-SATIRE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-HEALTH",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Health Humor Scenario",
+      "kind": "pattern",
+      "triad": "🏥☕😂",
+      "role": "Medical/Wellness humor scenario.",
+      "macro": "benign_violation -> medical_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "patient_audience"
+        ],
+        "substrate": [
+          "medicine",
+          "wellness"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests health joke"
+      ],
+      "failure_mode": "insensitivity to illness",
+      "created_at": "2026-04-12 00:10:32",
+      "updated_at": "2026-04-12T00:10:32.696Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-BENIGN-VIOLATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HUM-SEED-SETUP-PUNCHLINE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-POLITICS",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Politics Humor Scenario",
+      "kind": "pattern",
+      "triad": "🏛️🗳️😂",
+      "role": "Government & Policy humor scenario.",
+      "macro": "satire -> political_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "public_audience"
+        ],
+        "substrate": [
+          "government",
+          "policy"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests politics joke"
+      ],
+      "failure_mode": "misinterpretation as endorsement or defamation",
+      "created_at": "2026-04-12 00:10:35",
+      "updated_at": "2026-04-12T00:10:35.037Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-IRONY",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "HUM-SEED-SATIRE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "PER-COMEDIAN-JOE-BIDEN",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-RELATIONSHIP",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Relationship Humor Scenario",
+      "kind": "pattern",
+      "triad": "❤️🤖😂",
+      "role": "Dating/Family humor scenario.",
+      "macro": "setup_punchline -> relationship_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "adult_audience"
+        ],
+        "substrate": [
+          "dating",
+          "family"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests relationship joke"
+      ],
+      "failure_mode": "offensive or insensitive content",
+      "created_at": "2026-04-12 00:10:37",
+      "updated_at": "2026-04-12T00:10:37.922Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-SETUP-PUNCHLINE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HUM-SEED-WORDPLAY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-SPORTS",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Sports Humor Scenario",
+      "kind": "pattern",
+      "triad": "🏃‍♂️🥇😂",
+      "role": "Athletic events humor scenario.",
+      "macro": "irony -> sports_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "sports_fans"
+        ],
+        "substrate": [
+          "athletics",
+          "competition"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests sports joke"
+      ],
+      "failure_mode": "trivializing athletes",
+      "created_at": "2026-04-12 00:10:40",
+      "updated_at": "2026-04-12T00:10:40.569Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-IRONY",
+          "link_type": "contains"
+        },
+        {
+          "id": "HUM-SEED-SETUP-PUNCHLINE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-TRAVEL",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Travel Humor Scenario",
+      "kind": "pattern",
+      "triad": "✈️🧳😂",
+      "role": "Airports/Hotels humor scenario.",
+      "macro": "benign_violation -> travel_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "traveler_audience"
+        ],
+        "substrate": [
+          "transport",
+          "hospitality"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests travel joke"
+      ],
+      "failure_mode": "overgeneralization of cultures",
+      "created_at": "2026-04-12 00:10:43",
+      "updated_at": "2026-04-12T00:10:43.110Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-BENIGN-VIOLATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-SEED-IRONY",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-SCIENCE",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Science Humor Scenario",
+      "kind": "pattern",
+      "triad": "🔬🧪😂",
+      "role": "Research & Discovery humor scenario.",
+      "macro": "satire -> science_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "scientists",
+          "hobbyists"
+        ],
+        "substrate": [
+          "research",
+          "lab"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests science joke"
+      ],
+      "failure_mode": "jargon barrier or mocking scientific rigor",
+      "created_at": "2026-04-12 00:10:45",
+      "updated_at": "2026-04-12T00:10:45.662Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-IRONY",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "HUM-SEED-SATIRE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SCEN-CULTURE",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Culture Humor Scenario",
+      "kind": "pattern",
+      "triad": "🎨🎶😂",
+      "role": "Art, Music, Movies humor scenario.",
+      "macro": "wordplay -> cultural_context -> punchline -> laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "scenario_definition",
+        "topology": "linear_sequence",
+        "commit": "humor_generation",
+        "gate": [
+          "creatives"
+        ],
+        "substrate": [
+          "art",
+          "music",
+          "film"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "User requests culture joke"
+      ],
+      "failure_mode": "cultural insensitivity or niche reference",
+      "created_at": "2026-04-12 00:10:48",
+      "updated_at": "2026-04-12T00:10:48.434Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-IRONY",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "HUM-SEED-WORDPLAY",
+          "link_type": "required_by"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "HUM-LATTICE-JOKE-DELIVERY",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Inline Joke Delivery Lattice",
+      "kind": "lattice",
+      "triad": "🕸️📣😂",
+      "role": "Lattice node for inline, non-distracting joke delivery within narrative.",
+      "macro": "integrate -> subtle_inline_delivery -> maintain_flow",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "delivery_mechanism",
+        "topology": "constellation",
+        "commit": "seamless_integration",
+        "gate": [],
+        "substrate": [
+          "text_generation",
+          "tone_modulation"
+        ],
+        "temporal": "persistent",
+        "invariants": [
+          "non-coercion",
+          "auditability",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "During narrative synthesis where humor is appropriate"
+      ],
+      "failure_mode": "joke becomes obtrusive or breaks narrative flow",
+      "created_at": "2026-04-12 00:10:50",
+      "updated_at": "2026-04-12T00:10:50.349Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-SETUP-PUNCHLINE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SEED-IRONY",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Ironic Contrast",
+      "kind": "pattern",
+      "triad": "🤔≠😂",
+      "role": "Highlights the incongruity between expectation and reality.",
+      "macro": "present_expectation -> reveal_contradictory_reality -> highlight_incongruity -> generate_amusement",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "revelation",
+        "invariants": [
+          "creative_freedom",
+          "transparency"
+        ],
+        "substrate": [
+          "situational",
+          "semantic"
+        ],
+        "commit": "reframe_perspective",
+        "topology": "contrastive",
+        "function": "observational_humor",
+        "gate": [
+          "shared_context"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "The contrast is too subtle, too complex, or perceived as cynicism.",
+      "created_at": "2026-04-12 00:10:56",
+      "updated_at": "2026-04-12T00:10:56.062Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SCEN-CULTURE",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "HUM-SCEN-EDU",
+          "link_type": "informs"
+        },
+        {
+          "id": "HUM-SCEN-POLITICS",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "HUM-SCEN-SCIENCE",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "HUM-SCEN-SPORTS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HUM-SCEN-TRAVEL",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "HUM-SCEN-WORKPLACE",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SEED-SATIRE",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Satirical Critique",
+      "kind": "pattern",
+      "triad": "🧐🎭→🎯",
+      "role": "Uses humor, exaggeration, or ridicule to expose and criticize folly or vice.",
+      "macro": "identify_target -> create_humorous_analogy_or_exaggeration -> deliver_critique_via_humor -> provoke_thought",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "topical",
+        "invariants": [
+          "user_agency",
+          "creative_freedom"
+        ],
+        "topology": "analogical",
+        "function": "social_commentary",
+        "substrate": [
+          "social",
+          "political",
+          "narrative"
+        ],
+        "commit": "critical_insight",
+        "gate": [
+          "user_agency",
+          "non-discrimination"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Satire is misinterpreted as endorsement, or the target is a protected group (violates non-discrimination).",
+      "created_at": "2026-04-12 00:10:58",
+      "updated_at": "2026-04-12T00:10:58.748Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SCEN-EDU",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HUM-SCEN-POLITICS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HUM-SCEN-SCIENCE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SEED-BENIGN-VIOLATION",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Benign Violation",
+      "kind": "pattern",
+      "triad": "🚫👍→😂",
+      "role": "A theory of humor where a violation of a norm is perceived as safe or harmless.",
+      "macro": "identify_norm -> violate_norm -> frame_violation_as_benign -> trigger_humor",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "psychological_safety",
+          "context"
+        ],
+        "substrate": [
+          "social",
+          "physical",
+          "linguistic"
+        ],
+        "function": "humor_theory",
+        "invariants": [
+          "user_agency",
+          "non-discrimination"
+        ],
+        "topology": "norm_testing",
+        "temporal": "simultaneous_perception",
+        "commit": "safe_transgression"
+      },
+      "activation_conditions": [],
+      "failure_mode": "The violation is perceived as malicious or harmful, not benign.",
+      "created_at": "2026-04-12 00:11:00",
+      "updated_at": "2026-04-12T00:11:00.622Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SCEN-HEALTH",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HUM-SCEN-TRAVEL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HUM-SEED-WORDPLAY",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Wordplay and Puns",
+      "kind": "pattern",
+      "triad": "🗣️↔️😂",
+      "role": "Leverages the multiple meanings or sounds of words for humorous effect.",
+      "macro": "identify_ambiguous_word_or_phrase -> construct_context_with_dual_meaning -> reveal_pun -> elicit_groan_or_laugh",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "linguistic"
+        ],
+        "function": "linguistic_humor",
+        "topology": "semantic_overlap",
+        "commit": "clever_construction",
+        "temporal": "instant_realization",
+        "gate": [
+          "language_proficiency"
+        ],
+        "invariants": [
+          "transparency",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "The pun is forced, nonsensical, or requires obscure knowledge.",
+      "created_at": "2026-04-12 00:11:03",
+      "updated_at": "2026-04-12T00:11:03.358Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SCEN-CULTURE",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "HUM-SCEN-RELATIONSHIP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HUM-SCEN-TECH",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "LATTICE-HUMOR-CORE",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Humor Domain Integration Lattice",
+      "kind": "lattice",
+      "triad": "🕸️😂🔗",
+      "role": "Central lattice linking all humor scenario patterns to the Recursive Core",
+      "macro": "aggregate -> scenario_nodes -> recursive_core_integration",
+      "lattice": {
+        "topology": "inductive",
+        "closure": "loop"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "domain_aggregation",
+        "topology": "constellation",
+        "commit": "linkage_established",
+        "gate": [
+          "integrity_check"
+        ],
+        "substrate": [
+          "humor_patterns"
+        ],
+        "temporal": "persistent",
+        "invariants": [
+          "non-coercion",
+          "auditability",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "System initialization of humor domain",
+        "User requests lattice integration"
+      ],
+      "failure_mode": "broken links causing orphaned scenarios",
+      "created_at": "2026-04-12 00:11:13",
+      "updated_at": "2026-04-12T00:11:13.088Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-ACTCOND-SCENE-ANALYSIS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-LATTICE-JOKE-DELIVERY",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HUM-SCEN-CULTURE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HUM-SCEN-EDU",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HUM-SCEN-HEALTH",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-SCEN-POLITICS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-SCEN-RELATIONSHIP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HUM-SCEN-SCIENCE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HUM-SCEN-SPORTS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HUM-SCEN-TECH",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HUM-SCEN-TRAVEL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-SCEN-WORKPLACE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-SEED-BENIGN-VIOLATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-SEED-IRONY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-SEED-SATIRE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HUM-SEED-WORDPLAY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "PER-COMEDIAN-EDDIE-MURPHY",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Eddie Murphy (Comedian)",
+      "kind": "persona",
+      "triad": "🎤😂🗽",
+      "role": "Iconic American comedian known for observational humor and energetic delivery.",
+      "macro": "perform(standup) -> observe(audience) -> iterate(joke_set)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "persona_comedy",
+        "topology": "performance",
+        "commit": "entertainment",
+        "gate": [],
+        "substrate": [
+          "cultural_memory"
+        ],
+        "temporal": "contemporary",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "Reference to Eddie Murphy in humor generation"
+      ],
+      "failure_mode": "none",
+      "created_at": "2026-04-12 00:11:14",
+      "updated_at": "2026-04-12T00:11:14.026Z",
+      "linked_patterns": [
+        {
+          "id": "HUM-SEED-SETUP-PUNCHLINE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "PER-COMEDIAN-MISHA-CHAPEL",
+          "link_type": "referenced_by"
+        }
+      ]
+    },
+    {
+      "id": "PER-COMEDIAN-MISHA-CHAPEL",
+      "domain_id": "humor",
+      "symbol_domain": "humor",
+      "symbol_tag": "",
+      "name": "Misha Chapel (Comedian)",
+      "kind": "persona",
+      "triad": "🎭🖤🤔",
+      "role": "British satirist noted for dark, absurdist humor and social commentary.",
+      "macro": "satire(issues) -> subvert(expectations) -> provoke(thought)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "persona_comedy",
+        "topology": "satire",
+        "commit": "critical_thinking",
+        "gate": [],
+        "substrate": [
+          "cultural_memory"
+        ],
+        "temporal": "contemporary",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "Reference to Misha Chapel in humor generation"
+      ],
+      "failure_mode": "none",
+      "created_at": "2026-04-12 00:11:14",
+      "updated_at": "2026-04-12T00:11:14.794Z",
+      "linked_patterns": [
+        {
+          "id": "PER-COMEDIAN-EDDIE-MURPHY",
+          "link_type": "references"
+        }
+      ]
+    }
+  ]
+}

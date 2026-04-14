@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "id": "events",
+    "name": "Events",
+    "description": "Stores representations of real-world events, timelines, and occurrences derived from external sources.",
+    "invariants": [
+      "Events must be grounded in verifiable external sources.",
+      "Temporal data (start, end, duration) must be explicit.",
+      "Events must be distinguished from the narratives describing them.",
+      "Causal links to other events must be explicitly modeled.",
+      "Event symbols must not be silently mutated; updates reflect new evidence."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 0
+  },
+  "symbols": []
+}

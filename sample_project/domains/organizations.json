@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "id": "organizations",
+    "name": "Organizations",
+    "description": "Stores representations of real-world organizations, institutions, companies, and groups.",
+    "invariants": [
+      "Organizations must be grounded in verifiable external sources.",
+      "Organizational structure and hierarchy should be modeled where known.",
+      "Relationships to other entities (people, events) must be explicit.",
+      "Organizational goals and stated missions should be captured.",
+      "Changes in organizational status (mergers, dissolution) must be tracked."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 0
+  },
+  "symbols": []
+}

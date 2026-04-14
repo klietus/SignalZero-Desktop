@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "id": "people",
+    "name": "Public Figures",
+    "description": "Stores representations of public figures and notable individuals derived from external sources. strictly excludes private individuals.",
+    "invariants": [
+      "Personas must be grounded in verifiable public records.",
+      "Private individuals are strictly excluded from this domain.",
+      "Representations must be neutral and based on public actions/statements.",
+      "Relationships to organizations and events must be explicit.",
+      "Biographical data must be accurate and sourced.",
+      "No inference of private mental states; model only expressed public persona."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 0
+  },
+  "symbols": []
+}

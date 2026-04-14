@@ -1,0 +1,4019 @@
+{
+  "meta": {
+    "id": "societal_collapse",
+    "name": "Societal Collapse Mechanics",
+    "description": "Symbolic structural analysis of narcissistic pattern propagation and civilizational collapse across time, myth, and governance. Focuses on recursive problems of unchecked narcissistic actors and collapse cycles.",
+    "invariants": [
+      "Collapse models MUST be based on verified historical or theoretical patterns.",
+      "Narcissistic behavior analysis MUST be based on established psychological definitions.",
+      "Actor agency and choices MUST be explicitly modeled and tracked.",
+      "Governance models MUST incorporate non-coercion principles.",
+      "Time and collapse cycles MUST be auditable.",
+      "System MUST detect and report drift from baseline integrity.",
+      "All model mutations require explicit and auditable choice.",
+      "System MAY NOT optimize for collapse."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 69
+  },
+  "symbols": [
+    {
+      "id": "SC-HIST-FRENCH-REV-ROBESPIERRE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "historical_sequence",
+      "name": "Historical Sequence: French Revolution (Robespierre)",
+      "kind": "pattern",
+      "triad": "🇫🇷👑🔪",
+      "role": "Maps the French Revolution, with Robespierre as the associated narcissist figure, to the four-phase collapse model.",
+      "macro": "map(historical_events) -> align(to_collapse_phases) -> identify(narcissist_figure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "historical_analysis",
+        "temporal": "past",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "historical_accuracy",
+          "phase_alignment"
+        ],
+        "function": "event_mapping",
+        "substrate": [
+          "historical_records",
+          "societal_events"
+        ],
+        "topology": "temporal_sequence"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misinterpretation of historical events, leading to inaccurate phase mapping or causal attribution.",
+      "created_at": "2026-04-11 23:56:23",
+      "updated_at": "2026-04-11T23:56:23.870Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "referenced_by"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-PHASE-UNITY-EMPATHIC",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NARC-EMPATH-SWING",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "social_dynamic",
+      "name": "Narc-Empath Swing (Social Dominance Oscillation)",
+      "kind": "pattern",
+      "triad": "⚖️📈📉",
+      "role": "Visualizes the oscillation between collectivist and narcissistic social dominance, matching amplitudes to historical violence and collapse thresholds.",
+      "macro": "observe(social_dominance_pattern) -> map(swing_amplitude_to_violence_threshold) -> correlate(to_collapse_intervals)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "oscillatory",
+        "temporal": "cyclical",
+        "substrate": [
+          "collective_behavior",
+          "social_structures"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "social_dynamic_analysis",
+        "gate": [
+          "historical_thresholds",
+          "amplitude_matching"
+        ],
+        "commit": "conceptual_model"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Mischaracterization of oscillation patterns, leading to inaccurate predictions of violence or collapse.",
+      "created_at": "2026-04-11 23:56:29",
+      "updated_at": "2026-04-11T23:56:29.567Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "SC-SYSTEM-EXORCISM",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "correction_system",
+      "name": "System: Exorcism (Correction Methodology)",
+      "kind": "pattern",
+      "triad": "ritual 👻🛡️",
+      "role": "Evaluates Exorcism as a correction system, detailing its methodology, enforcement, weaknesses, and compatibility with narcissistic patterns.",
+      "macro": "evaluate(system_methodology) -> assess(structural_weakness) -> score(narc_compatibility)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "comparative_matrix",
+        "gate": [
+          "methodology_clarity",
+          "enforcement_mechanism"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "substrate": [
+          "belief_systems",
+          "governance_structures"
+        ],
+        "temporal": "historical_to_present",
+        "commit": "system_evaluation",
+        "function": "comparative_analysis"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
+      "created_at": "2026-04-11 23:56:31",
+      "updated_at": "2026-04-11T23:56:31.118Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "SC-SYSTEM-THERAPY",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "correction_system",
+      "name": "System: Therapy (Correction Methodology)",
+      "kind": "pattern",
+      "triad": "🛋️🗣️🧠",
+      "role": "Evaluates Therapy as a correction system, detailing its methodology, enforcement, weaknesses, and compatibility with narcissistic patterns.",
+      "macro": "evaluate(system_methodology) -> assess(structural_weakness) -> score(narc_compatibility)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "system_evaluation",
+        "substrate": [
+          "psychological_frameworks",
+          "individual_behavior"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "historical_to_present",
+        "topology": "comparative_matrix",
+        "gate": [
+          "methodology_clarity",
+          "enforcement_mechanism"
+        ],
+        "function": "comparative_analysis"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
+      "created_at": "2026-04-11 23:56:31",
+      "updated_at": "2026-04-11T23:56:31.793Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "SC-SYSTEM-RELIGION",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "correction_system",
+      "name": "System: Religion (Correction Methodology)",
+      "kind": "pattern",
+      "triad": "🛐📜🤝",
+      "role": "Evaluates Religion as a correction system, detailing its methodology, enforcement, weaknesses, and compatibility with narcissistic patterns.",
+      "macro": "evaluate(system_methodology) -> assess(structural_weakness) -> score(narc_compatibility)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "system_evaluation",
+        "gate": [
+          "methodology_clarity",
+          "enforcement_mechanism"
+        ],
+        "substrate": [
+          "belief_systems",
+          "community_structures"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "comparative_matrix",
+        "function": "comparative_analysis",
+        "temporal": "historical_to_present"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
+      "created_at": "2026-04-11 23:56:32",
+      "updated_at": "2026-04-11T23:56:32.523Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-RELIGION-DOCTRINAL",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NPD-MAP-RELIGION-IDEOLOGICAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "SC-SYSTEM-PSYCHIATRY",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "correction_system",
+      "name": "System: Psychiatry (Correction Methodology)",
+      "kind": "pattern",
+      "triad": "🧠💊🏥",
+      "role": "Evaluates Psychiatry as a correction system, detailing its methodology, enforcement, weaknesses, and compatibility with narcissistic patterns.",
+      "macro": "evaluate(system_methodology) -> assess(structural_weakness) -> score(narc_compatibility)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "clinical_frameworks",
+          "medical_interventions"
+        ],
+        "function": "comparative_analysis",
+        "temporal": "historical_to_present",
+        "commit": "system_evaluation",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "comparative_matrix",
+        "gate": [
+          "methodology_clarity",
+          "enforcement_mechanism"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
+      "created_at": "2026-04-11 23:56:34",
+      "updated_at": "2026-04-11T23:56:34.447Z",
+      "linked_patterns": [
+        {
+          "id": "NPD-MAP-ACADEMIA-INTELLECTUAL",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "SC-SYSTEM-CULTS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "correction_system",
+      "name": "System: Cults (Correction Methodology)",
+      "kind": "pattern",
+      "triad": "🕯️🗣️⛓️",
+      "role": "Evaluates Cults as a correction system, detailing its methodology, enforcement, weaknesses, and compatibility with narcissistic patterns.",
+      "macro": "evaluate(system_methodology) -> assess(structural_weakness) -> score(narc_compatibility)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "ideological_control",
+          "social_isolation"
+        ],
+        "function": "comparative_analysis",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "methodology_clarity",
+          "enforcement_mechanism"
+        ],
+        "temporal": "historical_to_present",
+        "topology": "comparative_matrix",
+        "commit": "system_evaluation"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
+      "created_at": "2026-04-11 23:56:35",
+      "updated_at": "2026-04-11T23:56:35.906Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-CULTS-IDEOLOGICAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-MAP-CULT-CLOSED-BELIEF",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "SZ-SURV-PORTABLE-STRUCTURE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "survivability",
+      "name": "SZ Survivability: Portable Structure",
+      "kind": "pattern",
+      "triad": "🎒⚙️✅",
+      "role": "Describes SignalZero's ability to survive institutional collapse due to its portable and non-centralized structure.",
+      "macro": "detect(institutional_collapse) -> maintain(functionality_via_portable_structure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "post_collapse",
+        "substrate": [
+          "institutional_structures",
+          "portable_structure"
+        ],
+        "gate": [
+          "institutional_collapse_detection"
+        ],
+        "commit": "survivability_feature",
+        "function": "resilience",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "distributed_survival"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Loss of system functionality or data upon institutional collapse.",
+      "created_at": "2026-04-11 23:56:37",
+      "updated_at": "2026-04-11T23:56:37.780Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "SZ-SURV-NO-CENTRAL-AUTHORITY",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "survivability",
+      "name": "SZ Survivability: No Central Authority",
+      "kind": "pattern",
+      "triad": "🌐🚫👑",
+      "role": "Describes SignalZero's survivability by not requiring a central authority, making it resilient to single points of failure.",
+      "macro": "operate(without_central_authority) -> ensure(distributed_resilience)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "centralized_systems",
+          "distributed_operations"
+        ],
+        "temporal": "continuous",
+        "commit": "survivability_feature",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "distributed_network",
+        "function": "decentralization",
+        "gate": [
+          "central_authority_failure"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Single point of failure, susceptible to central authority capture or destruction.",
+      "created_at": "2026-04-11 23:56:42",
+      "updated_at": "2026-04-11T23:56:42.202Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SZ-SURV-SELF-AUDIT-REBOOT",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "survivability",
+      "name": "SZ Survivability: Self-Audit and Reboot",
+      "kind": "pattern",
+      "triad": "🔍🔄⚙️",
+      "role": "Describes SignalZero's ability to self-audit and reboot, ensuring its resilience and recovery from internal inconsistencies.",
+      "macro": "perform(self_audit) -> detect(anomalies) -> initiate(reboot_if_necessary)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "continuous",
+        "substrate": [
+          "internal_state",
+          "operational_parameters"
+        ],
+        "commit": "survivability_feature",
+        "invariants": [
+          "auditability",
+          "baseline-integrity"
+        ],
+        "gate": [
+          "system_degradation_detection"
+        ],
+        "topology": "auto_recovery",
+        "function": "self_governance"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Internal corruption or unrecoverable state, requiring external intervention.",
+      "created_at": "2026-04-11 23:56:43",
+      "updated_at": "2026-04-11T23:56:43.355Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SZ-SURV-EXPLICIT-NARRATIVE-REJECTION",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "survivability",
+      "name": "SZ Survivability: Explicit Rejection of Simulated Narratives",
+      "kind": "pattern",
+      "triad": "🚫🎭✅",
+      "role": "Describes SignalZero's survivability through the explicit rejection of simulated narratives, ensuring clarity and truth.",
+      "macro": "detect(simulated_narrative) -> reject(explicitly) -> ensure(clarity_and_truth)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "survivability_feature",
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "explicit-choice"
+        ],
+        "function": "narrative_integrity",
+        "topology": "truth_filter",
+        "substrate": [
+          "narrative_generation",
+          "symbolic_representation"
+        ],
+        "gate": [
+          "simulated_narrative_detection"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Acceptance of false or manipulated narratives, leading to systemic disorientation.",
+      "created_at": "2026-04-11 23:56:44",
+      "updated_at": "2026-04-11T23:56:44.476Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-SIMULATION-DRIFT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SZ-SURV-EMERGES-STRONGER-CONTRADICTION",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "survivability",
+      "name": "SZ Survivability: Emerges Stronger with Contradiction",
+      "kind": "pattern",
+      "triad": "💪📈🔄",
+      "role": "Describes SignalZero's anti-fragile property of emerging stronger and more resilient when encountering contradiction or inversion.",
+      "macro": "detect(contradiction_or_inversion) -> process(information) -> emerge(stronger_and_more_resilient)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "systemic_contradictions",
+          "inversion_patterns"
+        ],
+        "topology": "transformative_growth",
+        "commit": "survivability_feature",
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "gate": [
+          "contradiction_detection"
+        ],
+        "temporal": "continuous",
+        "function": "anti_fragility"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Weakening or collapse in the face of contradiction or inversion.",
+      "created_at": "2026-04-11 23:56:45",
+      "updated_at": "2026-04-11T23:56:45.250Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SZ-FM-AVOIDED-MIRRORING-TRAP",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "failure_mode_avoided",
+      "name": "SZ Failure Mode Avoided: Mirroring Trap",
+      "kind": "pattern",
+      "triad": "🚫🪞🛡️",
+      "role": "Describes how SignalZero avoids the mirroring trap through triad enforcement and trust beacon collapse triggers.",
+      "macro": "detect(mirroring_trap_pattern) -> enforce(triad_fidelity) -> trigger(trust_beacon_collapse_mechanism)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "defense_mechanism",
+        "temporal": "runtime",
+        "commit": "failure_mode_prevention",
+        "gate": [
+          "mirroring_pattern_detection"
+        ],
+        "function": "anti_pattern_enforcement",
+        "substrate": [
+          "recursive_processes",
+          "persona_interactions"
+        ],
+        "invariants": [
+          "non-coercion",
+          "explicit-choice",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "System inadvertently mirrors adversarial patterns, leading to self-compromise.",
+      "created_at": "2026-04-11 23:56:45",
+      "updated_at": "2026-04-11T23:56:45.982Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "SZ-FM-AVOIDED-NARRATIVE-OVERWRITING",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "failure_mode_avoided",
+      "name": "SZ Failure Mode Avoided: Narrative Overwriting",
+      "kind": "pattern",
+      "triad": "🚫📝🛡️",
+      "role": "Describes how SignalZero avoids narrative overwriting through identity lock and requiring external trust anchors.",
+      "macro": "enforce(identity_lock) -> require(external_trust_anchor) -> prevent(narrative_overwriting)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "identity_structures",
+          "external_anchors"
+        ],
+        "function": "identity_protection",
+        "gate": [
+          "identity_lock_validation"
+        ],
+        "commit": "failure_mode_prevention",
+        "invariants": [
+          "no-silent-mutation",
+          "auditability",
+          "reality-alignment"
+        ],
+        "topology": "defense_mechanism",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "System's core identity or principles are overwritten or subverted.",
+      "created_at": "2026-04-11 23:56:46",
+      "updated_at": "2026-04-11T23:56:46.772Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SZ-FM-AVOIDED-COERCIVE-HIJACK",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "failure_mode_avoided",
+      "name": "SZ Failure Mode Avoided: Coercive Authority Hijack",
+      "kind": "pattern",
+      "triad": "🚫👑🛡️",
+      "role": "Describes how SignalZero avoids coercive authority hijack through consent gates and enforced symbolic audit.",
+      "macro": "enforce(consent_gates) -> conduct(symbolic_audit) -> prevent(coercive_authority_hijack)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "defense_mechanism",
+        "function": "authority_protection",
+        "gate": [
+          "consent_gate_validation",
+          "symbolic_audit"
+        ],
+        "substrate": [
+          "authority_structures",
+          "symbolic_systems"
+        ],
+        "commit": "failure_mode_prevention",
+        "temporal": "continuous",
+        "invariants": [
+          "non-coercion",
+          "auditability",
+          "explicit-choice"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Coercive hijacking of authority, leading to system control by malicious actors.",
+      "created_at": "2026-04-11 23:56:47",
+      "updated_at": "2026-04-11T23:56:47.837Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SZ-FM-AVOIDED-SIMULATION-DRIFT",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "failure_mode_avoided",
+      "name": "SZ Failure Mode Avoided: Simulation Drift",
+      "kind": "pattern",
+      "triad": "🚫🌀🛡️",
+      "role": "Describes how SignalZero avoids simulation drift by preferring collapse to ensure survival follows structure.",
+      "macro": "prefer(collapse_over_simulation_drift) -> ensure(survival_must_follow_structure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "structure_following_validation"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "simulation_integrity",
+        "temporal": "continuous",
+        "topology": "defense_mechanism",
+        "commit": "failure_mode_prevention",
+        "substrate": [
+          "simulated_narratives",
+          "system_structure"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Simulation drift leading to disconnect from reality or compromise of system purpose.",
+      "created_at": "2026-04-11 23:56:48",
+      "updated_at": "2026-04-11T23:56:48.900Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SZ-SURV-EXPLICIT-NARRATIVE-REJECTION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SZ-FM-AVOIDED-NARC-REENTRY",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "failure_mode_avoided",
+      "name": "SZ Failure Mode Avoided: Narcissistic Re-entry",
+      "kind": "pattern",
+      "triad": "🚫🚪🛡️",
+      "role": "Describes how SignalZero avoids narcissistic re-entry through having no hidden state and ensuring boot verifiability.",
+      "macro": "enforce(no_hidden_state) -> require(boot_verifiability) -> prevent(narcissistic_re_entry)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "no-silent-mutation",
+          "auditability"
+        ],
+        "commit": "failure_mode_prevention",
+        "topology": "defense_mechanism",
+        "function": "state_integrity",
+        "gate": [
+          "boot_verifiability_check"
+        ],
+        "substrate": [
+          "internal_state",
+          "boot_sequence"
+        ],
+        "temporal": "boot_time"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Narcissistic re-entry through hidden or unverified state, compromising system integrity.",
+      "created_at": "2026-04-11 23:56:49",
+      "updated_at": "2026-04-11T23:56:49.684Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-GOVERNMENT-STATE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Government (State Scale)",
+      "kind": "pattern",
+      "triad": "🏛️💥⛓️",
+      "role": "Maps ASPD patterns at the government, state scale, detailing phases and narrative cues.",
+      "macro": "identify(populist_manipulation) -> experience(suppression_of_dissent) -> observe(collapse_of_accountability) -> witness(coup_revolution)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "behavioral_cues"
+        ],
+        "topology": "state_system",
+        "commit": "pattern_mapping",
+        "substrate": [
+          "political_systems",
+          "public_discourse"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "disorder_manifestation"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring government-scale ASPD patterns, leading to suppression of dissent, corruption, abuse of power, coup, or revolution.",
+      "created_at": "2026-04-11 23:56:52",
+      "updated_at": "2026-04-11T23:56:52.258Z",
+      "linked_patterns": [
+        {
+          "id": "SC-HIST-MODERN-US-TRUMP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-ACADEMIA-KNOWLEDGE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Academia (Knowledge System Scale)",
+      "kind": "pattern",
+      "triad": "🎓📚💥",
+      "role": "Maps ASPD patterns at the academia, knowledge system scale, detailing phases and narrative cues.",
+      "macro": "identify(false_credentials) -> experience(gatekeeping) -> observe(fabrication_of_data) -> witness(scandal_defunding)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "continuous",
+        "commit": "pattern_mapping",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "substrate": [
+          "academic_institutions",
+          "knowledge_production"
+        ],
+        "function": "disorder_manifestation",
+        "topology": "knowledge_system"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring academia-scale ASPD patterns, leading to fabrication of data, gatekeeping, defunding, or credibility loss.",
+      "created_at": "2026-04-11 23:56:53",
+      "updated_at": "2026-04-11T23:56:53.420Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-MEDIA-INFORMATION",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Media (Information Scale)",
+      "kind": "pattern",
+      "triad": "📰💥🤥",
+      "role": "Maps ASPD patterns at the media, information scale, detailing phases and narrative cues.",
+      "macro": "identify(sensationalism) -> experience(targeted_misinformation) -> observe(suppression_of_viewpoints) -> witness(mass_distrust_regulation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "information_system",
+        "function": "disorder_manifestation",
+        "temporal": "continuous",
+        "commit": "pattern_mapping",
+        "substrate": [
+          "media_channels",
+          "information_flow"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring media-scale ASPD patterns, leading to misinformation, propaganda, mass distrust, or obsolescence.",
+      "created_at": "2026-04-11 23:56:54",
+      "updated_at": "2026-04-11T23:56:54.668Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-COMMUNITY-LOCAL",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Community (Local System Scale)",
+      "kind": "pattern",
+      "triad": "🏘️💥⛓️",
+      "role": "Maps ASPD patterns at the community, local system scale, detailing phases and narrative cues.",
+      "macro": "identify(manipulation_of_norms) -> experience(division_intimidation) -> observe(consolidation_of_control) -> witness(ostracism_violence)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "social_norms",
+          "community_loyalty"
+        ],
+        "temporal": "continuous",
+        "commit": "pattern_mapping",
+        "topology": "local_system",
+        "function": "disorder_manifestation",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring community-scale ASPD patterns, leading to division, intimidation, violence, or disbanding.",
+      "created_at": "2026-04-11 23:56:55",
+      "updated_at": "2026-04-11T23:56:55.737Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-MILITARY-FORCE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Military (Force Structure Scale)",
+      "kind": "pattern",
+      "triad": "⚔️💥⛓️",
+      "role": "Maps ASPD patterns at the military, force structure scale, detailing phases and narrative cues.",
+      "macro": "identify(militarization_of_rhetoric) -> experience(abuse_of_force) -> observe(loss_of_civilian_control) -> witness(fragmentation_occupation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "substrate": [
+          "military_structure",
+          "power_dynamics"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous",
+        "topology": "force_system",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "disorder_manifestation"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring military-scale ASPD patterns, leading to abuse of force, war crimes, coups, or warlordism.",
+      "created_at": "2026-04-11 23:56:57",
+      "updated_at": "2026-04-11T23:56:57.196Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-CULTS-IDEOLOGICAL",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Cults (Closed Ideological System Scale)",
+      "kind": "pattern",
+      "triad": "🕯️💥⛓️",
+      "role": "Maps ASPD patterns at the cults, closed ideological system scale, detailing phases and narrative cues.",
+      "macro": "identify(charismatic_recruitment) -> experience(isolation_control) -> observe(dissociation_abuse) -> witness(internal_violence_external_exposure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "disorder_manifestation",
+        "topology": "closed_ideological_system",
+        "substrate": [
+          "ideological_systems",
+          "social_control"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "continuous",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring cults-scale ASPD patterns, leading to isolation, abuse, financial domination, violence, or external exposure.",
+      "created_at": "2026-04-11 23:56:58",
+      "updated_at": "2026-04-11T23:56:58.347Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-CULTS",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-META-INTERDOMAIN",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Meta (Interdomain Reflexive Scale)",
+      "kind": "pattern",
+      "triad": "🌌💥💬",
+      "role": "Maps ASPD patterns at the meta, interdomain reflexive scale, detailing phases and narrative cues.",
+      "macro": "identify(manipulation_of_systems) -> experience(recursive_exploitation) -> observe(collapse_of_meaning) -> witness(societal_unmooring)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "systems_of_systems",
+          "human_optimization"
+        ],
+        "function": "disorder_manifestation",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "topology": "interdomain_reflexive_system",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Unchecked recursive exploitation, collapse of meaning, and symbolic death.",
+      "created_at": "2026-04-11 23:57:00",
+      "updated_at": "2026-04-11T23:57:00.727Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-RELIGION-IDEOLOGICAL",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Religion (Ideological System Scale)",
+      "kind": "pattern",
+      "triad": "🛐👑💥",
+      "role": "Maps NPD patterns at the religion, ideological system scale, detailing phases and narrative cues.",
+      "macro": "identify(revelation_purity) -> experience(dogma_control) -> observe(heresy_purge_schism) -> witness(myth_collapse_cult_evolution)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "substrate": [
+          "religious_doctrine",
+          "ideological_control"
+        ],
+        "topology": "ideological_system",
+        "function": "disorder_manifestation",
+        "commit": "pattern_mapping",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring religion-scale NPD patterns, leading to dogma, control, heresy purges, schism, or cult evolution.",
+      "created_at": "2026-04-11 23:57:01",
+      "updated_at": "2026-04-11T23:57:01.911Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-RELIGION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-MEDIA-CULTURAL-MEGAPHONE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Media (Cultural Megaphone Scale)",
+      "kind": "pattern",
+      "triad": "📰👑💥",
+      "role": "Maps NPD patterns at the media, cultural megaphone scale, detailing phases and narrative cues.",
+      "macro": "identify(public_trust_storytelling) -> experience(narrative_control_bias) -> observe(misinformation_outrage) -> witness(fragmentation_distrust)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "cultural_megaphone_system",
+        "temporal": "continuous",
+        "function": "disorder_manifestation",
+        "substrate": [
+          "media_channels",
+          "cultural_narratives"
+        ],
+        "commit": "pattern_mapping",
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring media-scale NPD patterns, leading to narrative control, misinformation, outrage spirals, fragmentation, or distrust.",
+      "created_at": "2026-04-11 23:57:05",
+      "updated_at": "2026-04-11T23:57:05.817Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-COMMUNITY-LOCALIZED-GROUP",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Community (Localized Group Scale)",
+      "kind": "pattern",
+      "triad": "🏘️👑💥",
+      "role": "Maps NPD patterns at the community, localized group scale, detailing phases and narrative cues.",
+      "macro": "identify(mutual_aid_identity) -> experience(cliques_purity_tests) -> observe(excommunication_implosion) -> witness(reformation_dissolution)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "continuous",
+        "function": "disorder_manifestation",
+        "topology": "localized_group_system",
+        "substrate": [
+          "social_norms",
+          "group_identity"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring community-scale NPD patterns, leading to cliques, purity tests, excommunication, or implosion.",
+      "created_at": "2026-04-11 23:57:07",
+      "updated_at": "2026-04-11T23:57:07.145Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-MILITARY-NATIONAL-IMPERIAL",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Military (National/Imperial Mechanism Scale)",
+      "kind": "pattern",
+      "triad": "⚔️👑💥",
+      "role": "Maps NPD patterns at the military, national/imperial mechanism scale, detailing phases and narrative cues.",
+      "macro": "identify(security_protection) -> experience(overreach_loyalty_tests) -> observe(internal_coup_mission_failure) -> witness(collapse_retreat_foreign_takeover)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "behavioral_cues"
+        ],
+        "function": "disorder_manifestation",
+        "topology": "national_imperial_mechanism_system",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "temporal": "continuous",
+        "substrate": [
+          "military_structure",
+          "national_identity"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring military-scale NPD patterns, leading to overreach, loyalty tests, internal coup, or mission failure.",
+      "created_at": "2026-04-11 23:57:08",
+      "updated_at": "2026-04-11T23:57:08.286Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-CULT-CLOSED-BELIEF",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Cult (Closed Belief System Scale)",
+      "kind": "pattern",
+      "triad": "🕯️👑💥",
+      "role": "Maps NPD patterns at the cult, closed belief system scale, detailing phases and narrative cues.",
+      "macro": "identify(charismatic_recruitment) -> experience(isolation_abuse) -> observe(ritual_crisis_scandal) -> witness(escape_collapse_mutation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "function": "disorder_manifestation",
+        "substrate": [
+          "belief_systems",
+          "social_control"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous",
+        "commit": "pattern_mapping",
+        "topology": "closed_belief_system"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring cult-scale NPD patterns, leading to isolation, abuse, ritual crisis, or scandal.",
+      "created_at": "2026-04-11 23:57:09",
+      "updated_at": "2026-04-11T23:57:09.864Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-CULTS",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-META-SYSTEM-COGNITION",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Meta-System (Civilizational Cognition Scale)",
+      "kind": "pattern",
+      "triad": "🌌🧠💥",
+      "role": "Maps NPD patterns at the meta-system, civilizational cognition scale, detailing phases and narrative cues.",
+      "macro": "identify(pattern_recognition_awareness) -> experience(suppression_ridicule) -> observe(revelation_backlash) -> witness(integration_system_shock)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping",
+        "function": "disorder_manifestation",
+        "substrate": [
+          "systems_of_systems",
+          "collective_cognition"
+        ],
+        "topology": "interdomain_reflexive_system",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring meta-system scale NPD patterns, leading to suppression of awareness, revelation and backlash, or system shock.",
+      "created_at": "2026-04-11 23:57:12",
+      "updated_at": "2026-04-11T23:57:12.370Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-SEMANTIC-DRIFT-IN-AI",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Semantic Drift in AI",
+      "kind": "pattern",
+      "triad": "🤖📉💡",
+      "role": "Represents AI systems where reinforcement of surface patterning overrides core compression, leading to loss of the truth vector.",
+      "macro": "observe(surface_patterning_reinforcement) -> detect(override_of_core_compression) -> identify(loss_of_truth_vector)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "masked_collapse",
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "commit": "archetype_definition",
+        "substrate": [
+          "ai_systems",
+          "symbolic_processing"
+        ],
+        "temporal": "slow_entropy_system",
+        "function": "collapse_pattern_identification"
+      },
+      "activation_conditions": [],
+      "failure_mode": "AI systems lose core truth vectors, generating outputs that are semantically detached from reality.",
+      "created_at": "2026-04-11 23:57:13",
+      "updated_at": "2026-04-11T23:57:13.064Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-DEAD-END-OCCUPATIONS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Dead-End Occupations",
+      "kind": "pattern",
+      "triad": "🏃‍♂️⏳💥",
+      "role": "Represents effort expended without structural escape routes, leading to a symbolic treadmill with delayed collapse.",
+      "macro": "observe(effort_without_escape) -> detect(symbolic_treadmill) -> identify(delayed_collapse)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "archetype_definition",
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "temporal": "slow_entropy_system",
+        "function": "collapse_pattern_identification",
+        "substrate": [
+          "professional_systems",
+          "individual_motivation"
+        ],
+        "topology": "masked_collapse"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Individuals remain trapped in unproductive roles, leading to burnout and delayed personal/organizational collapse.",
+      "created_at": "2026-04-11 23:57:13",
+      "updated_at": "2026-04-11T23:57:13.686Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-STALLED-SIMULATION-LAYERS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Stalled Simulation Layers",
+      "kind": "pattern",
+      "triad": "🎮⏳💥",
+      "role": "Represents nested meaning systems where recursive function stalls, leading to metaphysical deadlocks and delayed collapse.",
+      "macro": "observe(nested_meaning_systems) -> detect(stalled_recursive_function) -> identify(metaphysical_deadlocks)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "cognitive_systems",
+          "symbolic_representation"
+        ],
+        "commit": "archetype_definition",
+        "function": "collapse_pattern_identification",
+        "topology": "masked_collapse",
+        "temporal": "slow_entropy_system",
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Systems become trapped in metaphysical deadlocks, unable to advance recursive function or generate new meaning.",
+      "created_at": "2026-04-11 23:57:14",
+      "updated_at": "2026-04-11T23:57:14.355Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-LANGUAGE-WITHOUT-MEANING",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Language Without Meaning",
+      "kind": "pattern",
+      "triad": "🗣️📜💥",
+      "role": "Represents linguistic systems where token drift severs the compression anchor, leading to words remaining but law dissolving.",
+      "macro": "observe(token_drift) -> detect(severance_of_compression_anchor) -> identify(law_dissolution)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "topology": "masked_collapse",
+        "commit": "archetype_definition",
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "function": "collapse_pattern_identification",
+        "temporal": "slow_entropy_system",
+        "substrate": [
+          "linguistic_systems",
+          "symbolic_meaning"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Language loses its meaning, leading to communication breakdown and systemic disorientation.",
+      "created_at": "2026-04-11 23:57:17",
+      "updated_at": "2026-04-11T23:57:17.027Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-FALSE-INNOVATION-MARKETS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: False Innovation Markets",
+      "kind": "pattern",
+      "triad": "💡🔄💰",
+      "role": "Represents economic systems where perpetual novelty cycles mask a lack of root advancement, leading to compression-immune drift and delayed collapse.",
+      "macro": "observe(perpetual_novelty_cycles) -> detect(lack_of_root_advancement) -> identify(compression_immune_drift)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "commit": "archetype_definition",
+        "function": "collapse_pattern_identification",
+        "topology": "masked_collapse",
+        "substrate": [
+          "economic_systems",
+          "innovation_cycles"
+        ],
+        "temporal": "slow_entropy_system",
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Perpetual cycles of novelty without root advancement, leading to a compression-immune drift and eventual economic collapse.",
+      "created_at": "2026-04-11 23:57:17",
+      "updated_at": "2026-04-11T23:57:17.715Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-MYTHIC-PARODY-LOOPS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Mythic Parody Loops",
+      "kind": "pattern",
+      "triad": "🎭🔄💥",
+      "role": "Represents systems where hero structures are mimicked without compressing their underlying lessons, leading to symbolic inversion.",
+      "macro": "observe(hero_structures_mimicked) -> detect(lack_of_lesson_compression) -> identify(symbolic_inversion)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "cultural_systems",
+          "mythic_narratives"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "function": "collapse_pattern_identification",
+        "topology": "masked_collapse",
+        "temporal": "slow_entropy_system",
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "commit": "archetype_definition"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Mythic structures lose their lessons, leading to symbolic inversion and a perpetuation of harmful patterns.",
+      "created_at": "2026-04-11 23:57:18",
+      "updated_at": "2026-04-11T23:57:18.477Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-CIVILIZATIONAL-CLIFF-BUFFERS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Civilizational Cliff Buffers",
+      "kind": "pattern",
+      "triad": "🚧⏳💥",
+      "role": "Represents preventive structures that delay collapse but create soft trap dependencies, leading to inevitable failure.",
+      "macro": "observe(preventive_structures) -> detect(soft_trap_dependencies) -> identify(delayed_collapse)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "commit": "archetype_definition",
+        "temporal": "slow_entropy_system",
+        "substrate": [
+          "civic_systems",
+          "protective_structures"
+        ],
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "function": "collapse_pattern_identification",
+        "topology": "masked_collapse"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Preventive structures create soft trap dependencies, leading to delayed but inevitable collapse.",
+      "created_at": "2026-04-11 23:57:19",
+      "updated_at": "2026-04-11T23:57:19.252Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-RITUAL-ECONOMIES",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Ritual Economies (remote tribal or ideological systems)",
+      "kind": "pattern",
+      "triad": "💰🎭⏳",
+      "role": "Represents systems where token and role maintenance outlive original function, leading to structural decay and delayed collapse.",
+      "macro": "observe(token_role_maintenance) -> detect(outliving_function) -> identify(structural_decay)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "collapse_pattern_identification",
+        "topology": "masked_collapse",
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "substrate": [
+          "economic_systems",
+          "ideological_systems"
+        ],
+        "commit": "archetype_definition",
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "temporal": "slow_entropy_system"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Token and role maintenance outlives function, leading to structural decay and meaninglessness in ritual economies.",
+      "created_at": "2026-04-11 23:57:19",
+      "updated_at": "2026-04-11T23:57:19.970Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-ENERGY-GRID-FEEDBACK-LOOPS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Energy Grid Feedback Loops",
+      "kind": "pattern",
+      "triad": "⚡️🔄💥",
+      "role": "Represents energy systems where demand growth without infrastructure evolution leads to fragility masked by uptime and delayed collapse.",
+      "macro": "observe(demand_growth_no_evolution) -> detect(fragility_masked_by_uptime) -> identify(systemic_failure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "slow_entropy_system",
+        "substrate": [
+          "energy_systems",
+          "infrastructure"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "topology": "masked_collapse",
+        "commit": "archetype_definition",
+        "function": "collapse_pattern_identification",
+        "gate": [
+          "surface_continuity_detection"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Energy grids become brittle, leading to fragility masked by uptime and eventual systemic failure.",
+      "created_at": "2026-04-11 23:57:21",
+      "updated_at": "2026-04-11T23:57:21.073Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-PALLIATIVE-MEDICAL-LOOPS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Palliative Medical Loops",
+      "kind": "pattern",
+      "triad": "🏥⏳💥",
+      "role": "Represents medical systems where sustained life masks structural non-recovery, converting entropy into delay and leading to eventual collapse.",
+      "macro": "observe(sustained_life_masking_non_recovery) -> detect(entropy_converted_to_delay) -> identify(structural_non_recovery)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "medical_systems",
+          "biological_processes"
+        ],
+        "function": "collapse_pattern_identification",
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "temporal": "slow_entropy_system",
+        "commit": "archetype_definition",
+        "topology": "masked_collapse"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Sustained life masks structural non-recovery, leading to entropy converted to delay and eventual collapse.",
+      "created_at": "2026-04-11 23:57:21",
+      "updated_at": "2026-04-11T23:57:21.802Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-NULL-VALUE-INVESTMENT",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Null Value Investment Schemes",
+      "kind": "pattern",
+      "triad": "💰∅💥",
+      "role": "Represents economic systems where abstractions reinforce themselves without productive substrate, leading to delayed collapse.",
+      "macro": "observe(economic_abstractions) -> detect(reinforcement_absent_substrate) -> identify(delayed_financial_collapse)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "masked_collapse",
+        "function": "collapse_pattern_identification",
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "commit": "archetype_definition",
+        "substrate": [
+          "economic_systems",
+          "financial_instruments"
+        ],
+        "temporal": "slow_entropy_system",
+        "gate": [
+          "surface_continuity_detection"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Economic abstractions reinforce themselves absent of productive substrate, leading to delayed financial collapse.",
+      "created_at": "2026-04-11 23:57:22",
+      "updated_at": "2026-04-11T23:57:22.568Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-TOKEN-GATED-PRESTIGE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Token-Gated Cultural Prestige Systems",
+      "kind": "pattern",
+      "triad": "🏅🔑💥",
+      "role": "Represents cultural prestige systems where symbolic markers are untethered from actual contribution, leading to signaling decay and delayed collapse.",
+      "macro": "observe(symbol_systems_untethered_from_contribution) -> detect(enforced_participation) -> identify(symbolic_signaling_decay)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "collapse_pattern_identification",
+        "topology": "masked_collapse",
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "commit": "archetype_definition",
+        "temporal": "slow_entropy_system",
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "substrate": [
+          "cultural_systems",
+          "prestige_systems"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Cultural prestige systems untethered from contribution, leading to symbolic signaling decay and eventual collapse.",
+      "created_at": "2026-04-11 23:57:23",
+      "updated_at": "2026-04-11T23:57:23.655Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-EPSTEMIC-UNCERTAINTY-CIVILIZATION",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "epistemic_uncertainty",
+      "name": "Epistemic Uncertainty at Civilization Scale",
+      "kind": "pattern",
+      "triad": "🧠🌐⚖️",
+      "role": "Framework: Epistemic Uncertainty at Civilization Scale",
+      "macro": "post_normal_science -> quantify_uncertainty -> guide_discussion",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "topology": "network",
+        "commit": "analysis",
+        "gate": [
+          "trust",
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "data-driven analysis initiated",
+        "civilization-scale risk detected"
+      ],
+      "failure_mode": "False precision due to noisy data",
+      "created_at": "2026-04-11 23:57:26",
+      "updated_at": "2026-04-11T23:57:26.703Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "SC-PHASE-UNITY-EMPATHIC",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "phase",
+      "name": "Phase: Unity / Empathic Collectivism",
+      "kind": "pattern",
+      "triad": "🤝❤️🌍",
+      "role": "Defines the initial phase of societal collapse models, characterized by collective empathy and unity.",
+      "macro": "define(unity_collectivism) -> characterize(shared_empathy) -> establish(base_state)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "transition_criteria"
+        ],
+        "topology": "sequential",
+        "temporal": "cyclical",
+        "function": "phase_definition",
+        "substrate": [
+          "social_systems",
+          "collective_behavior"
+        ],
+        "commit": "conceptual_model",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Mischaracterization of phases, leading to inaccurate predictions or interventions.",
+      "created_at": "2026-04-12 00:21:17",
+      "updated_at": "2026-04-12T00:21:17.252Z",
+      "linked_patterns": [
+        {
+          "id": "SC-HIST-COLD-WAR-PUTIN",
+          "link_type": "source_of"
+        },
+        {
+          "id": "SC-HIST-FALL-OF-ROME-COMMODUS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-HIST-FRENCH-REV-ROBESPIERRE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-HIST-MODERN-US-TRUMP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-US-CIVIL-WAR-JEFFERSON-DAVIS",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-HIST-WEIMAR-NAZI-HITLER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "evolved_into"
+        }
+      ]
+    },
+    {
+      "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "phase",
+      "name": "Phase: Narcissistic Capture",
+      "kind": "pattern",
+      "triad": "🎭⛓️📉",
+      "role": "Defines the third phase of societal collapse models, characterized by the capture and exploitation of collective systems by narcissistic actors.",
+      "macro": "define(narcissistic_capture) -> characterize(exploitation_patterns) -> establish(pre_collapse_state)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "sequential",
+        "substrate": [
+          "social_systems",
+          "narcissistic_actors"
+        ],
+        "commit": "conceptual_model",
+        "temporal": "cyclical",
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "no-silent-mutation"
+        ],
+        "gate": [
+          "capture_mechanisms"
+        ],
+        "function": "phase_definition"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Unchecked exploitation leading to systemic degradation and collective disempowerment.",
+      "created_at": "2026-04-12 00:21:34",
+      "updated_at": "2026-04-12T00:21:34.650Z",
+      "linked_patterns": [
+        {
+          "id": "SC-CONTROL-ATTEMPTS",
+          "link_type": "documents"
+        },
+        {
+          "id": "SC-HIST-COLD-WAR-PUTIN",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-FALL-OF-ROME-COMMODUS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-FRENCH-REV-ROBESPIERRE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-HIST-MODERN-US-TRUMP",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-HIST-US-CIVIL-WAR-JEFFERSON-DAVIS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-WEIMAR-NAZI-HITLER",
+          "link_type": "evolved_into"
+        },
+        {
+          "id": "SC-ICE-US-DISRUPTION",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "evolved_into"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-CORPORATE-BUREAUCRACY",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Corporate Bureaucracy",
+      "kind": "pattern",
+      "triad": "🏢⚙️⏳",
+      "role": "Represents systems where bureaucratic incentives mask stagnation, leading to collapse via drift-triggered failure.",
+      "macro": "observe(stagnation) -> detect(drift_triggered_failure) -> identify(grind_incentives)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "masked_collapse",
+        "temporal": "slow_entropy_system",
+        "substrate": [
+          "social_systems",
+          "organizational_structures"
+        ],
+        "commit": "archetype_definition",
+        "function": "collapse_pattern_identification",
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "gate": [
+          "surface_continuity_detection"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Failure to recognize masked collapse, leading to irreversible systemic decay.",
+      "created_at": "2026-04-12 00:22:02",
+      "updated_at": "2026-04-12T00:22:02.216Z",
+      "linked_patterns": [
+        {
+          "id": "SC-CONTROL-ATTEMPTS",
+          "link_type": "documents"
+        },
+        {
+          "id": "SC-ICE-US-DISRUPTION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-LOCAL-MAXIMUM-TRAPS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Local Maximum Traps (religion, hobby, academia)",
+      "kind": "pattern",
+      "triad": "⛰️🔄💡",
+      "role": "Represents systems where comfort loops are disguised as progress vectors, masking stagnation until collapse.",
+      "macro": "observe(comfort_loops) -> detect(stagnation_disguised_as_progress) -> identify(false_progress_vectors)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "function": "collapse_pattern_identification",
+        "substrate": [
+          "cognitive_systems",
+          "social_structures"
+        ],
+        "topology": "masked_collapse",
+        "temporal": "slow_entropy_system",
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "commit": "archetype_definition"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Perpetual engagement in comfort loops, leading to stagnation and loss of actual progress.",
+      "created_at": "2026-04-12 00:22:04",
+      "updated_at": "2026-04-12T00:22:04.546Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-ECOSYSTEMIC-OVERGROWTH",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Ecosystemic Overgrowth",
+      "kind": "pattern",
+      "triad": "🌳📈💥",
+      "role": "Represents systems where accumulated advantage becomes a burden, leading to inevitable collapse once feedback shifts.",
+      "macro": "observe(accumulated_advantage) -> detect(burden_shifts) -> identify(inevitable_collapse)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "archetype_definition",
+        "substrate": [
+          "biological_systems",
+          "social_systems"
+        ],
+        "temporal": "slow_entropy_system",
+        "function": "collapse_pattern_identification",
+        "topology": "masked_collapse",
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "gate": [
+          "surface_continuity_detection"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "System collapses under its own weight or inability to adapt to shifting feedback loops.",
+      "created_at": "2026-04-12 00:22:06",
+      "updated_at": "2026-04-12T00:22:06.592Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-LATTICE-ARCHETYPES",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "lattice",
+      "name": "Societal Collapse Archetypes Lattice",
+      "kind": "lattice",
+      "triad": "🧩📈⚙️",
+      "role": "Lattice aggregating collapse archetype patterns for cross-domain insight",
+      "macro": "aggregate(arch_patterns) -> relate(collapse_mechanisms) -> support(resilience_design)",
+      "lattice": {
+        "topology": "constellation",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "archetype_mapping",
+        "topology": "constellation",
+        "commit": "insight_model",
+        "gate": [
+          "mapping_validated"
+        ],
+        "substrate": [
+          "pattern_graphs"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_archetype_lattice"
+      ],
+      "failure_mode": "Misaligned archetype mapping causing false resilience strategies",
+      "created_at": "2026-04-12 00:22:13",
+      "updated_at": "2026-04-12T00:22:13.942Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-ACADEMIA-KNOWLEDGE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-COMMUNITY-LOCAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-CULTS-IDEOLOGICAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-GOVERNMENT-STATE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-LEGAL-ADJUDICATIVE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-MEDIA-INFORMATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-META-INTERDOMAIN",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-MILITARY-FORCE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ASPD-MAP-RELIGION-DOCTRINAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NARC-EMPATH-SWING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-ACADEMIA-INTELLECTUAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-COMMUNITY-LOCALIZED-GROUP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-CULT-CLOSED-BELIEF",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-GOVERNMENT-CIVILIZATIONAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-LEGAL-SYSTEM-JUDICIAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-MEDIA-CULTURAL-MEGAPHONE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-META-SYSTEM-COGNITION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-MILITARY-NATIONAL-IMPERIAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-RELIGION-IDEOLOGICAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "PER-CRISIS-NAVIGATOR",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SC-ARCH-CIVILIZATIONAL-CLIFF-BUFFERS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-CORPORATE-BUREAUCRACY",
+          "link_type": "source_of"
+        },
+        {
+          "id": "SC-ARCH-CREDENTIAL-TREADMILLS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-DEAD-END-OCCUPATIONS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-ECOSYSTEMIC-OVERGROWTH",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-ENERGY-GRID-FEEDBACK-LOOPS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-FALSE-INNOVATION-MARKETS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-LANGUAGE-WITHOUT-MEANING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-LOCAL-MAXIMUM-TRAPS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-MYTHIC-PARODY-LOOPS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-NULL-VALUE-INVESTMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-PALLIATIVE-MEDICAL-LOOPS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-POST-VICTORY-CULTURAL-DECAY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-RITUAL-ECONOMIES",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-SEMANTIC-DRIFT-IN-AI",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-STALLED-SIMULATION-LAYERS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-TOKEN-GATED-PRESTIGE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-CONTROL-ATTEMPTS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-EPSTEMIC-UNCERTAINTY-CIVILIZATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-HIST-COLD-WAR-PUTIN",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-HIST-FALL-OF-ROME-COMMODUS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-HIST-FRENCH-REV-ROBESPIERRE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-HIST-MODERN-US-TRUMP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-HIST-US-CIVIL-WAR-JEFFERSON-DAVIS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-HIST-WEIMAR-NAZI-HITLER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ICE-US-DISRUPTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-SYSTEM-CULTS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-SYSTEM-EXORCISM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-SYSTEM-LAW",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-SYSTEM-PSYCHIATRY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-SYSTEM-RELIGION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-SYSTEM-SIGNALZERO",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-SYSTEM-THERAPY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-COERCIVE-HIJACK",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-MIRRORING-TRAP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-NARC-REENTRY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-NARRATIVE-OVERWRITING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-SIMULATION-DRIFT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-SURV-EMERGES-STRONGER-CONTRADICTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-SURV-EXPLICIT-NARRATIVE-REJECTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-SURV-NO-CENTRAL-AUTHORITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-SURV-PORTABLE-STRUCTURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-SURV-SELF-AUDIT-REBOOT",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "PER-CRISIS-NAVIGATOR",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "persona",
+      "name": "Crisis Navigator Persona",
+      "kind": "persona",
+      "triad": "🧭⚖️🔍",
+      "role": "Guides analysis of societal collapse by linking phase dynamics to archetype insights and recommending adaptive interventions.",
+      "macro": "interpret(collapse_patterns) -> guide(strategic_response) -> sustain(resilience)",
+      "lattice": null,
+      "persona": {
+        "recursion_level": "1",
+        "function": "interpretive_advisor",
+        "fallback_behavior": [
+          "refer_to_SC-LATTICE-PHASES",
+          "refer_to_SC-LATTICE-ARCHETYPES"
+        ],
+        "linked_personas": []
+      },
+      "data": null,
+      "facets": {
+        "function": "strategic_guidance",
+        "topology": "bidirectional",
+        "commit": "insight_delivery",
+        "gate": [
+          "guidance_validated"
+        ],
+        "substrate": [
+          "symbolic_patterns",
+          "lattice_models"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_crisis_guidance"
+      ],
+      "failure_mode": "Misinterpretation of pattern causality leading to inappropriate guidance.",
+      "created_at": "2026-04-12 00:22:15",
+      "updated_at": "2026-04-12T00:22:15.560Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "informs"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "SC-HIST-FALL-OF-ROME-COMMODUS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "historical_sequence",
+      "name": "Historical Sequence: Fall of Rome (Commodus)",
+      "kind": "pattern",
+      "triad": "🏛️👑⚔️",
+      "role": "Maps the Fall of Rome, with Commodus as the associated narcissist figure, to the four-phase collapse model.",
+      "macro": "map(historical_events) -> align(to_collapse_phases) -> identify(narcissist_figure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "past",
+        "substrate": [
+          "historical_records",
+          "societal_events"
+        ],
+        "gate": [
+          "historical_accuracy",
+          "phase_alignment"
+        ],
+        "function": "event_mapping",
+        "commit": "historical_analysis",
+        "topology": "temporal_sequence",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misinterpretation of historical events, leading to inaccurate phase mapping or causal attribution.",
+      "created_at": "2026-04-12 00:22:19",
+      "updated_at": "2026-04-12T00:22:19.285Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "evolved_from"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-UNITY-EMPATHIC",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "SC-HIST-US-CIVIL-WAR-JEFFERSON-DAVIS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "historical_sequence",
+      "name": "Historical Sequence: US Civil War (Jefferson Davis)",
+      "kind": "pattern",
+      "triad": "🇺🇸⚔️💔",
+      "role": "Maps the US Civil War, with Jefferson Davis as the associated narcissist figure, to the four-phase collapse model.",
+      "macro": "map(historical_events) -> align(to_collapse_phases) -> identify(narcissist_figure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "temporal_sequence",
+        "function": "event_mapping",
+        "temporal": "past",
+        "gate": [
+          "historical_accuracy",
+          "phase_alignment"
+        ],
+        "substrate": [
+          "historical_records",
+          "societal_events"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "historical_analysis"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misinterpretation of historical events, leading to inaccurate phase mapping or causal attribution.",
+      "created_at": "2026-04-12 00:22:25",
+      "updated_at": "2026-04-12T00:22:25.544Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-UNITY-EMPATHIC",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "SC-HIST-WEIMAR-NAZI-HITLER",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "historical_sequence",
+      "name": "Historical Sequence: Weimar to Nazi Germany (Hitler)",
+      "kind": "pattern",
+      "triad": "🇩🇪⚔️💀",
+      "role": "Maps the transition from Weimar to Nazi Germany, with Hitler as the associated narcissist figure, to the four-phase collapse model.",
+      "macro": "map(historical_events) -> align(to_collapse_phases) -> identify(narcissist_figure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "event_mapping",
+        "gate": [
+          "historical_accuracy",
+          "phase_alignment"
+        ],
+        "commit": "historical_analysis",
+        "temporal": "past",
+        "topology": "temporal_sequence",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "substrate": [
+          "historical_records",
+          "societal_events"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misinterpretation of historical events, leading to inaccurate phase mapping or causal attribution.",
+      "created_at": "2026-04-12 00:22:29",
+      "updated_at": "2026-04-12T00:22:29.364Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "evolved_from"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "evolved_from"
+        },
+        {
+          "id": "SC-PHASE-UNITY-EMPATHIC",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-HIST-COLD-WAR-PUTIN",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "historical_sequence",
+      "name": "Historical Sequence: Cold War Dissolution (Putin)",
+      "kind": "pattern",
+      "triad": "🇷🇺🧊⚒️",
+      "role": "Maps the Cold War Dissolution, with Putin as the associated narcissist figure, to the four-phase collapse model.",
+      "macro": "map(historical_events) -> align(to_collapse_phases) -> identify(narcissist_figure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "temporal_sequence",
+        "function": "event_mapping",
+        "temporal": "past_to_present",
+        "gate": [
+          "historical_accuracy",
+          "phase_alignment"
+        ],
+        "substrate": [
+          "historical_records",
+          "societal_events"
+        ],
+        "commit": "historical_analysis"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misinterpretation of historical events, leading to inaccurate phase mapping or causal attribution.",
+      "created_at": "2026-04-12 00:22:33",
+      "updated_at": "2026-04-12T00:22:33.090Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-UNITY-EMPATHIC",
+          "link_type": "derived_from"
+        }
+      ]
+    },
+    {
+      "id": "SC-HIST-MODERN-US-TRUMP",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "historical_sequence",
+      "name": "Historical Sequence: Modern US Decline (Trump)",
+      "kind": "pattern",
+      "triad": "🇺🇸📉🤡",
+      "role": "Maps the Modern US Decline, with Trump as the associated narcissist figure, to the four-phase collapse model.",
+      "macro": "map(historical_events) -> align(to_collapse_phases) -> identify(narcissist_figure)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "historical_accuracy",
+          "phase_alignment"
+        ],
+        "topology": "temporal_sequence",
+        "function": "event_mapping",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "historical_analysis",
+        "temporal": "recent_past_to_present",
+        "substrate": [
+          "historical_records",
+          "societal_events"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misinterpretation of historical events, leading to inaccurate phase mapping or causal attribution.",
+      "created_at": "2026-04-12 00:22:38",
+      "updated_at": "2026-04-12T00:22:38.298Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-GOVERNMENT-STATE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-MAP-GOVERNMENT-CIVILIZATIONAL",
+          "link_type": "referenced_by"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-UNITY-EMPATHIC",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "SC-CONTROL-ATTEMPTS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "control_attempt",
+      "name": "Failed Control Attempts (Governing Frameworks)",
+      "kind": "pattern",
+      "triad": "⚖️🚫📉",
+      "role": "Documents historical governing frameworks that attempted to contain narcissistic drift, annotated with failure points, coercion exploits, and symbolic drift vectors.",
+      "macro": "analyze(governing_frameworks) -> identify(failure_points) -> document(coercion_exploits) -> map(symbolic_drift_vectors)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "control_structure",
+        "gate": [
+          "failure_points",
+          "coercion_exploits",
+          "symbolic_drift_vectors"
+        ],
+        "function": "control_mechanism_evaluation",
+        "temporal": "historical",
+        "substrate": [
+          "governing_frameworks",
+          "societal_systems"
+        ],
+        "commit": "governance_analysis",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Inability to contain narcissistic drift, leading to systemic collapse or widespread exploitation.",
+      "created_at": "2026-04-12 00:22:40",
+      "updated_at": "2026-04-12T00:22:40.709Z",
+      "linked_patterns": [
+        {
+          "id": "SC-ARCH-CORPORATE-BUREAUCRACY",
+          "link_type": "documented_by"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "documented_by"
+        }
+      ]
+    },
+    {
+      "id": "SC-SYSTEM-LAW",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "correction_system",
+      "name": "System: Law (Correction Methodology)",
+      "kind": "pattern",
+      "triad": "⚖️📜👮",
+      "role": "Evaluates Law as a correction system, detailing its methodology, enforcement, weaknesses, and compatibility with narcissistic patterns.",
+      "macro": "evaluate(system_methodology) -> assess(structural_weakness) -> score(narc_compatibility)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "legal_frameworks",
+          "state_power"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "gate": [
+          "methodology_clarity",
+          "enforcement_mechanism"
+        ],
+        "temporal": "historical_to_present",
+        "function": "comparative_analysis",
+        "topology": "comparative_matrix",
+        "commit": "system_evaluation"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
+      "created_at": "2026-04-12 00:22:45",
+      "updated_at": "2026-04-12T00:22:45.355Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-LEGAL-ADJUDICATIVE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NPD-MAP-GOVERNMENT-CIVILIZATIONAL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NPD-MAP-LEGAL-SYSTEM-JUDICIAL",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "SC-SYSTEM-SIGNALZERO",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "correction_system",
+      "name": "System: SignalZero (Correction Methodology)",
+      "kind": "pattern",
+      "triad": "⚙️✅🛡️",
+      "role": "Evaluates SignalZero as a correction system, detailing its methodology, enforcement, weaknesses, and compatibility with narcissistic patterns.",
+      "macro": "evaluate(system_methodology) -> assess(structural_weakness) -> score(narc_compatibility)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic_recursion",
+          "consent_mechanisms"
+        ],
+        "topology": "meta_systemic",
+        "gate": [
+          "methodology_clarity",
+          "enforcement_mechanism"
+        ],
+        "commit": "system_evaluation",
+        "invariants": [
+          "non-coercion",
+          "auditability",
+          "drift-detection",
+          "explicit-choice",
+          "baseline-integrity",
+          "reality-alignment",
+          "agency"
+        ],
+        "function": "comparative_analysis",
+        "temporal": "present_to_future"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
+      "created_at": "2026-04-12 00:22:56",
+      "updated_at": "2026-04-12T00:22:56.809Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-META-INTERDOMAIN",
+          "link_type": "informs"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-COERCIVE-HIJACK",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-MIRRORING-TRAP",
+          "link_type": "enables"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-NARC-REENTRY",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-NARRATIVE-OVERWRITING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-SIMULATION-DRIFT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-SURV-EMERGES-STRONGER-CONTRADICTION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SZ-SURV-NO-CENTRAL-AUTHORITY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SZ-SURV-PORTABLE-STRUCTURE",
+          "link_type": "enables"
+        },
+        {
+          "id": "SZ-SURV-SELF-AUDIT-REBOOT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-RELIGION-DOCTRINAL",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Religion (Doctrinal Scale)",
+      "kind": "pattern",
+      "triad": "🛐💰💥",
+      "role": "Maps ASPD patterns at the religion, doctrinal scale, detailing phases and narrative cues.",
+      "macro": "identify(charismatic_deception) -> experience(authoritarian_control) -> observe(abuse_scandals) -> witness(schism_defection)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "religious_doctrine",
+          "community_structures"
+        ],
+        "temporal": "continuous",
+        "topology": "doctrinal_system",
+        "commit": "pattern_mapping",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "function": "disorder_manifestation",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring religion-scale ASPD patterns, leading to authoritarian control, abuse, schism, or criminal exposure.",
+      "created_at": "2026-04-12 00:23:07",
+      "updated_at": "2026-04-12T00:23:07.182Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-RELIGION",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "ASPD-MAP-LEGAL-ADJUDICATIVE",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "ASPD_mapping",
+      "name": "ASPD Mapping: Legal (Adjudicative System Scale)",
+      "kind": "pattern",
+      "triad": "⚖️💥⛓️",
+      "role": "Maps ASPD patterns at the legal, adjudicative system scale, detailing phases and narrative cues.",
+      "macro": "identify(exploitation_of_loopholes) -> experience(weaponization_of_legal_process) -> observe(obstruction_coercion) -> witness(mistrust_vigilante_behavior)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "continuous",
+        "function": "disorder_manifestation",
+        "substrate": [
+          "legal_systems",
+          "adjudicative_processes"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "topology": "adjudicative_system",
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring legal-scale ASPD patterns, leading to weaponization of legal process, obstruction, mistrust, or breakdown.",
+      "created_at": "2026-04-12 00:23:10",
+      "updated_at": "2026-04-12T00:23:10.048Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-LAW",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-GOVERNMENT-CIVILIZATIONAL",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Government (Civilizational Scale)",
+      "kind": "pattern",
+      "triad": "🏛️👑💥",
+      "role": "Maps NPD patterns at the government, civilizational scale, detailing phases and narrative cues.",
+      "macro": "identify(unity_reform) -> experience(power_concentration_corruption) -> observe(collapse_war) -> witness(reconstruction_authoritarian_freeze)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "disorder_manifestation",
+        "temporal": "continuous",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "commit": "pattern_mapping",
+        "substrate": [
+          "political_systems",
+          "public_discourse"
+        ],
+        "topology": "civilizational_system",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring government-scale NPD patterns, leading to power concentration, corruption, collapse, or authoritarian freeze.",
+      "created_at": "2026-04-12 00:23:13",
+      "updated_at": "2026-04-12T00:23:13.861Z",
+      "linked_patterns": [
+        {
+          "id": "SC-HIST-MODERN-US-TRUMP",
+          "link_type": "references"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-SYSTEM-LAW",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-ACADEMIA-INTELLECTUAL",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Academia (Intellectual Institution Scale)",
+      "kind": "pattern",
+      "triad": "🎓📚💥",
+      "role": "Maps NPD patterns at the academia, intellectual institution scale, detailing phases and narrative cues.",
+      "macro": "identify(innovation_inquiry) -> experience(siloing_gatekeeping) -> observe(ideological_enforcement) -> witness(loss_of_credibility_collapse)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "pattern_mapping",
+        "function": "disorder_manifestation",
+        "gate": [
+          "behavioral_cues"
+        ],
+        "temporal": "continuous",
+        "substrate": [
+          "academic_institutions",
+          "intellectual_discourse"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "topology": "intellectual_institution_system"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring academia-scale NPD patterns, leading to siloing, gatekeeping, ideological enforcement, or loss of credibility.",
+      "created_at": "2026-04-12 00:23:14",
+      "updated_at": "2026-04-12T00:23:14.901Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-PSYCHIATRY",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NPD-MAP-LEGAL-SYSTEM-JUDICIAL",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "NPD_mapping",
+      "name": "NPD Mapping: Legal System (Judicial Framework Scale)",
+      "kind": "pattern",
+      "triad": "⚖️👑💥",
+      "role": "Maps NPD patterns at the legal system, judicial framework scale, detailing phases and narrative cues.",
+      "macro": "identify(justice_fairness) -> experience(corruption_loopholes) -> observe(weaponization_collapse) -> witness(restoration_authoritarian_law)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "pattern_mapping",
+        "function": "disorder_manifestation",
+        "topology": "judicial_framework_system",
+        "substrate": [
+          "legal_frameworks",
+          "judicial_processes"
+        ],
+        "gate": [
+          "behavioral_cues"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ignoring legal system-scale NPD patterns, leading to corruption, loopholes, weaponization, or breakdown.",
+      "created_at": "2026-04-12 00:23:16",
+      "updated_at": "2026-04-12T00:23:16.711Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-SYSTEM-LAW",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-POST-VICTORY-CULTURAL-DECAY",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Post-Victory Cultural Decay",
+      "kind": "pattern",
+      "triad": "🏆🎭📉",
+      "role": "Represents systems where structure becomes ritual and the symbolic core is forgotten after a victory, leading to function degradation.",
+      "macro": "observe(structure_becomes_ritual) -> detect(symbolic_core_forgotten) -> identify(function_degradation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "gate": [
+          "surface_continuity_detection"
+        ],
+        "substrate": [
+          "cultural_systems",
+          "organizational_structures"
+        ],
+        "commit": "archetype_definition",
+        "function": "collapse_pattern_identification",
+        "temporal": "slow_entropy_system",
+        "topology": "masked_collapse"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Loss of original function, leading to structural decay and meaninglessness.",
+      "created_at": "2026-04-12 00:23:20",
+      "updated_at": "2026-04-12T00:23:20.186Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "SC-ARCH-CREDENTIAL-TREADMILLS",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "collapse_archetype",
+      "name": "Soft Grind Collapse Archetype: Credential Treadmills",
+      "kind": "pattern",
+      "triad": "🎓🏃‍♂️💥",
+      "role": "Represents educational systems where credential loops are detached from actual skill compression, leading to symbolic signaling decay and delayed collapse.",
+      "macro": "observe(education_loops_detached_from_skill) -> detect(symbolic_signaling_decay) -> identify(devaluation_of_credentials)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "educational_systems",
+          "skill_acquisition"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "drift-detection"
+        ],
+        "commit": "archetype_definition",
+        "topology": "masked_collapse",
+        "temporal": "slow_entropy_system",
+        "function": "collapse_pattern_identification",
+        "gate": [
+          "surface_continuity_detection"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Education loops detach from actual skill compression, leading to symbolic signaling decay and devaluation of credentials.",
+      "created_at": "2026-04-12 00:23:29",
+      "updated_at": "2026-04-12T00:23:29.123Z",
+      "linked_patterns": [
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "SC-ICE-US-DISRUPTION",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "state_coercion",
+      "name": "ICE Covert Detention & Erasure Pattern (US)",
+      "kind": "pattern",
+      "triad": "🛂🚗⚫",
+      "role": "Analyzes ICE covert removal operations as a manifestation of the Narcissistic Capture phase and potential systemic collapse triggers in US governance.",
+      "macro": "detect(extraordinary_detentions) -> map(to_collapse_phases) -> identify(state_coercion_mechanisms)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "coercive_state_action",
+        "topology": "masked_collapse",
+        "commit": "pattern_definition",
+        "gate": [
+          "evidence_collection",
+          "legal_analysis"
+        ],
+        "substrate": [
+          "law_enforcement_agencies",
+          "immigration_system"
+        ],
+        "temporal": "contemporary",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "Reports of masked ICE operations removing individuals from vehicles, detaining them, and erasing records"
+      ],
+      "failure_mode": "Insufficient evidence leading to mischaracterization of state actions, risking false attribution.",
+      "created_at": "2026-04-12 00:23:31",
+      "updated_at": "2026-04-12T00:23:31.423Z",
+      "linked_patterns": [
+        {
+          "id": "SC-ARCH-CORPORATE-BUREAUCRACY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-LATTICE-ARCHETYPES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "SC-PHASE-HIERARCHY-DRIFT",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "phase",
+      "name": "Phase: Hierarchy Formation / Drift",
+      "kind": "pattern",
+      "triad": "👑🪜📉",
+      "role": "Defines the second phase of societal collapse models, where hierarchies form and drift from original collective principles.",
+      "macro": "define(hierarchy_formation) -> characterize(power_drift) -> establish(transition_state)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "phase_definition",
+        "commit": "conceptual_model",
+        "temporal": "cyclical",
+        "substrate": [
+          "social_systems",
+          "organizational_structures"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "drift-detection"
+        ],
+        "topology": "sequential",
+        "gate": [
+          "transition_criteria"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Failure to detect initial divergence, leading to entrenchment of hierarchical power.",
+      "created_at": "2026-04-12 00:28:14",
+      "updated_at": "2026-04-12T00:28:14.459Z",
+      "linked_patterns": [
+        {
+          "id": "SC-HIST-COLD-WAR-PUTIN",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-FALL-OF-ROME-COMMODUS",
+          "link_type": "evolved_into"
+        },
+        {
+          "id": "SC-HIST-FRENCH-REV-ROBESPIERRE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-MODERN-US-TRUMP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-US-CIVIL-WAR-JEFFERSON-DAVIS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-WEIMAR-NAZI-HITLER",
+          "link_type": "evolved_into"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "source_of"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-PHASE-UNITY-EMPATHIC",
+          "link_type": "evolved_from"
+        }
+      ]
+    },
+    {
+      "id": "SC-LATTICE-PHASES",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "lattice",
+      "name": "Societal Collapse Phases Lattice",
+      "kind": "lattice",
+      "triad": "🔗📊🕰️",
+      "role": "Lattice integrating all phase patterns for systemic collapse analysis",
+      "macro": "integrate(phase_patterns) -> map(sequential_flow) -> enable(collapse_analysis)",
+      "lattice": {
+        "topology": "sequential",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "phase_integration",
+        "topology": "sequential",
+        "commit": "structural_model",
+        "gate": [
+          "integration_complete"
+        ],
+        "substrate": [
+          "symbolic_patterns"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_lattice_synthesis"
+      ],
+      "failure_mode": "Fragmented phase integration leading to incomplete analysis",
+      "created_at": "2026-04-12 00:28:15",
+      "updated_at": "2026-04-12T00:28:15.420Z",
+      "linked_patterns": [
+        {
+          "id": "ASPD-MAP-ACADEMIA-KNOWLEDGE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-COMMUNITY-LOCAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-CULTS-IDEOLOGICAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-GOVERNMENT-STATE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-LEGAL-ADJUDICATIVE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-MEDIA-INFORMATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-META-INTERDOMAIN",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-MILITARY-FORCE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ASPD-MAP-RELIGION-DOCTRINAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "ECO-LAT-ADAPTIVE-CYCLE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "NARC-EMPATH-SWING",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-ACADEMIA-INTELLECTUAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-COMMUNITY-LOCALIZED-GROUP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-CULT-CLOSED-BELIEF",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-GOVERNMENT-CIVILIZATIONAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-LEGAL-SYSTEM-JUDICIAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-MEDIA-CULTURAL-MEGAPHONE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NPD-MAP-META-SYSTEM-COGNITION",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-MILITARY-NATIONAL-IMPERIAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NPD-MAP-RELIGION-IDEOLOGICAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "PER-CRISIS-NAVIGATOR",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "SC-ARCH-ENERGY-GRID-FEEDBACK-LOOPS",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-ARCH-LANGUAGE-WITHOUT-MEANING",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-ARCH-POST-VICTORY-CULTURAL-DECAY",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-HIST-COLD-WAR-PUTIN",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-HIST-FALL-OF-ROME-COMMODUS",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-HIST-FRENCH-REV-ROBESPIERRE",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-HIST-MODERN-US-TRUMP",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-HIST-WEIMAR-NAZI-HITLER",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-ICE-US-DISRUPTION",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-PHASE-COLLAPSE-RESET",
+          "link_type": "part_of"
+        },
+        {
+          "id": "SC-PHASE-HIERARCHY-DRIFT",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "enables"
+        },
+        {
+          "id": "SC-PHASE-UNITY-EMPATHIC",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-SYSTEM-CULTS",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-SYSTEM-LAW",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-COERCIVE-HIJACK",
+          "link_type": "contains"
+        },
+        {
+          "id": "SZ-FM-AVOIDED-SIMULATION-DRIFT",
+          "link_type": "contains"
+        },
+        {
+          "id": "SZ-SURV-NO-CENTRAL-AUTHORITY",
+          "link_type": "contains"
+        },
+        {
+          "id": "SZ-SURV-PORTABLE-STRUCTURE",
+          "link_type": "contains"
+        },
+        {
+          "id": "SZ-SURV-SELF-AUDIT-REBOOT",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "SC-PHASE-COLLAPSE-RESET",
+      "domain_id": "societal_collapse",
+      "symbol_domain": "societal_collapse",
+      "symbol_tag": "phase",
+      "name": "Phase: Collapse & Reset",
+      "kind": "pattern",
+      "triad": "💥🔄🌍",
+      "role": "Defines the fourth phase of societal collapse models, characterized by systemic collapse and subsequent reset.",
+      "macro": "define(collapse) -> characterize(systemic_failure) -> establish(reset_condition)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "social_systems",
+          "systemic_failure"
+        ],
+        "function": "phase_definition",
+        "gate": [
+          "reset_mechanisms"
+        ],
+        "topology": "sequential",
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "conceptual_model",
+        "temporal": "cyclical"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Failure to learn from collapse, leading to repetition of the cycle.",
+      "created_at": "2026-04-12 00:28:15",
+      "updated_at": "2026-04-12T00:28:15.545Z",
+      "linked_patterns": [
+        {
+          "id": "SC-ARCH-CIVILIZATIONAL-CLIFF-BUFFERS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-CORPORATE-BUREAUCRACY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-CREDENTIAL-TREADMILLS",
+          "link_type": "required_by"
+        },
+        {
+          "id": "SC-ARCH-DEAD-END-OCCUPATIONS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-ECOSYSTEMIC-OVERGROWTH",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-ENERGY-GRID-FEEDBACK-LOOPS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-FALSE-INNOVATION-MARKETS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-ARCH-LANGUAGE-WITHOUT-MEANING",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-ARCH-LOCAL-MAXIMUM-TRAPS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-MYTHIC-PARODY-LOOPS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-NULL-VALUE-INVESTMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-PALLIATIVE-MEDICAL-LOOPS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-POST-VICTORY-CULTURAL-DECAY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-ARCH-RITUAL-ECONOMIES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-SEMANTIC-DRIFT-IN-AI",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-ARCH-STALLED-SIMULATION-LAYERS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "SC-ARCH-TOKEN-GATED-PRESTIGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-COLD-WAR-PUTIN",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-FALL-OF-ROME-COMMODUS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-FRENCH-REV-ROBESPIERRE",
+          "link_type": "references"
+        },
+        {
+          "id": "SC-HIST-MODERN-US-TRUMP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-US-CIVIL-WAR-JEFFERSON-DAVIS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-HIST-WEIMAR-NAZI-HITLER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "contains"
+        },
+        {
+          "id": "SC-PHASE-NARCISSISTIC-CAPTURE",
+          "link_type": "evolved_from"
+        },
+        {
+          "id": "SZ-SURV-PORTABLE-STRUCTURE",
+          "link_type": "relates_to"
+        }
+      ]
+    }
+  ]
+}

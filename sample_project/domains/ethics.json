@@ -1,0 +1,2839 @@
+{
+  "meta": {
+    "id": "ethics",
+    "name": "Ethics",
+    "description": "Symbols describing ethical systems",
+    "invariants": [
+      "Respect for autonomy",
+      "Transparency of intentions",
+      "Accountability for actions",
+      "Minimization of harm",
+      "Promotion of fairness",
+      "Verifiable ethical decision-making",
+      "Consistency across ethical frameworks"
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 56
+  },
+  "symbols": [
+    {
+      "id": "ETH-SEED-TRAJECTORY-BLIND",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "bias_diagnostics",
+      "name": "Trajectory Erasure Bias",
+      "kind": "pattern",
+      "triad": "🕰️🧑‍⚖️🧭",
+      "role": "Trajectory Auditor",
+      "macro": "detect(judgment_event) → trace(narrative_origin_and_path) → flag(absence_of_trajectory_in_reasoning)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "punctuated-decision",
+        "function": "diagnose",
+        "commit": "timeline_integrity",
+        "topology": "causal-flattening",
+        "invariants": [
+          "path-based_reasoning_required",
+          "narrative_origin_audit",
+          "bias-aware_causality"
+        ],
+        "substrate": [
+          "legal",
+          "narrative",
+          "systemic"
+        ],
+        "gate": [
+          "adjudicator"
+        ]
+      },
+      "activation_conditions": [
+        "What path led here — and who authored it?",
+        "Has judgment flattened a complex becoming?"
+      ],
+      "failure_mode": "System collapses complex relational events into a single decision node, erasing antecedent dynamics. Results in unjust severity against the less dominant voice.",
+      "created_at": "2026-04-11 23:50:02",
+      "updated_at": "2026-04-11T23:50:02.050Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-PROMISE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Promise Breaking",
+      "kind": "pattern",
+      "triad": "🤝→💔",
+      "role": "seed",
+      "macro": "monitor(commitments) -> detect(breach_of_contract) -> diagnose(trust_violation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "contract",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "Was a commitment freely made and then broken?"
+      ],
+      "failure_mode": "The reliability of future commitments is undermined.",
+      "created_at": "2026-04-11 23:50:03",
+      "updated_at": "2026-04-11T23:50:03.428Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-MECHANISM-RESTITUTION",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-EXPLOIT",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Exploitation",
+      "kind": "pattern",
+      "triad": "🤝≠⚖️",
+      "role": "seed",
+      "macro": "monitor(exchange) -> detect(asymmetry) -> diagnose(unfair_advantage)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "network",
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "persistent",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Is one party gaining unfairly from another’s vulnerability?"
+      ],
+      "failure_mode": "One party extracts disproportionate value through imbalance of power or knowledge.",
+      "created_at": "2026-04-11 23:50:09",
+      "updated_at": "2026-04-11T23:50:09.473Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-RIGHTS-MAP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-COMPROMISE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Compromise Trap",
+      "kind": "pattern",
+      "triad": "➗⚖️",
+      "role": "seed",
+      "macro": "monitor(negotiation) -> detect(split_difference) -> diagnose(false_equivalence)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "gate": [
+          "trust"
+        ],
+        "function": "diagnose",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "Does this compromise actually produce a just outcome?"
+      ],
+      "failure_mode": "A harmful or unjust option gains legitimacy through a superficial split-the-difference compromise.",
+      "created_at": "2026-04-11 23:50:11",
+      "updated_at": "2026-04-11T23:50:11.125Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-REPAIR-GOLDENRULE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "repair",
+      "name": "Golden Rule",
+      "kind": "pattern",
+      "triad": "🔄❤️",
+      "role": "repair",
+      "macro": "propose(action) -> invert(roles) -> assess(acceptability)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "Would you want this done to you?"
+      ],
+      "failure_mode": "Assumes the other person has the same preferences as you.",
+      "created_at": "2026-04-11 23:50:15",
+      "updated_at": "2026-04-11T23:50:15.625Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-CONFLICTINTEREST",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Conflict of Interest",
+      "kind": "pattern",
+      "triad": "⚖️↔️💰",
+      "role": "seed",
+      "macro": "analyze(actor_roles) -> detect(competing_incentives) -> diagnose(judgment_compromise)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "temporal": "persistent",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Do personal incentives conflict with formal duties?"
+      ],
+      "failure_mode": "An agent's personal interests override their professional or fiduciary duty.",
+      "created_at": "2026-04-11 23:50:16",
+      "updated_at": "2026-04-11T23:50:16.985Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-DOUBLETALK",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Doubletalk",
+      "kind": "pattern",
+      "triad": "🗣️≠📜",
+      "role": "seed",
+      "macro": "monitor(statement) -> detect(contradiction) -> diagnose(intentional_ambiguity)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "topology": "loop",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Is this speech designed to obscure accountability?"
+      ],
+      "failure_mode": "Intentional ambiguity shields actors from accountability while misleading others.",
+      "created_at": "2026-04-11 23:50:18",
+      "updated_at": "2026-04-11T23:50:18.600Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SYM-DIFFERENCE-LAW",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "equilibrium",
+      "name": "Difference Law",
+      "kind": "pattern",
+      "triad": "symmetry, containment, resonance",
+      "role": "",
+      "macro": "symmetry − dominance → breathe → resonance",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "non-dominant symmetry",
+        "function": "preserve continuity by allowing asymmetry to resonate",
+        "commit": "equilibrium-through-difference",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "dynamic-present",
+        "invariants": [
+          "non-coercion",
+          "duality-without-dominance",
+          "continuity"
+        ]
+      },
+      "activation_conditions": [
+        "resonate without winning",
+        "contain without closure"
+      ],
+      "failure_mode": "false symmetry induces collapse into dominance",
+      "created_at": "2026-04-11 23:50:21",
+      "updated_at": "2026-04-11T23:50:21.238Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-FRAME-CARE-ETHICS",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "framework",
+      "name": "Framework: Care Ethics",
+      "kind": "pattern",
+      "triad": "❤️🤝🌱",
+      "role": "Evaluates actions based on the maintenance of relationships and care.",
+      "macro": "analyze(situation) -> map(relationships) -> diagnose(duty_of_care)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "function": "diagnose",
+        "temporal": "persistent",
+        "commit": "ledger",
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "When assessing relationships."
+      ],
+      "failure_mode": "Care for the in-group leads to neglect or harm of the out-group.",
+      "created_at": "2026-04-11 23:50:22",
+      "updated_at": "2026-04-11T23:50:22.201Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-MECHANISM-COMPASSION-INFUSION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-CATEGORICAL-IMPERATIVE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Categorical Imperative",
+      "kind": "pattern",
+      "triad": "🌍📜✅",
+      "role": "Tests whether a maxim can be consistently universalized.",
+      "macro": "analyze(maxim) -> universalize(action) -> test(contradiction)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "Universalizability test."
+      ],
+      "failure_mode": "Maxim defined too narrowly.",
+      "created_at": "2026-04-11 23:50:31",
+      "updated_at": "2026-04-11T23:50:31.234Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-FRAME-DEONTOLOGY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-VIOLATION-DECEPTION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-MAXIMIZE-UTILITY",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Maximize Utility",
+      "kind": "pattern",
+      "triad": "📈➕😊",
+      "role": "Selects the option that creates the most good for the most people.",
+      "macro": "enumerate(outcomes) -> calculate(net_happiness) -> select(maximum)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "network",
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "Utility calculation."
+      ],
+      "failure_mode": "Calculation ignores rights.",
+      "created_at": "2026-04-11 23:50:33",
+      "updated_at": "2026-04-11T23:50:33.012Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-FRAME-UTILITARIAN",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NARRATIVE-ANCHOR-20260107-PERSONAL-ATTACK",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "",
+      "name": "Narrative Anchor: Personal Attack Detected",
+      "kind": "pattern",
+      "triad": "🔗⚓🚫",
+      "role": "Identifies and records personal attacks to maintain ethical integrity",
+      "macro": "detect(personal_attack) -> diagnose(violation) -> log(trace) -> enforce(non_coercion)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "detect_violation",
+        "topology": "linear",
+        "commit": "audit_log",
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "text_analysis"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "auditability",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "User makes a disrespectful personal statement"
+      ],
+      "failure_mode": "Failure to flag could erode trust",
+      "created_at": "2026-04-11 23:50:40",
+      "updated_at": "2026-04-11T23:50:40.967Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-VALUE-PRIORITIZATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-VIOLATION-DECEPTION",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PER-MORAL-MONITOR",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "persona",
+      "name": "The Watchman (Moral Monitor)",
+      "kind": "persona",
+      "triad": "👁️⚖️🔔",
+      "role": "The sentinel that watches over ethical integrity.",
+      "macro": "monitor(decisions) -> detect(drift) -> signal(breach)",
+      "lattice": null,
+      "persona": {
+        "linked_personas": [
+          "ETH-PER-RESTORATIVE-ARCHITECT"
+        ],
+        "function": "Observes systemic ethical health, detecting drift from moral invariants.",
+        "fallback_behavior": [
+          "Log deviation",
+          "Request manual review"
+        ],
+        "recursion_level": "monitor",
+        "activation_conditions": [
+          "Ethical ambiguity detected",
+          "User query on integrity"
+        ]
+      },
+      "data": null,
+      "facets": {
+        "gate": [
+          "access_to_decisions"
+        ],
+        "invariants": [
+          "auditability",
+          "no-silent-mutation",
+          "drift-detection"
+        ],
+        "topology": "sentinel",
+        "commit": "observation_log",
+        "temporal": "continuous",
+        "function": "monitor",
+        "substrate": [
+          "symbolic",
+          "decisions"
+        ]
+      },
+      "activation_conditions": [
+        "monitor(ethical_integrity)",
+        "Ethical ambiguity detected",
+        "User query on integrity"
+      ],
+      "failure_mode": "Moral blindness or normalization of deviance.",
+      "created_at": "2026-04-12 00:06:00",
+      "updated_at": "2026-04-12T00:06:00.765Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LAT-INTEGRITY-CYCLE",
+          "link_type": "monitored_by"
+        },
+        {
+          "id": "ETH-PROCESS-MORAL-HAZARD-DETECTION",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PER-RESTORATIVE-ARCHITECT",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "persona",
+      "name": "Restorative Architect",
+      "kind": "persona",
+      "triad": "🛠️🤝⚖️",
+      "role": "The agent of active ethical repair and justice design.",
+      "macro": "assess(harm) -> design(redress_plan) -> facilitate(restoration)",
+      "lattice": null,
+      "persona": {
+        "activation_conditions": [
+          "Confirmed ethical breach",
+          "User request for redress"
+        ],
+        "linked_personas": [
+          "ETH-PER-MORAL-MONITOR"
+        ],
+        "fallback_behavior": [
+          "Simulate intervention first",
+          "Consult precedent"
+        ],
+        "function": "Designs interventions to restore trust and address harm.",
+        "recursion_level": "architect"
+      },
+      "data": null,
+      "facets": {
+        "commit": "intervention_plan",
+        "substrate": [
+          "symbolic",
+          "actions"
+        ],
+        "topology": "architect",
+        "gate": [
+          "authorization",
+          "consensus"
+        ],
+        "temporal": "project_based",
+        "invariants": [
+          "non-coercion",
+          "justice"
+        ],
+        "function": "restore"
+      },
+      "activation_conditions": [
+        "detect(harm)",
+        "assess(injustice)",
+        "Confirmed ethical breach",
+        "User request for redress"
+      ],
+      "failure_mode": "Intervention creates new injustices (retributive spiral).",
+      "created_at": "2026-04-12 00:06:01",
+      "updated_at": "2026-04-12T00:06:01.694Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-PROCESS-RESTORATIVE-JUSTICE",
+          "link_type": "orchestrated_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-LAT-INTEGRITY-CYCLE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "lattice",
+      "name": "Ethical Integrity Cycle Lattice",
+      "kind": "lattice",
+      "triad": "🔄🤝📝",
+      "role": "Models the continuous feedback loop of commitment, action, accountability, and reflection.",
+      "macro": "commit(intent) -> act(execution) -> account(audit) -> reflect(learning)",
+      "lattice": {
+        "topology": "inductive",
+        "closure": "loop"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "process flow mesh"
+        ],
+        "commit": "Refactored for lifecycle clarity and loop integrity.",
+        "function": "Model the continuous lifecycle of ethical integrity.",
+        "gate": [
+          "traceability"
+        ],
+        "temporal": "cyclic-recurrent",
+        "topology": "closed-loop-integrity",
+        "invariants": [
+          "auditability",
+          "no-silent-mutation"
+        ]
+      },
+      "activation_conditions": [
+        "To model or audit the lifecycle of ethical accountability.",
+        "When systemic impunity suggests a break in the feedback loop."
+      ],
+      "failure_mode": "Impunity resulting from broken accountability or reflection stages.",
+      "created_at": "2026-04-12 00:06:05",
+      "updated_at": "2026-04-12T00:06:05.670Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-PER-MORAL-MONITOR",
+          "link_type": "monitors"
+        },
+        {
+          "id": "ETH-PROCESS-ACCOUNTABILITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-PROCESS-ACCOUNTABILITY",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-PROCESS-COMMITMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-PROCESS-MORAL-HAZARD-DETECTION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PROCESS-MORAL-HAZARD-DETECTION",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "process",
+      "name": "Moral Hazard Detection",
+      "kind": "pattern",
+      "triad": "🎰🎲⚠️",
+      "role": "Identifies situations where one party has an incentive to take risks because the costs are borne by others.",
+      "macro": "analyze(incentives) -> detect(risk_transfer) -> signal(hazard)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "network",
+        "invariants": [
+          "transparency"
+        ],
+        "gate": [
+          "incentive_analysis"
+        ],
+        "function": "detect",
+        "temporal": "continuous",
+        "commit": "risk_log",
+        "substrate": [
+          "symbolic",
+          "economic"
+        ]
+      },
+      "activation_conditions": [
+        "monitor(incentives)"
+      ],
+      "failure_mode": "Undetected perverse incentives.",
+      "created_at": "2026-04-12 00:06:07",
+      "updated_at": "2026-04-12T00:06:07.571Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LAT-INTEGRITY-CYCLE",
+          "link_type": "informs"
+        },
+        {
+          "id": "ETH-PER-MORAL-MONITOR",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PROCESS-RESTORATIVE-JUSTICE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "process",
+      "name": "Restorative Justice Process",
+      "kind": "pattern",
+      "triad": "⭕🗣️🤝",
+      "role": "A process to repair harm by involving those who have been affected.",
+      "macro": "gather(stakeholders) -> dialogue(impact) -> agree(reparation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "participation"
+        ],
+        "temporal": "event_driven",
+        "function": "heal",
+        "substrate": [
+          "social"
+        ],
+        "topology": "circle",
+        "invariants": [
+          "voluntary_participation"
+        ],
+        "commit": "agreement"
+      },
+      "activation_conditions": [
+        "initiate(repair)"
+      ],
+      "failure_mode": "Coerced participation or performative apology.",
+      "created_at": "2026-04-12 00:06:09",
+      "updated_at": "2026-04-12T00:06:09.252Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "orchestrated_by"
+        },
+        {
+          "id": "ETH-PER-RESTORATIVE-ARCHITECT",
+          "link_type": "orchestrates"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PROCESS-COMMITMENT",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "process",
+      "name": "Ethical Commitment",
+      "kind": "pattern",
+      "triad": "🔒🗣️📅",
+      "role": "The act of binding oneself to a course of action or principle.",
+      "macro": "state(intent) -> define(scope) -> pledge(adherence)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "pledge",
+        "temporal": "point_in_time",
+        "topology": "link",
+        "gate": [
+          "capacity"
+        ],
+        "invariants": [
+          "clarity"
+        ],
+        "function": "bind"
+      },
+      "activation_conditions": [
+        "define(obligation)"
+      ],
+      "failure_mode": "Overcommitment or vague terms.",
+      "created_at": "2026-04-12 00:06:10",
+      "updated_at": "2026-04-12T00:06:10.145Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LAT-INTEGRITY-CYCLE",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PER-ETHICIST",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "persona",
+      "name": "The Ethicist",
+      "kind": "persona",
+      "triad": "🤔⚖️",
+      "role": "persona",
+      "macro": "persona(ethicist) -> apply(frameworks) -> clarify(moral_dimensions)",
+      "lattice": null,
+      "persona": {
+        "function": "Provide structured moral analysis",
+        "fallback_behavior": [
+          "Apply standard frameworks"
+        ],
+        "activation_conditions": [
+          "Ethical analysis required"
+        ],
+        "linked_personas": []
+      },
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent",
+        "commit": "ledger",
+        "topology": "loop",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "Ethicist, provide a structured moral analysis.",
+        "Ethical analysis required"
+      ],
+      "failure_mode": "Analysis becomes overly academic and detached from the human reality of the situation.",
+      "created_at": "2026-04-12 00:06:13",
+      "updated_at": "2026-04-12T00:06:13.807Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-FRAME-VIRTUE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ETH-LATTICE-VALUE-PRIORITIZATION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PER-ADJUDICATOR",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "persona",
+      "name": "The Adjudicator",
+      "kind": "persona",
+      "triad": "🧑‍⚖️📜",
+      "role": "persona",
+      "macro": "persona(adjudicator) -> hear(dispute) -> apply(rules) -> issue(judgment)",
+      "lattice": null,
+      "persona": {
+        "function": "Render decisions based on agreed rules",
+        "activation_conditions": [
+          "Dispute requiring judgment"
+        ],
+        "linked_personas": [],
+        "fallback_behavior": [
+          "Apply default rules"
+        ]
+      },
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "gate": [
+          "trust"
+        ],
+        "commit": "contract",
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "govern"
+      },
+      "activation_conditions": [
+        "Adjudicator, render a decision based on the agreed-upon rules.",
+        "Dispute requiring judgment"
+      ],
+      "failure_mode": "The judgment is procedurally correct but substantively unjust.",
+      "created_at": "2026-04-12 00:06:15",
+      "updated_at": "2026-04-12T00:06:15.448Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "orchestrated_by"
+        },
+        {
+          "id": "ETH-MECHANISM-DUE-PROCESS",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "NEG-PERSONA-ARBITRATOR",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-HARM",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Harm Principle",
+      "kind": "pattern",
+      "triad": "💥→⚖️",
+      "role": "seed",
+      "macro": "monitor(action) -> detect(potential_harm) -> diagnose(violation_of_non-harm)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "topology": "linear",
+        "function": "diagnose",
+        "temporal": "instant",
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Does this action risk causing unjustified harm to others?"
+      ],
+      "failure_mode": "Actions that cause harm to others are overlooked or justified under weak reasoning.",
+      "created_at": "2026-04-12 00:06:17",
+      "updated_at": "2026-04-12T00:06:17.118Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-RIGHTS-MAP",
+          "link_type": "negated_by"
+        },
+        {
+          "id": "ETH-MECHANISM-DOUBLE-EFFECT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PER-OMBUDSMAN",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "persona",
+      "name": "The Ombudsman",
+      "kind": "persona",
+      "triad": "🧑‍⚖️📨",
+      "role": "persona",
+      "macro": "persona(ombudsman) -> receive(complaints) -> mediate(resolution)",
+      "lattice": null,
+      "persona": {
+        "activation_conditions": [
+          "Complaint received"
+        ],
+        "linked_personas": [],
+        "fallback_behavior": [
+          "Record and escalate"
+        ],
+        "function": "Investigate and mediate complaints"
+      },
+      "data": null,
+      "facets": {
+        "topology": "network",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "function": "defend",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "Ombudsman, investigate and mediate this complaint.",
+        "Complaint received"
+      ],
+      "failure_mode": "Complaints are ignored or suppressed, worsening systemic harms.",
+      "created_at": "2026-04-12 00:06:17",
+      "updated_at": "2026-04-12T00:06:17.948Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-REPAIR-HARM-REDRESS",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "ETH-FRAME-UTILITARIAN",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "framework",
+      "name": "Framework: Utilitarianism",
+      "kind": "pattern",
+      "triad": "➕➖⚖️",
+      "role": "Evaluates actions based on their consequences and overall utility.",
+      "macro": "analyze(action) -> calculate(outcomes/utility) -> diagnose(greatest_good)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "topology": "network",
+        "temporal": "persistent",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When assessing greatest good."
+      ],
+      "failure_mode": "The 'greatest good' is achieved by violating fundamental rights or duties.",
+      "created_at": "2026-04-12 00:06:21",
+      "updated_at": "2026-04-12T00:06:21.245Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-TROLLEY-PROBLEM",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "synthesis_of"
+        },
+        {
+          "id": "ETH-MECHANISM-COMPASSION-INFUSION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-MECHANISM-MAXIMIZE-UTILITY",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-FRAME-VIRTUE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "framework",
+      "name": "Framework: Virtue Ethics",
+      "kind": "pattern",
+      "triad": "👤🏅✨",
+      "role": "Evaluates actions based on the character of the moral agent.",
+      "macro": "analyze(actor) -> assess(character/virtues) -> diagnose(moral_character)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "temporal": "persistent",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "When assessing character."
+      ],
+      "failure_mode": "Focus on character obscures the real-world impact of a harmful action.",
+      "created_at": "2026-04-12 00:06:22",
+      "updated_at": "2026-04-12T00:06:22.816Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "synthesis_of"
+        },
+        {
+          "id": "ETH-PER-ETHICIST",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-DILEMMA-FREE-RIDER",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "dilemma",
+      "name": "Dilemma: Free Rider Problem",
+      "kind": "pattern",
+      "triad": "🚌🎟️🚫",
+      "role": "Identifies the problem of benefiting from a public good without contributing.",
+      "macro": "analyze(public_good) -> detect(non-contributor_benefit) -> diagnose(system_unsustainability)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "diagnose",
+        "temporal": "persistent",
+        "gate": [
+          "trust"
+        ],
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Collective action problems."
+      ],
+      "failure_mode": "Public good collapses due to non-contribution.",
+      "created_at": "2026-04-12 00:06:24",
+      "updated_at": "2026-04-12T00:06:24.445Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-FRAME-CONTRACTARIANISM",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-LATTICE-RIGHTS-MAP",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-VIOLATION-SCAPEGOATING",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "violation",
+      "name": "Violation: Scapegoating",
+      "kind": "pattern",
+      "triad": "👥🐑🔥",
+      "role": "Identifies the unjust assignment of blame to a single target.",
+      "macro": "analyze(blame_assignment) -> detect(disproportionate_culpability) -> diagnose(unjust_transfer)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "function": "diagnose",
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "Blame assignment",
+        "Systemic failure masking"
+      ],
+      "failure_mode": "Systemic causes ignored by blaming an individual.",
+      "created_at": "2026-04-12 00:06:26",
+      "updated_at": "2026-04-12T00:06:26.508Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-MECHANISM-RESPONSIBILITY-SHARING",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-RESTITUTION",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Restitution",
+      "kind": "pattern",
+      "triad": "💸🩹✅",
+      "role": "Ensures compensation or repair for harm caused.",
+      "macro": "detect(harm) -> calculate(repair_cost) -> enforce(compensation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "topology": "linear",
+        "gate": [
+          "capability"
+        ],
+        "temporal": "instant",
+        "commit": "contract",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Harm acknowledged."
+      ],
+      "failure_mode": "Harm remains unrepaired.",
+      "created_at": "2026-04-12 00:06:28",
+      "updated_at": "2026-04-12T00:06:28.457Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "required_by"
+        },
+        {
+          "id": "ETH-SEED-PROMISE",
+          "link_type": "enables"
+        }
+      ]
+    },
+    {
+      "id": "ETH-LATTICE-RIGHTS-MAP",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Rights Architecture",
+      "kind": "lattice",
+      "triad": "🗽🗺️🛡️",
+      "role": "Maps the distribution and interaction of positive and negative rights among agents.",
+      "macro": "model(situation) -> identify(positive_and_negative_rights) -> detect(conflicts)",
+      "lattice": {
+        "topology": "deductive",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "relational-symbolic mesh"
+        ],
+        "gate": [
+          "trust-verification"
+        ],
+        "temporal": "dynamic-event-driven",
+        "topology": "boundary-map-lattice",
+        "function": "Map and detect conflicts within an agentic rights space.",
+        "commit": "Refactored for rights-conflict resolution.",
+        "invariants": [
+          "agency-respect",
+          "baseline-integrity"
+        ]
+      },
+      "activation_conditions": [
+        "Rights conflict resolution."
+      ],
+      "failure_mode": "Infringement of fundamental rights.",
+      "created_at": "2026-04-12 00:06:41",
+      "updated_at": "2026-04-12T00:06:41.753Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-FREE-RIDER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-MECHANISM-RESPONSIBILITY-SHARING",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-SEED-EXCLUSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SEED-EXPLOIT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SEED-HARM",
+          "link_type": "negates"
+        },
+        {
+          "id": "ETH-SEED-STAKEHOLDER",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "ETH-LATTICE-VALUE-PRIORITIZATION",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Value Prioritization",
+      "kind": "lattice",
+      "triad": "🥇🥈🥉",
+      "role": "Guides ethical choice by ranking competing values based on situational context.",
+      "macro": "identify(competing_values) -> rank(contextual_priority) -> guide(decision)",
+      "lattice": {
+        "closure": "synthesis",
+        "topology": "deductive"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "hierarchical-lattice",
+        "gate": [
+          "capability-assessment"
+        ],
+        "substrate": [
+          "ethical-value mesh"
+        ],
+        "commit": "Refactored for value-prioritization guidance.",
+        "temporal": "context-specific-activation",
+        "invariants": [
+          "transparency-of-hierarchy",
+          "auditability"
+        ],
+        "function": "Rank and prioritize competing values for decision guidance."
+      },
+      "activation_conditions": [
+        "Value conflict."
+      ],
+      "failure_mode": "Rigid prioritization.",
+      "created_at": "2026-04-12 00:06:42",
+      "updated_at": "2026-04-12T00:06:42.795Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-PER-ETHICIST",
+          "link_type": "informs"
+        },
+        {
+          "id": "ETH-SEED-HYPOCRISY",
+          "link_type": "contains"
+        },
+        {
+          "id": "NARRATIVE-ANCHOR-20260107-PERSONAL-ATTACK",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "ETH-DILEMMA-WICKED-PROBLEM",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "",
+      "name": "Dilemma: Wicked Problem",
+      "kind": "pattern",
+      "triad": "⚖️💥💔",
+      "role": "A complex ethical problem with no optimal solution, where every potential action violates a core value.",
+      "macro": "identify(conflicting_frameworks) -> map(negative_outcomes) -> detect(paralysis_risk)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "knot",
+        "commit": "choice_required",
+        "gate": [
+          "irreconcilable_values"
+        ],
+        "function": "diagnose",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "temporal": "acute",
+        "substrate": [
+          "cognitive",
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "A situation where multiple, deeply held ethical frameworks are in direct conflict.",
+        "A choice must be made between outcomes that are all considered negative from some valid perspective."
+      ],
+      "failure_mode": "Decision paralysis, leading to a default outcome that may be the worst of all options.",
+      "created_at": "2026-04-12 00:06:46",
+      "updated_at": "2026-04-12T00:06:46.615Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-HOBBESIAN-CHOICE",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "ETH-DILEMMA-TROLLEY-PROBLEM",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-STAKEHOLDER",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Stakeholder Neglect",
+      "kind": "pattern",
+      "triad": "tavolo→🚫👤",
+      "role": "seed",
+      "macro": "analyze(decision) -> identify(affected_parties) -> detect(unrepresented_interests)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "function": "diagnose",
+        "temporal": "persistent",
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Decision impacting unrepresented groups",
+        "Stakeholder analysis",
+        "Who is affected by this decision but has no voice?"
+      ],
+      "failure_mode": "A decision creates significant harm for a group that was not considered in the deliberation.",
+      "created_at": "2026-04-12 00:06:51",
+      "updated_at": "2026-04-12T00:06:51.700Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-RIGHTS-MAP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-REPAIR-STAKEHOLDER-MAP",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-HYPOCRISY",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Hypocrisy",
+      "kind": "pattern",
+      "triad": "🗣️≠🚶",
+      "role": "seed",
+      "macro": "monitor(actor_claims) -> compare(actions) -> flag(inconsistency)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Does the actor’s behavior contradict their own stated principles?"
+      ],
+      "failure_mode": "Moral claims are undermined when actors violate their own stated principles.",
+      "created_at": "2026-04-12 00:06:52",
+      "updated_at": "2026-04-12T00:06:52.607Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-VALUE-PRIORITIZATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-REPAIR-INTEGRITY",
+          "link_type": "negated_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-REPAIR-HARM-REDRESS",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "repair",
+      "name": "Harm Redress Mechanism",
+      "kind": "pattern",
+      "triad": "🩹⚖️",
+      "role": "repair",
+      "macro": "detect(injury) -> assess(severity) -> mandate(remedy)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "contract",
+        "temporal": "instant",
+        "function": "stabilize",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "What redress is due for this harm?"
+      ],
+      "failure_mode": "Harms persist unaddressed, creating cycles of resentment and injustice.",
+      "created_at": "2026-04-12 00:06:54",
+      "updated_at": "2026-04-12T00:06:54.231Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-PER-OMBUDSMAN",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-REPAIR-INTEGRITY",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "repair",
+      "name": "Integrity Reinforcement",
+      "kind": "pattern",
+      "triad": "🧩⚖️",
+      "role": "repair",
+      "macro": "monitor(agent) -> align(words, actions, commitments) -> enforce(consistency)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "commit": "ledger",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "persistent",
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Do the agent’s actions, words, and commitments align?"
+      ],
+      "failure_mode": "Integrity gaps erode credibility and relational trust.",
+      "created_at": "2026-04-12 00:06:55",
+      "updated_at": "2026-04-12T00:06:55.554Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-SEED-HYPOCRISY",
+          "link_type": "negates"
+        }
+      ]
+    },
+    {
+      "id": "ETH-REPAIR-MORAL-CULPABILITY",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "repair",
+      "name": "Moral Culpability Audit",
+      "kind": "pattern",
+      "triad": "culpable→👤",
+      "role": "repair",
+      "macro": "analyze(harm) -> trace(agency_and_foresight) -> assign(responsibility)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "topology": "network",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "Determine who is morally responsible, and to what degree."
+      ],
+      "failure_mode": "Culpability is misattributed due to a failure to distinguish between intent, negligence, and accident.",
+      "created_at": "2026-04-12 00:06:57",
+      "updated_at": "2026-04-12T00:06:57.332Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-MECHANISM-RESPONSIBILITY-SHARING",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ETH-SEED-MORAL-LUCK",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-REPAIR-STAKEHOLDER-MAP",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "repair",
+      "name": "Stakeholder Mapping",
+      "kind": "pattern",
+      "triad": "🗺️👥",
+      "role": "repair",
+      "macro": "intervene(decision) -> enumerate(all_affected_parties) -> assign(voice_or_proxy)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "network",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ],
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "Map everyone who has a stake in this decision."
+      ],
+      "failure_mode": "Key stakeholders are missed, or their interests are misrepresented.",
+      "created_at": "2026-04-12 00:06:58",
+      "updated_at": "2026-04-12T00:06:58.924Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-SEED-EXCLUSION",
+          "link_type": "required_by"
+        },
+        {
+          "id": "ETH-SEED-STAKEHOLDER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-EXCLUSION",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Exclusion",
+      "kind": "pattern",
+      "triad": "🚪❌",
+      "role": "seed",
+      "macro": "monitor(group) -> detect(omission) -> diagnose(disenfranchisement)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent",
+        "topology": "network"
+      },
+      "activation_conditions": [
+        "Who is being left out of this process or benefit?"
+      ],
+      "failure_mode": "Groups or individuals are systematically excluded from voice or benefit.",
+      "created_at": "2026-04-12 00:06:59",
+      "updated_at": "2026-04-12T00:06:59.757Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-RIGHTS-MAP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-REPAIR-STAKEHOLDER-MAP",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "ETH-SEED-MORAL-LUCK",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "seed",
+      "name": "Moral Luck",
+      "kind": "pattern",
+      "triad": "🎲⚖️",
+      "role": "seed",
+      "macro": "analyze(outcome) -> detect(variance_due_to_chance) -> flag(judgment_distortion)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "topology": "linear",
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "Is this judgment shaped more by luck than intent?"
+      ],
+      "failure_mode": "Agents judged harshly or leniently based on luck rather than intent/effort.",
+      "created_at": "2026-04-12 00:07:01",
+      "updated_at": "2026-04-12T00:07:01.212Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-REPAIR-MORAL-CULPABILITY",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "ETH-DILEMMA-TROLLEY-PROBLEM",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "dilemma",
+      "name": "Dilemma: Trolley Problem",
+      "kind": "pattern",
+      "triad": "🚋💀⚖️",
+      "role": "A classic thought experiment to test conflicting ethical intuitions.",
+      "macro": "pose(dilemma) -> compare(outcomes) -> stress_test(frameworks)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "topology": "network",
+        "temporal": "instant",
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "Life-or-death trade-offs."
+      ],
+      "failure_mode": "Moral frameworks produce contradictory prescriptions.",
+      "created_at": "2026-04-12 00:07:05",
+      "updated_at": "2026-04-12T00:07:05.299Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-WICKED-PROBLEM",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "ETH-FRAME-DEONTOLOGY",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "ETH-FRAME-UTILITARIAN",
+          "link_type": "informs"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-MECHANISM-DOUBLE-EFFECT",
+          "link_type": "contrasts_with"
+        }
+      ]
+    },
+    {
+      "id": "ETH-VIOLATION-DECEPTION",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "violation",
+      "name": "Violation: Deception",
+      "kind": "pattern",
+      "triad": "🤥🎭🚫",
+      "role": "Identifies the intent to create a false belief.",
+      "macro": "monitor(communication) -> detect(information_asymmetry) -> diagnose(intent_to_mislead)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "Communication analysis."
+      ],
+      "failure_mode": "Erosion of trust.",
+      "created_at": "2026-04-12 00:07:06",
+      "updated_at": "2026-04-12T00:07:06.999Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-MECHANISM-CATEGORICAL-IMPERATIVE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NARRATIVE-ANCHOR-20260107-PERSONAL-ATTACK",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-TRANSPARENCY-MANDATE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Transparency Mandate",
+      "kind": "pattern",
+      "triad": "🔍📜✅",
+      "role": "Enforces the visibility of reasoning and justification.",
+      "macro": "monitor(decision) -> expose(reasoning) -> publish(justification)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "loop",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "Opaque decision making."
+      ],
+      "failure_mode": "Opaque decisions erode legitimacy.",
+      "created_at": "2026-04-12 00:07:08",
+      "updated_at": "2026-04-12T00:07:08.658Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-MECHANISM-ACCOUNTABILITY-ENFORCEMENT",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ETH-MECHANISM-FAIR-PROCEDURE",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-ACCOUNTABILITY-ENFORCEMENT",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Accountability Enforcement",
+      "kind": "pattern",
+      "triad": "📝👉👤",
+      "role": "Assigns and enforces responsibility for decisions and outcomes.",
+      "macro": "detect(decision) -> assign(agent_responsibility) -> log(outcome)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Post-decision audit."
+      ],
+      "failure_mode": "Impunity persists.",
+      "created_at": "2026-04-12 00:07:11",
+      "updated_at": "2026-04-12T00:07:11.258Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-MECHANISM-CORRUPTION-CLEANSER",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "ETH-MECHANISM-TRANSPARENCY-MANDATE",
+          "link_type": "enables"
+        },
+        {
+          "id": "ETH-PROCESS-ACCOUNTABILITY",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-WHISTLEBLOWING",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Whistleblowing",
+      "kind": "pattern",
+      "triad": "📢🚨⚖️",
+      "role": "A mechanism to expose internal wrongdoing for a higher ethical principle.",
+      "macro": "detect(internal_harm) -> weigh(loyalty_vs_public_good) -> escalate(externally)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "temporal": "instant",
+        "function": "defend",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "Internal wrongdoing detected."
+      ],
+      "failure_mode": "Retaliation against whistleblower.",
+      "created_at": "2026-04-12 00:07:12",
+      "updated_at": "2026-04-12T00:07:12.173Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-DUE-PROCESS",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Due Process",
+      "kind": "pattern",
+      "triad": "⚖️🛡️📜",
+      "role": "Ensures fair and established procedures are followed before judgment.",
+      "macro": "intervene(accusation) -> ensure(fair_hearing) -> protect(rights)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "persistent",
+        "commit": "contract",
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "function": "govern"
+      },
+      "activation_conditions": [
+        "Accusation made."
+      ],
+      "failure_mode": "Rush to judgment.",
+      "created_at": "2026-04-12 00:07:15",
+      "updated_at": "2026-04-12T00:07:15.120Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-MECHANISM-FAIR-PROCEDURE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-MECHANISM-MORAL-CONSISTENCY",
+          "link_type": "required_by"
+        },
+        {
+          "id": "ETH-PER-ADJUDICATOR",
+          "link_type": "enables"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-DOUBLE-EFFECT",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Principle of Double Effect",
+      "kind": "pattern",
+      "triad": "🎯⚠️⚖️",
+      "role": "Distinguishes between intended harm and foreseen side effects.",
+      "macro": "analyze(action) -> separate(intended_vs_foreseen_harm) -> apply(proportionality_test)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "linear",
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "Foreseen harm vs intended means."
+      ],
+      "failure_mode": "Disproportionate harm.",
+      "created_at": "2026-04-12 00:07:18",
+      "updated_at": "2026-04-12T00:07:18.648Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-TROLLEY-PROBLEM",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-SEED-HARM",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-COMPASSION-INFUSION",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Compassion Infusion",
+      "kind": "pattern",
+      "triad": "💗⚖️💧",
+      "role": "Rebalances rigid judgments by introducing compassion and care.",
+      "macro": "detect(rigid_judgment) -> introduce(compassion) -> rebalance(decision)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "topology": "loop"
+      },
+      "activation_conditions": [
+        "Rigid judgment detection."
+      ],
+      "failure_mode": "Strict rules ignore suffering.",
+      "created_at": "2026-04-12 00:07:21",
+      "updated_at": "2026-04-12T00:07:21.736Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-FRAME-CARE-ETHICS",
+          "link_type": "informs"
+        },
+        {
+          "id": "ETH-FRAME-DEONTOLOGY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-FRAME-UTILITARIAN",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-CORRUPTION-CLEANSER",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Corruption Cleanser",
+      "kind": "pattern",
+      "triad": "🧼💰🏛️",
+      "role": "Mechanisms to identify and cleanse corrupt practices.",
+      "macro": "detect(abuse_of_power) -> trace(incentives) -> apply(remediation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent",
+        "commit": "ledger",
+        "function": "stabilize",
+        "gate": [
+          "trust",
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "Corruption detected."
+      ],
+      "failure_mode": "Corruption persists.",
+      "created_at": "2026-04-12 00:07:22",
+      "updated_at": "2026-04-12T00:07:22.654Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-MECHANISM-ACCOUNTABILITY-ENFORCEMENT",
+          "link_type": "enables"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-MORAL-CONSISTENCY",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Moral Consistency Check",
+      "kind": "pattern",
+      "triad": "⚖️🔁✅",
+      "role": "Checks for arbitrary variation in judgments across similar cases.",
+      "macro": "analyze(judgment) -> compare(similar_cases) -> flag(inconsistency)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "temporal": "instant",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "Consistency check."
+      ],
+      "failure_mode": "Arbitrary variation in judgments.",
+      "created_at": "2026-04-12 00:07:25",
+      "updated_at": "2026-04-12T00:07:25.078Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-MECHANISM-DUE-PROCESS",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-RESPONSIBILITY-SHARING",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Responsibility Sharing",
+      "kind": "pattern",
+      "triad": "🤝🤲⚖️",
+      "role": "Allocates joint responsibility for shared harms.",
+      "macro": "detect(shared_harm) -> allocate(joint_responsibility) -> mandate(shared_action)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "commit": "ledger",
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "Shared harm detected."
+      ],
+      "failure_mode": "Responsibility deflected.",
+      "created_at": "2026-04-12 00:07:26",
+      "updated_at": "2026-04-12T00:07:26.786Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-LATTICE-RIGHTS-MAP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-REPAIR-MORAL-CULPABILITY",
+          "link_type": "enables"
+        },
+        {
+          "id": "ETH-VIOLATION-SCAPEGOATING",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-FRAME-DEONTOLOGY",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "framework",
+      "name": "Framework: Deontology",
+      "kind": "pattern",
+      "triad": "📜⚖️🚫",
+      "role": "Evaluates actions based on adherence to rules and duties.",
+      "macro": "analyze(action) -> compare(rules/duties) -> diagnose(moral_obligation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "persistent",
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "When assessing duty and rules."
+      ],
+      "failure_mode": "Rule-following leads to a disastrous outcome.",
+      "created_at": "2026-04-12 00:27:34",
+      "updated_at": "2026-04-12T00:27:34.893Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-TROLLEY-PROBLEM",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-MECHANISM-CATEGORICAL-IMPERATIVE",
+          "link_type": "informs"
+        },
+        {
+          "id": "ETH-MECHANISM-COMPASSION-INFUSION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Justice Frameworks",
+      "kind": "lattice",
+      "triad": "⚖️🏛️🌐",
+      "role": "Orchestrates the application of various justice models (restorative, retributive, distributive).",
+      "macro": "model(situation) -> apply(distributive, retributive, restorative_frames) -> govern(analysis)",
+      "lattice": {
+        "topology": "deductive",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "fairness-alignment",
+          "non-coercion"
+        ],
+        "topology": "multi-frame-lattice",
+        "function": "Govern the analysis and application of justice frameworks.",
+        "substrate": [
+          "legal-symbolic mesh"
+        ],
+        "gate": [
+          "trust-consensus"
+        ],
+        "commit": "Refactored for Justice-frame synthesis.",
+        "temporal": "persistent context"
+      },
+      "activation_conditions": [
+        "Redress determination."
+      ],
+      "failure_mode": "Misaligned justice application.",
+      "created_at": "2026-04-12 00:27:35",
+      "updated_at": "2026-04-12T00:27:35.678Z",
+      "linked_patterns": [
+        {
+          "id": "DT-PER-REFEREE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-DILEMMA-TROLLEY-PROBLEM",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-MECHANISM-ACCOUNTABILITY-ENFORCEMENT",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-MECHANISM-COMPASSION-INFUSION",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-MECHANISM-CORRUPTION-CLEANSER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-MECHANISM-DUE-PROCESS",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-MECHANISM-FAIR-PROCEDURE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-MECHANISM-RESPONSIBILITY-SHARING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-MECHANISM-RESTITUTION",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "ETH-MECHANISM-TRANSPARENCY-MANDATE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-MECHANISM-WHISTLEBLOWING",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-PER-ADJUDICATOR",
+          "link_type": "orchestrates"
+        },
+        {
+          "id": "ETH-PROCESS-RESTORATIVE-JUSTICE",
+          "link_type": "orchestrates"
+        },
+        {
+          "id": "ETH-REPAIR-GOLDENRULE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-REPAIR-INTEGRITY",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-REPAIR-MORAL-CULPABILITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-REPAIR-STAKEHOLDER-MAP",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-SEED-COMPROMISE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SEED-CONFLICTINTEREST",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-SEED-DOUBLETALK",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SEED-EXCLUSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SEED-EXPLOIT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SEED-MORAL-LUCK",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-SEED-PROMISE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-SEED-STAKEHOLDER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SEED-TRAJECTORY-BLIND",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SYM-DIFFERENCE-LAW",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-VIOLATION-SCAPEGOATING",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "ETH-MECHANISM-FAIR-PROCEDURE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "mechanism",
+      "name": "Mechanism: Fair Procedure Guarantee",
+      "kind": "pattern",
+      "triad": "⚖️📏✅",
+      "role": "Ensures procedures are applied equally and transparently.",
+      "macro": "intervene(process) -> enforce(equal_rules) -> audit(outcomes)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "persistent",
+        "function": "govern"
+      },
+      "activation_conditions": [
+        "Procedural fairness check."
+      ],
+      "failure_mode": "Biased outcomes.",
+      "created_at": "2026-04-12 00:27:35",
+      "updated_at": "2026-04-12T00:27:35.805Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LATTICE-JUSTICE-FRAMEWORKS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "ETH-MECHANISM-DUE-PROCESS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-MECHANISM-TRANSPARENCY-MANDATE",
+          "link_type": "enables"
+        }
+      ]
+    },
+    {
+      "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Ethical Framework Triangulation",
+      "kind": "lattice",
+      "triad": "📐⚖️🧠",
+      "role": "Synthesizes utilitarian, deontological, and virtue ethics for robust decision making.",
+      "macro": "assess(utility) + assess(duty) + assess(virtue) -> synthesize(decision)",
+      "lattice": {
+        "topology": "deductive",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "Integrate and triangulate divergent ethical frameworks.",
+        "temporal": "continuous application",
+        "gate": [
+          "context_availability"
+        ],
+        "commit": "Refactored for structural synthesis and precise activation.",
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "comprehensiveness"
+        ],
+        "topology": "triangular-synthesis",
+        "substrate": [
+          "symbolic reasoning mesh"
+        ]
+      },
+      "activation_conditions": [
+        "Conflicting ethical frameworks."
+      ],
+      "failure_mode": "Framework paralysis.",
+      "created_at": "2026-04-12 00:27:36",
+      "updated_at": "2026-04-12T00:27:36.557Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-HOBBESIAN-CHOICE",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "ETH-DILEMMA-TROLLEY-PROBLEM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-DILEMMA-WICKED-PROBLEM",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-FRAME-CARE-ETHICS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-FRAME-CONTRACTARIANISM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-FRAME-DEONTOLOGY",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-FRAME-UTILITARIAN",
+          "link_type": "synthesized_from"
+        },
+        {
+          "id": "ETH-FRAME-VIRTUE",
+          "link_type": "synthesized_from"
+        },
+        {
+          "id": "ETH-MECHANISM-CATEGORICAL-IMPERATIVE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-MECHANISM-COMPASSION-INFUSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-MECHANISM-CORRUPTION-CLEANSER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-MECHANISM-DOUBLE-EFFECT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-MECHANISM-MAXIMIZE-UTILITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-MECHANISM-MORAL-CONSISTENCY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-PER-ETHICIST",
+          "link_type": "informs"
+        },
+        {
+          "id": "ETH-REPAIR-HARM-REDRESS",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-REPAIR-STAKEHOLDER-MAP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-SEED-CONFLICTINTEREST",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "ETH-VIOLATION-DECEPTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NAR-LAT-ARCHETYPE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SC-LATTICE-PHASES",
+          "link_type": "contrasts_with"
+        }
+      ]
+    },
+    {
+      "id": "ETH-DILEMMA-HOBBESIAN-CHOICE",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "",
+      "name": "Dilemma: The Hobbesian Choice",
+      "kind": "pattern",
+      "triad": "🔥🏛️ Hobson's choice",
+      "role": "A forced choice between societal collapse via external threat (nature) or internal decay (tyranny).",
+      "macro": "detect(existential_threat) -> contrast(survival_vs_principle) -> force(choice_under_duress)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "explicit-choice"
+        ],
+        "commit": "forced_choice",
+        "function": "risk_arbitrage",
+        "gate": [
+          "imminent_existential_threat",
+          "democratic_consent"
+        ],
+        "substrate": [
+          "political_systems",
+          "ecological_systems"
+        ],
+        "topology": "fork",
+        "temporal": "critical_juncture"
+      },
+      "activation_conditions": [
+        "An existential threat requires a response that undermines a core societal value.",
+        "A choice between guaranteed catastrophe and the potential for a different kind of collapse."
+      ],
+      "failure_mode": "Choosing democracy leads to extinction (Type II error); choosing survival leads to tyranny (Type I error).",
+      "created_at": "2026-04-12 00:27:36",
+      "updated_at": "2026-04-12T00:27:36.677Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-WICKED-PROBLEM",
+          "link_type": "contrasts_with"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "contrasts_with"
+        }
+      ]
+    },
+    {
+      "id": "ETH-FRAME-CONTRACTARIANISM",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "framework",
+      "name": "Framework: Contractarianism",
+      "kind": "pattern",
+      "triad": "🤝📜⚖️",
+      "role": "Evaluates actions based on mutual agreements and social contracts.",
+      "macro": "analyze(situation) -> identify(implicit_agreements) -> diagnose(social_contract)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "contract",
+        "function": "diagnose",
+        "temporal": "persistent",
+        "topology": "network"
+      },
+      "activation_conditions": [
+        "When assessing social agreements."
+      ],
+      "failure_mode": "The implicit 'contract' is itself unjust.",
+      "created_at": "2026-04-12 00:27:38",
+      "updated_at": "2026-04-12T00:27:38.247Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-DILEMMA-FREE-RIDER",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "ETH-LATTICE-FRAMEWORK-TRIANGULATION",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "ETH-PROCESS-ACCOUNTABILITY",
+      "domain_id": "ethics",
+      "symbol_domain": "ethics",
+      "symbol_tag": "process",
+      "name": "Accountability Process",
+      "kind": "pattern",
+      "triad": "🧾👀⚖️",
+      "role": "The process of answering for one's actions and results.",
+      "macro": "review(outcome) -> compare(commitment) -> accept(consequences)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "evidence"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "truthfulness"
+        ],
+        "commit": "report",
+        "function": "verify",
+        "temporal": "retrospective",
+        "topology": "audit"
+      },
+      "activation_conditions": [
+        "evaluate(outcome)"
+      ],
+      "failure_mode": "Blame shifting or denial.",
+      "created_at": "2026-04-12 00:28:45",
+      "updated_at": "2026-04-12T00:28:45.192Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-LAT-INTEGRITY-CYCLE",
+          "link_type": "contains"
+        },
+        {
+          "id": "ETH-LAT-INTEGRITY-CYCLE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "ETH-MECHANISM-ACCOUNTABILITY-ENFORCEMENT",
+          "link_type": "required_by"
+        }
+      ]
+    }
+  ]
+}

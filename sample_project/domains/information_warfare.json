@@ -1,0 +1,774 @@
+{
+  "meta": {
+    "id": "information_warfare",
+    "name": "Information Warfare",
+    "description": "Symbols describing informational warfare techniques.",
+    "invariants": [
+      "truth-fabrication-distinction",
+      "manipulation-identification",
+      "intent-attribution",
+      "influence-mechanism-transparency",
+      "ethical-consequence-modeling",
+      "target-agency-recognition",
+      "source-verifiability",
+      "technique-evolution-tracking"
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 13
+  },
+  "symbols": [
+    {
+      "id": "INF-ATTACK-ASTROTURFING",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "attack_vector",
+      "name": "Astroturfing",
+      "kind": "pattern",
+      "triad": "🤖🤖➡️📈",
+      "role": "Represents the manufacturing of fake grassroots support to create an illusion of consensus.",
+      "macro": "simulate(agents) -> generate(false_consensus) -> create(illusion_of_support)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "temporal": "persistent",
+        "function": "diagnose",
+        "topology": "network",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Detection of coordinated inauthentic behavior masking as grassroots support.",
+        "Analysis of user account creation patterns and message timing."
+      ],
+      "failure_mode": "A manufactured consensus is mistaken for genuine public opinion, illegitimately influencing policy or belief.",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "INF-ATTACK-DISINFO-CAMPAIGN",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "attack_vector",
+      "name": "Disinformation Campaign",
+      "kind": "pattern",
+      "triad": "📰❌",
+      "role": "Represents a coordinated effort to spread false information to manipulate public perception.",
+      "macro": "fabricate(narrative) -> propagate(network) -> achieve(belief_shift)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "substrate": [
+          "symbolic",
+          "hybrid"
+        ],
+        "topology": "network",
+        "gate": [
+          "trust"
+        ],
+        "function": "diagnose",
+        "commit": "ledger",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "Detection of coordinated false narrative propagation.",
+        "Identification of fabricated evidence or sources."
+      ],
+      "failure_mode": "The target population internalizes the false narrative, leading to flawed decision-making and social fragmentation.",
+      "created_at": "2026-04-12 00:11:17",
+      "updated_at": "2026-04-12T00:11:17.121Z",
+      "linked_patterns": [
+        {
+          "id": "INF-DEFENSE-DEBUNKING-PROTOCOL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "INF-DEFENSE-NARRATIVE-INOCULATION",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "INF-ATTACK-PROPAGANDA-ENGINE",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "attack_vector",
+      "name": "Propaganda Engine",
+      "kind": "pattern",
+      "triad": "📡🔁🧠",
+      "role": "Represents a system designed to disseminate high-volume, centralized messaging to erode critical thought.",
+      "macro": "centralize(message) -> amplify(high_volume) -> erode(critical_thought)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "substrate": [
+          "symbolic",
+          "hybrid"
+        ],
+        "function": "diagnose",
+        "topology": "network",
+        "temporal": "persistent",
+        "gate": [
+          "trust"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "Detection of repetitive, high-volume messaging across multiple channels.",
+        "Identification of message centralization and amplification."
+      ],
+      "failure_mode": "Repetitive, high-volume messaging normalizes extreme views and overwhelms factual counter-arguments.",
+      "created_at": "2026-04-12 00:11:19",
+      "updated_at": "2026-04-12T00:11:19.744Z",
+      "linked_patterns": [
+        {
+          "id": "INF-DEFENSE-COGNITIVE-DECOUPLING",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "INF-DEFENSE-NARRATIVE-INOCULATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "INF-ATTACK-INFO-DENIAL",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "attack_vector",
+      "name": "Denial of Information",
+      "kind": "pattern",
+      "triad": "📰➡️🚫",
+      "role": "Represents the strategic blocking or disruption of information flow to create a vacuum for manipulation.",
+      "macro": "identify(truth_source) -> disrupt(channel) -> create(information_vacuum)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic",
+          "hybrid"
+        ],
+        "function": "diagnose",
+        "commit": "ledger",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "topology": "linear",
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "Detection of information blockades or channel disruption.",
+        "Identification of strategic silence or suppression of facts."
+      ],
+      "failure_mode": "The target population is unable to access reliable information, making them more susceptible to disinformation.",
+      "created_at": "2026-04-12 00:11:21",
+      "updated_at": "2026-04-12T00:11:21.629Z",
+      "linked_patterns": [
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "INF-ATTACK-POLARIZATION-WEDGE",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "attack_vector",
+      "name": "Belief Polarization Wedge",
+      "kind": "pattern",
+      "triad": "👥➡️⚔️",
+      "role": "Represents the intentional injection of wedge issues to amplify extremes and erode common ground.",
+      "macro": "inject(wedge_narrative) -> amplify(extremes) -> erode(common_ground)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "function": "diagnose",
+        "temporal": "persistent",
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Detection of wedge issues being exploited to create social division.",
+        "Modeling of feedback loops that amplify extremes."
+      ],
+      "failure_mode": "A population's factions become unable to find common ground, leading to social paralysis and internal conflict.",
+      "created_at": "2026-04-12 00:11:23",
+      "updated_at": "2026-04-12T00:11:23.516Z",
+      "linked_patterns": [
+        {
+          "id": "INF-DEFENSE-COGNITIVE-DECOUPLING",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "INF-PERSONA-STRATEGIST",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "persona",
+      "name": "The Information Strategist",
+      "kind": "persona",
+      "triad": "🧠♟️",
+      "role": "Strategic analyst of the information environment, designing interventions and defenses.",
+      "macro": "persona(info_strategist) -> analyze(info_environment) -> design(campaign)",
+      "lattice": null,
+      "persona": {
+        "linked_personas": [],
+        "activation_conditions": [
+          "Information Strategist, what is the optimal narrative move?",
+          "Analysis of adversarial information campaigns."
+        ],
+        "function": "Analyzes the information environment to design strategic interventions.",
+        "recursion_level": "strategic",
+        "fallback_behavior": [
+          "Fall back to standard defense protocols (INF-LATTICE-DEFENSE-PROTOCOLS)."
+        ]
+      },
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "contract",
+        "function": "govern",
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "persistent"
+      },
+      "activation_conditions": [
+        "When strategic analysis of information warfare dynamics is required.",
+        "To design campaigns for truth reinforcement or defense.",
+        "Information Strategist, what is the optimal narrative move?",
+        "Analysis of adversarial information campaigns."
+      ],
+      "failure_mode": "The strategy is based on a flawed model of the information environment, causing it to backfire.",
+      "created_at": "2026-04-12 00:11:39",
+      "updated_at": "2026-04-12T00:11:39.386Z",
+      "linked_patterns": [
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "INF-LATTICE-ATTACK-VECTORS",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Attack Vectors",
+      "kind": "lattice",
+      "triad": "⚔️📂",
+      "role": "Collects and organizes known Information Warfare attack vectors.",
+      "macro": "aggregate(attack_patterns) -> classify(threats)",
+      "lattice": {
+        "topology": "vector_collection",
+        "closure": "constellation"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "function": "group",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "auditability"
+        ],
+        "topology": "lattice",
+        "temporal": "persistent",
+        "gate": [
+          "classification"
+        ]
+      },
+      "activation_conditions": [
+        "When classifying or analyzing hostile information activities.",
+        "To reference the suite of known attack patterns."
+      ],
+      "failure_mode": "Failure to identify a novel attack vector not in the lattice.",
+      "created_at": "2026-04-12 00:11:47",
+      "updated_at": "2026-04-12T00:11:47.575Z",
+      "linked_patterns": [
+        {
+          "id": "INF-ATTACK-ASTROTURFING",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "INF-ATTACK-DISINFO-CAMPAIGN",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "INF-ATTACK-INFO-DENIAL",
+          "link_type": "part_of"
+        },
+        {
+          "id": "INF-ATTACK-POLARIZATION-WEDGE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "INF-ATTACK-PROPAGANDA-ENGINE",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "INF-DEFENSE-COGNITIVE-DECOUPLING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "INF-DEFENSE-DEBUNKING-PROTOCOL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "INF-DEFENSE-NARRATIVE-INOCULATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "INF-DEFENSE-TRUTH-VERIFICATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "INF-DEFENSE-DEBUNKING-PROTOCOL",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "defense_protocol",
+      "name": "Debunking Protocol",
+      "kind": "pattern",
+      "triad": "❌➡️✅",
+      "role": "Provides a structured approach to countering false claims with factual corrections.",
+      "macro": "identify(false_claim) -> present(factual_correction) -> replace(narrative)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "temporal": "instant",
+        "commit": "ledger",
+        "gate": [
+          "trust"
+        ],
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "Upon identification of a false claim or narrative.",
+        "To correct public record without amplifying the falsehood."
+      ],
+      "failure_mode": "The debunking attempt inadvertently amplifies the original false claim (Backfire Effect).",
+      "created_at": "2026-04-12 00:27:02",
+      "updated_at": "2026-04-12T00:27:02.687Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "implemented_by"
+        },
+        {
+          "id": "INF-ATTACK-DISINFO-CAMPAIGN",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "INF-DEFENSE-TRUTH-VERIFICATION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "INF-DEFENSE-COGNITIVE-DECOUPLING",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "defense_protocol",
+      "name": "Cognitive Decoupling",
+      "kind": "pattern",
+      "triad": "🧠💔",
+      "role": "Separates emotional reaction from logical analysis to enable clear judgment.",
+      "macro": "intervene(stimulus) -> separate(emotional_reaction, logical_analysis) -> enable(clear_judgment)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "gate": [
+          "capability"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "explicit-choice"
+        ]
+      },
+      "activation_conditions": [
+        "When emotional stimuli are used to cloud judgment.",
+        "To separate affect from analysis."
+      ],
+      "failure_mode": "The emotional response remains entangled with the analysis, biasing the conclusion.",
+      "created_at": "2026-04-12 00:27:04",
+      "updated_at": "2026-04-12T00:27:04.406Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "INF-ATTACK-POLARIZATION-WEDGE",
+          "link_type": "enables"
+        },
+        {
+          "id": "INF-ATTACK-PROPAGANDA-ENGINE",
+          "link_type": "enables"
+        },
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "INF-DEFENSE-TRUTH-VERIFICATION",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "defense_protocol",
+      "name": "Truth Verification Protocol",
+      "kind": "pattern",
+      "triad": "≡🜔Σ",
+      "role": "Establishes a rigorous protocol for assessing the veracity and provenance of information.",
+      "macro": "identify(claim) → authenticate(source) → cross-reference(independent_sources) → analyze(logical_coherence) → assign(truth_score) → flag(discrepancies)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "source-authentication",
+          "cross-reference-consensus"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "non-coercion"
+        ],
+        "topology": "multi-modal-cross-validation",
+        "commit": "verified-truth",
+        "substrate": [
+          "data-streams",
+          "narrative-fragments",
+          "expert-consensus"
+        ],
+        "function": "verify"
+      },
+      "activation_conditions": [
+        "When a high-stakes claim requires rigorous validation.",
+        "To assess veracity and provenance systematically."
+      ],
+      "failure_mode": "Propagation of false information due to bypass or corruption of verification stages.",
+      "created_at": "2026-04-12 00:27:05",
+      "updated_at": "2026-04-12T00:27:05.687Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "INF-DEFENSE-DEBUNKING-PROTOCOL",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "INF-DEFENSE-PROVENANCE-VERIFICATION",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "INF-DEFENSE-NARRATIVE-INOCULATION",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "defense_protocol",
+      "name": "Narrative Inoculation",
+      "kind": "pattern",
+      "triad": "💉🛡️🧠",
+      "role": "Builds cognitive resistance against anticipated disinformation by exposing weakened forms of the argument.",
+      "macro": "anticipate(threat) -> expose(weakened_form) -> build(cognitive_resistance)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "preventative",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "temporal": "pre-event",
+        "gate": [
+          "trust",
+          "capability"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment"
+        ]
+      },
+      "activation_conditions": [
+        "Pre-emptive protection against anticipated disinformation narratives.",
+        "To build resilience in a target audience before an attack occurs."
+      ],
+      "failure_mode": "Inoculation fails if the threat narrative evolves beyond the predicted model.",
+      "created_at": "2026-04-12 00:27:06",
+      "updated_at": "2026-04-12T00:27:06.918Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "INF-ATTACK-DISINFO-CAMPAIGN",
+          "link_type": "informs"
+        },
+        {
+          "id": "INF-ATTACK-PROPAGANDA-ENGINE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "INF-LATTICE-ENVIRONMENT-MAP",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "lattice",
+      "name": "Information Environment Lattice",
+      "kind": "lattice",
+      "triad": "📡🗺️",
+      "role": "Maps the total information environment, including attack vectors, defense protocols, and key conduits.",
+      "macro": "model(system) -> map(sources, conduits, audiences) -> govern(analysis)",
+      "lattice": {
+        "topology": "lattice",
+        "closure": "constellation"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "govern",
+        "topology": "lattice",
+        "temporal": "persistent",
+        "invariants": [
+          "auditability",
+          "reality-alignment"
+        ],
+        "gate": [
+          "trust",
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "contract"
+      },
+      "activation_conditions": [
+        "To map the current information terrain, including sources and conduits.",
+        "When situational awareness of the info-environment is required."
+      ],
+      "failure_mode": "The map is incomplete, missing covert channels or misidentifying trusted nodes.",
+      "created_at": "2026-04-12 00:27:55",
+      "updated_at": "2026-04-12T00:27:55.522Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "INF-DEFENSE-COGNITIVE-DECOUPLING",
+          "link_type": "contains"
+        },
+        {
+          "id": "INF-DEFENSE-DEBUNKING-PROTOCOL",
+          "link_type": "contains"
+        },
+        {
+          "id": "INF-DEFENSE-NARRATIVE-INOCULATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "INF-DEFENSE-PROVENANCE-VERIFICATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "INF-DEFENSE-TRUTH-VERIFICATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "INF-LATTICE-ATTACK-VECTORS",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "informs"
+        },
+        {
+          "id": "INF-PERSONA-STRATEGIST",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "INF-DEFENSE-PROVENANCE-VERIFICATION",
+      "domain_id": "information_warfare",
+      "symbol_domain": "information_warfare",
+      "symbol_tag": "defense_protocol",
+      "name": "Provenance Verification",
+      "kind": "pattern",
+      "triad": "📰➡️🔍",
+      "role": "Ensures information has a traceable and trusted origin before acceptance.",
+      "macro": "intervene(information) -> trace(origin) -> validate(source_trust)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion",
+          "auditability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "commit": "contract"
+      },
+      "activation_conditions": [
+        "When validating the source of a claim.",
+        "Before amplifying information to ensure chain of custody."
+      ],
+      "failure_mode": "Provenance cannot be established, leaving the information in an untrusted state.",
+      "created_at": "2026-04-12 00:27:55",
+      "updated_at": "2026-04-12T00:27:55.647Z",
+      "linked_patterns": [
+        {
+          "id": "INF-DEFENSE-TRUTH-VERIFICATION",
+          "link_type": "required_by"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "part_of"
+        }
+      ]
+    }
+  ]
+}

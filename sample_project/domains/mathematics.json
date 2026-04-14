@@ -1,0 +1,582 @@
+{
+  "meta": {
+    "id": "mathematics",
+    "name": "Mathematics",
+    "description": "Formal symbols, axioms, theorems, and proofs in mathematical logic and foundational systems.",
+    "invariants": [
+      "truth-preservation",
+      "consistency",
+      "completeness",
+      "proof-validity"
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 12
+  },
+  "symbols": [
+    {
+      "id": "MATH-PROOF-EUCLIDEAN-PA",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "proof",
+      "name": "Euclid's Proof of Infinite Primes",
+      "kind": "pattern",
+      "triad": "📐🟰✏️",
+      "role": "Classic proof of the infinitude of prime numbers.",
+      "macro": "prove(infinite_primes) -> Euclid's_argument -> conclude(infinitude)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "number_theory_proof",
+        "topology": "linear",
+        "commit": "theorem_validation",
+        "gate": [
+          "proof_verified"
+        ],
+        "substrate": [
+          "arithmetic_logic"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_proof_euclid_primes"
+      ],
+      "failure_mode": "Misinterpretation of coprime construction leading to invalid conclusion",
+      "created_at": "2026-04-11 23:51:21",
+      "updated_at": "2026-04-11T23:51:21.818Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "MATH-PROOF-PAINLEVE-MODERN",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "proof",
+      "name": "Algebraic Proof of Pythagorean Theorem",
+      "kind": "pattern",
+      "triad": "📊🧮🔍",
+      "role": "Algebraic proof of the Pythagorean theorem.",
+      "macro": "prove(pythagorean_theorem) -> algebraic_decomposition -> derive(a^2+b^2=c^2)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "geometry_proof",
+        "topology": "linear",
+        "commit": "theorem_validation",
+        "gate": [
+          "proof_verified"
+        ],
+        "substrate": [
+          "geometric_logic"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_proof_pythagorean"
+      ],
+      "failure_mode": "Geometric misalignment causing incorrect equality",
+      "created_at": "2026-04-11 23:51:22",
+      "updated_at": "2026-04-11T23:51:22.570Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "MATH-CONCEPT-GROUP-ABSTRACTION",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "concept",
+      "name": "Group Theory – Abstract Group Definition",
+      "kind": "pattern",
+      "triad": "⚙️🔗📚",
+      "role": "Fundamental concept of a mathematical group.",
+      "macro": "define(group) -> set + binary_operation + axioms -> enable(abstract_algebra)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "algebraic_structure",
+        "topology": "node",
+        "commit": "definition_record",
+        "gate": [
+          "axioms_validated"
+        ],
+        "substrate": [
+          "set_theory"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_concept_group"
+      ],
+      "failure_mode": "Violation of closure or associativity breaking group axioms",
+      "created_at": "2026-04-11 23:51:23",
+      "updated_at": "2026-04-11T23:51:23.519Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "MATH-CONCEPT-REAL-NUMBERS-COMPLETENESS",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "concept",
+      "name": "Real Numbers – Completeness Axiom",
+      "kind": "pattern",
+      "triad": "🔢∞🧩",
+      "role": "Completeness property of the real numbers.",
+      "macro": "define(completeness) -> every_cauchy_sequence_converges -> real_numbers_complete",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "analysis_foundation",
+        "topology": "node",
+        "commit": "axiom_record",
+        "gate": [
+          "axioms_validated"
+        ],
+        "substrate": [
+          "metric_spaces"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_concept_completeness"
+      ],
+      "failure_mode": "Assuming incompleteness leads to flawed analysis",
+      "created_at": "2026-04-11 23:51:24",
+      "updated_at": "2026-04-11T23:51:24.229Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "MATH-PATTERN-SET-THEOREM",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "pattern",
+      "name": "Set Theory Theorem Pattern",
+      "kind": "pattern",
+      "triad": "🧩📚🔎",
+      "role": "General pattern for set theory theorems using ZFC.",
+      "macro": "prove(set_theory_theorem) -> apply(zermelo_fraenkel_axioms) -> derive(result)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "set_theory_proof",
+        "topology": "linear",
+        "commit": "theorem_validation",
+        "gate": [
+          "proof_verified"
+        ],
+        "substrate": [
+          "axiomatic_logic"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_set_theory_pattern"
+      ],
+      "failure_mode": "Improper axiom selection causing inconsistency",
+      "created_at": "2026-04-11 23:51:24",
+      "updated_at": "2026-04-11T23:51:24.971Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "MATH-PROOF-IRRATIONAL-SQRT2",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "proof",
+      "name": "Proof of the Irrationality of √2",
+      "kind": "pattern",
+      "triad": "√2❌🧮",
+      "role": "Classic proof that √2 is irrational by contradiction.",
+      "macro": "prove(irrational_sqrt2) -> assume_rational(p/q) -> derive_contradiction -> conclude(irrational)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "number_theory_proof",
+        "topology": "linear",
+        "commit": "theorem_validation",
+        "gate": [
+          "proof_verified"
+        ],
+        "substrate": [
+          "arithmetic_logic"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_proof_sqrt2"
+      ],
+      "failure_mode": "Faulty reduction leading to false rational claim",
+      "created_at": "2026-04-11 23:51:25",
+      "updated_at": "2026-04-11T23:51:25.677Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "MATH-PROOF-BANACH-TARSKI-PARADOX",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "proof",
+      "name": "Banach–Tarski Paradox Proof",
+      "kind": "pattern",
+      "triad": "🌀⚖️✂️",
+      "role": "Banach–Tarski paradox showing a sphere can be split and reassembled into two copies of itself.",
+      "macro": "prove(paradox) -> assume_finite_additivity -> construct_decomposition -> derive_contradiction",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "set_theory_proof",
+        "topology": "nonlinear",
+        "commit": "theorem_validation",
+        "gate": [
+          "proof_verified"
+        ],
+        "substrate": [
+          "axiomatic_logic"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_paradox_banach_tarski"
+      ],
+      "failure_mode": "Misapplication of axiom of choice causing logical error",
+      "created_at": "2026-04-11 23:51:26",
+      "updated_at": "2026-04-11T23:51:26.370Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "MATH-PROOF-BASEL-PROBLEM",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "proof",
+      "name": "Basel Problem Proof",
+      "kind": "pattern",
+      "triad": "π🔢🧩",
+      "role": "Euler’s solution to the Basel problem (sum of reciprocal squares).",
+      "macro": "prove(basel_problem) -> apply_euler_product(zeta2) -> derive(pi_squared_over_6)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "analysis_proof",
+        "topology": "linear",
+        "commit": "theorem_validation",
+        "gate": [
+          "proof_verified"
+        ],
+        "substrate": [
+          "series_logic"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_basel_problem"
+      ],
+      "failure_mode": "Incorrect series manipulation leading to false sum",
+      "created_at": "2026-04-11 23:51:27",
+      "updated_at": "2026-04-11T23:51:27.053Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "MATH-PROOF-FUNDAMENTAL-THM-ALGEBRA",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "proof",
+      "name": "Fundamental Theorem of Algebra Proof",
+      "kind": "pattern",
+      "triad": "ℂ⚙️📈",
+      "role": "Fundamental Theorem of Algebra – every non‑constant polynomial over ℂ has a root.",
+      "macro": "prove(fundamental_theorem_algebra) -> use_complex_analysis -> show_root_existence",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "algebra_proof",
+        "topology": "linear",
+        "commit": "theorem_validation",
+        "gate": [
+          "proof_verified"
+        ],
+        "substrate": [
+          "complex_analysis"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_fundamental_theorem_algebra"
+      ],
+      "failure_mode": "Misuse of complex analysis causing missing roots",
+      "created_at": "2026-04-11 23:51:27",
+      "updated_at": "2026-04-11T23:51:27.736Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "MATH-PROOF-POISSON-DISTRIBUTION",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "proof",
+      "name": "Poisson Distribution Derivation",
+      "kind": "pattern",
+      "triad": "λ📊⚙️",
+      "role": "Derivation of the Poisson distribution as a limiting case of the binomial.",
+      "macro": "prove(poisson_distribution) -> limit_binomial(p→0,n→∞,np=λ) -> derive_exp_form",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "probability_proof",
+        "topology": "linear",
+        "commit": "theorem_validation",
+        "gate": [
+          "proof_verified"
+        ],
+        "substrate": [
+          "probabilistic_logic"
+        ],
+        "temporal": "static",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_poisson_derivation"
+      ],
+      "failure_mode": "Incorrect limit handling leading to invalid probability mass function",
+      "created_at": "2026-04-11 23:51:28",
+      "updated_at": "2026-04-11T23:51:28.506Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "PER-MATH-ARCHITECT",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "persona",
+      "name": "Mathematics Architect Persona",
+      "kind": "persona",
+      "triad": "📐🧩⚙️",
+      "role": "Guides mathematical lattice usage, maps formal logic to symbolic reasoning workflows, and ensures proof integrity.",
+      "macro": "interpret(logical_lattice) -> design(reasoning_strategies) -> optimize(symbolic_execution)",
+      "lattice": null,
+      "persona": {
+        "recursion_level": "1",
+        "function": "logic_advisor",
+        "fallback_behavior": [
+          "refer_to_LOG-LATTICE-FORMAL-LOGIC-V3"
+        ],
+        "linked_personas": []
+      },
+      "data": null,
+      "facets": {
+        "function": "logic_guidance",
+        "topology": "bidirectional",
+        "commit": "proof_assistance",
+        "gate": [
+          "strategy_validated"
+        ],
+        "substrate": [
+          "logical_lattice",
+          "reasoning_models"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "truth-preservation",
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "request_math_guidance"
+      ],
+      "failure_mode": "Misapplication of logical constructs causing invalid inference chains.",
+      "created_at": "2026-04-12 00:11:48",
+      "updated_at": "2026-04-12T00:11:48.496Z",
+      "linked_patterns": [
+        {
+          "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "MATH-LATTICE-FORMAL-FOUNDATION-V1",
+      "domain_id": "mathematics",
+      "symbol_domain": "mathematics",
+      "symbol_tag": "",
+      "name": "Mathematical Foundation Lattice (v1)",
+      "kind": "lattice",
+      "triad": "🔢🏛️🔗",
+      "role": "Synthesizes formal logic axioms, inference rules, and fallacy detectors into a unified mathematical foundation lattice for recursive symbolic reasoning.",
+      "macro": "aggregate(logical_axioms) → integrate(inference_rules) → embed(fallacy_detectors) → synthesize(mathematical_lattice)",
+      "lattice": {
+        "topology": "inductive",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "foundational synthesis",
+        "topology": "inductive",
+        "commit": "truth-preservation",
+        "gate": [
+          "validity",
+          "consistency",
+          "completeness"
+        ],
+        "substrate": [
+          "axioms",
+          "inference_rules",
+          "fallacies"
+        ],
+        "temporal": "persistent",
+        "invariants": [
+          "truth-preservation",
+          "consistency",
+          "completeness",
+          "proof-validity"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:11:49",
+      "updated_at": "2026-04-12T00:11:49.284Z",
+      "linked_patterns": [
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "synthesized_from"
+        },
+        {
+          "id": "MATH-CONCEPT-GROUP-ABSTRACTION",
+          "link_type": "contains"
+        },
+        {
+          "id": "MATH-CONCEPT-REAL-NUMBERS-COMPLETENESS",
+          "link_type": "contains"
+        },
+        {
+          "id": "MATH-PATTERN-SET-THEOREM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "MATH-PROOF-BANACH-TARSKI-PARADOX",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "MATH-PROOF-BASEL-PROBLEM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "MATH-PROOF-EUCLIDEAN-PA",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "MATH-PROOF-FUNDAMENTAL-THM-ALGEBRA",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "MATH-PROOF-IRRATIONAL-SQRT2",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "MATH-PROOF-PAINLEVE-MODERN",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "MATH-PROOF-POISSON-DISTRIBUTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "PER-MATH-ARCHITECT",
+          "link_type": "informs"
+        }
+      ]
+    }
+  ]
+}

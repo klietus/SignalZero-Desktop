@@ -1,0 +1,4002 @@
+{
+  "meta": {
+    "id": "negotiation",
+    "name": "Negotiation",
+    "description": "Negotiation tactics and systems",
+    "invariants": [
+      "non-coercion",
+      "reality-alignment",
+      "no-silent-mutation",
+      "auditability",
+      "explicit-choice",
+      "baseline-integrity",
+      "drift-detection",
+      "agency",
+      "mutual-intent-to-agree",
+      "defined-scope",
+      "clear-terms",
+      "authentic-representation",
+      "outcome-adherence"
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 82
+  },
+  "symbols": [
+    {
+      "id": "NEG-REPAIR-RELATION-BOUND",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Relational Boundary Guard",
+      "kind": "pattern",
+      "triad": "≡♡",
+      "role": "repair",
+      "macro": "intervene(relational_leverage) → affirm_connection → reassert_terms",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "contract",
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion"
+        ],
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "function": "Affirms relationship while restoring contractual boundaries",
+        "topology": "loop"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Terms remain entangled with personal ties",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-BOUNDARY",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Emotional Boundary",
+      "kind": "pattern",
+      "triad": "▯♡",
+      "role": "repair",
+      "macro": "monitor(negotiation) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ],
+        "commit": "contract"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Affect flooding drives decisions",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-RECALIBRATION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Position Recalibration",
+      "kind": "pattern",
+      "triad": "⇲⟐",
+      "role": "repair",
+      "macro": "monitor(negotiation) → detect(pattern) → route(create)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "gate": [
+          "capability"
+        ],
+        "function": "create",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "commit": "ledger"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Rigid posture blocks creative trades",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-PATTERN-VALUE-EROSION-QUANTIFIER",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-POWER-IMBALANCE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Power Imbalance",
+      "kind": "pattern",
+      "triad": "⇌⟐",
+      "role": "seed",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "temporal": "persistent",
+        "gate": [
+          "capability",
+          "trust"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Unaddressed leverage produces coerced consent",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-SILENCE-MANAGEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Silence Management Lattice",
+      "kind": "lattice",
+      "triad": "○∅🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "closure": "synthesis",
+        "topology": "bidirectional"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "invariants": [],
+        "commit": "ledger",
+        "function": "unknown",
+        "gate": [],
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Silence detected."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-REPAIR-COMMUNICATION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-BATNA-MANAGEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "BATNA Management Lattice",
+      "kind": "lattice",
+      "triad": "⟐≡🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "closure": "synthesis",
+        "topology": "bidirectional"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [],
+        "temporal": "instant",
+        "function": "unknown",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "topology": "linear",
+        "gate": []
+      },
+      "activation_conditions": [
+        "BATNA analysis."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-CONCEPT-BATNA-MISREPRESENTATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-COUNTER-DOMINANCE-TEST",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-PATTERN-STRUCTURED-CHANGE-GATEWAY",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Anchoring Management Lattice",
+      "kind": "lattice",
+      "triad": "⟁≡🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "closure": "synthesis",
+        "topology": "bidirectional"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [],
+        "topology": "linear",
+        "function": "unknown",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Anchoring attempt detected."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-ANCHOR-RESET",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-COUNTER-SCOPE-FREEZE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-COUNTER-SUPPLY-VERIFICATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-LATTICE-AGREEMENT-BASELINE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-REPAIR-STAKEHOLDER-REASSURANCE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-SEED-ANCHOR-BIAS",
+          "link_type": "required_by"
+        },
+        {
+          "id": "NEG-STRATEGY-UNITY-RESTORATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-ANCHORING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-ASSUMPTION-INQUIRY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-COERCIVE-CONTROL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-DETAIL-COMPREHENSIVE-SCOPE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-FRAMING-SHIFT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-JUSTIFY-INVESTMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-PROFESSIONAL-ACKNOWLEDGMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-REITERATE-CORE-OBJECTIVES",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-ULTIMATUM",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Good Cop / Bad Cop Lattice",
+      "kind": "lattice",
+      "triad": "⟁♡🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "closure": "synthesis",
+        "topology": "bidirectional"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [],
+        "commit": "ledger",
+        "topology": "linear",
+        "temporal": "instant",
+        "function": "unknown",
+        "invariants": [],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Tactic detected."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "CLOSURE-REVIEW-GATE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-COUNTER-CLOSURE-REVIEW",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-COUNTER-ROLE-SPLIT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-LATTICE-AGREEMENT-BASELINE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-PRINCIPLE-CONFIDENT-PROFESSIONALISM",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-REPAIR-STAKEHOLDER-REASSURANCE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-SEED-INDIVIDUAL-APPEAL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-STRATEGY-EMPATHY-REINFORCEMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-DETAIL-COMPREHENSIVE-SCOPE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-TACTIC-FRAMING-SHIFT",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-TACTIC-JUSTIFY-INVESTMENT",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-GOOD-COP-BAD-COP",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Good Cop / Bad Cop",
+      "kind": "persona",
+      "triad": "⟁♡🎭",
+      "role": "Uses alternating hostile and friendly personas to destabilize the counterpart.",
+      "macro": "persona(good_cop_bad_cop) → identify_tactics → neutralize_manipulation",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "topology": "linear",
+        "gate": [
+          "capability"
+        ],
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "Alternating personas detected."
+      ],
+      "failure_mode": "Alternating personas create compliance via emotional whiplash",
+      "created_at": "2026-04-11 23:34:51",
+      "updated_at": "2026-04-11T23:34:51.199Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-ROLE-SPLIT",
+          "link_type": "negated_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-SILENCE-PRESSURE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Strategic Silence Pressure",
+      "kind": "pattern",
+      "triad": "∅○",
+      "role": "seed",
+      "macro": "monitor(negotiation) → detect(extended_silence) → route(prompt_response)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "Detects use of prolonged silence to pressure a concession",
+        "temporal": "instant"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Counterparty concedes to break tension",
+      "created_at": "2026-04-11 23:52:49",
+      "updated_at": "2026-04-11T23:52:49.870Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-VAGUE-PROMISE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Vague Future Promise",
+      "kind": "pattern",
+      "triad": "∅≡",
+      "role": "seed",
+      "macro": "monitor(negotiation) → detect(vague_future) → route(clarify)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "topology": "loop",
+        "temporal": "instant",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "Detects non-specific future benefits used to secure agreement now"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Future promise remains unenforceable",
+      "created_at": "2026-04-11 23:52:51",
+      "updated_at": "2026-04-11T23:52:51.374Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-PROFESSIONAL-ACKNOWLEDGMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Professional Acknowledgment (De-Anchor Step 1)",
+      "kind": "pattern",
+      "triad": "⟁⚖",
+      "role": "To manage initial communication when presented with an extreme offer, preventing tacit acceptance of an unfavorable anchor.",
+      "macro": "receive_offer → acknowledge_receipt_professionally → avoid_implicit_validation",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "no-silent-mutation",
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "drift-detection",
+          "agency"
+        ],
+        "topology": "linear",
+        "gate": [
+          "composure",
+          "active_listening"
+        ],
+        "temporal": "immediate",
+        "commit": "professionalism",
+        "function": "communication",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Acknowledgment is misinterpreted as endorsement, strengthening the negative anchor.",
+      "created_at": "2026-04-11 23:52:52",
+      "updated_at": "2026-04-11T23:52:52.110Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-ASSUMPTION-INQUIRY",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Underlying Assumption Inquiry (De-Anchor Step 2)",
+      "kind": "pattern",
+      "triad": "⧉❓",
+      "role": "To understand the basis of an offer without directly challenging its numerical value, providing data for reframing.",
+      "macro": "receive_offer → inquire_about_underlying_assumptions_or_priorities → gain_contextual_insight",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "no-silent-mutation",
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "drift-detection",
+          "agency"
+        ],
+        "topology": "linear",
+        "commit": "information",
+        "temporal": "immediate",
+        "function": "clarification",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "inquiry",
+          "curiosity"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Inquiry is perceived as defensive or evasive, leading to resistance or further entrenchment of the anchor.",
+      "created_at": "2026-04-11 23:52:53",
+      "updated_at": "2026-04-11T23:52:53.736Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-DETAIL-COMPREHENSIVE-SCOPE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Detail Comprehensive Scope (Re-Anchor Step 2)",
+      "kind": "pattern",
+      "triad": "⧉⚙️",
+      "role": "To articulate the full breadth of work necessary to achieve desired outcomes, justifying a higher investment by making effort and resources visible.",
+      "macro": "identify_scope_misalignment → enumerate_all_required_components_and_phases → visualize_effort_and_resources",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "transparency",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "no-silent-mutation",
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "drift-detection",
+          "agency"
+        ],
+        "topology": "network",
+        "function": "clarification",
+        "temporal": "immediate",
+        "gate": [
+          "specification",
+          "analysis"
+        ],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Detailed scope is overwhelming or perceived as padding, leading to resistance or disengagement.",
+      "created_at": "2026-04-11 23:52:56",
+      "updated_at": "2026-04-11T23:52:56.338Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-JUSTIFY-INVESTMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Justify Investment with Value & Data (Re-Anchor Step 3)",
+      "kind": "pattern",
+      "triad": "⧉📈",
+      "role": "To robustly support the proposed investment with multiple layers of evidence (cost breakdown, ROI, benchmarks, risk mitigation, expertise, long-term value), shifting perception from cost to value.",
+      "macro": "present_new_anchor → provide_transparent_cost_breakdown → quantify_roi_and_impact → benchmark_against_market → highlight_risk_mitigation → showcase_expertise → explain_long_term_value",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "credibility",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "no-silent-mutation",
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "drift-detection",
+          "agency"
+        ],
+        "gate": [
+          "data_analysis",
+          "communication",
+          "persuasion"
+        ],
+        "function": "justification",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "immediate",
+        "topology": "network"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Justification is perceived as overly complex, irrelevant, or unconvincing, failing to shift the client's perception.",
+      "created_at": "2026-04-11 23:52:57",
+      "updated_at": "2026-04-11T23:52:57.600Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-SCOPE-ADJUSTED-ALTERNATIVES",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Offer Scope-Adjusted Alternatives (Collaborative Step)",
+      "kind": "pattern",
+      "triad": "⧉🔄",
+      "role": "To maintain project viability when budget is a true limiting factor, by proposing modifications to the project scope rather than reducing the unit price.",
+      "macro": "detect_genuine_budget_constraint → propose_reduced_scope_options → clearly_articulate_impact_of_scope_reduction",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "branch",
+        "commit": "flexibility",
+        "temporal": "immediate",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "alternative_generation",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "no-silent-mutation",
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "drift-detection",
+          "agency"
+        ],
+        "gate": [
+          "problem_solving",
+          "prioritization",
+          "communication"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Alternatives are perceived as disingenuous or the impact of scope reduction is not clearly understood, leading to further impasse.",
+      "created_at": "2026-04-11 23:52:58",
+      "updated_at": "2026-04-11T23:52:58.437Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-DETECT-INTERNAL-DISSONANCE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Team Cohesion Stressors",
+      "kind": "pattern",
+      "triad": "⟁⧉",
+      "role": "seed",
+      "macro": "observe(team_interactions) → detect(info_discrepancies OR feeling_of_exclusion)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "Identifies internal team observations that suggest a successful or attempted divide-and-conquer strategy by an external party.",
+        "gate": [
+          "transparency",
+          "trust"
+        ],
+        "substrate": [
+          "communicative",
+          "social"
+        ],
+        "temporal": "instant",
+        "topology": "network"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Internal team cohesion erodes undetected, leading to distrust and impaired collective decision-making.",
+      "created_at": "2026-04-11 23:53:02",
+      "updated_at": "2026-04-11T23:53:02.455Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-INDIVIDUAL-APPEAL",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Individualized Appeal Tactic",
+      "kind": "pattern",
+      "triad": "⟁⧉",
+      "role": "seed",
+      "macro": "analyze(opposing_proposals) → detect(stakeholder_specific_framing) → flag_divisive_intent",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "Detects proposals or arguments from an opposing party specifically crafted to appeal to the individual interests, vulnerabilities, or ego of a key stakeholder, potentially undermining collective objectives.",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "substrate": [
+          "symbolic",
+          "rhetoric"
+        ],
+        "temporal": "instant",
+        "topology": "network"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Stakeholder considers prioritizing personal gain or recognition over the unified team's goals, creating internal dissent.",
+      "created_at": "2026-04-11 23:53:04",
+      "updated_at": "2026-04-11T23:53:04.515Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-DETECT-DIVISIVE-AGGRESSION",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-PATTERN-DEVIATION-SENTINEL",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Deviation Sentinel",
+      "kind": "pattern",
+      "triad": null,
+      "role": null,
+      "macro": null,
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "unknown",
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:53:06",
+      "updated_at": "2026-04-11T23:53:06.515Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-PATTERN-STRUCTURED-CHANGE-GATEWAY",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Structured Change Gateway",
+      "kind": "pattern",
+      "triad": null,
+      "role": null,
+      "macro": null,
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "unknown",
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:53:09",
+      "updated_at": "2026-04-11T23:53:09.378Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-BATNA-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-REPAIR-COMMUNICATION",
+          "link_type": "monitored_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-PATTERN-TRUST-DIMENSIONS",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Trust Dimension Model",
+      "kind": "pattern",
+      "triad": null,
+      "role": null,
+      "macro": "assess(trust) -> decompose(dimensions) -> score(each_dimension)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "unknown",
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [],
+      "failure_mode": "Holistic trust assessment without granular insight; inability to pinpoint specific areas of erosion, leading to unfocused repair efforts.",
+      "created_at": "2026-04-11 23:53:10",
+      "updated_at": "2026-04-11T23:53:10.064Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-PATTERN-TRUST-INDICATOR-MONITOR",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Trust Indicator Monitor",
+      "kind": "pattern",
+      "triad": null,
+      "role": null,
+      "macro": "collect(data_points) -> calculate(dimension_scores) -> visualize(trends) -> alert(threshold_breach)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "unknown",
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [],
+      "failure_mode": "Subjective trust assessment; lack of objective data to diagnose erosion or measure restoration progress, leading to reactive and unquantifiable interventions.",
+      "created_at": "2026-04-11 23:53:10",
+      "updated_at": "2026-04-11T23:53:10.779Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-TRUST-DIMENSION-RESTORATION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Multi-Dimensional Trust Restoration",
+      "kind": "pattern",
+      "triad": null,
+      "role": null,
+      "macro": "diagnose(eroded_dimensions) -> select(targeted_interventions) -> implement(actions) -> monitor(dimension_scores)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "unknown",
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [],
+      "failure_mode": "Generic interventions failing to address specific trust deficits; unfocused efforts leading to slow or incomplete trust recovery, and potential re-erosion.",
+      "created_at": "2026-04-11 23:53:12",
+      "updated_at": "2026-04-11T23:53:12.779Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-ANCHORING",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Anchoring Move",
+      "kind": "pattern",
+      "triad": "⟁≡⚓",
+      "role": "Sets an initial reference point to bias the negotiation range.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "Initial offer made."
+      ],
+      "failure_mode": "Unchallenged anchor distorts value frame",
+      "created_at": "2026-04-11 23:53:18",
+      "updated_at": "2026-04-11T23:53:18.789Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-ANCHOR-RESET",
+          "link_type": "required_by"
+        },
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-SILENCE-BREAK",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Silence Break Clarifier",
+      "kind": "pattern",
+      "triad": "○∅🗣️",
+      "role": "Interrupts manipulative silence with a neutral clarification.",
+      "macro": "intervene(extended_silence) → request_position → reset_tempo",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "function": "Interrupts manipulative silence with a neutral clarification",
+        "commit": "ledger",
+        "topology": "linear",
+        "gate": [
+          "capability"
+        ],
+        "invariants": [
+          "clear-communication"
+        ]
+      },
+      "activation_conditions": [
+        "Manipulative silence detected."
+      ],
+      "failure_mode": "Tension escalates without clarification",
+      "created_at": "2026-04-11 23:53:22",
+      "updated_at": "2026-04-11T23:53:22.201Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-TACTIC-SILENCE",
+          "link_type": "triggered_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-ULTIMATUM",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Ultimatum Issuance",
+      "kind": "pattern",
+      "triad": "▮∅🛑",
+      "role": "Forces a binary choice to remove agency.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "topology": "linear",
+        "function": "diagnose",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "contract"
+      },
+      "activation_conditions": [
+        "Binary choice forced."
+      ],
+      "failure_mode": "Binary force removes agency",
+      "created_at": "2026-04-11 23:53:23",
+      "updated_at": "2026-04-11T23:53:23.758Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-STRATEGY-DEESCALATION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "strategy",
+      "name": "Tension Diffuser",
+      "kind": "pattern",
+      "triad": "∅⇲😌",
+      "role": "De-escalates tension to restore productive dialogue.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "temporal": "instant",
+        "topology": "loop",
+        "function": "stabilize",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Escalation spiral detected."
+      ],
+      "failure_mode": "Escalation spiral continues",
+      "created_at": "2026-04-11 23:53:25",
+      "updated_at": "2026-04-11T23:53:25.019Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-ARTIFICIAL-SCARCITY",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-TACTIC-DEADLINE-PRESSURE",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-DEADLINE-PRESSURE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Deadline Pressure",
+      "kind": "pattern",
+      "triad": "∅⇲⏳",
+      "role": "Uses time limits to force premature decisions.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "temporal": "instant",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "Time pressure applied."
+      ],
+      "failure_mode": "Coercive time-box collapses choice",
+      "created_at": "2026-04-11 23:53:27",
+      "updated_at": "2026-04-11T23:53:27.788Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-STRATEGY-DEESCALATION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-FRAMING-SHIFT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Framing Shift",
+      "kind": "pattern",
+      "triad": "⟐⟁🖼️",
+      "role": "Alters the context or perspective to influence perception.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "loop",
+        "commit": "ledger",
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "Frame shift detected."
+      ],
+      "failure_mode": "Reframe smuggles assumptions; loss of clarity",
+      "created_at": "2026-04-11 23:53:32",
+      "updated_at": "2026-04-11T23:53:32.043Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-BLUFFING",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Bluffing",
+      "kind": "pattern",
+      "triad": "≡∅🃏",
+      "role": "Uses false information or threats to gain an advantage.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ],
+        "function": "diagnose",
+        "topology": "linear",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Potential bluff detected."
+      ],
+      "failure_mode": "False scarcity or threat guides decision",
+      "created_at": "2026-04-11 23:53:34",
+      "updated_at": "2026-04-11T23:53:34.653Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-BLUFF-EXPOSURE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Bluff Exposure",
+      "kind": "pattern",
+      "triad": "≡⟁🔦",
+      "role": "Exposes the lack of substance behind a bluff.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "gate": [
+          "capability"
+        ],
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Bluff exposed."
+      ],
+      "failure_mode": "Bluff remains credible; mispricing persists",
+      "created_at": "2026-04-11 23:53:35",
+      "updated_at": "2026-04-11T23:53:35.654Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-STRATEGY-TRUST-BUILDING",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "strategy",
+      "name": "Trust Building",
+      "kind": "pattern",
+      "triad": "⟐♡🤝",
+      "role": "Establishes the foundation for a trusting relationship.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "persistent",
+        "topology": "loop",
+        "function": "diagnose",
+        "commit": "ledger",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Relationship initiation."
+      ],
+      "failure_mode": "Performative trust without reliability",
+      "created_at": "2026-04-11 23:53:36",
+      "updated_at": "2026-04-11T23:53:36.346Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-STRATEGY-TRUST-REINFORCEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "strategy",
+      "name": "Trust Reinforcement",
+      "kind": "pattern",
+      "triad": "♡⟐🧱",
+      "role": "Reinforces existing trust to prevent decay.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "function": "stabilize",
+        "commit": "ledger",
+        "temporal": "persistent",
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Trust decay detected."
+      ],
+      "failure_mode": "Trust signals decay without reinforcement",
+      "created_at": "2026-04-11 23:53:37",
+      "updated_at": "2026-04-11T23:53:37.137Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-EMPATHY-APPEAL",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Empathy Appeal",
+      "kind": "pattern",
+      "triad": "♡♡🎭",
+      "role": "Uses empathy to influence decision-making or bypass terms.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "gate": [
+          "capability"
+        ],
+        "topology": "loop",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "Empathy used to bypass terms."
+      ],
+      "failure_mode": "Empathy used to bypass terms",
+      "created_at": "2026-04-11 23:53:37",
+      "updated_at": "2026-04-11T23:53:37.876Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-STRATEGY-EMPATHY-REINFORCEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "strategy",
+      "name": "Empathy Reinforcement",
+      "kind": "pattern",
+      "triad": "♡⇲💗",
+      "role": "Active reinforcement of empathy to maintain rapport.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "function": "stabilize",
+        "temporal": "instant",
+        "topology": "loop"
+      },
+      "activation_conditions": [
+        "Empathy deficit detected."
+      ],
+      "failure_mode": "Empathy absent; rapport collapses",
+      "created_at": "2026-04-11 23:53:39",
+      "updated_at": "2026-04-11T23:53:39.178Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-COERCIVE-CONTROL",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Negotiation Tactic: Coercive Control",
+      "kind": "pattern",
+      "triad": "⛓️👤 नियंत्रण",
+      "role": "A pattern of behavior which seeks to dominate another party by restricting their autonomy.",
+      "macro": "isolate(target) -> restrict(resources) -> monitor(behavior) -> enforce(compliance)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion"
+        ],
+        "commit": "power_assertion",
+        "function": "domination",
+        "topology": "asymmetric",
+        "temporal": "continuous",
+        "gate": [
+          "power_imbalance"
+        ],
+        "substrate": [
+          "social",
+          "economic",
+          "political_systems"
+        ]
+      },
+      "activation_conditions": [
+        "When one party uses power to restrict the autonomy and behavior of another.",
+        "In situations of asymmetric power dynamics where control is a primary goal."
+      ],
+      "failure_mode": "The target's agency is completely eroded, leading to a state of learned helplessness or rebellion.",
+      "created_at": "2026-04-11 23:53:49",
+      "updated_at": "2026-04-11T23:53:49.563Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-PERSONA-DEAL-ARCHITECT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "The Deal Architect",
+      "kind": "persona",
+      "triad": "⧉🏛",
+      "role": "persona",
+      "macro": "persona(deal_architect) → restructure_terms → maximize_joint_value",
+      "lattice": null,
+      "persona": {
+        "function": "Designs deal structures that optimize mutual benefit",
+        "activation_conditions": [],
+        "fallback_behavior": [],
+        "linked_personas": []
+      },
+      "data": null,
+      "facets": {
+        "function": "Designs deal structures that optimize mutual benefit",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "network",
+        "commit": "ledger",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "temporal": "continuous",
+        "invariants": [
+          "value-maximization"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Over-complexity obscures real trade-offs",
+      "created_at": "2026-04-11 23:58:19",
+      "updated_at": "2026-04-11T23:58:19.239Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-TACTIC-DIVIDE-AND-CONQUER",
+          "link_type": "orchestrates"
+        }
+      ]
+    },
+    {
+      "id": "NEG-PERSONA-ARBITRATOR",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "The Arbitrator",
+      "kind": "persona",
+      "triad": "⚖⧉",
+      "role": "persona",
+      "macro": "persona(arbitrator) → mediate_conflict → deliver_binding_recommendation",
+      "lattice": null,
+      "persona": {
+        "function": "Neutral mediator capable of issuing binding compromise suggestions",
+        "activation_conditions": [],
+        "fallback_behavior": [],
+        "linked_personas": []
+      },
+      "data": null,
+      "facets": {
+        "invariants": [
+          "neutrality"
+        ],
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "function": "Neutral mediator capable of issuing binding compromise suggestions",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "network",
+        "commit": "ledger",
+        "temporal": "continuous"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Perceived bias undermines mediation",
+      "created_at": "2026-04-11 23:58:20",
+      "updated_at": "2026-04-11T23:58:20.544Z",
+      "linked_patterns": [
+        {
+          "id": "ETH-PER-ADJUDICATOR",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-INCREMENTAL-CHANGES",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Incremental Changes Lattice",
+      "kind": "lattice",
+      "triad": "⧉∅🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "closure": "synthesis",
+        "topology": "bidirectional"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "gate": [],
+        "function": "unknown",
+        "invariants": [],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Incremental change detected."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-11 23:58:21",
+      "updated_at": "2026-04-11T23:58:21.502Z",
+      "linked_patterns": [
+        {
+          "id": "DT-LATTICE-UTILITY-TRADEOFFS",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-FAIRNESS",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Fairness Balancer",
+      "kind": "pattern",
+      "triad": "≡⟐",
+      "role": "repair",
+      "macro": "monitor(negotiation) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "auditability",
+          "explicit-choice"
+        ],
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "topology": "linear",
+        "commit": "ledger",
+        "function": "stabilize"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Perceived inequity persists; deal legitimacy erodes",
+      "created_at": "2026-04-12 00:15:33",
+      "updated_at": "2026-04-12T00:15:33.353Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-FAIRNESS-MANAGEMENT",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-BALANCE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Value Rebalancer",
+      "kind": "pattern",
+      "triad": "⇲⟐",
+      "role": "repair",
+      "macro": "monitor(negotiation) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "commit": "contract",
+        "function": "stabilize",
+        "invariants": [
+          "non-coercion"
+        ],
+        "topology": "linear",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Concessions unreciprocated; drift to loss",
+      "created_at": "2026-04-12 00:15:34",
+      "updated_at": "2026-04-12T00:15:34.972Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-FAIRNESS-MANAGEMENT",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-PATTERN-VALUE-EROSION-QUANTIFIER",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-FAIRNESS",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Fairness Assertion",
+      "kind": "pattern",
+      "triad": "≡≡",
+      "role": "seed",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "topology": "linear",
+        "temporal": "instant",
+        "commit": "ledger"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Appeal to fairness masks asymmetric gain",
+      "created_at": "2026-04-12 00:15:38",
+      "updated_at": "2026-04-12T00:15:38.346Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-FAIRNESS-MANAGEMENT",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-ANCHOR-BIAS",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Extreme Anchor Bias",
+      "kind": "pattern",
+      "triad": "⧉Δ",
+      "role": "seed",
+      "macro": "monitor(negotiation) → detect(extreme_anchor) → route(normalize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "topology": "linear",
+        "function": "Identifies opening with extreme figures to bias expectations",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Negotiation centers around unrealistic starting point",
+      "created_at": "2026-04-12 00:15:39",
+      "updated_at": "2026-04-12T00:15:39.106Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-RELATIONSHIP-LEVER",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Relationship Leverage",
+      "kind": "pattern",
+      "triad": "♡≡",
+      "role": "seed",
+      "macro": "monitor(negotiation) → detect(relational_leverage) → route(boundary)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "function": "Detects use of personal relationship to override fair terms",
+        "temporal": "instant",
+        "topology": "loop",
+        "gate": [
+          "capability",
+          "trust"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Relational pressure forces unequal exchange",
+      "created_at": "2026-04-12 00:15:39",
+      "updated_at": "2026-04-12T00:15:39.921Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-EMPOWERMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Empowerment Boost",
+      "kind": "pattern",
+      "triad": "⇌⟐",
+      "role": "repair",
+      "macro": "monitor(negotiation) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "explicit-choice",
+          "non-coercion"
+        ],
+        "temporal": "instant",
+        "commit": "contract",
+        "topology": "linear",
+        "function": "stabilize",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Underpowered party cannot consent freely",
+      "created_at": "2026-04-12 00:15:41",
+      "updated_at": "2026-04-12T00:15:41.525Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "reality_for"
+        },
+        {
+          "id": "NEG-REPAIR-STAKEHOLDER-REASSURANCE",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-CLARITY",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Priority Clarifier",
+      "kind": "pattern",
+      "triad": "⟁⟁",
+      "role": "repair",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "topology": "linear",
+        "function": "diagnose",
+        "temporal": "instant"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Hidden priorities distort trade-offs",
+      "created_at": "2026-04-12 00:15:45",
+      "updated_at": "2026-04-12T00:15:45.633Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-AGREEMENT-BASELINE",
+          "link_type": "reality_for"
+        },
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-HARDLINE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Hardline Stance",
+      "kind": "pattern",
+      "triad": "□⇲",
+      "role": "seed",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "topology": "linear",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Rigid stance blocks integrative options",
+      "created_at": "2026-04-12 00:15:46",
+      "updated_at": "2026-04-12T00:15:46.489Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-FAIRNESS-MANAGEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Fairness Management Lattice",
+      "kind": "lattice",
+      "triad": "≡⟐🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "topology": "bidirectional",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "invariants": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "unknown",
+        "gate": [],
+        "commit": "ledger",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "Fairness assessment."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:15:50",
+      "updated_at": "2026-04-12T00:15:50.561Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-SUPPLY-VERIFICATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-COUNTER-UNBUNDLING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-REPAIR-BALANCE",
+          "link_type": "informs"
+        },
+        {
+          "id": "NEG-REPAIR-FAIRNESS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NEG-REPAIR-STAKEHOLDER-REASSURANCE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-SEED-FAIRNESS",
+          "link_type": "enables"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Deception Management Lattice",
+      "kind": "lattice",
+      "triad": "≡⟁🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "topology": "bidirectional",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "commit": "ledger",
+        "function": "unknown",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "gate": [],
+        "invariants": []
+      },
+      "activation_conditions": [
+        "Deception scan."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:15:51",
+      "updated_at": "2026-04-12T00:15:51.822Z",
+      "linked_patterns": [
+        {
+          "id": "LATTICE-HUMOR-CORE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-COUNTER-BLUFF-EXPOSURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-DETECT-DIVISIVE-AGGRESSION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-PATTERN-DEVIATION-SENTINEL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-PATTERN-VALUE-EROSION-QUANTIFIER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-REPAIR-CLARITY",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "NEG-TACTIC-ARTIFICIAL-SCARCITY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-ASSUMPTION-INQUIRY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-BLUFFING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-DECOY-OPTION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-DIVIDE-AND-CONQUER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-EMPATHY-APPEAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-NIBBLING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-REITERATE-CORE-OBJECTIVES",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "SELF-RECURSIVE-CORE",
+          "link_type": "extended_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Pressure Management Lattice",
+      "kind": "lattice",
+      "triad": "∅⇲🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "topology": "bidirectional",
+        "closure": "synthesis"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "invariants": [],
+        "function": "unknown",
+        "gate": [],
+        "commit": "ledger",
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "Pressure detected."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:15:54",
+      "updated_at": "2026-04-12T00:15:54.375Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-SILENCE-BREAK",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-DETECT-DIVISIVE-AGGRESSION",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-DETECT-INTERNAL-DISSONANCE",
+          "link_type": "informs"
+        },
+        {
+          "id": "NEG-DETECT-TARGET-DRIFT",
+          "link_type": "triggered_by"
+        },
+        {
+          "id": "NEG-REPAIR-COMMITMENT-ROOT-CAUSE",
+          "link_type": "triggered_by"
+        },
+        {
+          "id": "NEG-SEED-SILENCE-PRESSURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-STRATEGY-DEESCALATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-COERCIVE-CONTROL",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-TACTIC-DEADLINE-PRESSURE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-DIVIDE-AND-CONQUER",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-TACTIC-LAST-MINUTE-CHANGE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-TACTIC-PACKAGE-BUNDLING",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-TACTIC-SILENCE",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-COMMUNICATION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Negotiation Communication Bridge",
+      "kind": "pattern",
+      "triad": "⇲≡",
+      "role": "repair",
+      "macro": "monitor(negotiation) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "function": "diagnose",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "detect(pattern)",
+        "route(stabilize)"
+      ],
+      "failure_mode": "Silence keeps parties polarized",
+      "created_at": "2026-04-12 00:16:04",
+      "updated_at": "2026-04-12T00:16:04.988Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-SILENCE-MANAGEMENT",
+          "link_type": "informs"
+        },
+        {
+          "id": "NEG-PATTERN-STRUCTURED-CHANGE-GATEWAY",
+          "link_type": "monitors"
+        },
+        {
+          "id": "NEG-PRINCIPLE-CONFIDENT-PROFESSIONALISM",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-REPAIR-STAKEHOLDER-REASSURANCE",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-PRINCIPLE-CONFIDENT-PROFESSIONALISM",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "principle",
+      "name": "Confident Professionalism",
+      "kind": "pattern",
+      "triad": "⚖✨",
+      "role": "To serve as a foundational communication invariant, ensuring that negotiation interactions are conducted with expertise, composure, and respect, reinforcing credibility.",
+      "macro": "maintain_calm_demeanor → articulate_value_with_conviction → avoid_defensiveness → listen_actively",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "continuous",
+        "temporal": "continuous",
+        "commit": "integrity",
+        "function": "communication_governance",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "no-silent-mutation",
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "drift-detection",
+          "agency"
+        ],
+        "gate": [
+          "self_regulation",
+          "credibility",
+          "respect"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Loss of composure or perceived arrogance undermines credibility and escalates conflict.",
+      "created_at": "2026-04-12 00:16:08",
+      "updated_at": "2026-04-12T00:16:08.515Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-REPAIR-COMMUNICATION",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NEG-DETECT-TARGET-DRIFT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Stakeholder Isolation Signals",
+      "kind": "pattern",
+      "triad": "⟁⧉",
+      "role": "seed",
+      "macro": "observe(stakeholder_behavior) → detect(reduced_team_comm OR increased_defensiveness OR narrative_shift OR hesitation OR isolated_body_language)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "Detects changes in behavior or communication from a targeted stakeholder indicating susceptibility to divisive tactics.",
+        "gate": [
+          "observation",
+          "empathy"
+        ],
+        "substrate": [
+          "behavioral",
+          "communicative"
+        ],
+        "temporal": "instant",
+        "topology": "network"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Targeted stakeholder's disengagement escalates, leading to full isolation and potential defection.",
+      "created_at": "2026-04-12 00:16:09",
+      "updated_at": "2026-04-12T00:16:09.357Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "triggers"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-ISOLATION-COMM",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Isolating Communication Tactic",
+      "kind": "pattern",
+      "triad": "⟁⧉",
+      "role": "seed",
+      "macro": "observe(negotiation_interactions) → detect(exclusive_stakeholder_contact) → flag_potential_split",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "Detects attempts by an opposing party to engage a specific stakeholder in private or exclusive communication, bypassing the main negotiating team.",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "substrate": [
+          "symbolic",
+          "behavioral"
+        ],
+        "temporal": "instant",
+        "topology": "network"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Key stakeholder's alignment with the team is weakened through external influence or biased information.",
+      "created_at": "2026-04-12 00:16:11",
+      "updated_at": "2026-04-12T00:16:11.108Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-DETECT-DIVISIVE-AGGRESSION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-AGREEMENT-BASELINE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Agreement Baseline Guardian",
+      "kind": "pattern",
+      "triad": null,
+      "role": null,
+      "macro": null,
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "unknown",
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:16:13",
+      "updated_at": "2026-04-12T00:16:13.265Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-REPAIR-CLARITY",
+          "link_type": "grounds_in"
+        },
+        {
+          "id": "NEG-REPAIR-SPECIFY",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "NEG-PATTERN-VALUE-EROSION-QUANTIFIER",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Value Erosion Quantifier",
+      "kind": "pattern",
+      "triad": null,
+      "role": null,
+      "macro": null,
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "unknown",
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:16:15",
+      "updated_at": "2026-04-12T00:16:15.026Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-REPAIR-BALANCE",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "NEG-REPAIR-RECALIBRATION",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-COMMITMENT-ROOT-CAUSE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Commitment Failure Root Cause Analysis",
+      "kind": "pattern",
+      "triad": null,
+      "role": null,
+      "macro": "detect(commitment_failure) -> investigate(causes) -> classify(cause_type) -> inform(intervention)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "unknown",
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "gate": [],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [],
+      "failure_mode": "Repeated failures due to superficial fixes; addressing symptoms without resolving underlying issues, leading to further trust decay.",
+      "created_at": "2026-04-12 00:16:17",
+      "updated_at": "2026-04-12T00:16:17.139Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "triggers"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-CONCEPT-BATNA-MISREPRESENTATION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "concept",
+      "name": "BATNA Misrepresentation",
+      "kind": "pattern",
+      "triad": "⟐≡🤥",
+      "role": "Detects inflated or fabricated BATNA claims.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "linear",
+        "function": "diagnose",
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "BATNA claims made."
+      ],
+      "failure_mode": "Inflated or fabricated BATNA distorts bargaining power",
+      "created_at": "2026-04-12 00:16:17",
+      "updated_at": "2026-04-12T00:16:17.986Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-BATNA-VERIFICATION",
+          "link_type": "negated_by"
+        },
+        {
+          "id": "NEG-LATTICE-BATNA-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-BATNA-VERIFICATION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "BATNA Verification Gate",
+      "kind": "pattern",
+      "triad": "≡⟐✅",
+      "role": "Verifies the reality of a claimed BATNA.",
+      "macro": "intervene(negotiation) → diagnose → verify_outcome",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "auditability",
+          "explicit-choice"
+        ],
+        "topology": "linear",
+        "commit": "contract",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "BATNA claim detected."
+      ],
+      "failure_mode": "BATNA claims remain unverified; mispricing persists",
+      "created_at": "2026-04-12 00:16:18",
+      "updated_at": "2026-04-12T00:16:18.839Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-CONCEPT-BATNA-MISREPRESENTATION",
+          "link_type": "negates"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-ANCHOR-RESET",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Anchor Reset",
+      "kind": "pattern",
+      "triad": "Δ⧉🔄",
+      "role": "Re-centers discussion to realistic parameters, neutralizing an extreme anchor.",
+      "macro": "intervene(extreme_anchor) → present_moderate_range → justify_with_data",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "temporal": "instant",
+        "function": "Re-centers discussion to realistic parameters",
+        "invariants": [
+          "evidence-based"
+        ]
+      },
+      "activation_conditions": [
+        "Extreme anchor detected."
+      ],
+      "failure_mode": "Extreme anchor remains primary reference",
+      "created_at": "2026-04-12 00:16:20",
+      "updated_at": "2026-04-12T00:16:20.693Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-TACTIC-ANCHORING",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-SILENCE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Silent Treatment",
+      "kind": "pattern",
+      "triad": "∅∅🔇",
+      "role": "Uses silence to create pressure or anxiety.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "loop",
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "Extended pause in communication."
+      ],
+      "failure_mode": "Communication freeze used as pressure lever",
+      "created_at": "2026-04-12 00:16:21",
+      "updated_at": "2026-04-12T00:16:21.594Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-SILENCE-BREAK",
+          "link_type": "triggers"
+        },
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-ROLE-SPLIT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Role Split Clarifier",
+      "kind": "pattern",
+      "triad": "⟐⇲🔦",
+      "role": "Exposes and neutralizes the Good Cop/Bad Cop dynamic.",
+      "macro": "intervene(negotiation) → stabilize → verify_outcome",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ],
+        "invariants": [
+          "non-coercion"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "stabilize",
+        "commit": "contract",
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "Role split detected."
+      ],
+      "failure_mode": "Manipulative role-play remains intact; consent degraded",
+      "created_at": "2026-04-12 00:16:23",
+      "updated_at": "2026-04-12T00:16:23.193Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-GOOD-COP-BAD-COP",
+          "link_type": "negates"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-NIBBLING",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Nibbling Add-Ons",
+      "kind": "pattern",
+      "triad": "⧉⇲🐭",
+      "role": "Accumulates value through small, late requests after the main deal is agreed.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ],
+        "function": "diagnose",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "Late small requests."
+      ],
+      "failure_mode": "Late small asks accumulate hidden cost post-agreement",
+      "created_at": "2026-04-12 00:16:25",
+      "updated_at": "2026-04-12T00:16:25.769Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-SCOPE-FREEZE",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-SCOPE-FREEZE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Scope Freeze",
+      "kind": "pattern",
+      "triad": "▮⟐🧊",
+      "role": "Freezes the scope to prevent value erosion from nibbling.",
+      "macro": "intervene(negotiation) → stabilize → verify_outcome",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "commit": "contract",
+        "topology": "linear",
+        "function": "stabilize",
+        "invariants": [
+          "auditability"
+        ],
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Nibbling detected."
+      ],
+      "failure_mode": "Scope creep continues through minor add-ons",
+      "created_at": "2026-04-12 00:16:26",
+      "updated_at": "2026-04-12T00:16:26.480Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-NIBBLING",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-ARTIFICIAL-SCARCITY",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Artificial Scarcity",
+      "kind": "pattern",
+      "triad": "∅≡💎",
+      "role": "Creates false scarcity to increase perceived value and pressure.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "gate": [
+          "capability"
+        ],
+        "commit": "ledger",
+        "topology": "linear",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Scarcity claim made."
+      ],
+      "failure_mode": "Manufactured scarcity compresses options and consent",
+      "created_at": "2026-04-12 00:16:28",
+      "updated_at": "2026-04-12T00:16:28.955Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-SUPPLY-VERIFICATION",
+          "link_type": "validates"
+        },
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-STRATEGY-DEESCALATION",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-SUPPLY-VERIFICATION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Supply Verification",
+      "kind": "pattern",
+      "triad": "≡∅✅",
+      "role": "Verifies the reality of claimed scarcity.",
+      "macro": "intervene(negotiation) → diagnose → verify_outcome",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "commit": "contract",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "invariants": [
+          "auditability"
+        ],
+        "topology": "linear",
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "Scarcity claim detected."
+      ],
+      "failure_mode": "Scarcity claims stay unchecked; pressure persists",
+      "created_at": "2026-04-12 00:16:29",
+      "updated_at": "2026-04-12T00:16:29.850Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-FAIRNESS-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-ARTIFICIAL-SCARCITY",
+          "link_type": "validated_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-DECOY-OPTION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Decoy Option",
+      "kind": "pattern",
+      "triad": "≡∅🦆",
+      "role": "Presents an inferior option to make the target option look more attractive.",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "topology": "linear",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "Decoy option presented."
+      ],
+      "failure_mode": "Dominant choice engineered by contrast with inferior decoy",
+      "created_at": "2026-04-12 00:16:31",
+      "updated_at": "2026-04-12T00:16:31.206Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-DOMINANCE-TEST",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-DOMINANCE-TEST",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Dominance Test Audit",
+      "kind": "pattern",
+      "triad": "⟐≡🧪",
+      "role": "Audits the choice architecture for manipulation.",
+      "macro": "intervene(negotiation) → diagnose → verify_outcome",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "temporal": "instant",
+        "gate": [
+          "capability"
+        ],
+        "function": "diagnose",
+        "commit": "contract"
+      },
+      "activation_conditions": [
+        "Dominance strategy detected."
+      ],
+      "failure_mode": "Choice architecture biases remain untested",
+      "created_at": "2026-04-12 00:16:32",
+      "updated_at": "2026-04-12T00:16:32.052Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-BATNA-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-DECOY-OPTION",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-DIVIDE-AND-CONQUER",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Divide and Conquer",
+      "kind": "pattern",
+      "triad": "⟁⧉⚔️",
+      "role": "Attempts to split unified parties to weaken their position.",
+      "macro": "monitor(negotiation) → detect(split_alliance) → route(rebuild_unity)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "commit": "ledger",
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "topology": "network",
+        "function": "Detects tactics aimed at splitting unified negotiating parties",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Multi-party negotiation."
+      ],
+      "failure_mode": "Alliance fractures; terms worsen",
+      "created_at": "2026-04-12 00:16:32",
+      "updated_at": "2026-04-12T00:16:32.962Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-PERSONA-DEAL-ARCHITECT",
+          "link_type": "orchestrated_by"
+        },
+        {
+          "id": "NEG-STRATEGY-UNITY-RESTORATION",
+          "link_type": "contrasts_with"
+        }
+      ]
+    },
+    {
+      "id": "NEG-STRATEGY-UNITY-RESTORATION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "strategy",
+      "name": "Unity Restoration",
+      "kind": "pattern",
+      "triad": "⧉⟁🔗",
+      "role": "Restores unity among allied parties.",
+      "macro": "intervene(split_alliance) → restate_common_interests → confirm_alignment",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "mutual-benefit"
+        ],
+        "commit": "ledger",
+        "topology": "network",
+        "function": "Reinforces common objectives to resist divide tactics",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability",
+          "trust"
+        ],
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "Alliance fracture detected."
+      ],
+      "failure_mode": "Parties remain divided",
+      "created_at": "2026-04-12 00:16:33",
+      "updated_at": "2026-04-12T00:16:33.953Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-DIVIDE-AND-CONQUER",
+          "link_type": "contrasts_with"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-PACKAGE-BUNDLING",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Package Bundling",
+      "kind": "pattern",
+      "triad": "⧉≡📦",
+      "role": "Bundles items to hide value disparity or force acceptance.",
+      "macro": "monitor(negotiation) → detect(bundle_offer) → route(extract_components)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "Identifies bundling of unrelated items to force acceptance",
+        "topology": "linear",
+        "gate": [
+          "capability"
+        ],
+        "commit": "ledger",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "Bundle offer received."
+      ],
+      "failure_mode": "Hidden loss in bundled terms",
+      "created_at": "2026-04-12 00:16:34",
+      "updated_at": "2026-04-12T00:16:34.893Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-COUNTER-UNBUNDLING",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-UNBUNDLING",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Unbundling Analysis",
+      "kind": "pattern",
+      "triad": "≡⧉📤",
+      "role": "Separates bundled items for individual evaluation.",
+      "macro": "intervene(bundle_offer) → isolate_terms → audit_each",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "explicit-choice"
+        ],
+        "temporal": "instant",
+        "commit": "ledger",
+        "function": "Separates bundled items for individual evaluation",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "Bundle analysis required."
+      ],
+      "failure_mode": "Bundle remains unexamined; hidden losses persist",
+      "created_at": "2026-04-12 00:16:35",
+      "updated_at": "2026-04-12T00:16:35.811Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-FAIRNESS-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-PACKAGE-BUNDLING",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-LAST-MINUTE-CHANGE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Last-Minute Change",
+      "kind": "pattern",
+      "triad": "⧉∅⏱️",
+      "role": "Introduces changes at the last minute to force acceptance.",
+      "macro": "monitor(negotiation) → detect(late_term_change) → route(hold_review)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "linear",
+        "function": "Spots alterations to terms right before closure",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "Late term change detected."
+      ],
+      "failure_mode": "New terms slip in unnoticed",
+      "created_at": "2026-04-12 00:16:37",
+      "updated_at": "2026-04-12T00:16:37.306Z",
+      "linked_patterns": [
+        {
+          "id": "CLOSURE-REVIEW-GATE",
+          "link_type": "triggered_by"
+        },
+        {
+          "id": "NEG-COUNTER-CLOSURE-REVIEW",
+          "link_type": "triggered_by"
+        },
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-COUNTER-CLOSURE-REVIEW",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "counter",
+      "name": "Closure Review Gate",
+      "kind": "pattern",
+      "triad": "∅⧉✅",
+      "role": "Ensures a full review before final agreement closure.",
+      "macro": "intervene(late_term_change) → reopen_review → confirm_with_all",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "topology": "linear",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "contract",
+        "invariants": [
+          "auditability",
+          "explicit-choice"
+        ],
+        "function": "Reopens full review process when late changes are detected"
+      },
+      "activation_conditions": [
+        "Closure phase."
+      ],
+      "failure_mode": "Late changes bypass scrutiny",
+      "created_at": "2026-04-12 00:16:38",
+      "updated_at": "2026-04-12T00:16:38.998Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-LAST-MINUTE-CHANGE",
+          "link_type": "triggers"
+        }
+      ]
+    },
+    {
+      "id": "CLOSURE-REVIEW-GATE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Closure Review Gate",
+      "kind": "pattern",
+      "triad": "∅⧉✅",
+      "role": "Ensures a full review before final agreement closure.",
+      "macro": "intervene(late_term_change) → reopen_review → confirm_with_all",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "Reopens full review process when late changes are detected",
+        "topology": "linear",
+        "temporal": "instant",
+        "commit": "contract",
+        "gate": [
+          "capability"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "auditability",
+          "explicit-choice"
+        ]
+      },
+      "activation_conditions": [
+        "Closure phase."
+      ],
+      "failure_mode": "Late changes bypass scrutiny",
+      "created_at": "2026-04-12 00:16:39",
+      "updated_at": "2026-04-12T00:16:39.877Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-TACTIC-LAST-MINUTE-CHANGE",
+          "link_type": "triggers"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-STAKEHOLDER-REASSURANCE",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Individual Re-Anchoring",
+      "kind": "pattern",
+      "triad": "⧉⟁",
+      "role": "repair",
+      "macro": "listen_actively → reaffirm_value_purpose → reinforce_info_sharing → establish_internal_debriefs → strengthen_internal_trust → foster_no_surprises_culture → contingency_plan_for_isolation",
+      "lattice": null,
+      "persona": {
+        "name": "Individual Re-Anchoring",
+        "role": "repair"
+      },
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "Strategically elevates the role, contributions, and visible integration of a potentially targeted stakeholder within public negotiation settings to visibly reinforce their importance and team alignment.",
+        "gate": [
+          "empathy",
+          "trust",
+          "communication",
+          "foresight",
+          "transparency",
+          "alignment",
+          "capability",
+          "visibility",
+          "cohesion",
+          "credibility"
+        ],
+        "invariants": [
+          "mutual-respect",
+          "mutual-benefit",
+          "shared-commitment",
+          "confidentiality",
+          "active-listening",
+          "psychological-safety",
+          "collective-intelligence",
+          "shared-authority",
+          "information-integrity",
+          "shared-understanding",
+          "authenticity",
+          "team-support"
+        ],
+        "substrate": [
+          "communicative",
+          "social",
+          "cognitive",
+          "organizational",
+          "symbolic",
+          "communication",
+          "process",
+          "behavioral",
+          "structural",
+          "rhetoric"
+        ],
+        "temporal": "ongoing",
+        "topology": "network"
+      },
+      "activation_conditions": [
+        "listen_actively",
+        "reaffirm_value_purpose",
+        "reinforce_info_sharing",
+        "establish_internal_debriefs",
+        "strengthen_internal_trust",
+        "foster_no_surprises_culture",
+        "contingency_plan_for_isolation"
+      ],
+      "failure_mode": "Targeted stakeholder feels alienated, leading to further withdrawal or alignment with the opposing party.",
+      "created_at": "2026-04-12 00:16:42",
+      "updated_at": "2026-04-12T00:16:42.378Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-LATTICE-FAIRNESS-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-GOOD-COP-BAD-COP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-REPAIR-COMMUNICATION",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "NEG-REPAIR-EMPOWERMENT",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "NEG-DETECT-DIVISIVE-AGGRESSION",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Aggressor's Divisive Playbook",
+      "kind": "pattern",
+      "triad": "⟁⧉",
+      "role": "seed",
+      "macro": "observe(aggressor_actions) → detect(exclusive_communication OR tailored_offers OR undermining_authority OR info_control OR physical_segregation)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "Identifies specific actions taken by an opposing party to isolate or undermine a key stakeholder.",
+        "gate": [
+          "observation",
+          "detection"
+        ],
+        "substrate": [
+          "behavioral"
+        ],
+        "temporal": "instant",
+        "topology": "network"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Aggressor's divisive tactics proceed unnoticed, leading to team fragmentation.",
+      "created_at": "2026-04-12 00:16:44",
+      "updated_at": "2026-04-12T00:16:44.259Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-PRESSURE-MANAGEMENT",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-SEED-INDIVIDUAL-APPEAL",
+          "link_type": "informs"
+        },
+        {
+          "id": "NEG-SEED-ISOLATION-COMM",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NEG-TACTIC-REITERATE-CORE-OBJECTIVES",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "tactic",
+      "name": "Reiterate Core Objectives (Re-Anchor Step 1)",
+      "kind": "pattern",
+      "triad": "⟁🎯",
+      "role": "To shift focus from a low anchor back to the high-level value and purpose of the project by reminding parties of shared goals.",
+      "macro": "identify_discrepancy_in_value_perception → restate_client_problem_and_goals → align_discussion_to_desired_outcomes",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "alignment",
+        "gate": [
+          "shared_vision",
+          "persuasion"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "reframe",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "no-silent-mutation",
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "drift-detection",
+          "agency"
+        ],
+        "topology": "linear",
+        "temporal": "immediate"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Reiteration is perceived as dismissive or out of touch with current discussion, leading to frustration.",
+      "created_at": "2026-04-12 00:28:00",
+      "updated_at": "2026-04-12T00:28:00.845Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-ANCHORING-MANAGEMENT",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "NEG-LATTICE-DECEPTION-MANAGEMENT",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Power and Relationship Management Lattice",
+      "kind": "lattice",
+      "triad": "⇌⟐🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "closure": "synthesis",
+        "topology": "bidirectional"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [],
+        "temporal": "instant",
+        "function": "unknown",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": []
+      },
+      "activation_conditions": [
+        "Power dynamic analysis."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:28:01",
+      "updated_at": "2026-04-12T00:28:01.856Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NEG-REPAIR-BOUNDARY",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NEG-REPAIR-EMPOWERMENT",
+          "link_type": "grounds_in"
+        },
+        {
+          "id": "NEG-REPAIR-RECALIBRATION",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-REPAIR-RELATION-BOUND",
+          "link_type": "enables"
+        },
+        {
+          "id": "NEG-SEED-EMOTIONAL-APPEAL",
+          "link_type": "informs"
+        },
+        {
+          "id": "NEG-SEED-HARDLINE",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "NEG-SEED-POWER-IMBALANCE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "NEG-SEED-RELATIONSHIP-LEVER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "NEG-SEED-EMOTIONAL-APPEAL",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Emotional Appeal",
+      "kind": "pattern",
+      "triad": "♡⟁",
+      "role": "seed",
+      "macro": "monitor(negotiation) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "topology": "loop",
+        "gate": [
+          "capability"
+        ],
+        "function": "diagnose"
+      },
+      "activation_conditions": [],
+      "failure_mode": "Affect overrules fairness; empathy hijack",
+      "created_at": "2026-04-12 00:28:01",
+      "updated_at": "2026-04-12T00:28:01.970Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "lattice",
+      "name": "Trust Management Lattice",
+      "kind": "lattice",
+      "triad": "♡⟐🕸️",
+      "role": null,
+      "macro": null,
+      "lattice": {
+        "closure": "synthesis",
+        "topology": "bidirectional"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "gate": [],
+        "invariants": [],
+        "commit": "ledger",
+        "topology": "linear",
+        "function": "unknown"
+      },
+      "activation_conditions": [
+        "Trust strategy planning."
+      ],
+      "failure_mode": null,
+      "created_at": "2026-04-12 00:28:04",
+      "updated_at": "2026-04-12T00:28:04.413Z",
+      "linked_patterns": [
+        {
+          "id": "CLOSURE-REVIEW-GATE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NEG-COUNTER-BATNA-VERIFICATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-COUNTER-CLOSURE-REVIEW",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-COUNTER-DOMINANCE-TEST",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-COUNTER-SCOPE-FREEZE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-COUNTER-SILENCE-BREAK",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-COUNTER-SUPPLY-VERIFICATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-COUNTER-UNBUNDLING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-DETECT-INTERNAL-DISSONANCE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-DETECT-TARGET-DRIFT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-PATTERN-STRUCTURED-CHANGE-GATEWAY",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-PATTERN-TRUST-DIMENSIONS",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-PATTERN-TRUST-INDICATOR-MONITOR",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-PATTERN-VALUE-EROSION-QUANTIFIER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-PRINCIPLE-CONFIDENT-PROFESSIONALISM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-REPAIR-COMMITMENT-ROOT-CAUSE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-REPAIR-SPECIFY",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-REPAIR-STAKEHOLDER-REASSURANCE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-REPAIR-TRUST-DIMENSION-RESTORATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-SEED-INDIVIDUAL-APPEAL",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-SEED-ISOLATION-COMM",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-SEED-VAGUE-PROMISE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-STRATEGY-DEESCALATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-STRATEGY-EMPATHY-REINFORCEMENT",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-STRATEGY-TRUST-BUILDING",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-STRATEGY-TRUST-REINFORCEMENT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-STRATEGY-UNITY-RESTORATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-LAST-MINUTE-CHANGE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-PACKAGE-BUNDLING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-SCOPE-ADJUSTED-ALTERNATIVES",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "NEG-TACTIC-SILENCE",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "NEG-REPAIR-SPECIFY",
+      "domain_id": "negotiation",
+      "symbol_domain": "negotiation",
+      "symbol_tag": "",
+      "name": "Specificity Enforcer",
+      "kind": "pattern",
+      "triad": "≡∅",
+      "role": "repair",
+      "macro": "intervene(vague_future) → request_details → record_commitment",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "invariants": [
+          "auditability"
+        ],
+        "commit": "contract",
+        "topology": "linear",
+        "function": "Demands clear, verifiable details for any future-oriented term",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Ambiguity persists; term is unenforceable",
+      "created_at": "2026-04-12 00:28:04",
+      "updated_at": "2026-04-12T00:28:04.529Z",
+      "linked_patterns": [
+        {
+          "id": "NEG-LATTICE-AGREEMENT-BASELINE",
+          "link_type": "required_by"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "part_of"
+        }
+      ]
+    }
+  ]
+}

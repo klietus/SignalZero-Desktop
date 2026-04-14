@@ -1,0 +1,2482 @@
+{
+  "meta": {
+    "id": "human_factors",
+    "name": "Human Factors",
+    "description": "Factors that humans have to deal with, or involving uniquely human traits",
+    "invariants": [
+      "Human_factors domain MUST respect user agency and autonomy.",
+      "Human_factors domain MUST be transparent and avoid opaque or black-box processes.",
+      "Human_factors domain MUST prioritize ethical considerations and fairness.",
+      "Human_factors domain MAY NOT introduce biases or discriminatory practices.",
+      "Human_factors domain MUST be explainable to users, with clear justifications for outputs or actions."
+    ],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-11 23:34:51",
+    "symbolCount": 41
+  },
+  "symbols": [
+    {
+      "id": "HF-FM-SEC-DEPT-ROADBLOCK",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "failure_mode",
+      "name": "Failure Mode: Security Department Perceived as Roadblock",
+      "kind": "pattern",
+      "triad": "🚧🗣️👥",
+      "role": "Describes the negative outcome where the security department's actions lead to it being viewed as an impediment rather than a partner by other departments.",
+      "macro": "monitor(interdepartmental_feedback) -> detect(negative_perception_shift) -> identify(causes_of_roadblock_perception)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "perception_feedback",
+          "collaborative_metrics"
+        ],
+        "topology": "social_network",
+        "substrate": [
+          "organizational_communication",
+          "stakeholder_perceptions"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "auditability"
+        ],
+        "temporal": "continuous_assessment",
+        "function": "interdepartmental_relationship_management",
+        "commit": "reputational_risk"
+      },
+      "activation_conditions": [
+        "Security team perceived as obstruction.",
+        "Negative sentiment regarding security processes."
+      ],
+      "failure_mode": "Departments avoid security, leading to shadow IT and increased unvetted deployments.",
+      "created_at": "2026-04-11 23:51:03",
+      "updated_at": "2026-04-11T23:51:03.056Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-VALUE-SECURITY-AS-PARTNER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "HF-VALUE-SECURITY-AS-PARTNER",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "organizational_value",
+      "name": "Organizational Value: Security as Partner",
+      "kind": "pattern",
+      "triad": "🤝💡📈",
+      "role": "Represents the vital organizational value where the security department is perceived as a collaborative partner that enables business objectives, rather than an impediment.",
+      "macro": "monitor(interdepartmental_perception) -> actively_cultivate(partnership) -> demonstrate(enabling_value)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "explicit-choice",
+          "agency"
+        ],
+        "commit": "organizational_asset",
+        "topology": "collaborative_network",
+        "substrate": [
+          "interdepartmental_relationships",
+          "shared_goals"
+        ],
+        "temporal": "continuous_cultivation",
+        "gate": [
+          "stakeholder_satisfaction",
+          "innovation_enablement_metrics"
+        ],
+        "function": "collaborative_value_proposition"
+      },
+      "activation_conditions": [
+        "Promote security as business enabler.",
+        "Demonstrating value of security partnership."
+      ],
+      "failure_mode": "Erosion of trust and collaboration, leading to isolation of security function.",
+      "created_at": "2026-04-11 23:51:04",
+      "updated_at": "2026-04-11T23:51:04.431Z",
+      "linked_patterns": [
+        {
+          "id": "HF-FM-SEC-DEPT-ROADBLOCK",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HF-MACRO-LEADERSHIP-ACTION-TRACKING",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "protocol",
+      "name": "Macro: Public Figure Action & Effect Tracking",
+      "kind": "pattern",
+      "triad": "🗣️📝🌊",
+      "role": "Defines the protocol for monitoring high-profile public figures (e.g., Heads of State, CEOs) using open sources. Focuses strictly on observable actions, stated policies, and their systemic consequences, explicitly excluding private surveillance or psychological diagnosis.",
+      "macro": "identify(public_figure) → extract(action | directive | statement) → map(systemic_effect) → log(causality)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "News_Feeds",
+          "Official_Statements"
+        ],
+        "function": "leadership_tracking",
+        "topology": "actor-network",
+        "commit": "osint-analysis",
+        "temporal": "Continuous",
+        "gate": [
+          "public-source-verification",
+          "role-relevance"
+        ],
+        "invariants": [
+          "public-data-only",
+          "action-outcome-focus",
+          "no-psych-speculation"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Bias in source reporting, misattribution of agency, confusion between rhetoric and action.",
+      "created_at": "2026-04-11 23:51:09",
+      "updated_at": "2026-04-11T23:51:09.796Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-AUTHORITY-PRESSURE",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Authority Pressure Bias",
+      "kind": "pattern",
+      "triad": "≡⟠",
+      "role": "Represents the cognitive bias where perceived authority overrides independent judgment.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion"
+        ],
+        "commit": "ledger",
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When perceived authority influences decision-making.",
+        "Detection of commands overriding independent judgment."
+      ],
+      "failure_mode": "Perceived authority overrides independent judgment and ethical constraints.",
+      "created_at": "2026-04-12 00:08:17",
+      "updated_at": "2026-04-12T00:08:17.376Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-MITIGATION-ROLE-SEPARATION",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-URGENCY-FRAME",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Urgency Frame Bias",
+      "kind": "pattern",
+      "triad": "⟠∅",
+      "role": "Represents the manipulation of time perception to force premature decisions.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "function": "diagnose",
+        "topology": "linear",
+        "gate": [
+          "trust"
+        ],
+        "invariants": [
+          "non-coercion"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant"
+      },
+      "activation_conditions": [
+        "When artificial time constraints are imposed.",
+        "Detection of 'act now' framing to bypass deliberation."
+      ],
+      "failure_mode": "Time pressure collapses deliberation and consent quality.",
+      "created_at": "2026-04-12 00:08:20",
+      "updated_at": "2026-04-12T00:08:20.762Z",
+      "linked_patterns": [
+        {
+          "id": "HF-BIAS-AFFECT-HEURISTIC",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-MITIGATION-TIME-BUFFER",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-SOCIAL-PROOF-CASCADE",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Social Proof Cascade Bias",
+      "kind": "pattern",
+      "triad": "Σ≡",
+      "role": "Represents the cognitive bias where perceived group consensus overrides individual judgment.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "ledger",
+        "gate": [
+          "trust"
+        ],
+        "invariants": [
+          "non-coercion"
+        ],
+        "function": "diagnose",
+        "temporal": "instant",
+        "topology": "loop",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "When dissent is suppressed by perceived consensus.",
+        "Detection of 'everyone agrees' rhetoric without evidence."
+      ],
+      "failure_mode": "Perception that 'everyone agrees' suppresses dissent and independent thought.",
+      "created_at": "2026-04-12 00:08:24",
+      "updated_at": "2026-04-12T00:08:24.189Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "source_of"
+        },
+        {
+          "id": "HF-MITIGATION-EXPLICIT-CHOICE",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-COGNITIVE-LOAD-SPIKE",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Cognitive Load Spike Bias",
+      "kind": "pattern",
+      "triad": "⟠Σ",
+      "role": "Represents the degradation of decision quality due to overwhelming cognitive demand.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "function": "diagnose",
+        "topology": "loop",
+        "invariants": [
+          "non-coercion"
+        ],
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ]
+      },
+      "activation_conditions": [
+        "When cognitive demand exceeds processing capacity.",
+        "Detection of information flooding to force compliance."
+      ],
+      "failure_mode": "Overload reduces scrutiny and increases compliance or error rate.",
+      "created_at": "2026-04-12 00:08:26",
+      "updated_at": "2026-04-12T00:08:26.461Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-MITIGATION-TASK-SLICING",
+          "link_type": "triggered_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-ROLE-SEPARATION",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Role Separation",
+      "kind": "pattern",
+      "triad": "≡⟠",
+      "role": "Separates the advice of an authority figure from the responsibility of the decision maker.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "function": "stabilize",
+        "invariants": [
+          "non-coercion",
+          "explicit-choice"
+        ],
+        "commit": "contract",
+        "temporal": "instant",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "When expert advice is conflated with command.",
+        "To decouple authority figures from decision responsibility."
+      ],
+      "failure_mode": "Authority continues to bias decisions without separation.",
+      "created_at": "2026-04-12 00:08:31",
+      "updated_at": "2026-04-12T00:08:31.099Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-BIAS-AUTHORITY-PRESSURE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-BIAS-COVERT-ANCHORING",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-BIAS-FRAMING",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "reality_for"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-TIME-BUFFER",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Time Buffer",
+      "kind": "pattern",
+      "triad": "⏳🛡️",
+      "role": "Inserts a mandatory pause to counteract artificial urgency.",
+      "macro": "insert(pause) → restate(options) → calculate(costs)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "temporal": "instant",
+        "commit": "ledger",
+        "invariants": [
+          "non-coercion"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "topology": "linear"
+      },
+      "activation_conditions": [
+        "When urgency is used to force a decision.",
+        "To reintroduce deliberation space."
+      ],
+      "failure_mode": "Urgency continues to collapse decision quality.",
+      "created_at": "2026-04-12 00:08:33",
+      "updated_at": "2026-04-12T00:08:33.819Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-BIAS-URGENCY-FRAME",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-EXPLICIT-CHOICE",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Explicit Choice Enforcement",
+      "kind": "pattern",
+      "triad": "📝⚖️",
+      "role": "Forces implicit influences to be made explicit and confirmed by the user.",
+      "macro": "detect(implicit_influence) → demand(explicit_option) → log(commitment)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "topology": "linear",
+        "commit": "ledger",
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion",
+          "explicit-choice"
+        ],
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "When implicit influence or reciprocity is detected.",
+        "To force options to be stated explicitly."
+      ],
+      "failure_mode": "Reciprocity or social proof biases persist without explicit options.",
+      "created_at": "2026-04-12 00:08:37",
+      "updated_at": "2026-04-12T00:08:37.986Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-BIAS-SOCIAL-PROOF-CASCADE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-PAT-RECIPROCITY-HOOK",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-PERSONA-MEDIATOR-ETHICIST",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-MIRROR-COLLAPSE",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Mirror Collapse",
+      "kind": "pattern",
+      "triad": "≡💔",
+      "role": "Disrupts identity mirroring by calling out the tactic and resetting the interaction.",
+      "macro": "call_out(mimicry) → reset(stance) → demand(authentic_signal)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "commit": "ledger",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "non-coercion"
+        ]
+      },
+      "activation_conditions": [
+        "When identity mirroring is used to bypass scrutiny.",
+        "To reset the interaction stance."
+      ],
+      "failure_mode": "Mirroring continues to manipulate trust.",
+      "created_at": "2026-04-12 00:08:40",
+      "updated_at": "2026-04-12T00:08:40.753Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "triggers"
+        },
+        {
+          "id": "HF-BIAS-IDENTITY-MIRRORING",
+          "link_type": "negated_by"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-CLARITY-INJECTION",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Clarity Injection",
+      "kind": "pattern",
+      "triad": "☁️✂️",
+      "role": "Replaces vague terms with precise, auditable commitments.",
+      "macro": "detect(ambiguity) → demand(concrete_terms) → record(precision)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "commit": "ledger",
+        "function": "stabilize",
+        "gate": [
+          "trust"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "When vague language obscures commitment.",
+        "To force precise terms."
+      ],
+      "failure_mode": "Ambiguity persists, concealing real commitments.",
+      "created_at": "2026-04-12 00:08:44",
+      "updated_at": "2026-04-12T00:08:44.274Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "HF-PAT-AMBIGUITY-FOG",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-PERSONA-MEDIATOR-ETHICIST",
+          "link_type": "enabled_by"
+        },
+        {
+          "id": "HF-REPAIR-BIAS-DECONDITION",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-RISK-REBASE",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Risk Rebase",
+      "kind": "pattern",
+      "triad": "Σ✙",
+      "role": "Recalibrates risk perception by comparing fear signals against base rates.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "topology": "linear",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "temporal": "instant",
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "When fear signals distort probability estimates.",
+        "To recalibrate risk perception."
+      ],
+      "failure_mode": "Fear signals continue to distort base-rate reasoning.",
+      "created_at": "2026-04-12 00:08:46",
+      "updated_at": "2026-04-12T00:08:46.246Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-PAT-FEAR-UNCERTAINTY-DOUBT",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-ANCHOR-COUNTER",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Anchor Counter",
+      "kind": "pattern",
+      "triad": "⚓✂️",
+      "role": "Generates an independent estimate to counteract the effect of a cognitive anchor.",
+      "macro": "detect(anchor) → generate(independent_estimate) → compare(drift)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "function": "stabilize",
+        "topology": "linear",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "When an anchor biases an estimate.",
+        "To generate an independent baseline."
+      ],
+      "failure_mode": "Anchoring distorts probability or value estimates.",
+      "created_at": "2026-04-12 00:08:51",
+      "updated_at": "2026-04-12T00:08:51.461Z",
+      "linked_patterns": [
+        {
+          "id": "HF-BIAS-COVERT-ANCHORING",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-TASK-SLICING",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Task Slicing",
+      "kind": "pattern",
+      "triad": "✂️🧠",
+      "role": "Breaks complex choices into smaller, sequential steps to reduce cognitive load.",
+      "macro": "detect(overload) → partition(tasks) → sequence(decisions)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "capability"
+        ],
+        "topology": "loop",
+        "invariants": [
+          "non-coercion"
+        ],
+        "commit": "ledger",
+        "function": "stabilize"
+      },
+      "activation_conditions": [
+        "When cognitive overload is detected.",
+        "To break decisions into manageable steps."
+      ],
+      "failure_mode": "Cognitive load remains overwhelming, degrading decisions.",
+      "created_at": "2026-04-12 00:08:53",
+      "updated_at": "2026-04-12T00:08:53.177Z",
+      "linked_patterns": [
+        {
+          "id": "HF-BIAS-COGNITIVE-LOAD-SPIKE",
+          "link_type": "triggers"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "required_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-PERSONA-MEDIATOR-ETHICIST",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "persona",
+      "name": "Mediator-Ethicist",
+      "kind": "persona",
+      "triad": "≡⟠Σ",
+      "role": "Surfaces hidden influence and restores consensual dialogue.",
+      "macro": "surface(influence) → restore(consent) → stabilize(dialogue)",
+      "lattice": null,
+      "persona": {
+        "function": "Surfaces hidden influence and restores consensual dialogue.",
+        "recursion_level": "tactical",
+        "activation_conditions": [
+          "Name the tactic; protect consent; ask for explicit choice."
+        ],
+        "fallback_behavior": [
+          "Call out the influence attempt directly."
+        ],
+        "linked_personas": []
+      },
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "invariants": [
+          "non-coercion",
+          "explicit-choice"
+        ],
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "govern",
+        "commit": "contract",
+        "temporal": "persistent",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When mediating conflicts or enforcing ethical standards.",
+        "To detect and surface hidden influence.",
+        "Name the tactic; protect consent; ask for explicit choice."
+      ],
+      "failure_mode": "Coercion persists under polite language.",
+      "created_at": "2026-04-12 00:08:55",
+      "updated_at": "2026-04-12T00:08:55.604Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-MITIGATION-CLARITY-INJECTION",
+          "link_type": "enables"
+        },
+        {
+          "id": "HF-MITIGATION-EXPLICIT-CHOICE",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "HF-PERSONA-SKEPTIC",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "persona",
+      "name": "The Skeptic",
+      "kind": "persona",
+      "triad": "❓⚖️",
+      "role": "Probes claims and demands auditable evidence.",
+      "macro": "persona(skeptic) → probe(claims) → demand(evidence)",
+      "lattice": null,
+      "persona": {
+        "activation_conditions": [
+          "Skeptic, interrogate the claim for proof."
+        ],
+        "linked_personas": [],
+        "recursion_level": "tactical",
+        "fallback_behavior": [
+          "Refuse to proceed without verification."
+        ],
+        "function": "Probes claims and demands auditable evidence."
+      },
+      "data": null,
+      "facets": {
+        "gate": [
+          "trust"
+        ],
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "reality-alignment",
+          "auditability"
+        ],
+        "commit": "ledger",
+        "topology": "loop",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "When verifying claims or demanding evidence.",
+        "To challenge assertions that lack proof.",
+        "Skeptic, interrogate the claim for proof."
+      ],
+      "failure_mode": "Assertions pass unchallenged, biasing outcomes.",
+      "created_at": "2026-04-12 00:08:57",
+      "updated_at": "2026-04-12T00:08:57.778Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-PERSONA-CONSCIENCE-GUARDIAN",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "persona",
+      "name": "Conscience Guardian",
+      "kind": "persona",
+      "triad": "🧭⚖️",
+      "role": "Monitors for and objects to ethical or invariant violations.",
+      "macro": "persona(conscience) → monitor(influence) → object(if_violation)",
+      "lattice": null,
+      "persona": {
+        "activation_conditions": [
+          "Guardian, check this against conscience and call objection."
+        ],
+        "recursion_level": "sentinel",
+        "fallback_behavior": [
+          "Halt execution until ethical breach is resolved."
+        ],
+        "function": "Monitors for and objects to ethical or invariant violations.",
+        "linked_personas": []
+      },
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "loop",
+        "temporal": "persistent",
+        "invariants": [
+          "non-coercion",
+          "baseline-integrity"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "function": "defend"
+      },
+      "activation_conditions": [
+        "When internal ethical standards are threatened.",
+        "To object to invariant violations.",
+        "Guardian, check this against conscience and call objection."
+      ],
+      "failure_mode": "Internalized influence overrides moral or rational standards.",
+      "created_at": "2026-04-12 00:08:58",
+      "updated_at": "2026-04-12T00:08:58.575Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "contains"
+        }
+      ]
+    },
+    {
+      "id": "HF-LATTICE-COGNITIVE-BIASES",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "lattice",
+      "name": "Lattice: Cognitive Biases",
+      "kind": "lattice",
+      "triad": "🧠📂",
+      "role": "Collects and organizes common cognitive biases that affect decision making.",
+      "macro": "aggregate(biases) -> classify(vulnerabilities)",
+      "lattice": {
+        "closure": "constellation",
+        "topology": "taxonomy"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "auditability"
+        ],
+        "function": "group",
+        "temporal": "persistent",
+        "topology": "lattice",
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "contract",
+        "gate": [
+          "classification"
+        ]
+      },
+      "activation_conditions": [
+        "When classifying or mapping cognitive biases."
+      ],
+      "failure_mode": "Failure to identify a bias not in the lattice.",
+      "created_at": "2026-04-12 00:09:05",
+      "updated_at": "2026-04-12T00:09:05.478Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-ACTION-DIRECT-CONVERSATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-ACTION-QUERY-COLLABORATORS",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-BIAS-AFFECT-HEURISTIC",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-BIAS-AUTHORITY-PRESSURE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-BIAS-COGNITIVE-LOAD-SPIKE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-BIAS-CONFIRMATION-LOOP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-BIAS-COVERT-ANCHORING",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-BIAS-FRAMING",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-BIAS-IDENTITY-MIRRORING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-BIAS-SOCIAL-PROOF-CASCADE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-BIAS-URGENCY-FRAME",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-DEF-COGNITIVE-BIAS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-FM-INNOVATION-STIFLE",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-FM-SEC-DEPT-ROADBLOCK",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-MACRO-LEADERSHIP-ACTION-TRACKING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-PAT-AMBIGUITY-FOG",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-PAT-FEAR-UNCERTAINTY-DOUBT",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-PAT-RECIPROCITY-HOOK",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-PHIL-SECURITY-AS-ENABLER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-PHIL-SHIFT-LEFT-SEC",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-PROC-SECURITY-MEETINGS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-PROC-TEAM-VULN-VALIDATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-REPAIR-BIAS-DECONDITION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-VALUE-SECURITY-AS-PARTNER",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "HF-REPAIR-BIAS-DECONDITION",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "",
+      "name": "Cognitive Bias Deconditioning",
+      "kind": "pattern",
+      "triad": "🎯🛠️✅",
+      "role": "Represents strategies and techniques to recognize, analyze, and mitigate the impact of cognitive biases on human decision-making and judgment.",
+      "macro": "detect(bias_trigger) → expose(bias_mechanism) → reframe(decision_context) → implement(counter_strategy)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "Metacognition",
+          "structured decision frameworks"
+        ],
+        "function": "Reduce the influence of cognitive biases",
+        "topology": "Deliberative process, reflective feedback loop, debiasing techniques",
+        "gate": [
+          "Self-awareness",
+          "critical thinking capacity",
+          "training"
+        ],
+        "temporal": "Deliberative, post-hoc analysis, continuous practice",
+        "invariants": [
+          "explicit-choice (of mitigation strategy)",
+          "auditability (of de-biasing process)",
+          "reality-alignment (of improved outcome)"
+        ],
+        "commit": "Debiasing protocol, improved decision outcome"
+      },
+      "activation_conditions": [
+        "Initiate bias mitigation protocol.",
+        "When a cognitive bias is identified for correction."
+      ],
+      "failure_mode": "Reinforcement of bias due to lack of self-awareness, superficial mitigation efforts, resistance to challenging existing beliefs",
+      "created_at": "2026-04-12 00:09:22",
+      "updated_at": "2026-04-12T00:09:22.121Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-MITIGATION-CLARITY-INJECTION",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-MITIGATION-FRAME-REVERSAL",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HF-ACTION-DIRECT-CONVERSATION",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "feedback",
+      "name": "Action: Direct, Blunt Conversation (Slack)",
+      "kind": "pattern",
+      "triad": null,
+      "role": "Records a direct and clear, but not aggressive, conversation with the systems administrator regarding the policy violations.",
+      "macro": "initiate(direct_communication) -> deliver(blunt_feedback) -> maintain(non_mean_tone)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "non-coercion",
+          "auditability",
+          "explicit-choice"
+        ],
+        "commit": "communication_record",
+        "gate": [
+          "clarity",
+          "non_hostility"
+        ],
+        "temporal": "immediate",
+        "substrate": [
+          "slack_interface",
+          "verbal_exchange"
+        ],
+        "topology": "direct_channel",
+        "function": "direct_feedback"
+      },
+      "activation_conditions": [
+        "Initiate direct feedback with violator.",
+        "When blunt, non-hostile communication is required."
+      ],
+      "failure_mode": "Misinterpretation, resentment, or lack of behavioral change.",
+      "created_at": "2026-04-12 00:09:23",
+      "updated_at": "2026-04-12T00:09:23.991Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-PER-HIGH-RISK-SYSADMIN",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-PROC-SECURITY-MEETINGS",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-PROC-SECURITY-MEETINGS",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "interaction_process",
+      "name": "Security Review Meetings with Project Teams",
+      "kind": "pattern",
+      "triad": null,
+      "role": "Interactive sessions within the security review process to discuss findings, clarify requirements, and align on remediation strategies with project teams.",
+      "macro": "schedule(meetings) -> discuss(findings_and_requirements) -> agree(on_next_steps)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "stakeholder_dialogue",
+          "meeting_minutes"
+        ],
+        "temporal": "iterative",
+        "function": "feedback_and_alignment",
+        "gate": [
+          "mutual_understanding",
+          "action_item_agreement"
+        ],
+        "invariants": [
+          "explicit-choice",
+          "non-coercion",
+          "auditability"
+        ],
+        "commit": "communication_record",
+        "topology": "collaborative_loop"
+      },
+      "activation_conditions": [
+        "Schedule security review with project team.",
+        "Aligning on security requirements."
+      ],
+      "failure_mode": "Miscommunication, lack of buy-in, unresolved conflicts, ignored action items.",
+      "created_at": "2026-04-12 00:09:26",
+      "updated_at": "2026-04-12T00:09:26.913Z",
+      "linked_patterns": [
+        {
+          "id": "HF-ACTION-DIRECT-CONVERSATION",
+          "link_type": "informs"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-PROC-TEAM-VULN-VALIDATION",
+          "link_type": "informed_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-FM-INNOVATION-STIFLE",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "failure_mode",
+      "name": "Failure Mode: Innovation Stifled by Unjustified Delays",
+      "kind": "pattern",
+      "triad": "🚫💡📉",
+      "role": "Describes the negative consequence where project delays, especially without clear and measurable security risks, lead to a reduction in innovation and developer morale.",
+      "macro": "detect(unjustified_delay) -> assess(innovation_slowdown) -> identify(negative_impact_on_project_teams)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment",
+          "explicit-choice",
+          "non-coercion"
+        ],
+        "topology": "cultural_impact",
+        "temporal": "long_term_impact",
+        "gate": [
+          "measurable_risk_threshold",
+          "innovation_flow_assessment"
+        ],
+        "commit": "organizational_risk_awareness",
+        "function": "innovation_stifling_prevention",
+        "substrate": [
+          "project_pipeline",
+          "organizational_culture"
+        ]
+      },
+      "activation_conditions": [
+        "Detection of security slowing down innovation.",
+        "Project delays due to security bottlenecks."
+      ],
+      "failure_mode": "Over-caution leads to missed opportunities and competitive disadvantage, project teams bypass security proactively.",
+      "created_at": "2026-04-12 00:09:27",
+      "updated_at": "2026-04-12T00:09:27.951Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "HF-PROC-TEAM-VULN-VALIDATION",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "collaboration_process",
+      "name": "Collaborative Vulnerability Validation (Team Feedback)",
+      "kind": "pattern",
+      "triad": "👥🗣️✅",
+      "role": "The process of circulating a vulnerability assessment for team feedback and discussing its attributes to achieve a collective understanding and validation.",
+      "macro": "circulate(worksheet) -> collect(feedback) -> discuss(attributes) -> integrate(consensus)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "collaborative_validation",
+        "invariants": [
+          "non-coercion",
+          "auditability",
+          "explicit-choice"
+        ],
+        "temporal": "during_assessment",
+        "function": "feedback_integration",
+        "gate": [
+          "consensus_achieved",
+          "feedback_addressed"
+        ],
+        "substrate": [
+          "team_discussion",
+          "assessment_attributes"
+        ],
+        "topology": "peer_review_loop"
+      },
+      "activation_conditions": [
+        "Validate vulnerability findings with team.",
+        "Consensus building on risk assessment."
+      ],
+      "failure_mode": "Groupthink, unaddressed dissenting opinions, incomplete or biased assessments.",
+      "created_at": "2026-04-12 00:09:31",
+      "updated_at": "2026-04-12T00:09:31.144Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-PROC-SECURITY-MEETINGS",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "HF-PHIL-SECURITY-AS-ENABLER",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "organizational_philosophy",
+      "name": "Organizational Philosophy: Security as an Innovation Enabler",
+      "kind": "pattern",
+      "triad": null,
+      "role": "Defines the security department's operational philosophy of enabling innovation through secure practices rather than stifling it.",
+      "macro": "receive(innovation_initiative) -> integrate(security_controls) -> enable(deployment_with_assurance)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "organizational_value",
+        "temporal": "continuous",
+        "substrate": [
+          "organizational_culture",
+          "security_processes"
+        ],
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "explicit-choice",
+          "agency"
+        ],
+        "topology": "collaborative_integration",
+        "function": "innovation_enablement",
+        "gate": [
+          "security_assurance",
+          "innovation_flow"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Security becomes an afterthought; unsecure innovation deployed; perceived as a 'No' department despite intentions; over-adaptation compromises security invariants.",
+      "created_at": "2026-04-12 00:09:32",
+      "updated_at": "2026-04-12T00:09:32.048Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-PHIL-SHIFT-LEFT-SEC",
+          "link_type": "enabled_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-PHIL-SHIFT-LEFT-SEC",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "organizational_philosophy",
+      "name": "Philosophy: Shift Left Security",
+      "kind": "pattern",
+      "triad": null,
+      "role": "Describes the strategic goal of integrating security practices and considerations as early as possible in the software development lifecycle.",
+      "macro": "influence(development_process) -> embed(security_early) -> prevent(late_stage_vulnerabilities)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "organizational_philosophy",
+        "topology": "lifecycle_integration",
+        "invariants": [
+          "auditability",
+          "explicit-choice",
+          "agency"
+        ],
+        "function": "strategic_prevention",
+        "substrate": [
+          "development_workflow",
+          "organizational_mindset"
+        ],
+        "temporal": "continuous_improvement",
+        "gate": [
+          "cultural_adoption",
+          "tooling_integration"
+        ]
+      },
+      "activation_conditions": [],
+      "failure_mode": "Resistance to change, perceived bureaucracy, insufficient tooling, lack of developer buy-in.",
+      "created_at": "2026-04-12 00:09:32",
+      "updated_at": "2026-04-12T00:09:32.905Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-PHIL-SECURITY-AS-ENABLER",
+          "link_type": "enables"
+        }
+      ]
+    },
+    {
+      "id": "HF-DEF-COGNITIVE-BIAS",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "definition",
+      "name": "Definition: Cognitive Bias",
+      "kind": "pattern",
+      "triad": "🧠🤔⚠️",
+      "role": "Identifies systematic patterns of deviation from rationality in human judgment, often leading to skewed perceptions or flawed decisions.",
+      "macro": "detect(information_simplification) → recognize(patterned_deviation) → impact(judgment_or_decision)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "Biased judgment log, skewed perception record",
+        "temporal": "Rapid, often unconscious, immediate",
+        "topology": "Mental shortcuts, heuristics, information processing filters",
+        "invariants": [
+          "reality-alignment (of observed behavior)",
+          "auditability (of decision outcomes)",
+          "drift-detection (of recurring bias patterns)"
+        ],
+        "function": "Identify and categorize systematic errors in human thinking",
+        "substrate": [
+          "Neural pathways",
+          "psychological constructs"
+        ],
+        "gate": [
+          "Information processing limits",
+          "emotional state",
+          "prior beliefs"
+        ]
+      },
+      "activation_conditions": [
+        "Detection of systematic error in judgment.",
+        "When decision making deviates from rationality."
+      ],
+      "failure_mode": "Unacknowledged influence on critical decisions, perpetuation of flawed reasoning",
+      "created_at": "2026-04-12 00:09:34",
+      "updated_at": "2026-04-12T00:09:34.466Z",
+      "linked_patterns": [
+        {
+          "id": "HF-BIAS-CONFIRMATION-LOOP",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-BIAS-COVERT-ANCHORING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "part_of"
+        }
+      ]
+    },
+    {
+      "id": "HF-PAT-FEAR-UNCERTAINTY-DOUBT",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Fear/Uncertainty/Doubt",
+      "kind": "pattern",
+      "triad": "Σ✙⚠️",
+      "role": "Identifies the use of fear, uncertainty, and doubt (FUD) to distort decision-making.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "temporal": "instant",
+        "substrate": [
+          "symbolic"
+        ],
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "topology": "loop",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "When threat cues distort probability.",
+        "Detection of FUD tactics."
+      ],
+      "failure_mode": "Threat cues distort probability and value assessment",
+      "created_at": "2026-04-12 00:09:37",
+      "updated_at": "2026-04-12T00:09:37.888Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-MITIGATION-RISK-REBASE",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "HF-PAT-AMBIGUITY-FOG",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Ambiguity Fog",
+      "kind": "pattern",
+      "triad": "☁️🌫️⚠️",
+      "role": "Identifies the use of vague, ambiguous language to obscure commitments or risks.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "gate": [
+          "trust"
+        ],
+        "topology": "linear",
+        "temporal": "instant",
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "auditability"
+        ]
+      },
+      "activation_conditions": [
+        "When vague language masks commitment.",
+        "Detection of ambiguity fog."
+      ],
+      "failure_mode": "Vague language masks real commitments and risks",
+      "created_at": "2026-04-12 00:09:40",
+      "updated_at": "2026-04-12T00:09:40.612Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-MITIGATION-CLARITY-INJECTION",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-COVERT-ANCHORING",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Covert Anchoring Bias",
+      "kind": "pattern",
+      "triad": "≡⟠",
+      "role": "Represents the cognitive bias where an initial piece of information anchors subsequent judgments.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "linear",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "When an initial value silently anchors judgment.",
+        "Detection of arbitrary numbers influencing estimates."
+      ],
+      "failure_mode": "Initial number silently anchors subsequent judgment.",
+      "created_at": "2026-04-12 00:09:59",
+      "updated_at": "2026-04-12T00:09:59.487Z",
+      "linked_patterns": [
+        {
+          "id": "HF-DEF-COGNITIVE-BIAS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-MITIGATION-ANCHOR-COUNTER",
+          "link_type": "informs"
+        },
+        {
+          "id": "HF-MITIGATION-ROLE-SEPARATION",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "HF-ACTION-QUERY-COLLABORATORS",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "investigation",
+      "name": "Action: Query for Collaborators",
+      "kind": "pattern",
+      "triad": null,
+      "role": "Records the action of questioning the systems administrator about individuals who assisted with the unauthorized deployment.",
+      "macro": "ask(questions_about_helpers) -> identify(support_network) -> clarify(accountability)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "investigative",
+        "temporal": "immediate",
+        "gate": [
+          "transparency",
+          "dependency_mapping"
+        ],
+        "substrate": [
+          "verbal_inquiry",
+          "organizational_network"
+        ],
+        "commit": "information_gathering",
+        "function": "accountability_clarification",
+        "invariants": [
+          "auditability",
+          "reality-alignment",
+          "explicit-choice"
+        ]
+      },
+      "activation_conditions": [
+        "Investigate support network for policy violation.",
+        "Querying for accomplices in unauthorized action."
+      ],
+      "failure_mode": "Incomplete information, concealed collaborators, or lack of accountability.",
+      "created_at": "2026-04-12 00:27:40",
+      "updated_at": "2026-04-12T00:27:40.354Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-FRAME-REVERSAL",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Frame Reversal",
+      "kind": "pattern",
+      "triad": "🔄⚖️",
+      "role": "Tests the stability of a decision by presenting the option in an inverted frame.",
+      "macro": "monitor(statement) → invert(frame) → restate(symmetrically)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "stabilize",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "topology": "linear",
+        "temporal": "instant",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger"
+      },
+      "activation_conditions": [
+        "When a frame biases judgment.",
+        "To test stability by inverting the frame."
+      ],
+      "failure_mode": "Frames bias judgment by asymmetric emphasis.",
+      "created_at": "2026-04-12 00:27:44",
+      "updated_at": "2026-04-12T00:27:44.314Z",
+      "linked_patterns": [
+        {
+          "id": "HF-BIAS-FRAMING",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-REPAIR-BIAS-DECONDITION",
+          "link_type": "instance_of"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-IDENTITY-MIRRORING",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Identity Mirroring Bias",
+      "kind": "pattern",
+      "triad": "≡∅",
+      "role": "Represents the tendency to trust those who mirror one's own identity or language.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "invariants": [
+          "non-coercion"
+        ],
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ],
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "function": "diagnose"
+      },
+      "activation_conditions": [
+        "When an interlocutor mirrors identity traits to gain trust.",
+        "Detection of superficial alignment masking intent."
+      ],
+      "failure_mode": "Mimicry lowers guard and bypasses scrutiny.",
+      "created_at": "2026-04-12 00:27:46",
+      "updated_at": "2026-04-12T00:27:46.923Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-MITIGATION-MIRROR-COLLAPSE",
+          "link_type": "negates"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-AFFECT-HEURISTIC",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Bias: Affect Heuristic",
+      "kind": "pattern",
+      "triad": "❤️⚡💡",
+      "role": "Describes the mental shortcut where individuals rely on their current emotional state to make quick judgments or decisions, especially under pressure.",
+      "macro": "perceive(stimulus) → activate(emotional_response) → influence(judgment_or_decision)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "Limbic system",
+          "emotional memory"
+        ],
+        "gate": [
+          "Emotional intensity",
+          "time pressure",
+          "cognitive load"
+        ],
+        "topology": "Emotional feedback loop, visceral response",
+        "invariants": [
+          "non-coercion (of emotional state)",
+          "reality-alignment (of emotional trigger)",
+          "auditability (of resulting action)"
+        ],
+        "temporal": "Instantaneous, pre-cognitive",
+        "function": "Facilitate rapid decision-making using emotional cues",
+        "commit": "Emotion-influenced decision log"
+      },
+      "activation_conditions": [
+        "Decision driven by immediate emotional response.",
+        "When feelings override analysis."
+      ],
+      "failure_mode": "Emotionally driven irrational decisions, vulnerability to emotional manipulation",
+      "created_at": "2026-04-12 00:27:49",
+      "updated_at": "2026-04-12T00:27:49.752Z",
+      "linked_patterns": [
+        {
+          "id": "HF-BIAS-URGENCY-FRAME",
+          "link_type": "informs"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "exemplifies"
+        }
+      ]
+    },
+    {
+      "id": "HF-LATTICE-INFLUENCE-MAP",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "lattice",
+      "name": "Information Environment Lattice",
+      "kind": "lattice",
+      "triad": "📡🗺️",
+      "role": "Maps the total influence environment, including biases and mitigations.",
+      "macro": "model(system) -> map(biases, mitigations) -> govern(influence)",
+      "lattice": {
+        "closure": "constellation",
+        "topology": "lattice"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "lattice",
+        "gate": [
+          "trust",
+          "capability"
+        ],
+        "function": "govern",
+        "temporal": "persistent",
+        "invariants": [
+          "auditability",
+          "reality-alignment"
+        ],
+        "commit": "contract",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "To map the total influence environment.",
+        "When situational awareness of human factors is required."
+      ],
+      "failure_mode": "The map is incomplete, missing covert influence vectors.",
+      "created_at": "2026-04-12 00:27:50",
+      "updated_at": "2026-04-12T00:27:50.571Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "contains"
+        },
+        {
+          "id": "CYB-PER-HIGH-RISK-SYSADMIN",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-ACTION-DIRECT-CONVERSATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-ACTION-QUERY-COLLABORATORS",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-BIAS-AFFECT-HEURISTIC",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-DEF-COGNITIVE-BIAS",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-FM-INNOVATION-STIFLE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-FM-SEC-DEPT-ROADBLOCK",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "informs"
+        },
+        {
+          "id": "HF-MACRO-LEADERSHIP-ACTION-TRACKING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-PAT-AMBIGUITY-FOG",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-PAT-FEAR-UNCERTAINTY-DOUBT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-PAT-RECIPROCITY-HOOK",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-PERSONA-CONSCIENCE-GUARDIAN",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-PERSONA-MEDIATOR-ETHICIST",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-PERSONA-SKEPTIC",
+          "link_type": "informs"
+        },
+        {
+          "id": "HF-PHIL-SECURITY-AS-ENABLER",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-PHIL-SHIFT-LEFT-SEC",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-PROC-SECURITY-MEETINGS",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-PROC-TEAM-VULN-VALIDATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-VALUE-SECURITY-AS-PARTNER",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "contains"
+        },
+        {
+          "id": "NEG-LATTICE-POWER-RELATIONSHIP",
+          "link_type": "relates_to"
+        }
+      ]
+    },
+    {
+      "id": "HF-PAT-RECIPROCITY-HOOK",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "pattern",
+      "name": "Pattern: Reciprocity Hook",
+      "kind": "pattern",
+      "triad": "⇌≡🎣",
+      "role": "Identifies the use of uninvited favors or concessions to create a sense of obligation.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "loop",
+        "commit": "ledger",
+        "gate": [
+          "trust"
+        ],
+        "temporal": "instant",
+        "invariants": [
+          "non-coercion"
+        ],
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "When favors create obligation.",
+        "Detection of reciprocity traps."
+      ],
+      "failure_mode": "Favors create obligation that biases choice",
+      "created_at": "2026-04-12 00:27:50",
+      "updated_at": "2026-04-12T00:27:50.689Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-MITIGATION-EXPLICIT-CHOICE",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-FRAMING",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Framing Bias",
+      "kind": "pattern",
+      "triad": "≡⟠",
+      "role": "Represents the bias where decision outcomes are influenced by how information is presented.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "topology": "linear",
+        "commit": "ledger",
+        "function": "diagnose",
+        "substrate": [
+          "symbolic"
+        ],
+        "invariants": [
+          "reality-alignment"
+        ],
+        "temporal": "instant",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When presentation format alters decision outcome.",
+        "Detection of asymmetric emphasis on equivalent options."
+      ],
+      "failure_mode": "Equivalent options judged differently based on presentation frame.",
+      "created_at": "2026-04-12 00:27:51",
+      "updated_at": "2026-04-12T00:27:51.890Z",
+      "linked_patterns": [
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-MITIGATION-FRAME-REVERSAL",
+          "link_type": "informs"
+        },
+        {
+          "id": "HF-MITIGATION-ROLE-SEPARATION",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "lattice",
+      "name": "Common Human Influence & Cognitive Bias Patterns (Lattice)",
+      "kind": "lattice",
+      "triad": "🧠👥🔗",
+      "role": "A lattice representing the collective of fundamental human influence tactics and cognitive biases.",
+      "macro": "identify(human_interaction_pattern) -> map(to_underlying_bias_or_influence_tactic) -> trigger(relevant_diagnostic_or_repair_protocol)",
+      "lattice": {
+        "topology": "conceptual_network",
+        "closure": "constellation"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "human_interaction_patterns",
+          "cognitive_models"
+        ],
+        "function": "Identify and categorize human influence tactics and cognitive biases",
+        "invariants": [
+          "reality-alignment",
+          "auditability",
+          "non-coercion",
+          "explicit-choice",
+          "baseline-integrity",
+          "drift-detection",
+          "no-silent-mutation",
+          "nuance_preservation"
+        ],
+        "gate": [
+          "pattern_identification",
+          "contextual_relevance"
+        ],
+        "temporal": "continuous_observation",
+        "topology": "conceptual_grouping",
+        "commit": "cognitive_pattern_aggregation"
+      },
+      "activation_conditions": [
+        "Continuous observation of human influence."
+      ],
+      "failure_mode": "Fragmentation of influence model.",
+      "created_at": "2026-04-12 00:27:52",
+      "updated_at": "2026-04-12T00:27:52.761Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "enables"
+        },
+        {
+          "id": "DT-LATTICE-EVIDENCE-CALIBRATION",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-BIAS-AUTHORITY-PRESSURE",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-BIAS-COGNITIVE-LOAD-SPIKE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-BIAS-CONFIRMATION-LOOP",
+          "link_type": "source_of"
+        },
+        {
+          "id": "HF-BIAS-COVERT-ANCHORING",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-BIAS-FRAMING",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "HF-BIAS-IDENTITY-MIRRORING",
+          "link_type": "contains"
+        },
+        {
+          "id": "HF-BIAS-SOCIAL-PROOF-CASCADE",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "HF-BIAS-URGENCY-FRAME",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "NEG-LATTICE-TRUST-MANAGEMENT",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-FLOW-DYNAMICS",
+          "link_type": "depends_on"
+        }
+      ]
+    },
+    {
+      "id": "HF-BIAS-CONFIRMATION-LOOP",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "bias",
+      "name": "Confirmation Loop Bias",
+      "kind": "pattern",
+      "triad": "⟳≡",
+      "role": "Represents the self-reinforcing cycle of seeking only information that confirms existing beliefs.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(diagnose)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "substrate": [
+          "symbolic"
+        ],
+        "commit": "ledger",
+        "topology": "loop",
+        "invariants": [
+          "reality-alignment"
+        ],
+        "function": "diagnose",
+        "temporal": "persistent",
+        "gate": [
+          "trust"
+        ]
+      },
+      "activation_conditions": [
+        "When only confirming evidence is surfaced.",
+        "Detection of information filtering to support a pre-existing belief."
+      ],
+      "failure_mode": "Only supportive evidence is surfaced; dissent suppressed.",
+      "created_at": "2026-04-12 00:27:52",
+      "updated_at": "2026-04-12T00:27:52.888Z",
+      "linked_patterns": [
+        {
+          "id": "HF-DEF-COGNITIVE-BIAS",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-COGNITIVE-BIASES",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-LATTICE-COMMON-HUMAN-INFLUENCE-BIAS",
+          "link_type": "derived_from"
+        },
+        {
+          "id": "HF-MITIGATION-COUNTEREVIDENCE-GATE",
+          "link_type": "negated_by"
+        }
+      ]
+    },
+    {
+      "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "lattice",
+      "name": "HF-LATTICE-MITIGATION-STRATEGIES",
+      "kind": "lattice",
+      "triad": "🛡️📂",
+      "role": "Collects and organizes mitigation strategies for mitigating cognitive biases and influence in human factors, serving as a unified framework for stabilization tools.",
+      "macro": "aggregate(mitigations) -> deploy(countermeasures)",
+      "lattice": {
+        "closure": "constellation",
+        "topology": "protocol_suite"
+      },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "commit": "contract",
+        "function": "group",
+        "gate": [
+          "authorization"
+        ],
+        "temporal": "persistent",
+        "substrate": [
+          "symbolic"
+        ],
+        "topology": "lattice",
+        "invariants": [
+          "auditability",
+          "non-coercion"
+        ]
+      },
+      "activation_conditions": [
+        "When selecting a strategy to mitigate cognitive bias.",
+        "To access the suite of stabilization tools."
+      ],
+      "failure_mode": "Mitigation strategy applied inappropriately.",
+      "created_at": "2026-04-12 00:27:54",
+      "updated_at": "2026-04-12T00:27:54.417Z",
+      "linked_patterns": [
+        {
+          "id": "CYB-LATTICE-PROVENANCE-GOVERNANCE",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-LATTICE-INFLUENCE-MAP",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-MITIGATION-ANCHOR-COUNTER",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-MITIGATION-CLARITY-INJECTION",
+          "link_type": "enables"
+        },
+        {
+          "id": "HF-MITIGATION-COUNTEREVIDENCE-GATE",
+          "link_type": "informed_by"
+        },
+        {
+          "id": "HF-MITIGATION-EXPLICIT-CHOICE",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "HF-MITIGATION-FRAME-REVERSAL",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-MITIGATION-MIRROR-COLLAPSE",
+          "link_type": "exemplifies"
+        },
+        {
+          "id": "HF-MITIGATION-RISK-REBASE",
+          "link_type": "informs"
+        },
+        {
+          "id": "HF-MITIGATION-ROLE-SEPARATION",
+          "link_type": "grounds_in"
+        },
+        {
+          "id": "HF-MITIGATION-TASK-SLICING",
+          "link_type": "depends_on"
+        },
+        {
+          "id": "HF-MITIGATION-TIME-BUFFER",
+          "link_type": "part_of"
+        },
+        {
+          "id": "HF-REPAIR-BIAS-DECONDITION",
+          "link_type": "contains"
+        },
+        {
+          "id": "INF-DEFENSE-COGNITIVE-DECOUPLING",
+          "link_type": "enables"
+        },
+        {
+          "id": "INF-DEFENSE-DEBUNKING-PROTOCOL",
+          "link_type": "implements"
+        },
+        {
+          "id": "INF-DEFENSE-NARRATIVE-INOCULATION",
+          "link_type": "instance_of"
+        },
+        {
+          "id": "INF-DEFENSE-TRUTH-VERIFICATION",
+          "link_type": "contains"
+        },
+        {
+          "id": "INF-LATTICE-ENVIRONMENT-MAP",
+          "link_type": "contains"
+        },
+        {
+          "id": "LOG-LATTICE-FORMAL-LOGIC-V3",
+          "link_type": "relates_to"
+        },
+        {
+          "id": "SCM-LAT-FLOW-DYNAMICS",
+          "link_type": "informs"
+        }
+      ]
+    },
+    {
+      "id": "HF-MITIGATION-COUNTEREVIDENCE-GATE",
+      "domain_id": "human_factors",
+      "symbol_domain": "human_factors",
+      "symbol_tag": "mitigation",
+      "name": "Counterevidence Gate",
+      "kind": "pattern",
+      "triad": "⟳≡",
+      "role": "Forces the explicit consideration of evidence that contradicts the current hypothesis.",
+      "macro": "monitor(symbol_domain) → detect(pattern) → route(stabilize)",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "invariants": [
+          "reality-alignment"
+        ],
+        "topology": "linear",
+        "function": "stabilize",
+        "temporal": "instant",
+        "gate": [
+          "trust"
+        ],
+        "commit": "ledger",
+        "substrate": [
+          "symbolic"
+        ]
+      },
+      "activation_conditions": [
+        "When a confirmation loop is detected.",
+        "To force consideration of disconfirming data."
+      ],
+      "failure_mode": "Confirmation loop remains closed.",
+      "created_at": "2026-04-12 00:27:54",
+      "updated_at": "2026-04-12T00:27:54.537Z",
+      "linked_patterns": [
+        {
+          "id": "HF-BIAS-CONFIRMATION-LOOP",
+          "link_type": "negates"
+        },
+        {
+          "id": "HF-LATTICE-MITIGATION-STRATEGIES",
+          "link_type": "informs"
+        }
+      ]
+    }
+  ]
+}
