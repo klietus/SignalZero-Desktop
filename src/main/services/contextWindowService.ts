@@ -345,7 +345,7 @@ export class ContextWindowService {
             // Query 1: List Domains
             const meta = await domainService.getMetadata();
             const domains = meta.map(d => `| ${d.id} | ${d.name} | ${d.invariants?.join('; ') || ''} |`);
-            results.push(`[DOMAINS]\n${domains.join('\n')}`);
+            results.push(`[CURRENT SYMBOLIC DOMAINS]\n${domains.join('\n')}`);
 
             // Query 2: Recursive Core Injection
             const coreSet = new Map<string, SymbolDef>();

@@ -153,15 +153,24 @@ export const WorldMonitoringPanel: React.FC<WorldMonitoringPanelProps> = ({ widt
                                 return (
                                     <>
                                         {meta.imageUrl && (
-                                            <div className="mb-6 rounded-2xl overflow-hidden border border-gray-800 shadow-xl aspect-video bg-black/40 relative group">
-                                                <img 
-                                                    src={meta.imageUrl} 
-                                                    alt="Monitoring Visual" 
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                                                />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                                                    <p className="text-[10px] text-gray-300 font-mono tracking-widest uppercase">Delta_Visual_Verification</p>
+                                            <div className="mb-6 rounded-2xl overflow-hidden border border-gray-800 shadow-xl bg-black/40 relative group">
+                                                <div className="aspect-video relative overflow-hidden">
+                                                    <img 
+                                                        src={meta.imageUrl} 
+                                                        alt="Monitoring Visual" 
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                                        <p className="text-[10px] text-gray-300 font-mono tracking-widest uppercase">Delta_Visual_Verification</p>
+                                                    </div>
                                                 </div>
+                                                {meta.imageSummary && (
+                                                    <div className="p-4 bg-gray-950/80 border-t border-gray-800">
+                                                        <p className="text-[11px] font-mono text-emerald-500/80 leading-relaxed italic">
+                                                            // {meta.imageSummary}
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                         <div className="text-xl leading-relaxed font-sans text-gray-200 whitespace-pre-wrap tracking-wide mb-6">

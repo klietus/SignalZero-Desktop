@@ -20,7 +20,6 @@ export interface TopologyStats {
     islandsBridged: number;
     domainLatticeLinksCreated: number;
     crossDomainBridgesLifted: number;
-    symbolDomainRefactored: number;
 }
 
 interface PredictedLink {
@@ -101,7 +100,6 @@ class TopologyService {
             let islandsBridged = 0;
             let domainLatticeLinksCreated = 0;
             let crossDomainBridgesLifted = 0;
-            let symbolDomainRefactored = 0;
 
             // Relational analysis requires at least 2 symbols
             const canRunRelational = symbols.length >= 2;
@@ -156,11 +154,6 @@ class TopologyService {
                 await this.promoteRelatesToLinks(symbols);
             }
 
-            // --- STRATEGY: Symbol Domain Refactor (ID Uppercasing & Domain Relocation) ---
-            if (specificStrategy === 'symbolDomainRefactor' || (specificStrategy === undefined && hygiene.domainRefactor)) {
-                symbolDomainRefactored = await this.refactorSymbolDomains(symbols, this.lastRunTimestamp);
-            }
-
             // 4. Recalculate final stats (post-cleanup)
             const finalLinkTypes = new Set<string>();
             let finalLinkCount = 0;
@@ -182,8 +175,7 @@ class TopologyService {
                 reflexiveLinksCreated,
                 islandsBridged,
                 domainLatticeLinksCreated,
-                crossDomainBridgesLifted,
-                symbolDomainRefactored
+                crossDomainBridgesLifted
             };
 
             this.lastRunTimestamp = currentRunTimestamp;
@@ -582,7 +574,7 @@ class TopologyService {
             - referenced_by (reciprocal: references)
 
             {
-              "shouldLink": true/false,
+              "shouldLink": true,
               "reason": "Brief explanation",
               "linkType": "chosen_link_type"
             }`;
@@ -1470,103 +1462,6 @@ A Lattice is a high-level abstract container providing structural "docking point
         }
 
         return bridgedCount;
-    }
-
-    private async refactorSymbolDomains(symbols: SymbolDef[], lastRun: string | null): Promise<number> {
-        loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Starting symbol domain refactor (ID normalization & relocation)");
-        let refactoredCount = 0;
-
-        const allDomains = await domainService.listDomains();
-        
-        // Filter for symbols added/modified since last run
-        const newSymbols = symbols.filter(s => {
-            if (!lastRun || !s.created_at) return true;
-            return new Date(s.updated_at || s.created_at) > new Date(lastRun);
-        });
-
-        if (newSymbols.length === 0) {
-            loggerService.catDebug(LogCategory.KERNEL, "TopologyService: No new or modified symbols to refactor");
-            return 0;
-        }
-
-        for (const s of newSymbols) {
-            let currentId = s.id;
-
-            // 1. ID Normalization (Uppercasing)
-            const upperId = currentId.toUpperCase().replace(/[^A-Z0-9-]/g, '-').replace(/-+/g, '-');
-            if (currentId !== upperId) {
-                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Normalizing ID ${currentId} -> ${upperId}`);
-                try {
-                    await domainService.renameSymbol(s.symbol_domain, currentId, upperId);
-                    currentId = upperId; // Update local tracker
-                    refactoredCount++;
-                } catch (err) {
-                    loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed to rename symbol ${currentId}`, { error: err });
-                }
-            }
-
-            // 2. Domain Relocation Evaluation
-            try {
-                const settings = await settingsService.getInferenceSettings();
-                const fastModel = settings.fastModel;
-                if (!fastModel) continue;
-
-                const prompt = `### KNOWLEDGE GRAPH CURATOR: DOMAIN RELOCATION MISSION
-
-Analyze the following symbol and determine if it is currently placed in the most appropriate domain.
-
-SYMBOL:
-ID: ${currentId}
-Name: "${s.name}"
-Role: ${s.role}
-Current Domain: "${s.symbol_domain}"
-
-AVAILABLE DOMAINS:
-${allDomains.join(', ')}
-
-#### MISSION GOAL:
-If the current domain is incorrect or if there is a significantly more specific/appropriate domain in the list, provide the new domain ID.
-
-#### CONSTRAINTS:
-1. **EXCLUSIVITY**: Output ONLY valid JSON.
-2. **NO CHANGE**: If the current domain is correct, set "shouldRelocate" to false.
-3. **VALIDITY**: The "targetDomain" MUST be one of the IDs from the AVAILABLE DOMAINS list.
-
-#### OUTPUT SCHEMA:
-{
-  "shouldRelocate": boolean,
-  "targetDomain": "domain_id_here",
-  "reason": "Brief justification"
-}`;
-
-                let response: any = {};
-                if (settings.provider === 'gemini') {
-                    const client = await getGeminiClient();
-                    const model = client.getGenerativeModel({ model: fastModel });
-                    const result = await model.generateContent(prompt);
-                    response = extractJson(result.response.text());
-                } else {
-                    const client = await getClient();
-                    const result = await client.chat.completions.create({
-                        model: fastModel,
-                        messages: [{ role: "user", content: prompt }]
-                    });
-                    response = extractJson(result.choices[0]?.message?.content || "{}");
-                }
-
-                if (response.shouldRelocate && response.targetDomain && response.targetDomain !== s.symbol_domain) {
-                    if (allDomains.includes(response.targetDomain)) {
-                        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Relocating symbol ${currentId} from ${s.symbol_domain} to ${response.targetDomain}`, { reason: response.reason });
-                        await domainService.relocateSymbol(currentId, s.symbol_domain, response.targetDomain);
-                        refactoredCount++;
-                    }
-                }
-            } catch (err) {
-                loggerService.catError(LogCategory.KERNEL, `TopologyService: Relocation evaluation failed for ${currentId}`, { error: err });
-            }
-        }
-
-        return refactoredCount;
     }
 }
 

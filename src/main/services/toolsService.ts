@@ -300,6 +300,17 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
+      name: 'list_domains',
+      description: 'List all available symbolic domains (ontological containers).',
+      parameters: {
+        type: 'object',
+        properties: {}
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
       name: 'web_fetch',
       description: 'Fetch content from a URL and extract structured metadata (actors, quotes, summary, timeline).',
       parameters: {
@@ -318,6 +329,12 @@ export const createToolExecutor = (contextSessionId?: string) => {
     loggerService.info(`[ToolExecutor] ${name}`, args);
 
     switch (name) {
+      case 'list_domains': {
+        const domains = await domainService.listDomains();
+        loggerService.catInfo(LogCategory.TOOL, `list_domains: Returning ${domains.length} domains.`, { domains });
+        return { domains };
+      }
+
       case 'find_symbols': {
         const results: VectorSearchResult[] = [];
         for (const q of args.queries) {

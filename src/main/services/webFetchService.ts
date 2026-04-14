@@ -3,6 +3,7 @@ import { Readability } from '@mozilla/readability';
 import { settingsService } from './settingsService.js';
 import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
 import { loggerService, LogCategory } from './loggerService.js';
+import { documentMeaningService } from './documentMeaningService.js';
 
 export interface WebFetchResult {
     url: string;
@@ -16,6 +17,7 @@ export interface WebFetchResult {
         events: string[];
         time: string;
         imageUrl?: string;
+        imageDescription?: string;
     };
 }
 
@@ -41,10 +43,23 @@ export const webFetchService = {
             // --- IMAGE EXTRACTION (Efficient, single-pass) ---
             const imageCandidates: string[] = [];
             
+            const resolveUrl = (src: string | null | undefined) => {
+                if (!src) return null;
+                try {
+                    // Use the document's baseURI or the original URL
+                    const resolved = new URL(src, doc.baseURI || url).href;
+                    loggerService.catDebug(LogCategory.TOOL, `WebFetchService: Resolved image URL "${src}" to "${resolved}"`);
+                    return resolved;
+                } catch (e) {
+                    loggerService.catWarn(LogCategory.TOOL, `WebFetchService: Failed to resolve image URL "${src}" against base "${doc.baseURI || url}"`);
+                    return null;
+                }
+            };
+
             // 1. OG/Twitter Meta Tags
-            const og = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+            const og = resolveUrl(doc.querySelector('meta[property="og:image"]')?.getAttribute('content'));
             if (og) imageCandidates.push(og);
-            const twitter = doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+            const twitter = resolveUrl(doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content'));
             if (twitter) imageCandidates.push(twitter);
 
             // 2. Readability parsing
@@ -59,14 +74,44 @@ export const webFetchService = {
             const mainImg = doc.querySelector('article img, main img, #content img');
             if (mainImg) {
                 const src = mainImg.getAttribute('src');
-                if (src && (src.startsWith('http') || src.startsWith('//'))) {
-                    const finalSrc = src.startsWith('//') ? `https:${src}` : src;
-                    if (!imageCandidates.includes(finalSrc)) imageCandidates.push(finalSrc);
+                const resolved = resolveUrl(src);
+                if (resolved && !imageCandidates.includes(resolved)) {
+                    imageCandidates.push(resolved);
+                }
+            }
+
+            // --- VISION ANALYSIS (Describe the best candidate) ---
+            let imageDescription = "";
+            let selectedImageUrl = "";
+            
+            if (imageCandidates.length > 0) {
+                selectedImageUrl = imageCandidates[0];
+                try {
+                    loggerService.catDebug(LogCategory.TOOL, `WebFetchService: Describing hero image: ${selectedImageUrl}`);
+                    const imgResp = await fetch(selectedImageUrl, { signal: AbortSignal.timeout(10000) });
+                    if (imgResp.ok) {
+                        const buffer = await imgResp.arrayBuffer();
+                        const contentType = imgResp.headers.get('content-type') || 'image/jpeg';
+                        const meaning = await documentMeaningService.parse(Buffer.from(buffer), contentType, selectedImageUrl);
+                        if (meaning.type === 'image' && meaning.content && !meaning.content.includes('[Image analysis failed]')) {
+                            imageDescription = meaning.content;
+                            loggerService.catDebug(LogCategory.TOOL, "WebFetchService: Image description generated successfully");
+                        } else if (meaning.content?.includes('[Image analysis failed]')) {
+                            loggerService.catWarn(LogCategory.TOOL, `WebFetchService: Image analysis failed: ${meaning.content}`);
+                        }
+                    } else {
+                        loggerService.catWarn(LogCategory.TOOL, `WebFetchService: Hero image fetch failed with status ${imgResp.status} ${imgResp.statusText}`);
+                    }
+                } catch (imgErr: any) {
+                    loggerService.catWarn(LogCategory.TOOL, "WebFetchService: Failed to describe hero image", { 
+                        imageUrl: selectedImageUrl,
+                        error: imgErr.message || String(imgErr) 
+                    });
                 }
             }
 
             const cleanText = article.textContent.trim().replace(/\s+/g, ' ');
-            const metadata = await this.extractMetadata(cleanText, url, imageCandidates);
+            const metadata = await this.extractMetadata(cleanText, url, selectedImageUrl, imageDescription);
 
             return {
                 url,
@@ -82,7 +127,7 @@ export const webFetchService = {
         }
     },
 
-    async extractMetadata(text: string, url: string, imageCandidates: string[] = []): Promise<any> {
+    async extractMetadata(text: string, url: string, imageUrl: string = "", imageDescription: string = ""): Promise<any> {
         const settings = await settingsService.getInferenceSettings();
         const fastModel = settings.fastModel;
         if (!fastModel) throw new Error("Fast model not configured");
@@ -92,8 +137,9 @@ export const webFetchService = {
         TEXT:
         ${text.slice(0, 10000)}
 
-        IMAGE CANDIDATES FOUND IN HTML:
-        ${imageCandidates.join('\n')}
+        HERO IMAGE URL: ${imageUrl || "None"}
+        HERO IMAGE VISUAL DESCRIPTION: 
+        ${imageDescription || "No description available."}
 
         Return ONLY valid JSON matching this schema. 
         CRITICAL: All double quotes INSIDE string values must be properly escaped with backslashes.
@@ -101,10 +147,11 @@ export const webFetchService = {
         {
             "actors": ["List of primary entities/people involved"],
             "verbatim_statements": ["Key direct quotes or specific declarations"],
-            "summary": "Concise summary of the core information",
+            "summary": "Concise summary of the core information. Incorporate relevant visual details if an image description was provided.",
             "events": ["Timeline of specific events mentioned"],
             "time": "The primary timeframe of the content",
-            "imageUrl": "The most relevant hero/primary image URL from the candidates provided above. If none are relevant, leave null."
+            "imageUrl": "The provided Hero Image URL if relevant, else null.",
+            "imageDescription": "The provided Visual Description if relevant, else null."
         }`;
 
         try {
@@ -131,7 +178,8 @@ export const webFetchService = {
                 summary: "Extraction failed",
                 events: [],
                 time: "Unknown",
-                imageUrl: imageCandidates[0] || null
+                imageUrl: imageUrl || null,
+                imageDescription: imageDescription || null
             };
         }
     }

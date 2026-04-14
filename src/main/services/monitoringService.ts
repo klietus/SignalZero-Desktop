@@ -1,3 +1,5 @@
+import { webFetchService } from './webFetchService.js';
+import { documentMeaningService } from './documentMeaningService.js';
 import { settingsService } from './settingsService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { sqliteService } from './sqliteService.js';
@@ -61,7 +63,7 @@ class MonitoringService {
     async initialize() {
         if (this.isRunning) return;
         this.isRunning = true;
-        
+
         loggerService.catInfo(LogCategory.MONITORING, "Initializing Monitoring Service");
 
         // Ensure prebuilt sources exist in settings and have updated URLs
@@ -103,14 +105,14 @@ class MonitoringService {
         }
 
         await this.refreshIntervals();
-        
+
         // Start the rollup checker (every 15 minutes)
         setInterval(() => this.checkRollups(), 15 * 60 * 1000);
     }
 
     async refreshIntervals() {
         const settings = await settingsService.getMonitoringSettings();
-        
+
         // Stop removed or disabled sources
         for (const [id, interval] of this.intervals.entries()) {
             const config = settings.sources.find(s => s.id === id);
@@ -129,7 +131,7 @@ class MonitoringService {
                 const interval = setInterval(() => this.pollSource(source), source.pollingIntervalMs);
                 this.intervals.set(source.id, interval);
                 loggerService.catInfo(LogCategory.MONITORING, `Started monitoring source: ${source.name} (${source.id})`, { interval: source.pollingIntervalMs });
-                
+
                 // Initial poll with a small settle-delay to avoid first-run network jitter
                 setTimeout(() => this.pollSource(source), 5000);
             }
@@ -158,10 +160,10 @@ class MonitoringService {
 
             // 1. Itemize the raw data into individual articles/entries
             const items = await this.itemizeData(source, rawData);
-            
+
             if (items && items.length > 0) {
                 loggerService.catInfo(LogCategory.MONITORING, `Source ${source.name} returned ${items.length} items. Checking cache...`);
-                
+
                 for (const item of items) {
                     const articleId = item.id || item.link || item.title;
                     if (!articleId) continue;
@@ -178,29 +180,31 @@ class MonitoringService {
                     }
 
                     // 3. Summarize new article
-                    const summary = await this.summarizeArticle(source, item);
-                    if (summary) {
+                    const result = await this.summarizeArticle(source, item);
+                    if (result) {
                         // 4. Cache the result
                         sqliteService.run(
                             `INSERT INTO monitoring_article_cache (source_id, article_id, summary) VALUES (?, ?, ?)`,
-                            [source.id, articleId, summary]
+                            [source.id, articleId, result.summary]
                         );
 
                         // 5. Feed to delta engine
                         const metadata = {
                             articleUrl: item.link || item.url,
-                            imageUrl: item.image || item.imageUrl
+                            imageUrl: result.imageUrl || item.image || item.imageUrl,
+                            imageSummary: result.imageDescription
                         };
-                        await this.recordDelta(source.id, 'hour', summary, undefined, metadata);
+                        await this.recordDelta(source.id, 'hour', result.summary, undefined, metadata);
                     }
                 }
             } else {
                 // Fallback for non-itemized or failed itemization
                 const summary = await this.summarizeRawData(source, rawData);
                 if (summary && summary.hasChanges) {
-                    await this.recordDelta(source.id, 'hour', summary.content, undefined, { 
+                    await this.recordDelta(source.id, 'hour', summary.content, undefined, {
                         articleUrl: summary.articleUrl,
-                        imageUrl: summary.imageUrl
+                        imageUrl: summary.imageUrl,
+                        imageSummary: summary.imageSummary
                     });
                 }
             }
@@ -214,7 +218,7 @@ class MonitoringService {
             }
 
         } catch (error: any) {
-            loggerService.catError(LogCategory.MONITORING, `Failed to poll source: ${source.name}`, { 
+            loggerService.catError(LogCategory.MONITORING, `Failed to poll source: ${source.name}`, {
                 error: error.message,
                 cause: error.cause,
                 stack: error.stack
@@ -251,7 +255,7 @@ class MonitoringService {
         if (source.type === 'api') {
             try {
                 const data = JSON.parse(rawData);
-                
+
                 // ACLED: { data: [...] }
                 if (source.id === 'acled' && Array.isArray(data.data)) {
                     loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.data.length} items from ACLED API`);
@@ -277,7 +281,7 @@ class MonitoringService {
                     loggerService.catInfo(LogCategory.MONITORING, `Itemized ${data.length} items from generic array API`);
                     return data;
                 }
-            } catch (e) { 
+            } catch (e) {
                 loggerService.catWarn(LogCategory.MONITORING, `JSON parse failed during itemization for ${source.name}`, { error: e });
                 return []; // Return empty instead of null to avoid accidental raw summary of huge JSON error string
             }
@@ -296,7 +300,7 @@ class MonitoringService {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ 
+                const model = client.getGenerativeModel({
                     model: fastModel,
                     generationConfig: { maxOutputTokens: 1024 }
                 });
@@ -318,28 +322,80 @@ class MonitoringService {
         }
     }
 
-    private async summarizeArticle(source: MonitoringSourceConfig, item: any): Promise<string | null> {
+    private async summarizeArticle(source: MonitoringSourceConfig, item: any): Promise<{ summary: string, imageUrl?: string, imageDescription?: string } | null> {
         const settings = await settingsService.getInferenceSettings();
         const fastModel = settings.fastModel;
         if (!fastModel) return null;
 
+        let articleData = item;
+        let imageUrl = item.image || item.imageUrl;
+        let imageDescription = "";
+
+        // --- NEW: Leverage WebFetchService for full content and images ---
+        if (item.link && (source.type === 'rss' || source.type === 'web' || source.type === 'api')) {
+            try {
+                loggerService.catDebug(LogCategory.MONITORING, `Fetching full content for article: ${item.link}`);
+                const fetchResult = await webFetchService.fetch(item.link);
+                if (fetchResult) {
+                    articleData = {
+                        ...item,
+                        title: fetchResult.title || item.title,
+                        content: fetchResult.content || item.content,
+                        excerpt: fetchResult.excerpt || item.excerpt
+                    };
+                    if (fetchResult.extracted.imageUrl) {
+                        imageUrl = fetchResult.extracted.imageUrl;
+                    }
+                    if (fetchResult.extracted.imageDescription) {
+                        imageDescription = fetchResult.extracted.imageDescription;
+                    }
+                }
+            } catch (err) {
+                loggerService.catWarn(LogCategory.MONITORING, `WebFetchService failed for ${item.link}, falling back to item data`, { error: err });
+            }
+        }
+
+        // --- Fallback: Describe image if we have a URL but no description yet ---
+        if (imageUrl && !imageDescription) {
+            try {
+                loggerService.catDebug(LogCategory.MONITORING, `Describing article image: ${imageUrl}`);
+                const imgResp = await fetch(imageUrl, {
+                    headers: { 'User-Agent': 'Mozilla/5.0' },
+                    signal: AbortSignal.timeout(10000)
+                });
+                if (imgResp.ok) {
+                    const buffer = await imgResp.arrayBuffer();
+                    const contentType = imgResp.headers.get('content-type') || 'image/jpeg';
+                    const meaning = await documentMeaningService.parse(Buffer.from(buffer), contentType, imageUrl);
+                    if (meaning.type === 'image' && meaning.content) {
+                        imageDescription = meaning.content;
+                    }
+                }
+            } catch (err) {
+                loggerService.catDebug(LogCategory.MONITORING, "Failed to fetch/describe article image", { error: err });
+            }
+        }
+
         const prompt = `Summarize the following article/event from source "${source.name}". 
         Focus on identifying the core delta (the change in the world).
         
-        Article:
-        ${JSON.stringify(item)}
+        ARTICLE DATA:
+        ${JSON.stringify(articleData)}
 
-        Output a concise bulleted summary.`;
+        ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` : ""}
+
+        Output a concise bulleted summary. Incorporate visual details if relevant.`;
 
         try {
+            let summary = "";
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ 
+                const model = client.getGenerativeModel({
                     model: fastModel,
                     generationConfig: { maxOutputTokens: 1024 }
                 });
                 const result = await model.generateContent(prompt);
-                return result.response.text().trim();
+                summary = result.response.text().trim();
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
@@ -347,15 +403,21 @@ class MonitoringService {
                     messages: [{ role: "user", content: prompt }],
                     max_tokens: 1024
                 });
-                return result.choices[0]?.message?.content?.trim() || null;
+                summary = result.choices[0]?.message?.content?.trim() || "";
             }
+
+            return {
+                summary,
+                imageUrl,
+                imageDescription
+            };
         } catch (error) {
             loggerService.catError(LogCategory.MONITORING, "Article summarization failed", { error });
             return null;
         }
     }
 
-    private async summarizeRawData(source: MonitoringSourceConfig, rawData: string): Promise<{ hasChanges: boolean, content: string, articleUrl?: string, imageUrl?: string } | null> {
+    private async summarizeRawData(source: MonitoringSourceConfig, rawData: string): Promise<{ hasChanges: boolean, content: string, articleUrl?: string, imageUrl?: string, imageSummary?: string } | null> {
         const settings = await settingsService.getInferenceSettings();
         const fastModel = settings.fastModel;
         if (!fastModel) return null;
@@ -369,15 +431,16 @@ class MonitoringService {
         If there are changes:
         1. Identify a primary 'articleUrl' if one exists in the data.
         2. Identify a primary 'imageUrl' if one exists in the data.
-        3. Provide a concise bulleted summary of the deltas in 'content'.
+        3. Identify a concise 'imageSummary' if an image is present.
+        4. Provide a concise bulleted summary of the deltas in 'content'.
         
-        Output valid JSON: { "hasChanges": boolean, "content": "...", "articleUrl": "...", "imageUrl": "..." }`;
+        Output valid JSON: { "hasChanges": boolean, "content": "...", "articleUrl": "...", "imageUrl": "...", "imageSummary": "..." }`;
 
         try {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ 
+                const model = client.getGenerativeModel({
                     model: fastModel,
                     generationConfig: { maxOutputTokens: 1024 }
                 });
@@ -420,7 +483,7 @@ class MonitoringService {
 
         // Index in LanceDB
         await lancedbService.indexDeltaBatch([delta]);
-        
+
         // Notify any listeners (e.g. Agents)
         eventBusService.emitKernelEvent('monitoring:delta-created' as any, delta);
 
@@ -468,7 +531,7 @@ class MonitoringService {
 
         // Recursively ensure we have the previous period deltas
         const subDeltas = await this.ensureRollup(sourceId, prevPeriod, startDate, endDate);
-        
+
         if (subDeltas.length === 0) {
             loggerService.catWarn(LogCategory.MONITORING, `Cannot synthesize ${period}: No ${prevPeriod} deltas found in range.`);
             return [];
@@ -491,13 +554,13 @@ class MonitoringService {
             'day': { next: 'week', count: 7, window: '7 days' },
             'week': { next: 'month', count: 4, window: '30 days' },
             'month': { next: 'year', count: 12, window: '365 days' },
-            'year': { next: 'year', count: 0, window: '' } 
+            'year': { next: 'year', count: 0, window: '' }
         };
 
         for (const p of periods) {
             const rollupInfo = periodMap[p];
             const sources = sqliteService.all(`SELECT DISTINCT source_id FROM monitoring_deltas WHERE period = ?`, [p]);
-            
+
             for (const { source_id } of sources) {
                 // Get most recent 50 deltas in the current window for this period to prevent context explosion
                 const deltas = sqliteService.all(
@@ -534,55 +597,82 @@ class MonitoringService {
 
     private async performRollup(sourceId: string, fromPeriod: MonitoringPeriod, toPeriod: MonitoringPeriod, deltas: any[], customTimestamp?: string, existingId?: string) {
         loggerService.catInfo(LogCategory.MONITORING, `${existingId ? 'Updating' : 'Performing'} ${toPeriod} rollup for ${sourceId}`);
-        
+
         const settings = await settingsService.getInferenceSettings();
-        const fastModel = settings.fastModel;
-        if (!fastModel) return;
+        const agentModel = settings.agentModel;
+        if (!agentModel) return;
 
-        const combinedContent = deltas.map(d => {
-            const truncatedContent = (d.content || "").slice(0, 1000);
-            return `[${d.timestamp}] ${truncatedContent}`;
-        }).join('\n\n---\n\n');
-        const prompt = `Synthesize the following ${fromPeriod} deltas for "${sourceId}" into a single comprehensive ${toPeriod} summary.
-        Focus on identifying long-term trends and major shifts.
+        const combinedData = deltas.map(d => {
+            const meta = typeof d.metadata === 'string' ? JSON.parse(d.metadata) : (d.metadata || {});
+            return {
+                timestamp: d.timestamp,
+                content: d.content,
+                imageUrl: meta.imageUrl,
+                imageSummary: meta.imageSummary,
+                articleUrl: meta.articleUrl
+            };
+        });
+
+        const prompt = `Synthesize the following ${fromPeriod} deltas for "${sourceId}" into a comprehensive ${toPeriod} report.
         
-        Deltas:
-        ${combinedContent}
+        The report MUST include:
+        1. **KEY THEMES**: A high-level synthesis of the most significant trends and shifts during this period.
+        2. **HIGHLIGHTED EVENTS**: A list of the top ten most important individual delta provided. For each selected delta, include a concise one-line summary for each.
+        3. **FEATURED HIGHLIGHT**: Identify the single most impactful event or trend from this period. Extract its 'articleUrl', 'imageUrl', and 'imageSummary'.
 
-        Output a concise synthesized summary.`;
+        Deltas to synthesize:
+        ${JSON.stringify(combinedData)}
+
+        Output valid JSON:
+        {
+          "content": "The full formatted report text (using markdown for themes and the detailed log)",
+          "featuredEvent": {
+            "articleUrl": "URL for the highlight (if any)",
+            "imageUrl": "Image URL for the highlight (if any)",
+            "imageSummary": "Image description for the highlight (if any)"
+          }
+        }`;
 
         try {
-            let summary = "";
+            let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ 
-                    model: fastModel,
-                    generationConfig: { maxOutputTokens: 1024 }
+                const model = client.getGenerativeModel({
+                    model: agentModel,
+                    generationConfig: { maxOutputTokens: 4096 }
                 });
                 const result = await model.generateContent(prompt);
-                summary = result.response.text().trim();
+                response = extractJson(result.response.text());
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
-                    model: fastModel,
+                    model: agentModel,
                     messages: [{ role: "user", content: prompt }],
-                    max_tokens: 1024
+                    max_tokens: 4096
                 });
-                summary = result.choices[0]?.message?.content?.trim() || "";
+                response = extractJson(result.choices[0]?.message?.content || "{}");
             }
 
-            if (summary) {
+            if (response.content) {
+                const metadata = {
+                    articleUrl: response.featuredEvent?.articleUrl,
+                    imageUrl: response.featuredEvent?.imageUrl,
+                    imageSummary: response.featuredEvent?.imageSummary,
+                    isRollup: true,
+                    constituentCount: deltas.length
+                };
+
                 if (existingId) {
                     // Update existing
                     sqliteService.run(
-                        `UPDATE monitoring_deltas SET content = ?, timestamp = ? WHERE id = ?`,
-                        [summary, customTimestamp || new Date().toISOString(), existingId]
+                        `UPDATE monitoring_deltas SET content = ?, timestamp = ?, metadata = ? WHERE id = ?`,
+                        [response.content, customTimestamp || new Date().toISOString(), JSON.stringify(metadata), existingId]
                     );
-                    // Re-index in LanceDB (LanceDB replace is handled by delete then add in our service)
+                    // Re-index in LanceDB
                     const delta = sqliteService.get(`SELECT * FROM monitoring_deltas WHERE id = ?`, [existingId]);
                     if (delta) await lancedbService.indexDeltaBatch([delta]);
                 } else {
-                    await this.recordDelta(sourceId, toPeriod, summary, customTimestamp);
+                    await this.recordDelta(sourceId, toPeriod, response.content, customTimestamp, metadata);
                 }
             }
         } catch (error) {
@@ -603,25 +693,46 @@ class MonitoringService {
 
         if (delta.period === 'hour') {
             loggerService.catInfo(LogCategory.MONITORING, `Refining hour delta: ${deltaId}`);
-            // For hour deltas, we re-summarize the existing content to "refine" it, 
-            // since we don't store the original raw data for efficiency.
+
             const settings = await settingsService.getInferenceSettings();
             const fastModel = settings.fastModel;
             if (!fastModel) return delta;
 
+            const meta = typeof delta.metadata === 'string' ? JSON.parse(delta.metadata) : (delta.metadata || {});
+            let articleContent = delta.content;
+            let imageUrl = meta.imageUrl;
+            let imageDescription = meta.imageSummary || "";
+
+            // --- FULL PIPELINE: Fetch fresh content and images if URL exists ---
+            if (meta.articleUrl) {
+                try {
+                    loggerService.catInfo(LogCategory.MONITORING, `Regeneration: Fetching full content for ${meta.articleUrl}`);
+                    const fetchResult = await webFetchService.fetch(meta.articleUrl);
+                    if (fetchResult) {
+                        articleContent = `Title: ${fetchResult.title}\n\nContent: ${fetchResult.content}`;
+                        if (fetchResult.extracted.imageUrl) imageUrl = fetchResult.extracted.imageUrl;
+                        if (fetchResult.extracted.imageDescription) imageDescription = fetchResult.extracted.imageDescription;
+                    }
+                } catch (fetchErr) {
+                    loggerService.catWarn(LogCategory.MONITORING, `Regeneration fetch failed, using existing content`, { error: fetchErr });
+                }
+            }
+
             const prompt = `Refine and improve the following world-monitoring summary. 
-            Ensure it is concise, impactful, and captures the core 'delta' accurately.
+            Focus on identifying the core 'delta' (the change in the world).
             
-            Current Summary:
-            ${delta.content}
+            ${meta.articleUrl ? 'SOURCE CONTENT:' : 'CURRENT SUMMARY:'}
+            ${articleContent}
             
-            Output the refined summary only.`;
+            ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` : ""}
+
+            Output a concise, impactful bulleted summary. Incorporate visual details if relevant.`;
 
             try {
                 let refined = "";
                 if (settings.provider === 'gemini') {
                     const client = await getGeminiClient();
-                    const model = client.getGenerativeModel({ 
+                    const model = client.getGenerativeModel({
                         model: fastModel,
                         generationConfig: { maxOutputTokens: 1024 }
                     });
@@ -638,8 +749,18 @@ class MonitoringService {
                 }
 
                 if (refined) {
-                    sqliteService.run(`UPDATE monitoring_deltas SET content = ? WHERE id = ?`, [refined, deltaId]);
-                    const updated = { ...delta, content: refined };
+                    const updatedMeta = {
+                        ...meta,
+                        imageUrl,
+                        imageSummary: imageDescription
+                    };
+
+                    sqliteService.run(
+                        `UPDATE monitoring_deltas SET content = ?, metadata = ? WHERE id = ?`,
+                        [refined, JSON.stringify(updatedMeta), deltaId]
+                    );
+
+                    const updated = { ...delta, content: refined, metadata: updatedMeta };
                     await lancedbService.indexDeltaBatch([updated]);
                     return updated;
                 }
@@ -651,7 +772,7 @@ class MonitoringService {
             // It's a rollup. Find constituent sub-deltas.
             const prevPeriod = periodOrder[idx - 1];
             loggerService.catInfo(LogCategory.MONITORING, `Re-synthesizing ${delta.period} rollup from ${prevPeriod} deltas`);
-            
+
             // Find deltas of prevPeriod that occurred BEFORE or AT this delta's timestamp,
             // going back one unit of the current period.
             // For simplicity, we'll take the latest 50 sub-deltas that precede this one.

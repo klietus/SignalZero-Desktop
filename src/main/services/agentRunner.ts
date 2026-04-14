@@ -22,7 +22,7 @@ class AgentRunner {
 
         // Background: Trigger the Batch Execution Round every 5 minutes
         setInterval(() => this.runBatchRound(), 5 * 60 * 1000);
-        
+
         // Initial catch-up and first batch run
         setTimeout(() => this.catchUpAndRoute(), 10000);
     }
@@ -44,7 +44,7 @@ class AgentRunner {
                     await this.handleIncomingDelta(delta as MonitoringDelta);
                 }
             }
-            
+
             // Trigger first batch run immediately after catch-up routing
             this.runBatchRound();
         } catch (error) {
@@ -62,7 +62,7 @@ class AgentRunner {
             this.routedDeltas.add(delta.id);
             const agents = await agentService.listAgents();
             const activeAgents = agents.filter(a => a.enabled && a.subscriptions && a.subscriptions.length > 0);
-            
+
             if (activeAgents.length === 0) return;
 
             // WINNER TAKES ALL ROUTING
@@ -89,23 +89,23 @@ class AgentRunner {
      */
     private async runBatchRound() {
         if (this.isProcessingBatch) return;
-        
+
         try {
             this.isProcessingBatch = true;
             const agents = await agentService.listAgents();
-            
+
             for (const agent of agents) {
                 const deltas = this.pendingBatches.get(agent.id);
                 if (!deltas || deltas.length === 0) continue;
 
                 loggerService.catInfo(LogCategory.AGENT, `Batch Round: Agent ${agent.id} processing ${deltas.length} deltas`);
-                
+
                 // Clear the batch before starting to avoid race conditions if new deltas arrive during turn
                 this.pendingBatches.set(agent.id, []);
 
                 try {
                     await this.executeAgentBatchTurn(agent, deltas);
-                    
+
                     // Mark all as processed in DB
                     for (const delta of deltas) {
                         await agentService.markDeltaProcessed(agent.id, delta.id);
@@ -173,18 +173,18 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
             const toolExecutor = createToolExecutor(session.id);
 
             const deltaSummary = deltas.map((d, i) => {
-                let header = `[EVENT ${i+1}]\nSource: ${d.sourceId}\nContent: ${d.content}`;
+                let header = `[EVENT ${i + 1}]\nSource: ${d.sourceId}\nContent: ${d.content}`;
                 if (d.metadata) {
                     if (d.metadata.articleUrl) header += `\nArticle URL: ${d.metadata.articleUrl}`;
                     if (d.metadata.imageUrl) header += `\nImage URL: ${d.metadata.imageUrl}`;
                 }
                 return header;
             }).join('\n\n---\n\n');
-            
-            const message = `[AUTONOMOUS BATCH TRIGGER]\n${deltas.length} new events have been detected:\n\n${deltaSummary}\n\nSynthesize these events into your symbolic graph. Use the provided URLs for grounding if needed.`;
+
+            const message = `[AUTONOMOUS BATCH TRIGGER]\n${deltas.length} new events have been detected:\n\n${deltaSummary}\n\nSynthesize these events into your symbolic graph. Use the provided URLs for grounding if needed.  You MUST modify the symbolic graph using the upsert_symbols tool for each delta.  You MUST use the log_trace tool to record the changes.`;
 
             const startTime = new Date().toISOString();
-            const stream = sendMessageAndHandleTools(chat, message, toolExecutor, true, agent.prompt, session.id, undefined, undefined, undefined, undefined, 0);
+            const stream = sendMessageAndHandleTools(chat, message, toolExecutor, false, fullAgentPrompt, session.id, undefined, undefined, undefined, undefined, 0);
 
             let fullResponse = "";
             let traceCount = 0;

@@ -171,12 +171,21 @@ export const MonitoringScreen: React.FC<MonitoringScreenProps> = ({ headerProps 
                                                     return (
                                                         <>
                                                             {meta.imageUrl && (
-                                                                <div className="mb-6 rounded-xl overflow-hidden border border-gray-800 shadow-xl max-h-80 bg-black/40 relative group">
-                                                                    <img 
-                                                                        src={meta.imageUrl} 
-                                                                        alt="Delta Visual" 
-                                                                        className="w-full h-full object-contain" 
-                                                                    />
+                                                                <div className="mb-6 rounded-xl overflow-hidden border border-gray-800 shadow-xl bg-black/40 relative group">
+                                                                    <div className="max-h-80 relative overflow-hidden bg-black flex justify-center">
+                                                                        <img 
+                                                                            src={meta.imageUrl} 
+                                                                            alt="Delta Visual" 
+                                                                            className="max-h-80 object-contain" 
+                                                                        />
+                                                                    </div>
+                                                                    {meta.imageSummary && (
+                                                                        <div className="p-4 bg-gray-950/80 border-t border-gray-800">
+                                                                            <p className="text-[11px] font-mono text-emerald-500/80 leading-relaxed italic">
+                                                                                // {meta.imageSummary}
+                                                                            </p>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                             

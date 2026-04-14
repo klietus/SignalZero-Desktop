@@ -230,8 +230,9 @@ class DocumentMeaningService {
                 content: this.stripThinking(description),
                 structured_data: { analysis_model: visionModel }
             };
-        } catch (error) {
-            return { type: 'image', metadata: { url, error: String(error) }, content: `[Image analysis failed]` };
+        } catch (error: any) {
+            loggerService.error(`DocumentMeaningService: Image analysis failed for ${url}`, { error: error.message });
+            return { type: 'image', metadata: { url, error: String(error) }, content: `[Image analysis failed: ${error.message || String(error)}]` };
         }
     }
 
