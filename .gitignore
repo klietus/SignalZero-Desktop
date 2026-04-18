@@ -19,6 +19,7 @@ sidecars/voice/python-portable/
 sidecars/voice/deps/
 sidecars/voice/*.bin
 sidecars/voice/*.onnx
+sidecars/voice/spkrec-model/
 test_venv/
 
 __pycache__/

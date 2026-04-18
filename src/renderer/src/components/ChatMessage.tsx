@@ -391,13 +391,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
       <div className={`flex max-w-[90%] md:max-w-[80%] gap-3 pointer-events-none ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
         
         {/* Avatar */}
-        <div className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center shadow-sm border
-          ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}
-          ${isUser 
-            ? 'bg-indigo-600 border-indigo-500 text-white' 
-            : 'bg-gray-900 border-gray-700 text-emerald-500'
-          }`}>
-          {isUser ? <User size={16} /> : <Terminal size={16} />}
+        <div className="flex flex-col items-center gap-1">
+            <div className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center shadow-sm border
+              ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}
+              ${isUser 
+                ? 'bg-indigo-600 border-indigo-500 text-white' 
+                : 'bg-gray-900 border-gray-700 text-emerald-500'
+              }`}>
+              {isUser ? <User size={16} /> : <Terminal size={16} />}
+            </div>
+            {isUser && message.metadata?.voice_authenticated_username && (
+                <div className="text-[8px] font-bold uppercase text-indigo-500 bg-indigo-500/10 px-1 rounded truncate max-w-[40px] text-center">
+                    {message.metadata.voice_authenticated_username}
+                </div>
+            )}
         </div>
 
         {/* Bubble */}

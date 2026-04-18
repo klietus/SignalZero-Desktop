@@ -2,7 +2,7 @@ import { GraphHygieneSettings, MonitoringSourceConfig } from '../types.js';
 import fs from 'fs';
 import path from 'path';
 import { app, safeStorage } from 'electron';
-import { loggerService } from './loggerService.js';
+import { loggerService, LogCategory } from './loggerService.js';
 
 // In Electron, settings are stored in the user data directory
 const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
@@ -26,6 +26,7 @@ export interface InferenceSettings {
   voiceEnabled?: boolean;
   systemName?: string;
   voiceId?: string;
+  voiceProfiles?: Record<string, number[]>;
   dominantLanguage?: string;
   savedConfigs?: Record<string, InferenceConfiguration>;
 }
@@ -55,12 +56,20 @@ export interface MonitoringSettings {
 
 export interface SystemSettings {
   inference?: Partial<InferenceSettings>;
+  voiceProfiles?: Record<string, number[]>; 
+  systemName?: string; 
+  voiceId?: string;
+  voiceEnabled?: boolean;
+  dominantLanguage?: string;
   serpApi?: WebSearchProviderSettings;
   braveSearch?: WebSearchProviderSettings;
   tavily?: WebSearchProviderSettings;
   hygiene?: GraphHygieneSettings;
   mcpConfigs?: McpConfiguration[];
   monitoring?: MonitoringSettings;
+  ui?: {
+    showGraphviz?: boolean;
+  };
 }
 
 let _settingsCache: SystemSettings | null = null;
@@ -142,10 +151,11 @@ export const settingsService = {
       agentModel: saved.agentModel || saved.model || 'qwen3.5-122b-a10b',
       visionModel: saved.visionModel || 'zai-org/glm-4.6v-flash',
       fastModel: saved.fastModel || 'qwen3.5-0.8b',
-      voiceEnabled: saved.voiceEnabled ?? false,
-      systemName: saved.systemName || 'axiom',
-      voiceId: saved.voiceId || 'af_sarah',
-      dominantLanguage: saved.dominantLanguage || 'en',
+      voiceEnabled: settings.voiceEnabled ?? saved.voiceEnabled ?? false,
+      systemName: settings.systemName ?? saved.systemName ?? 'axiom',
+      voiceId: settings.voiceId ?? saved.voiceId ?? 'af_sarah',
+      voiceProfiles: settings.voiceProfiles || (saved as any).voiceProfiles || {},
+      dominantLanguage: settings.dominantLanguage ?? saved.dominantLanguage ?? 'en',
       savedConfigs: saved.savedConfigs ? Object.fromEntries(
           Object.entries(saved.savedConfigs).map(([k, v]) => [k, { ...v, apiKey: decrypt(v.apiKey) }])
       ) : {},
@@ -288,18 +298,50 @@ export const settingsService = {
         serpApi,
         braveSearch,
         tavily,
-        monitoring
+        monitoring,
+        voiceProfiles: settings.voiceProfiles || inference.voiceProfiles,
+        systemName: settings.systemName || inference.systemName,
+        voiceId: settings.voiceId || inference.voiceId,
+        voiceEnabled: settings.voiceEnabled ?? inference.voiceEnabled,
+        dominantLanguage: settings.dominantLanguage || inference.dominantLanguage
     };
   },
 
   update: async (settings: Partial<SystemSettings>) => {
+    loggerService.catInfo(LogCategory.SYSTEM, "Settings update call received.");
     const current = loadFromFile();
     
+    // Handle global voice settings
+    if (settings.voiceProfiles) {
+        current.voiceProfiles = { ...(current.voiceProfiles || {}), ...settings.voiceProfiles };
+        loggerService.catInfo(LogCategory.SYSTEM, `Merged voice profiles. Total: ${Object.keys(current.voiceProfiles).length}`);
+    }
+    if (settings.systemName) current.systemName = settings.systemName;
+    if (settings.voiceId) current.voiceId = settings.voiceId;
+    if (settings.voiceEnabled !== undefined) current.voiceEnabled = settings.voiceEnabled;
+    if (settings.dominantLanguage) current.dominantLanguage = settings.dominantLanguage;
+
     if (settings.inference) {
+        const currentSavedConfigs = current.inference?.savedConfigs || {};
+        const incomingSavedConfigs = settings.inference.savedConfigs || {};
+        
+        // Merge saved configs and encrypt apiKeys
+        const mergedSavedConfigs = { ...currentSavedConfigs };
+        for (const [key, value] of Object.entries(incomingSavedConfigs)) {
+            mergedSavedConfigs[key] = {
+                ...value,
+                apiKey: encrypt(value.apiKey || '')
+            };
+        }
+
+        // Clean up incoming inference from local voice settings that are now global
+        const { voiceProfiles, systemName, voiceId, voiceEnabled, dominantLanguage, ...cleanInference } = settings.inference as any;
+
         current.inference = {
             ...current.inference,
-            ...settings.inference,
-            apiKey: encrypt(settings.inference.apiKey || '')
+            ...cleanInference,
+            apiKey: encrypt(settings.inference.apiKey || ''),
+            savedConfigs: mergedSavedConfigs
         };
     }
     
@@ -340,7 +382,13 @@ export const settingsService = {
     delete otherSettings.braveSearch;
     delete otherSettings.tavily;
     delete otherSettings.monitoring;
+    delete (otherSettings as any).voiceProfiles;
+    delete (otherSettings as any).systemName;
+    delete (otherSettings as any).voiceId;
+    delete (otherSettings as any).voiceEnabled;
+    delete (otherSettings as any).dominantLanguage;
 
     saveToFile({ ...current, ...otherSettings });
   }
 };
+

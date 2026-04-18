@@ -12,8 +12,8 @@ const api = {
   deleteContext: (id: string) => ipcRenderer.invoke('context:delete', id),
   
   // Inference
-  sendMessage: (sessionId: string, message: string, systemInstruction?: string) => 
-    ipcRenderer.invoke('inference:send', sessionId, message, systemInstruction),
+  sendMessage: (sessionId: string, message: string, systemInstruction?: string, metadata?: Record<string, any>) => 
+    ipcRenderer.invoke('inference:send', sessionId, message, systemInstruction, metadata),
   
   // Symbol/Domain Management
   listDomains: () => ipcRenderer.invoke('domain:list'),
@@ -79,12 +79,25 @@ const api = {
     ipcRenderer.on('voice:play-chunk', subscription);
     return () => ipcRenderer.removeListener('voice:play-chunk', subscription);
   },
-  onTriggerSubmit: (callback: (text?: string) => void) => {
-    const subscription = (_event, text?: string) => callback(text);
+  onTriggerSubmit: (callback: (data: { text: string, speaker?: string }) => void) => {
+    const subscription = (_event, data: { text: string, speaker?: string }) => callback(data);
     ipcRenderer.on('voice:trigger-submit', subscription);
     return () => {
       ipcRenderer.removeListener('voice:trigger-submit', subscription);
     };
+  },
+  startVoiceEnrollment: (phrase: string) => ipcRenderer.send('voice:enroll-start', { phrase }),
+  nextVoiceEnrollmentPhrase: (phrase: string) => ipcRenderer.send('voice:enroll-next', { phrase }),
+  stopVoiceEnrollment: (name: string) => ipcRenderer.send('voice:enroll-stop', { name }),
+  onVoiceEnrollProgress: (callback: (data: { count: number, verified: boolean, text: string }) => void) => {
+    const listener = (_event: any, data: any) => callback(data);
+    ipcRenderer.on('voice:enroll-progress', listener);
+    return () => ipcRenderer.removeListener('voice:enroll-progress', listener);
+  },
+  onVoiceEnrollFinalized: (callback: (data: { profile: number[], name: string }) => void) => {
+    const subscription = (_event, data: { profile: number[], name: string }) => callback(data);
+    ipcRenderer.on('voice:enroll-finalized', subscription);
+    return () => ipcRenderer.removeListener('voice:enroll-finalized', subscription);
   },
   notifyPlaybackFinished: () => ipcRenderer.send('voice:playback-finished'),
 

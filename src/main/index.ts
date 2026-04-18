@@ -454,9 +454,16 @@ ipcMain.handle('trace:list', async (_, sessionId) => {
   return await traceService.getBySession(sessionId);
 });
 
-ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruction) => {
+ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruction, metadata?: Record<string, any>) => {
   activeSessionId = sessionId;
   try {
+    const speakerName = metadata?.voice_authenticated_username;
+    let finalSystemInstruction = systemInstruction || activeSystemPrompt;
+    
+    if (speakerName && speakerName !== 'Unknown') {
+        finalSystemInstruction = `${finalSystemInstruction}\n\n[Voice Authentication Metadata]\n- Current Speaker: ${speakerName}\n- Verification Status: Authenticated via Voice Fingerprint`;
+    }
+
     const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, sessionId);
     const session = await contextService.getSession(sessionId);
     if (session) {
@@ -465,15 +472,16 @@ ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruc
         metadata: {
           ...session.metadata,
           trace_needed: traceNeeded,
-          trace_reason: traceReason
+          trace_reason: traceReason,
+          voice_authenticated_username: speakerName
         }
       });
     }
 
-    const chat = await getChatSession(systemInstruction || activeSystemPrompt, sessionId);
+    const chat = await getChatSession(finalSystemInstruction, sessionId);
     const toolExecutor = createToolExecutor(sessionId);
 
-    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, traceNeeded, systemInstruction || activeSystemPrompt, sessionId, undefined, webResults, webBrief, undefined, 1);
+    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, traceNeeded, finalSystemInstruction, sessionId, undefined, webResults, webBrief, undefined, 1);
 
     let fullText = "";
     for await (const chunk of stream) {
@@ -566,6 +574,10 @@ ipcMain.handle('settings:get', async () => {
 });
 
 ipcMain.handle('settings:update', async (_, settings) => {
+  loggerService.catInfo(LogCategory.SYSTEM, "IPC Handle: settings:update", {
+      hasInference: !!settings.inference,
+      voiceProfilesCount: settings.inference?.voiceProfiles ? Object.keys(settings.inference.voiceProfiles).length : 0
+  });
   const updated = await settingsService.update(settings);
   await monitoringService.refreshIntervals();
   return updated;

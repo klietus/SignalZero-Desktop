@@ -559,7 +559,7 @@ function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    const handleSendMessage = async (text: string, options?: { attachments?: { id: string, filename: string, type: string }[] }) => {
+    const handleSendMessage = async (text: string, options?: { attachments?: { id: string, filename: string, type: string }[], metadata?: Record<string, any> }) => {
         if (!activeContextId || isProcessing) return;
         setIsProcessing(true);
 
@@ -568,10 +568,19 @@ function App() {
             finalMessage += `\n\n<attachments>${JSON.stringify(options.attachments)}</attachments>`;
         }
 
-        const userMsg: Message = { id: 'temp-' + Date.now(), role: Sender.USER, content: text, timestamp: new Date(), metadata: { attachments: options?.attachments } };
+        const userMsg: Message = { 
+            id: 'temp-' + Date.now(), 
+            role: Sender.USER, 
+            content: text, 
+            timestamp: new Date(), 
+            metadata: { 
+                attachments: options?.attachments,
+                ...options?.metadata
+            } 
+        };
         setMessages(prev => [...prev, userMsg]);
         try {
-            await window.api.sendMessage(activeContextId, finalMessage, systemPrompt);
+            await window.api.sendMessage(activeContextId, finalMessage, systemPrompt, options?.metadata);
         } catch (e) {
             setIsProcessing(false);
             console.error(e);

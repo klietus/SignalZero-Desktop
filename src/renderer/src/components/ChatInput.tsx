@@ -6,7 +6,10 @@ import {
 } from 'lucide-react';
 
 interface ChatInputProps {
-  onSend: (message: string, options?: { attachments?: { id: string, filename: string, type: string, thumbnail?: string }[] }) => void;
+  onSend: (message: string, options?: { 
+      attachments?: { id: string, filename: string, type: string, thumbnail?: string }[],
+      metadata?: Record<string, any>
+  }) => void;
   onStop?: () => void;
   disabled?: boolean;
   isProcessing?: boolean;
@@ -85,11 +88,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       });
 
       // Explicit trigger from main when silence is detected and wake word was validated
-      const unbindSubmit = (window.api as any).onTriggerSubmit?.((finalText?: string) => {
+      const unbindSubmit = (window.api as any).onTriggerSubmit?.((data: { text: string, speaker?: string }) => {
           if (isProcessingRef.current) {
               return;
           }
-          handleSubmit(finalText);
+          handleSubmit(data.text, { voice_authenticated_username: data.speaker });
       }) || (() => {});
 
       return () => {
@@ -158,13 +161,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showEmojiPicker, showAttachMenu]);
 
-  const handleSubmit = (overrideText?: string) => {
+  const handleSubmit = (overrideText?: string, metadata?: Record<string, any>) => {
     const currentText = overrideText || textRef.current;
     const currentAtts = attachmentsRef.current;
 
     if (currentText.trim() || currentAtts.length > 0) {
       console.log("[ChatInput] handleSubmit executing with:", currentText);
-      onSendRef.current(currentText, { attachments: currentAtts });
+      onSendRef.current(currentText, { attachments: currentAtts, metadata });
       setText('');
       setAttachments([]);
       setShowEmojiPicker(false);

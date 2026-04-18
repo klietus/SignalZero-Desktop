@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     Save, Database, Network, Cpu, Cloud, 
     Search, AlertCircle, Layout, RefreshCw, Plus,
@@ -43,6 +43,43 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [systemName, setSystemName] = useState('Signal');
   const [voiceId, setVoiceId] = useState('af_sarah');
   const [dominantLanguage, setDominantLanguage] = useState('en');
+  const [profileName, setProfileName] = useState('');
+  const profileNameRef = useRef('');
+  
+  useEffect(() => {
+    profileNameRef.current = profileName;
+  }, [profileName]);
+
+  const [voiceProfile, setVoiceProfile] = useState<number[] | undefined>(undefined);
+  const [voiceProfiles, setVoiceProfiles] = useState<Record<string, number[]>>({});
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [isAiEnrolling, setIsAiEnrolling] = useState(false);
+  const [enrollmentProgress, setEnrollmentProgress] = useState(0);
+  const [isEnrollmentComplete, setIsEnrollmentComplete] = useState(false);
+
+  const handleDeleteProfile = async (name: string) => {
+      try {
+          const currentSettings = await window.api.getSettings();
+          const updatedProfiles = { ...(currentSettings.voiceProfiles || {}) };
+          delete updatedProfiles[name];
+          
+          await window.api.updateSettings({
+              ...currentSettings,
+              voiceProfiles: updatedProfiles
+          });
+          setVoiceProfiles(updatedProfiles);
+      } catch (err) {
+          console.error("Failed to delete voice profile", err);
+      }
+  };
+
+  const ENROLLMENT_PHRASES = [
+      "Axiom, initialize secure symbolic protocol.",
+      "Identify primary user and verify voice fingerprint.",
+      "The symbolic kernel is operational and invariants are holding.",
+      "Accessing distributed knowledge domains for deep analysis.",
+      "Axiom, system status report and diagnostic check."
+  ];
 
   // Graph Hygiene State
   const [hygieneSettings, setHygieneSettings] = useState<GraphHygieneSettings>({
@@ -157,10 +194,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setInferenceAgentModel(inference.agentModel || inference.model || '');
     setInferenceVisionModel(inference.visionModel || '');
     setInferenceFastModel(inference.fastModel || '');
-    setVoiceEnabled(inference.voiceEnabled ?? false);
-    setSystemName(inference.systemName || 'axiom');
-    setVoiceId(inference.voiceId || 'af_sarah');
-    setDominantLanguage(inference.dominantLanguage || 'en');
+    
+    // Voice settings are now top-level in settings object, but with fallbacks
+    setVoiceEnabled(settings.voiceEnabled ?? inference.voiceEnabled ?? false);
+    setSystemName(settings.systemName || inference.systemName || 'axiom');
+    setProfileName(''); // Reset enrollment name
+    setVoiceId(settings.voiceId || inference.voiceId || 'af_sarah');
+    setVoiceProfiles(settings.voiceProfiles || inference.voiceProfiles || {});
+    setDominantLanguage(settings.dominantLanguage || inference.dominantLanguage || 'en');
     
     setHygieneSettings(hygiene);
     if (inference.savedConfigs) setStoredConfigs(inference.savedConfigs);
@@ -181,6 +222,62 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       loadSettings();
   }, []);
 
+  useEffect(() => {
+    const unbindProgress = window.api.onVoiceEnrollProgress?.((data: { count: number, verified: boolean, text: string }) => {
+        if (data.verified) {
+            setEnrollmentProgress(data.count);
+            
+            // Auto-advance logic
+            if (data.count < ENROLLMENT_PHRASES.length) {
+                // Short delay before showing next phrase
+                setTimeout(() => {
+                    window.api.nextVoiceEnrollmentPhrase(ENROLLMENT_PHRASES[data.count]);
+                }, 1500);
+            } else {
+                // Automatically stop when all phrases are done
+                setTimeout(() => {
+                    window.api.stopVoiceEnrollment(profileNameRef.current);
+                }, 1000);
+            }
+        } else {
+            console.log(`[Enrollment] Phrase not verified. Heard: "${data.text}", Expected: "${ENROLLMENT_PHRASES[enrollmentProgress]}"`);
+        }
+    }) || (() => {});
+
+    const unbindFinalized = window.api.onVoiceEnrollFinalized?.(async (data: { profile: number[], name: string }) => {
+        setVoiceProfile(data.profile);
+        setIsEnrolling(false);
+        setIsEnrollmentComplete(true);
+        setEnrollmentProgress(0);
+        
+        const finalName = data.name || profileNameRef.current;
+        
+        // Save automatically
+        try {
+            const currentSettings = await window.api.getSettings();
+            const updatedProfiles = { 
+                ...(currentSettings.voiceProfiles || {}),
+                [finalName]: data.profile 
+            };
+            
+            setVoiceProfiles(updatedProfiles);
+
+            await window.api.updateSettings({
+                ...currentSettings,
+                voiceProfiles: updatedProfiles
+            });
+            console.log(`[Enrollment] Voice profile for '${finalName}' saved to global settings.`);
+        } catch (e) {
+            console.error("Failed to auto-save voice profile", e);
+        }
+    }) || (() => {});
+
+    return () => {
+        unbindProgress();
+        unbindFinalized();
+    };
+  }, []);
+
   const handleProviderChange = (newProvider: 'local' | 'openai' | 'gemini' | 'kimi2') => {
       const currentConfig = {
           apiKey: inferenceApiKey,
@@ -188,11 +285,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           model: inferenceModel,
           agentModel: inferenceAgentModel,
           visionModel: inferenceVisionModel,
-          fastModel: inferenceFastModel,
-          voiceEnabled,
-          systemName,
-          voiceId,
-          dominantLanguage
+          fastModel: inferenceFastModel
       };
       const updatedConfigs = { ...storedConfigs, [inferenceProvider]: currentConfig };
       setStoredConfigs(updatedConfigs);
@@ -206,10 +299,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           setInferenceAgentModel(saved.agentModel || '');
           setInferenceVisionModel(saved.visionModel || '');
           setInferenceFastModel(saved.fastModel || '');
-          setVoiceEnabled(saved.voiceEnabled ?? false);
-          setSystemName(saved.systemName || 'axiom');
-          setVoiceId(saved.voiceId || 'af_sarah');
-          setDominantLanguage(saved.dominantLanguage || 'en');
       } else {
           setInferenceApiKey('');
           if (newProvider === 'openai') {
@@ -242,28 +331,37 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleSave = async () => {
     setIsSaving(true);
+    console.log("[SettingsScreen] Starting save. Current voiceProfiles count:", Object.keys(voiceProfiles).length);
     try {
-        const currentConfig = {
+        const currentSettings = await window.api.getSettings();
+        
+        const currentInferenceConfig = {
           apiKey: inferenceApiKey,
           endpoint: inferenceEndpoint,
           model: inferenceModel,
           agentModel: inferenceAgentModel,
           visionModel: inferenceVisionModel,
-          fastModel: inferenceFastModel,
-          voiceEnabled,
-          systemName,
-          voiceId,
-          dominantLanguage
+          fastModel: inferenceFastModel
         };
-        const finalConfigs = { ...storedConfigs, [inferenceProvider]: currentConfig };
+        const finalConfigs = { ...storedConfigs, [inferenceProvider]: currentInferenceConfig };
 
+        console.log("[SettingsScreen] Sending updateSettings IPC...");
+        
         await window.api.updateSettings({
-            ui: { showGraphviz },
+            ...currentSettings, // PRESERVE ALL OTHER SETTINGS
+            ui: { ...currentSettings.ui, showGraphviz },
             serpApi: { apiKey: serpApiKey, enabled: serpApiEnabled },
             braveSearch: { apiKey: braveApiKey, enabled: braveEnabled },
             tavily: { apiKey: tavilyApiKey, enabled: tavilyEnabled },
             hygiene: hygieneSettings,
+            // Voice settings are now top-level
+            voiceEnabled,
+            systemName,
+            voiceId,
+            voiceProfiles,
+            dominantLanguage,
             inference: {
+                ...currentSettings.inference,
                 provider: inferenceProvider,
                 apiKey: inferenceApiKey,
                 endpoint: inferenceEndpoint,
@@ -271,10 +369,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 agentModel: inferenceAgentModel,
                 visionModel: inferenceVisionModel,
                 fastModel: inferenceFastModel,
-                voiceEnabled,
-                systemName,
-                voiceId,
-                dominantLanguage,
                 savedConfigs: finalConfigs
             },
             mcpConfigs,
@@ -429,6 +523,122 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                             <option value="am_adam">Adam (Male - Clear)</option>
                                           </select>
                                           <p className="text-[10px] text-gray-500">Select the high-quality Kokoro voice for system feedback.</p>
+                                      </div>
+                                  </div>
+
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="space-y-4">
+                                          <div className="flex items-center justify-between">
+                                              <div className="font-bold text-sm">Saved Voice Profiles</div>
+                                              <span className="text-[10px] font-mono text-gray-500 uppercase">{Object.keys(voiceProfiles).length} Profile(s)</span>
+                                          </div>
+
+                                          {Object.keys(voiceProfiles).length > 0 ? (
+                                              <div className="space-y-2">
+                                                  {Object.entries(voiceProfiles).map(([name, _]) => (
+                                                      <div key={name} className="flex items-center justify-between p-3 bg-white dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 group transition-all hover:border-indigo-500/30">
+                                                          <div className="flex items-center gap-3">
+                                                              <div className="p-2 bg-indigo-500/10 rounded-full text-indigo-500">
+                                                                  <Mic size={14} />
+                                                              </div>
+                                                              <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{name}</span>
+                                                          </div>
+                                                          <button 
+                                                            onClick={() => handleDeleteProfile(name)}
+                                                            className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10 opacity-0 group-hover:opacity-100"
+                                                          >
+                                                              <Trash2 size={14} />
+                                                          </button>
+                                                      </div>
+                                                  ))}
+                                              </div>
+                                          ) : (
+                                              <div className="p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl flex flex-col items-center justify-center gap-2">
+                                                  <Mic size={24} className="text-gray-300" />
+                                                  <p className="text-xs text-gray-500">No voice profiles saved yet.</p>
+                                              </div>
+                                          )}
+                                      </div>
+                                  </div>
+
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="flex items-center justify-between mb-2">
+                                          <div className="space-y-1">
+                                              <div className="font-bold text-sm">New Speaker Calibration</div>
+                                              <p className="text-xs text-gray-500">Record a new voice fingerprint to identify a user.</p>
+                                          </div>
+                                      </div>
+
+                                      <div className="space-y-4">
+                                          <div className="space-y-2">
+                                              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 font-mono">User / Profile Name</label>
+                                              <input 
+                                                type="text" 
+                                                value={profileName} 
+                                                onChange={(e) => setProfileName(e.target.value)} 
+                                                className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" 
+                                                placeholder="Enter your name"
+                                              />
+                                          </div>
+
+                                          <div className="bg-white dark:bg-gray-950 p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                                              <div className="flex items-center gap-4">
+                                                  <div className={`p-3 rounded-full ${isEnrolling ? 'bg-red-500 animate-pulse' : (isEnrollmentComplete ? 'bg-emerald-500' : 'bg-gray-100 dark:bg-gray-800')} transition-all`}>
+                                                      {isEnrollmentComplete && !isEnrolling ? (
+                                                          <CheckCircle2 size={20} className="text-white" />
+                                                      ) : (
+                                                          <Mic size={20} className={isEnrolling ? 'text-white' : 'text-gray-400'} />
+                                                      )}
+                                                  </div>
+                                                  <div>
+                                                      <div className="text-sm font-bold">
+                                                          {isEnrolling ? 'Listening to your voice...' : (isEnrollmentComplete ? 'Voice Profile Finalized' : 'Voice Fingerprinting')}
+                                                      </div>
+                                                      <div className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                                                          {isEnrolling ? `RECORDING PHRASE ${enrollmentProgress + 1} OF ${ENROLLMENT_PHRASES.length}` : (isEnrollmentComplete ? 'READY FOR SECURE INTERACTION' : 'IDLE - READY TO ENROLL')}
+                                                      </div>
+                                                  </div>
+                                              </div>
+
+                                              {!isEnrolling ? (
+                                                  <button 
+                                                    onClick={() => {
+                                                        setIsEnrolling(true);
+                                                        setIsEnrollmentComplete(false);
+                                                        setEnrollmentProgress(0);
+                                                        window.api.startVoiceEnrollment(ENROLLMENT_PHRASES[0]);
+                                                    }}
+                                                    disabled={!profileName.trim()}
+                                                    className={`px-4 py-2 ${isEnrollmentComplete ? 'bg-gray-800 hover:bg-gray-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50`}
+                                                  >
+                                                      {isEnrollmentComplete ? 'Add Another Profile' : 'Start Calibration'}
+                                                  </button>
+                                              ) : (
+                                                  <div className="text-xs font-bold text-red-500 animate-pulse">RECORDING...</div>
+                                              )}
+                                          </div>
+
+                                          {isEnrolling && (
+                                              <div className="p-4 bg-indigo-600 rounded-xl shadow-xl border-2 border-indigo-400 animate-in zoom-in-95">
+                                                  <div className="text-[10px] text-indigo-200 font-bold uppercase tracking-widest mb-2">Please read the following phrase clearly:</div>
+                                                  <div className="text-lg font-bold text-white leading-relaxed">
+                                                      "{ENROLLMENT_PHRASES[enrollmentProgress]}"
+                                                  </div>
+                                                  <div className="mt-4 flex gap-1">
+                                                      {ENROLLMENT_PHRASES.map((_, i) => (
+                                                          <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= enrollmentProgress ? 'bg-white' : 'bg-indigo-900/50'}`} />
+                                                      ))}
+                                                  </div>
+                                              </div>
+                                          )}
+
+                                          {isEnrollmentComplete && !isEnrolling && (
+                                              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-in zoom-in-95">
+                                                  <p className="text-xs text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-2">
+                                                      <CheckCircle2 size={14} /> Profile successfully synchronized.
+                                                  </p>
+                                              </div>
+                                          )}
                                       </div>
                                   </div>
 

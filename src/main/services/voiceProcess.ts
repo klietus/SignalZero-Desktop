@@ -20,6 +20,7 @@ class PythonVoiceManager {
     private stdoutBuffer = "";
     private isMicAccessGranted = false;
     private isSpeaking = false;
+    private authenticatedSpeaker: string | null = null;
 
     constructor() {
         this.setupIpc();
@@ -69,7 +70,9 @@ class PythonVoiceManager {
                 ...process.env, 
                 PYTHONUNBUFFERED: '1',
                 DYLD_FRAMEWORK_PATH: '/System/Library/Frameworks',
-                DYLD_LIBRARY_PATH: path.join(sidecarDir, 'deps', 'lib')
+                DYLD_LIBRARY_PATH: path.join(sidecarDir, 'deps', 'lib'),
+                ORT_DISABLE_MEM_ARENA: '1',
+                ONNX_RUNTIME_SESSION_OPTIONS_ENABLE_CPU_MEM_ARENA: '0'
             }
         });
 
@@ -86,7 +89,6 @@ class PythonVoiceManager {
                         const msg = JSON.parse(line);
                         this.handleSidecarMessage(msg);
                     } catch (e) {
-                        // Not JSON, treat as a log message if it doesn't look like fragmented JSON
                         if (!line.startsWith('{') && !line.startsWith('"')) {
                             loggerService.catInfo(LogCategory.SYSTEM, `Sidecar Log: ${line}`);
                         }
@@ -99,8 +101,6 @@ class PythonVoiceManager {
         this.process.stderr.on('data', (data) => {
             const msg = data.toString().trim();
             if (!msg) return;
-            
-            // Distinguish between info and error logs from python
             if (msg.includes(' - INFO - ') || msg.includes(' - WARNING - ')) {
                 loggerService.catInfo(LogCategory.SYSTEM, `Sidecar: ${msg}`);
             } else {
@@ -120,41 +120,65 @@ class PythonVoiceManager {
         });
 
         this.sendToSidecar('init', {});
+        
+        const profileCount = settings.voiceProfiles ? Object.keys(settings.voiceProfiles).length : (settings.voiceProfile ? 1 : 0);
+        loggerService.catInfo(LogCategory.SYSTEM, `Initializing voice system with ${profileCount} profile(s)...`);
+
+        // Pass all user profiles
+        if (settings.voiceProfiles && Object.keys(settings.voiceProfiles).length > 0) {
+            this.sendToSidecar('set_profiles', { profiles: settings.voiceProfiles });
+        } else if (settings.voiceProfile) {
+            // Migration: handle old single profile
+            this.sendToSidecar('set_profiles', { profiles: { "Primary_User": settings.voiceProfile } });
+        }
     }
 
     private sendToSidecar(action: string, payload: any) {
         if (this.process && this.process.stdin) {
             this.process.stdin.write(JSON.stringify({ action, payload }) + '\n');
+        } else {
+            loggerService.catError(LogCategory.SYSTEM, `Cannot send command ${action}: Sidecar process not running.`);
         }
     }
 
     private handleSidecarMessage(msg: any) {
         const { type, payload } = msg;
 
-        if (type === 'ready') {
+        if (type === 'alive') {
+            // Heartbeat/Alive
+        } else if (type === 'ready') {
             this.isReady = true;
-            loggerService.catInfo(LogCategory.SYSTEM, `Python Sidecar Ready (Device: ${payload.device})`);
+            loggerService.catInfo(LogCategory.SYSTEM, `Python Sidecar Engine Ready (Device: ${payload.device})`);
             if (this.isVoiceModeActive && this.isMicAccessGranted) {
                 this.sendToSidecar('mic_on', {});
             }
+        } else if (type === 'profiles_ready') {
+            loggerService.catInfo(LogCategory.SYSTEM, `Sidecar initialized ${payload.count} voice profile(s).`);
         } else if (type === 'stt_result') {
+            this.authenticatedSpeaker = payload.speaker;
             this.processFinalTranscription(payload.text);
         } else if (type === 'tts_chunk') {
             if (this.lastSender) {
-                // Ensure mic is suppressed on the very first chunk
-                if (!this.isSpeaking) {
-                    this.isSpeaking = true;
-                    this.sendToSidecar('suppress_mic', {});
-                }
                 this.lastSender.send('voice:play-chunk', {
                     audio: payload.audio,
                     index: payload.index,
-                    isLast: payload.is_last
+                    isLast: payload.isLast
                 });
             }
         } else if (type === 'tts_complete') {
-            // Note: We don't resume mic here yet, we wait for renderer to finish playing ALL chunks
             loggerService.catInfo(LogCategory.SYSTEM, "Sidecar finished generating all TTS chunks.");
+        } else if (type === 'enroll_progress') {
+            if (this.lastSender) {
+                this.lastSender.send('voice:enroll-progress', {
+                    count: payload.count,
+                    verified: payload.verified,
+                    text: payload.text
+                });
+            }
+        } else if (type === 'enroll_finalized') {
+            if (this.lastSender) {
+                this.lastSender.send('voice:enroll-finalized', payload.profile);
+            }
         } else if (type === 'error') {
             loggerService.catError(LogCategory.SYSTEM, "Sidecar reported error", { error: payload.message });
         }
@@ -166,7 +190,6 @@ class PythonVoiceManager {
         const nameLower = this.systemName.toLowerCase();
 
         if (lowerText.includes(nameLower)) {
-            // Check if there is an active session and it is not busy
             if (!activeSessionId) {
                 loggerService.catInfo(LogCategory.SYSTEM, `Wake word detected but no active session found. Ignoring.`);
                 return;
@@ -182,12 +205,18 @@ class PythonVoiceManager {
             
             eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { 
                 type: 'voice_wake_word_detected',
-                text: cleanText 
+                text: cleanText,
+                metadata: {
+                    voice_authenticated_username: this.authenticatedSpeaker || 'Unknown'
+                }
             });
 
             if (this.lastSender) {
                 this.lastSender.send('voice:stt-result', cleanText);
-                this.lastSender.send('voice:trigger-submit', cleanText);
+                this.lastSender.send('voice:trigger-submit', { 
+                    text: cleanText, 
+                    speaker: this.authenticatedSpeaker || 'Unknown' 
+                });
             }
         }
     }
@@ -208,15 +237,32 @@ class PythonVoiceManager {
         });
 
         ipcMain.on('voice:playback-finished', () => {
+            // We no longer suppress mic automatically, but keeping the event for state tracking if needed
             this.isSpeaking = false;
-            this.sendToSidecar('resume_mic', {});
-            loggerService.catInfo(LogCategory.SYSTEM, "Playback finished. Resuming mic.");
+        });
+
+        ipcMain.on('voice:enroll-start', async (event, { phrase }) => {
+            this.lastSender = event.sender;
+            if (!this.process) {
+                await this.initialize();
+            }
+            this.sendToSidecar('enroll_start', { phrase });
+            this.sendToSidecar('mic_on', {});
+        });
+
+        ipcMain.on('voice:enroll-next', (event, { phrase }) => {
+            this.sendToSidecar('enroll_next', { phrase });
+        });
+
+        ipcMain.on('voice:enroll-stop', (event, { name }) => {
+            this.sendToSidecar('enroll_stop', { name });
+            this.sendToSidecar('mic_off', {});
+            loggerService.catInfo(LogCategory.SYSTEM, `Stop enrollment command for '${name}' sent to sidecar and mic disabled.`);
         });
     }
 
     private async synthesizeSpeechText(rawText: string): Promise<string> {
         try {
-            // Pre-strip internal thought blocks and attachment tags before LLM synthesis
             let processedText = rawText
                 .replace(/<thought>[\s\S]*?<\/thought>/g, '')
                 .replace(/<attachments>[\s\S]*?<\/attachments>/g, '')
@@ -244,7 +290,7 @@ ${processedText}`;
             return cleanSpeech || processedText;
         } catch (e) {
             loggerService.catError(LogCategory.SYSTEM, "Failed to synthesize speech text", { error: e });
-            return rawText; // Fallback to raw text if synthesis fails
+            return rawText; 
         }
     }
 
@@ -253,10 +299,7 @@ ${processedText}`;
             return;
         }
         this.lastSender = sender;
-
-        // Pre-process text through fast model for natural speech
         const speechText = await this.synthesizeSpeechText(text);
-        
         this.sendToSidecar('speak', { text: speechText, voice: this.voiceId });
     }
 }

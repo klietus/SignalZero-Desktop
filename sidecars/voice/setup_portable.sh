@@ -49,7 +49,7 @@ LDFLAGS="-L$DEPS_DIR/lib -lportaudio -Wl,-rpath,@loader_path/../../../../deps/li
 "$PYTHON_EXE" -m pip install --no-cache-dir --no-binary :all: pyaudio
 
 # 3. Install remaining deps
-"$PYTHON_EXE" -m pip install numpy faster-whisper kokoro-onnx webrtcvad soundfile requests torch scipy sounddevice
+"$PYTHON_EXE" -m pip install numpy faster-whisper kokoro-onnx webrtcvad soundfile requests torch scipy sounddevice speechbrain
 
 # 5. Final verification
 echo "--- Final Device Verification ---"
