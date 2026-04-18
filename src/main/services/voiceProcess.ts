@@ -157,8 +157,14 @@ class PythonVoiceManager {
         } else if (type === 'stt_result') {
             this.authenticatedSpeaker = payload.speaker;
             this.processFinalTranscription(payload.text);
+        } else if (type === 'speaker_interrupt') {
+            if (this.isSpeaking) {
+                loggerService.catInfo(LogCategory.SYSTEM, `Verified user '${payload.speaker}' interrupted AI speech.`);
+                this.interruptPlayback();
+            }
         } else if (type === 'tts_chunk') {
             if (this.lastSender) {
+                this.isSpeaking = true;
                 this.lastSender.send('voice:play-chunk', {
                     audio: payload.audio,
                     index: payload.index,
@@ -181,6 +187,14 @@ class PythonVoiceManager {
             }
         } else if (type === 'error') {
             loggerService.catError(LogCategory.SYSTEM, "Sidecar reported error", { error: payload.message });
+        }
+    }
+
+    private interruptPlayback() {
+        this.isSpeaking = false;
+        this.sendToSidecar('interrupt_tts', {});
+        if (this.lastSender) {
+            this.lastSender.send('voice:stop-playback');
         }
     }
 
@@ -300,6 +314,7 @@ ${processedText}`;
         }
         this.lastSender = sender;
         const speechText = await this.synthesizeSpeechText(text);
+        this.isSpeaking = true;
         this.sendToSidecar('speak', { text: speechText, voice: this.voiceId });
     }
 }

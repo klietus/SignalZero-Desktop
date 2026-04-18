@@ -76,7 +76,9 @@ declare global {
             onPlayAudio: (callback: (data: { audio: Float32Array, samplingRate: number }) => void) => () => void;
             onPlayAudioB64: (callback: (data: { audio: string }) => void) => () => void;
             onPlayChunk: (callback: (data: { audio: string, index: number, isLast: boolean }) => void) => () => void;
-            onInferenceChunk: (callback: (chunk: string) => void) => () => void;            onInferenceCompleted: (callback: () => void) => () => void;
+            onStopPlayback: (callback: () => void) => () => void;
+            onInferenceChunk: (callback: (chunk: string) => void) => () => void;
+            onInferenceCompleted: (callback: () => void) => () => void;
             onTraceLogged: (callback: (trace: any) => void) => () => void;
             onKernelEvent: (callback: (type: string, data: any) => void) => () => void;
             onNavigate: (callback: (view: string) => void) => () => void;
@@ -470,9 +472,10 @@ function App() {
         });
 
         // TTS Chunk Queueing
-        const playbackQueue: AudioBuffer[] = [];
+        let playbackQueue: AudioBuffer[] = [];
         let isPlaying = false;
         let lastChunkReceived = false;
+        let currentSource: AudioBufferSourceNode | null = null;
 
         const processQueue = async (ctx: AudioContext) => {
             if (isPlaying || playbackQueue.length === 0) return;
@@ -481,10 +484,12 @@ function App() {
             const buffer = playbackQueue.shift();
             if (buffer) {
                 const source = ctx.createBufferSource();
+                currentSource = source;
                 source.buffer = buffer;
                 source.connect(ctx.destination);
                 source.onended = () => {
                     isPlaying = false;
+                    currentSource = null;
                     if (playbackQueue.length > 0) {
                         // Add a half-second pause between sentences for more natural flow
                         setTimeout(() => processQueue(ctx), 500);
@@ -515,6 +520,20 @@ function App() {
             }
         });
 
+        const unbindStopPlayback = window.api.onStopPlayback(() => {
+            console.log("Stopping audio playback due to interruption...");
+            if (currentSource) {
+                try {
+                    currentSource.stop();
+                } catch (e) { /* ignore */ }
+                currentSource = null;
+            }
+            playbackQueue = [];
+            isPlaying = false;
+            lastChunkReceived = false;
+            window.api.notifyPlaybackFinished();
+        });
+
         return () => {
             if (typeof unbindChunk === 'function') unbindChunk();
             if (typeof unbindCompleted === 'function') unbindCompleted();
@@ -524,6 +543,7 @@ function App() {
             if (typeof removeScreenshotListener === 'function') removeScreenshotListener();
             if (typeof unbindVoiceB64 === 'function') unbindVoiceB64();
             if (typeof unbindVoiceChunk === 'function') unbindVoiceChunk();
+            if (typeof unbindStopPlayback === 'function') unbindStopPlayback();
         };
     }, [activeContextId, appState]);
 

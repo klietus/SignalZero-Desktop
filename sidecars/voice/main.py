@@ -34,11 +34,14 @@ class VoiceSidecar:
         self.current_enroll_phrase = None
         self.is_running = True
         self.tts_queue = queue.Queue()
+        self.interrupt_tts = False
         self.device_index = None
         self.triggered = False
         self.speech_frames = []
         self.silence_counter = 0
         self.callback_count = 0
+        self.early_id_sent = False
+        self.early_id_threshold = 20 # ~600ms (20 * 30ms)
 
     def send_to_electron(self, msg_type, data):
         """Send JSON message to Electron via stdout"""
@@ -109,8 +112,17 @@ class VoiceSidecar:
             if not self.triggered:
                 self.send_to_electron("speech_start", {})
                 self.triggered = True
+                self.early_id_sent = False
             self.silence_counter = 0
             self.speech_frames.append(audio_frame)
+
+            # Early Speaker ID for interruption
+            if self.engine and not self.early_id_sent and len(self.speech_frames) >= self.early_id_threshold:
+                audio_segment = np.concatenate(self.speech_frames)
+                speaker_name, score = self.engine.identify_speaker(audio_segment)
+                if speaker_name and speaker_name != "Unknown_Speaker":
+                    self.send_to_electron("speaker_interrupt", {"speaker": speaker_name, "score": score})
+                    self.early_id_sent = True
         elif self.triggered:
             self.speech_frames.append(audio_frame)
             self.silence_counter += 1
@@ -172,9 +184,10 @@ class VoiceSidecar:
                 
                 if not self.engine: continue
 
+                self.interrupt_tts = False
                 sentences = self.engine.split_into_sentences(text)
                 for i, sentence in enumerate(sentences):
-                    if not self.is_running: break
+                    if not self.is_running or self.interrupt_tts: break
                     wav_data = self.engine.generate_chunk_wav(sentence, voice=voice)
                     audio_b64 = base64.b64encode(wav_data).decode('utf-8')
                     self.send_to_electron("tts_chunk", {
@@ -182,7 +195,7 @@ class VoiceSidecar:
                         "index": i,
                         "isLast": i == len(sentences) - 1
                     })
-                self.send_to_electron("tts_complete", {})
+                self.send_to_electron("tts_complete", {"interrupted": self.interrupt_tts})
             except queue.Empty:
                 continue
             except Exception as e:
@@ -237,6 +250,12 @@ class VoiceSidecar:
                     self.mic_suppressed = False
                 elif action == 'speak':
                     self.tts_queue.put(payload)
+                elif action == 'interrupt_tts':
+                    self.interrupt_tts = True
+                    # Clear queue
+                    while not self.tts_queue.empty():
+                        try: self.tts_queue.get_nowait()
+                        except: break
                 elif action == 'quit':
                     self.is_running = False
                     break

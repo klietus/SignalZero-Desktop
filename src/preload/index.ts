@@ -79,6 +79,11 @@ const api = {
     ipcRenderer.on('voice:play-chunk', subscription);
     return () => ipcRenderer.removeListener('voice:play-chunk', subscription);
   },
+  onStopPlayback: (callback: () => void) => {
+    const subscription = () => callback();
+    ipcRenderer.on('voice:stop-playback', subscription);
+    return () => ipcRenderer.removeListener('voice:stop-playback', subscription);
+  },
   onTriggerSubmit: (callback: (data: { text: string, speaker?: string }) => void) => {
     const subscription = (_event, data: { text: string, speaker?: string }) => callback(data);
     ipcRenderer.on('voice:trigger-submit', subscription);
