@@ -1,5 +1,6 @@
 import os
 import torch
+import threading
 from faster_whisper import WhisperModel
 import numpy as np
 import warnings
@@ -20,6 +21,7 @@ logger = logging.getLogger("audio_engine")
 
 class AudioEngine:
     def __init__(self):
+        self.lock = threading.Lock()
         logger.info("Loading Faster-Whisper model (medium.en)...")
         self.transcriber = WhisperModel("medium.en", device="cpu", compute_type="int8")
         
@@ -42,14 +44,15 @@ class AudioEngine:
         self.verification_threshold = 0.55 
         
     def get_speaker_embedding(self, audio_data):
-        try:
-            signal = torch.from_numpy(audio_data).unsqueeze(0)
-            with torch.no_grad():
-                embeddings = self.speaker_classifier.encode_batch(signal)
-            return embeddings.squeeze().cpu().numpy()
-        except Exception as e:
-            logger.error(f"Failed to extract speaker embedding: {e}")
-            return None
+        with self.lock:
+            try:
+                signal = torch.from_numpy(audio_data).unsqueeze(0)
+                with torch.no_grad():
+                    embeddings = self.speaker_classifier.encode_batch(signal)
+                return embeddings.squeeze().cpu().numpy()
+            except Exception as e:
+                logger.error(f"Failed to extract speaker embedding: {e}")
+                return None
 
     def enroll_chunk(self, audio_data):
         if audio_data.dtype != np.float32:
@@ -113,18 +116,20 @@ class AudioEngine:
             return None, best_score
 
     def transcribe(self, audio_data):
-        segments, info = self.transcriber.transcribe(audio_data, beam_size=5)
-        return "".join([segment.text for segment in segments]).strip()
+        with self.lock:
+            segments, info = self.transcriber.transcribe(audio_data, beam_size=5)
+            return "".join([segment.text for segment in segments]).strip()
 
     def split_into_sentences(self, text):
         sentences = re.split(r'(?<=[.!?])\s+', text)
         return [s.strip() for s in sentences if s.strip()]
 
     def generate_chunk_wav(self, text, voice="af_sky"):
-        samples, sample_rate = self.kokoro.create(text, voice=voice, speed=1.0, lang="en-us")
-        buffer = io.BytesIO()
-        sf.write(buffer, samples, sample_rate, format='WAV')
-        return buffer.getvalue()
+        with self.lock:
+            samples, sample_rate = self.kokoro.create(text, voice=voice, speed=1.0, lang="en-us")
+            buffer = io.BytesIO()
+            sf.write(buffer, samples, sample_rate, format='WAV')
+            return buffer.getvalue()
 
     def process_segment(self, audio_data):
         if audio_data.dtype != np.float32:
