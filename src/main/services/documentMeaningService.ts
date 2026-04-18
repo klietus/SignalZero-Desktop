@@ -6,6 +6,8 @@ import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { loggerService } from './loggerService.js';
 import { settingsService } from './settingsService.js';
+import { sqliteService } from './sqliteService.js';
+import crypto from 'crypto';
 
 export interface NormalizedDocument {
     type: 'html' | 'rss' | 'pdf' | 'text' | 'json' | 'image' | 'unknown';
@@ -180,6 +182,30 @@ class DocumentMeaningService {
             visionModel = visionModel || 'gpt-4o-mini';
         }
 
+        // --- CACHE CHECK ---
+        const hash = crypto.createHash('sha256').update(buffer).digest('hex');
+        try {
+            const cached = sqliteService.get(`SELECT * FROM media_cache WHERE hash = ?`, [hash]);
+            if (cached) {
+                loggerService.info(`DocumentMeaningService: Cache hit for image ${hash.substring(0, 8)}`);
+                const cachedMetadata = cached.metadata ? JSON.parse(cached.metadata) : {};
+                return {
+                    type: 'image',
+                    metadata: { 
+                        url, 
+                        model: cachedMetadata.model || visionModel,
+                        base64: buffer.toString('base64'),
+                        mimeType: contentType || 'image/jpeg',
+                        cached: true
+                    },
+                    content: cached.content,
+                    structured_data: { analysis_model: cachedMetadata.model || visionModel, cache_hit: true }
+                };
+            }
+        } catch (e) {
+            loggerService.error(`DocumentMeaningService: Cache check failed`, { error: e });
+        }
+
         if (!apiKey && (settings.provider === 'openai' || settings.provider === 'gemini')) {
              return {
                 type: 'image',
@@ -219,6 +245,19 @@ class DocumentMeaningService {
                 description = response.choices[0]?.message?.content || "";
             }
 
+            const cleanDescription = this.stripThinking(description);
+
+            // --- CACHE SAVE ---
+            try {
+                sqliteService.run(
+                    `INSERT OR REPLACE INTO media_cache (hash, content, metadata) VALUES (?, ?, ?)`,
+                    [hash, cleanDescription, JSON.stringify({ model: visionModel, contentType })]
+                );
+                loggerService.info(`DocumentMeaningService: Cached description for image ${hash.substring(0, 8)}`);
+            } catch (e) {
+                loggerService.error(`DocumentMeaningService: Cache save failed`, { error: e });
+            }
+
             return {
                 type: 'image',
                 metadata: { 
@@ -227,7 +266,7 @@ class DocumentMeaningService {
                     base64: buffer.toString('base64'),
                     mimeType: contentType || 'image/jpeg'
                 },
-                content: this.stripThinking(description),
+                content: cleanDescription,
                 structured_data: { analysis_model: visionModel }
             };
         } catch (error: any) {

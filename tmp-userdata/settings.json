@@ -1,0 +1,42 @@
+{
+  "inference": {
+    "provider": "openai",
+    "apiKey": "746573742d6b6579",
+    "savedConfigs": {},
+    "endpoint": "http://localhost:1234/v1",
+    "model": "qwen3.5-122b-a10b",
+    "agentModel": "qwen3.5-122b-a10b",
+    "visionModel": "zai-org/glm-4.6v-flash",
+    "fastModel": "qwen3.5-0.8b"
+  },
+  "voiceProfiles": {
+    "User1": [
+      1,
+      2,
+      3
+    ]
+  },
+  "ui": {
+    "showGraphviz": true
+  },
+  "systemName": "axiom",
+  "voiceId": "af_sarah",
+  "voiceEnabled": false,
+  "dominantLanguage": "en",
+  "serpApi": {
+    "apiKey": "",
+    "enabled": false
+  },
+  "braveSearch": {
+    "apiKey": "",
+    "enabled": false
+  },
+  "tavily": {
+    "apiKey": "",
+    "enabled": false
+  },
+  "monitoring": {
+    "enabled": false,
+    "sources": []
+  }
+}

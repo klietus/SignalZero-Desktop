@@ -21,7 +21,11 @@ logger = logging.getLogger("audio_engine")
 
 class AudioEngine:
     def __init__(self):
-        self.lock = threading.Lock()
+        self.transcriber_lock = threading.Lock()
+        self.speaker_lock = threading.Lock()
+        self.tts_lock = threading.Lock()
+        self.profiles_lock = threading.Lock()
+        
         logger.info("Loading Faster-Whisper model (medium.en)...")
         self.transcriber = WhisperModel("medium.en", device="cpu", compute_type="int8")
         
@@ -44,7 +48,7 @@ class AudioEngine:
         self.verification_threshold = 0.55 
         
     def get_speaker_embedding(self, audio_data):
-        with self.lock:
+        with self.speaker_lock:
             try:
                 signal = torch.from_numpy(audio_data).unsqueeze(0)
                 with torch.no_grad():
@@ -62,38 +66,44 @@ class AudioEngine:
             
         emb = self.get_speaker_embedding(audio_np)
         if emb is not None:
-            self.enrollment_embeddings.append(emb)
+            with self.profiles_lock:
+                self.enrollment_embeddings.append(emb)
             return True
         return False
 
     def finalize_enrollment(self, name):
-        if not self.enrollment_embeddings:
-            return None
+        with self.profiles_lock:
+            if not self.enrollment_embeddings:
+                return None
+                
+            avg_emb = np.mean(self.enrollment_embeddings, axis=0)
+            avg_emb = avg_emb / np.linalg.norm(avg_emb)
             
-        avg_emb = np.mean(self.enrollment_embeddings, axis=0)
-        avg_emb = avg_emb / np.linalg.norm(avg_emb)
-        
-        self.user_profiles[name] = avg_emb
-        self.enrollment_embeddings = []
-        logger.info(f"Voice profile for '{name}' finalized.")
-        return avg_emb.tolist()
+            self.user_profiles[name] = avg_emb
+            self.enrollment_embeddings = []
+            logger.info(f"Voice profile for '{name}' finalized.")
+            return avg_emb.tolist()
 
     def set_profiles(self, profiles_dict):
         """
         Set multiple profiles: { "name": [embedding_list] }
         """
-        self.user_profiles = {}
-        for name, emb_list in profiles_dict.items():
-            self.user_profiles[name] = np.array(emb_list)
-        logger.info(f"Loaded {len(self.user_profiles)} voice profiles.")
+        with self.profiles_lock:
+            self.user_profiles = {}
+            for name, emb_list in profiles_dict.items():
+                self.user_profiles[name] = np.array(emb_list)
+            logger.info(f"Loaded {len(self.user_profiles)} voice profiles.")
 
     def identify_speaker(self, audio_data):
         """
         Identify which known user is speaking.
         Returns (name, similarity_score) or (None, highest_score)
         """
-        if not self.user_profiles:
-            return "Unknown_Speaker", 0.0
+        with self.profiles_lock:
+            if not self.user_profiles:
+                return "Unknown_Speaker", 0.0
+            # Take a snapshot of profiles to minimize lock time
+            current_profiles = list(self.user_profiles.items())
             
         emb = self.get_speaker_embedding(audio_data)
         if emb is None:
@@ -104,7 +114,7 @@ class AudioEngine:
         best_name = None
         best_score = -1.0
         
-        for name, profile_emb in self.user_profiles.items():
+        for name, profile_emb in current_profiles:
             similarity = 1 - cosine(profile_emb, emb)
             if similarity > best_score:
                 best_score = similarity
@@ -116,7 +126,7 @@ class AudioEngine:
             return None, best_score
 
     def transcribe(self, audio_data):
-        with self.lock:
+        with self.transcriber_lock:
             segments, info = self.transcriber.transcribe(audio_data, beam_size=5)
             return "".join([segment.text for segment in segments]).strip()
 
@@ -125,7 +135,7 @@ class AudioEngine:
         return [s.strip() for s in sentences if s.strip()]
 
     def generate_chunk_wav(self, text, voice="af_sky"):
-        with self.lock:
+        with self.tts_lock:
             samples, sample_rate = self.kokoro.create(text, voice=voice, speed=1.0, lang="en-us")
             buffer = io.BytesIO()
             sf.write(buffer, samples, sample_rate, format='WAV')

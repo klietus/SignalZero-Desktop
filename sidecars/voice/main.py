@@ -19,7 +19,7 @@ logger = logging.getLogger("voice_sidecar")
 SAMPLE_RATE = 16000
 CHUNK_DURATION_MS = 30
 CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION_MS / 1000)
-VAD_MODE = 3
+VAD_MODE = 2
 SILENCE_THRESHOLD_MS = 2000
 SILENCE_CHUNKS = int(SILENCE_THRESHOLD_MS / CHUNK_DURATION_MS)
 RMS_THRESHOLD = 0.005 
@@ -34,14 +34,17 @@ class VoiceSidecar:
         self.current_enroll_phrase = None
         self.is_running = True
         self.tts_queue = queue.Queue()
+        self.processing_queue = queue.Queue()
         self.interrupt_tts = False
+        self.is_speaking_ai = False
         self.device_index = None
         self.triggered = False
         self.speech_frames = []
         self.silence_counter = 0
         self.callback_count = 0
-        self.early_id_sent = False
+        self.early_id_sent_count = 0
         self.early_id_threshold = 20 # ~600ms (20 * 30ms)
+        self.early_id_interval = 25  # Re-check every ~750ms if long segment
 
     def send_to_electron(self, msg_type, data):
         """Send JSON message to Electron via stdout"""
@@ -112,17 +115,29 @@ class VoiceSidecar:
             if not self.triggered:
                 self.send_to_electron("speech_start", {})
                 self.triggered = True
-                self.early_id_sent = False
+                self.early_id_sent_count = 0
             self.silence_counter = 0
             self.speech_frames.append(audio_frame)
 
-            # Early Speaker ID for interruption
-            if self.engine and not self.early_id_sent and len(self.speech_frames) >= self.early_id_threshold:
-                audio_segment = np.concatenate(self.speech_frames)
-                speaker_name, score = self.engine.identify_speaker(audio_segment)
-                if speaker_name and speaker_name != "Unknown_Speaker":
-                    self.send_to_electron("speaker_interrupt", {"speaker": speaker_name, "score": score})
-                    self.early_id_sent = True
+            # Queue early speaker ID check
+            # We check periodically during long segments to catch user starting to talk
+            # if the AI voice already triggered the mic.
+            current_frame_count = len(self.speech_frames)
+            should_check_id = False
+            
+            if current_frame_count == self.early_id_threshold:
+                should_check_id = True
+            elif current_frame_count > self.early_id_threshold and (current_frame_count - self.early_id_threshold) % self.early_id_interval == 0:
+                should_check_id = True
+                
+            if self.engine and should_check_id:
+                # Use the last N frames for a snapshot
+                snapshot_frames = self.speech_frames[-self.early_id_threshold:]
+                audio_segment = np.concatenate(snapshot_frames)
+                self.processing_queue.put({"type": "early_id", "audio": audio_segment})
+                self.early_id_sent_count += 1
+                if self.is_speaking_ai:
+                    logger.info(f"AI is speaking. Queueing periodic speaker ID check (Snapshot {self.early_id_sent_count})")
         elif self.triggered:
             self.speech_frames.append(audio_frame)
             self.silence_counter += 1
@@ -135,28 +150,54 @@ class VoiceSidecar:
 
                 if len(audio_np) >= SAMPLE_RATE * 0.5:
                     if self.enroll_mode:
-                        transcription = self.engine.transcribe(audio_np)
-                        if self.verify_phrase(transcription, self.current_enroll_phrase):
-                            success = self.engine.enroll_chunk(audio_np)
-                            if success:
-                                self.send_to_electron("enroll_progress", {
-                                    "count": len(self.engine.enrollment_embeddings),
-                                    "verified": True,
-                                    "text": transcription
-                                })
-                        else:
+                        self.processing_queue.put({"type": "enroll", "audio": audio_np})
+                    elif self.engine:
+                        self.processing_queue.put({"type": "stt", "audio": audio_np})
+
+    def processing_worker(self):
+        logger.info("Processing worker thread started")
+        while self.is_running:
+            try:
+                task = self.processing_queue.get(timeout=1)
+                if not self.engine:
+                    continue
+                    
+                task_type = task.get("type")
+                audio_np = task.get("audio")
+
+                if task_type == "early_id":
+                    speaker_name, score = self.engine.identify_speaker(audio_np)
+                    if speaker_name and speaker_name != "Unknown_Speaker":
+                        self.send_to_electron("speaker_interrupt", {"speaker": speaker_name, "score": score})
+                
+                elif task_type == "enroll":
+                    transcription = self.engine.transcribe(audio_np)
+                    if self.verify_phrase(transcription, self.current_enroll_phrase):
+                        success = self.engine.enroll_chunk(audio_np)
+                        if success:
                             self.send_to_electron("enroll_progress", {
                                 "count": len(self.engine.enrollment_embeddings),
-                                "verified": False,
+                                "verified": True,
                                 "text": transcription
                             })
-                    elif self.engine:
-                        result = self.engine.process_segment(audio_np)
-                        if result and result.get('text'):
-                            self.send_to_electron("stt_result", {
-                                "text": result['text'].strip(),
-                                "speaker": result.get('speaker', 'Unknown')
-                            })
+                    else:
+                        self.send_to_electron("enroll_progress", {
+                            "count": len(self.engine.enrollment_embeddings),
+                            "verified": False,
+                            "text": transcription
+                        })
+
+                elif task_type == "stt":
+                    result = self.engine.process_segment(audio_np)
+                    if result and result.get('text'):
+                        self.send_to_electron("stt_result", {
+                            "text": result['text'].strip(),
+                            "speaker": result.get('speaker', 'Unknown')
+                        })
+            except queue.Empty:
+                continue
+            except Exception as e:
+                logger.error(f"Processing worker error: {e}")
 
     def audio_loop(self):
         logger.info("Audio loop thread started")
@@ -176,6 +217,7 @@ class VoiceSidecar:
                 time.sleep(2)
 
     def tts_worker(self):
+        logger.info("TTS worker thread started")
         while self.is_running:
             try:
                 task = self.tts_queue.get(timeout=1)
@@ -185,10 +227,14 @@ class VoiceSidecar:
                 if not self.engine: continue
 
                 self.interrupt_tts = False
+                self.is_speaking_ai = True
                 sentences = self.engine.split_into_sentences(text)
                 for i, sentence in enumerate(sentences):
                     if not self.is_running or self.interrupt_tts: break
+                    
                     wav_data = self.engine.generate_chunk_wav(sentence, voice=voice)
+                    if self.interrupt_tts: break
+                    
                     audio_b64 = base64.b64encode(wav_data).decode('utf-8')
                     self.send_to_electron("tts_chunk", {
                         "audio": audio_b64,
@@ -196,10 +242,12 @@ class VoiceSidecar:
                         "isLast": i == len(sentences) - 1
                     })
                 self.send_to_electron("tts_complete", {"interrupted": self.interrupt_tts})
+                self.is_speaking_ai = False
             except queue.Empty:
                 continue
             except Exception as e:
                 logger.error(f"TTS error: {e}")
+                self.is_speaking_ai = False
 
     def heartbeat_worker(self):
         while self.is_running:
@@ -209,6 +257,7 @@ class VoiceSidecar:
     def run(self):
         threading.Thread(target=self.heartbeat_worker, daemon=True).start()
         threading.Thread(target=self.audio_loop, daemon=True).start()
+        threading.Thread(target=self.processing_worker, daemon=True).start()
         threading.Thread(target=self.tts_worker, daemon=True).start()
         self.send_to_electron("alive", {})
 

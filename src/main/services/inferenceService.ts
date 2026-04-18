@@ -818,10 +818,54 @@ export async function* sendMessageAndHandleTools(
           if (toolResponses.length > 0) transientMessages.push(...toolResponses);
           transientMessages.push({ role: "user", content: `[SYSTEM AUDIT] ${auditMessage}` });
           auditRetries++;
+          // Flag that the next turn is a recovery from an audit failure
+          (nextAssistant as any)._audit_failure_trigger = true;
           continue;
         } else {
           auditTriggered = false;
         }
+      }
+
+      // --- NARRATIVE RECOVERY PROTOCOL ---
+      // If the PREVIOUS turn was an audit failure, and THIS turn is trying to end with just a narrative
+      // that describes the failure or apologizes for it, we throw it away and go one more loop.
+      const lastTurnWasAuditFailure = transientMessages.length > 0 && (transientMessages[transientMessages.length - 1] as any).role === 'user' && (transientMessages[transientMessages.length - 1] as any).content?.includes('[SYSTEM AUDIT]');
+      
+      if (lastTurnWasAuditFailure && isEndingTurn && hasNarrativeOutput) {
+          const auditCheckPrompt = `Analyze the following assistant response. Is this response primarily an apology, a meta-commentary about a system error, or a statement about failing an audit (e.g., "I forgot to log a trace", "I will now log a trace", "I apologize for the oversight")?
+          
+RESPONSE:
+"${textAccumulatedInTurn}"
+
+Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains actual useful content or a valid conclusion.`;
+
+          try {
+              const auditResult = await callFastInference([{ role: 'user', content: auditCheckPrompt }], 10);
+              if (auditResult.toUpperCase().includes('YES')) {
+                  loggerService.catInfo(LogCategory.INFERENCE, "Audit Failure Narrative detected. Discarding and forcing retry loop.", { 
+                    contextSessionId, 
+                    narrative: textAccumulatedInTurn.slice(0, 50) + "..." 
+                  });
+                  
+                  // Discard the text from this turn
+                  textAccumulatedInTurn = "";
+                  
+                  // Add this assistant message to transient so the model sees its own mistake
+                  transientMessages.push(nextAssistant!);
+                  if (toolResponses.length > 0) transientMessages.push(...toolResponses);
+                  
+                  // Add a nudge to actually do the work
+                  transientMessages.push({ 
+                    role: "user", 
+                    content: "[SYSTEM RECOVERY] That narrative was an apology for an audit failure. DO NOT apologize. Just execute the required tools and provide the final synthesis now." 
+                  });
+                  
+                  loops++;
+                  continue; 
+              }
+          } catch (e) {
+              loggerService.catError(LogCategory.INFERENCE, "Audit narrative check failed", { error: e });
+          }
       }
 
       if (totalTextAccumulatedAcrossLoops.length > 0 && textAccumulatedInTurn.trim().length > 0) {

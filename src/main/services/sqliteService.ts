@@ -257,6 +257,14 @@ const initDb = () => {
                 PRIMARY KEY (source_id, article_id)
             );
 
+            -- Media Cache (for image descriptions)
+            CREATE TABLE IF NOT EXISTS media_cache (
+                hash TEXT PRIMARY KEY,
+                content TEXT NOT NULL,
+                metadata TEXT, -- JSON object (model, contentType, etc.)
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
             -- Attachments
             CREATE TABLE IF NOT EXISTS attachments (
                 id TEXT PRIMARY KEY,
