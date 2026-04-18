@@ -177,7 +177,7 @@ class PythonVoiceManager {
             }
         } else if (type === 'enroll_finalized') {
             if (this.lastSender) {
-                this.lastSender.send('voice:enroll-finalized', payload.profile);
+                this.lastSender.send('voice:enroll-finalized', payload);
             }
         } else if (type === 'error') {
             loggerService.catError(LogCategory.SYSTEM, "Sidecar reported error", { error: payload.message });

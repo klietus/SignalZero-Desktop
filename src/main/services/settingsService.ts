@@ -311,10 +311,10 @@ export const settingsService = {
     loggerService.catInfo(LogCategory.SYSTEM, "Settings update call received.");
     const current = loadFromFile();
     
-    // Handle global voice settings
+    // Handle global voice settings - Use replacement to allow deletions
     if (settings.voiceProfiles) {
-        current.voiceProfiles = { ...(current.voiceProfiles || {}), ...settings.voiceProfiles };
-        loggerService.catInfo(LogCategory.SYSTEM, `Merged voice profiles. Total: ${Object.keys(current.voiceProfiles).length}`);
+        current.voiceProfiles = settings.voiceProfiles;
+        loggerService.catInfo(LogCategory.SYSTEM, `Updated voice profiles. Total: ${Object.keys(current.voiceProfiles).length}`);
     }
     if (settings.systemName) current.systemName = settings.systemName;
     if (settings.voiceId) current.voiceId = settings.voiceId;
@@ -335,14 +335,31 @@ export const settingsService = {
         }
 
         // Clean up incoming inference from local voice settings that are now global
-        const { voiceProfiles, systemName, voiceId, voiceEnabled, dominantLanguage, ...cleanInference } = settings.inference as any;
+        const { 
+            voiceProfiles: _vp, 
+            systemName: _sn, 
+            voiceId: _vid, 
+            voiceEnabled: _ve, 
+            dominantLanguage: _dl, 
+            ...cleanInference 
+        } = settings.inference as any;
 
-        current.inference = {
+        // Ensure we also remove these from current.inference if they exist
+        const updatedInference = {
             ...current.inference,
             ...cleanInference,
             apiKey: encrypt(settings.inference.apiKey || ''),
             savedConfigs: mergedSavedConfigs
         };
+        
+        // Surgical removal of legacy fields from the inference object
+        delete (updatedInference as any).voiceProfiles;
+        delete (updatedInference as any).systemName;
+        delete (updatedInference as any).voiceId;
+        delete (updatedInference as any).voiceEnabled;
+        delete (updatedInference as any).dominantLanguage;
+
+        current.inference = updatedInference;
     }
     
     if (settings.serpApi) {
