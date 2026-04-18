@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
     Save, Database, Network, Cpu, Cloud, 
     Search, AlertCircle, Layout, RefreshCw, Plus,
-    Trash2, CheckCircle2, XCircle, Server, Activity, Play
+    Trash2, CheckCircle2, XCircle, Server, Activity, Play,
+    Volume2, Mic
 } from 'lucide-react';
 import { UserProfile, GraphHygieneSettings, McpConfiguration } from '../../types';
 import { Header, HeaderProps } from '../Header';
@@ -36,6 +37,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [inferenceAgentModel, setInferenceAgentModel] = useState('');
   const [inferenceVisionModel, setInferenceVisionModel] = useState('');
   const [inferenceFastModel, setInferenceFastModel] = useState('');
+  
+  // Voice State
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [systemName, setSystemName] = useState('Signal');
+  const [voiceId, setVoiceId] = useState('af_sarah');
+  const [dominantLanguage, setDominantLanguage] = useState('en');
 
   // Graph Hygiene State
   const [hygieneSettings, setHygieneSettings] = useState<GraphHygieneSettings>({
@@ -150,6 +157,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setInferenceAgentModel(inference.agentModel || inference.model || '');
     setInferenceVisionModel(inference.visionModel || '');
     setInferenceFastModel(inference.fastModel || '');
+    setVoiceEnabled(inference.voiceEnabled ?? false);
+    setSystemName(inference.systemName || 'axiom');
+    setVoiceId(inference.voiceId || 'af_sarah');
+    setDominantLanguage(inference.dominantLanguage || 'en');
     
     setHygieneSettings(hygiene);
     if (inference.savedConfigs) setStoredConfigs(inference.savedConfigs);
@@ -177,7 +188,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           model: inferenceModel,
           agentModel: inferenceAgentModel,
           visionModel: inferenceVisionModel,
-          fastModel: inferenceFastModel
+          fastModel: inferenceFastModel,
+          voiceEnabled,
+          systemName,
+          voiceId,
+          dominantLanguage
       };
       const updatedConfigs = { ...storedConfigs, [inferenceProvider]: currentConfig };
       setStoredConfigs(updatedConfigs);
@@ -191,6 +206,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           setInferenceAgentModel(saved.agentModel || '');
           setInferenceVisionModel(saved.visionModel || '');
           setInferenceFastModel(saved.fastModel || '');
+          setVoiceEnabled(saved.voiceEnabled ?? false);
+          setSystemName(saved.systemName || 'axiom');
+          setVoiceId(saved.voiceId || 'af_sarah');
+          setDominantLanguage(saved.dominantLanguage || 'en');
       } else {
           setInferenceApiKey('');
           if (newProvider === 'openai') {
@@ -230,7 +249,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           model: inferenceModel,
           agentModel: inferenceAgentModel,
           visionModel: inferenceVisionModel,
-          fastModel: inferenceFastModel
+          fastModel: inferenceFastModel,
+          voiceEnabled,
+          systemName,
+          voiceId,
+          dominantLanguage
         };
         const finalConfigs = { ...storedConfigs, [inferenceProvider]: currentConfig };
 
@@ -248,6 +271,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 agentModel: inferenceAgentModel,
                 visionModel: inferenceVisionModel,
                 fastModel: inferenceFastModel,
+                voiceEnabled,
+                systemName,
+                voiceId,
+                dominantLanguage,
                 savedConfigs: finalConfigs
             },
             mcpConfigs,
@@ -288,6 +315,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const tabs = [
       { id: 'appearance', label: 'Appearance', icon: Layout },
       { id: 'inference', label: 'Inference', icon: Cpu },
+      { id: 'voice', label: 'Voice & Edge', icon: Volume2 },
       { id: 'services', label: 'Services', icon: Cloud },
       { id: 'monitoring', label: 'World Monitoring', icon: Activity },
       { id: 'mcp', label: 'MCP Clients', icon: Network },
@@ -358,10 +386,85 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                           <input type="text" value={inferenceVisionModel} onChange={(e) => setInferenceVisionModel(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
                                       </div>
                                   </div>
-                                  <p className="text-[10px] text-gray-500 mt-2">
-                                      <span className="font-bold text-amber-600 uppercase mr-1">Note:</span> 
-                                      Smaller primary models (&lt;10B) may be less accurate. Fast Model can be very small (0.8B).
-                                  </p>
+                              </div>
+                          </div>
+                      </section>
+                  )}
+
+                  {activeTab === 'voice' && (
+                      <section className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-8">
+                              <div className="space-y-6">
+                                  <div className="flex items-center justify-between border-b pb-2">
+                                      <div className="flex items-center gap-2 font-bold"><Volume2 size={16} className="text-indigo-500" /> Voice & Edge Configuration</div>
+                                  </div>
+
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="flex items-center justify-between">
+                                          <div className="space-y-1">
+                                              <div className="font-bold text-sm">Enable Voice Mode</div>
+                                              <p className="text-xs text-gray-500">Allow system-wide voice interaction and TTS feedback.</p>
+                                          </div>
+                                          <label className="relative inline-flex items-center cursor-pointer">
+                                              <input type="checkbox" className="sr-only peer" checked={voiceEnabled} onChange={(e) => setVoiceEnabled(e.target.checked)} />
+                                              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+                                          </label>
+                                      </div>
+                                  </div>
+
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="space-y-2">
+                                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono flex items-center gap-2"><Volume2 size={14} /> System Voice</label>
+                                          <select 
+                                            value={voiceId} 
+                                            onChange={(e) => setVoiceId(e.target.value)} 
+                                            className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono"
+                                          >
+                                            <option value="af_sarah">Sarah (Natural Default)</option>
+                                            <option value="af_sky">Sky (Clear & Fast)</option>
+                                            <option value="af_heart">Heart (Warm)</option>
+                                            <option value="af_bella">Bella (Soft)</option>
+                                            <option value="af_nicole">Nicole (Professional)</option>
+                                            <option value="am_michael">Michael (Male - Warm)</option>
+                                            <option value="am_adam">Adam (Male - Clear)</option>
+                                          </select>
+                                          <p className="text-[10px] text-gray-500">Select the high-quality Kokoro voice for system feedback.</p>
+                                      </div>
+                                  </div>
+
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="space-y-2">
+                                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono flex items-center gap-2"><Mic size={14} /> System Name (Wake Word)</label>
+                                          <input 
+                                            type="text" 
+                                            value={systemName} 
+                                            onChange={(e) => setSystemName(e.target.value)} 
+                                            className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" 
+                                            placeholder="e.g. Signal, Jarvis, Zero"
+                                          />
+                                          <p className="text-[10px] text-gray-500">The system will only respond to its name when voice mode is active.</p>
+                                      </div>
+                                  </div>
+
+                                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <div className="space-y-2">
+                                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Dominant Language</label>
+                                          <select 
+                                            value={dominantLanguage} 
+                                            onChange={(e) => setDominantLanguage(e.target.value)} 
+                                            className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono"
+                                          >
+                                            <option value="en">English</option>
+                                            <option value="zh">Chinese</option>
+                                            <option value="fr">French</option>
+                                            <option value="de">German</option>
+                                            <option value="ja">Japanese</option>
+                                            <option value="ko">Korean</option>
+                                            <option value="es">Spanish</option>
+                                          </select>
+                                          <p className="text-[10px] text-gray-500">Improves speech-to-text accuracy and performance.</p>
+                                      </div>
+                                  </div>
                               </div>
                           </div>
                       </section>

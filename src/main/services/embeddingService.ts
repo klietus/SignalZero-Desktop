@@ -1,11 +1,17 @@
 
+import { app } from 'electron';
+import path from 'path';
+
 let embeddingPipelinePromise: Promise<any> | null = null;
 
 async function getEmbeddingPipeline() {
     if (!embeddingPipelinePromise) {
         embeddingPipelinePromise = (async () => {
-            const { pipeline, env } = await import('@xenova/transformers');
-            env.allowLocalModels = true;
+            const { pipeline, env } = await import('@huggingface/transformers');
+            env.allowRemoteModels = false;
+            env.localModelPath = app.isPackaged 
+                ? path.join(process.resourcesPath, 'models') 
+                : path.join(app.getAppPath(), 'models');
             return pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
         })();
     }

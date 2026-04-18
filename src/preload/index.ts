@@ -56,6 +56,38 @@ const api = {
     ipcRenderer.invoke('system:process-attachment', file),
   captureScreenshot: () => ipcRenderer.invoke('system:capture-screenshot'),
 
+  // Voice
+  toggleVoiceMode: (active: boolean) => ipcRenderer.invoke('voice:toggle-mode', active),
+  streamAudioInput: (audioData: Float32Array) => ipcRenderer.send('voice:stream-input', audioData),
+  onSttResult: (callback: (text: string) => void) => {
+    const subscription = (_event, text: string) => callback(text);
+    ipcRenderer.on('voice:stt-result', subscription);
+    return () => ipcRenderer.removeListener('voice:stt-result', subscription);
+  },
+  onPlayAudio: (callback: (data: { audio: Float32Array, samplingRate: number }) => void) => {
+    const subscription = (_event, data) => callback(data);
+    ipcRenderer.on('voice:play-audio', subscription);
+    return () => ipcRenderer.removeListener('voice:play-audio', subscription);
+  },
+  onPlayAudioB64: (callback: (data: { audio: string }) => void) => {
+    const subscription = (_event, data) => callback(data);
+    ipcRenderer.on('voice:play-audio-b64', subscription);
+    return () => ipcRenderer.removeListener('voice:play-audio-b64', subscription);
+  },
+  onPlayChunk: (callback: (data: { audio: string, index: number, isLast: boolean }) => void) => {
+    const subscription = (_event, data) => callback(data);
+    ipcRenderer.on('voice:play-chunk', subscription);
+    return () => ipcRenderer.removeListener('voice:play-chunk', subscription);
+  },
+  onTriggerSubmit: (callback: (text?: string) => void) => {
+    const subscription = (_event, text?: string) => callback(text);
+    ipcRenderer.on('voice:trigger-submit', subscription);
+    return () => {
+      ipcRenderer.removeListener('voice:trigger-submit', subscription);
+    };
+  },
+  notifyPlaybackFinished: () => ipcRenderer.send('voice:playback-finished'),
+
   // System
   getRecentLogs: (limit?: number) => ipcRenderer.invoke('system:get-recent-logs', limit),
   getTraces: (sessionId: string) => ipcRenderer.invoke('trace:list', sessionId),

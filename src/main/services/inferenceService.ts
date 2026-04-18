@@ -2,7 +2,6 @@ import OpenAI from "openai";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { randomUUID } from "crypto";
 import type {
-  ChatCompletionChunk,
   ChatCompletionMessageParam,
   ChatCompletionMessageToolCall,
   ChatCompletionTool,
@@ -82,6 +81,25 @@ class InferenceLockManager {
 }
 
 export const inferenceLock = new InferenceLockManager();
+
+export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 512): Promise<string> => {
+    const settings = await settingsService.getInferenceSettings();
+    const fastModel = settings.fastModel;
+    
+    if (settings.provider === 'gemini') {
+        const client = await getGeminiClient();
+        const model = client.getGenerativeModel({ 
+            model: fastModel,
+            generationConfig: { maxOutputTokens: maxTokens } 
+        });
+        const result = await model.generateContent(messages.map(m => m.content).join('\n'));
+        return result.response.text().trim();
+    } else {
+        const client = await getClient();
+        const result = await client.chat.completions.create({ model: fastModel, messages: messages as any, max_tokens: maxTokens });
+        return result.choices[0]?.message?.content?.trim() || "";
+    }
+};
 
 export const getClient = async () => {
   const { endpoint, provider, apiKey } = await settingsService.getInferenceSettings();
@@ -831,24 +849,13 @@ export async function* sendMessageAndHandleTools(
                 if (fastModel) {
                   const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
                   const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
-                  let newName = "";
-                  if (settings.provider === 'gemini') {
-                    const client = await getGeminiClient();
-                    const model = client.getGenerativeModel({ 
-                      model: fastModel,
-                      generationConfig: { maxOutputTokens: 50 } 
-                    });
-                    const result = await model.generateContent(namingPrompt);
-                    newName = result.response.text().trim();
-                  } else {
-                    const client = await getClient();
-                    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: namingPrompt }], max_tokens: 50 });
-                    newName = result.choices[0]?.message?.content?.trim() || "";
-                  }
+                  
+                  const newName = await callFastInference([{ role: "user", content: namingPrompt }], 50);
+
                   if (newName) {
-                    newName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                    await contextService.updateSession({ ...session, name: newName });
-                    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: newName });
+                    const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                    await contextService.updateSession({ ...session, name: cleanName });
+                    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
                   }
                 }
               }
@@ -979,20 +986,9 @@ export const summarizeHistory = async (history: ContextMessage[], currentSummary
   if (!fastModel) return currentSummary || "";
   const cleanHistory = contextWindowService.stripTools(history);
   const historyText = cleanHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "")}`).join('\n');
-  const prompt = `Summarize the following conversation concisely: ${currentSummary ? `Previous: ${currentSummary}\n` : ''} History: ${historyText} SUMMARY:`;
+  const prompt = `Summarize the following conversation concisely: ${currentSummary ? `Previous Summary: ${currentSummary}\n` : ''} \n\nRecent Conversation History:\n${historyText}\n\nREFINED SUMMARY:`;
   try {
-    if (settings.provider === 'gemini') {
-      const client = await getGeminiClient();
-      const model = client.getGenerativeModel({ 
-        model: fastModel,
-        generationConfig: { maxOutputTokens: 800 }
-      });
-      const result = await model.generateContent(prompt);
-      return result.response.text().trim();
-    }
-    const client = await getClient();
-    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }], max_tokens: 800 });
-    return result.choices[0]?.message?.content?.trim() ?? (currentSummary || "");
+    return await callFastInference([{ role: "user", content: prompt }], 2048);
   } catch (error) { return currentSummary || ""; }
 };
 
@@ -1006,23 +1002,13 @@ export const synthesizeWebResults = async (
   queryResults.forEach(qr => {
     resultsText += `\n[RESULTS FOR QUERY: "${qr.query}"]\n`;
     qr.results.forEach((r, i) => {
-      resultsText += `${i + 1}. ${r.title}\n   Snippet: ${r.snippet}\n   URL: ${r.url}\n`;
+      // Allow more detail per result
+      resultsText += `${i + 1}. ${r.title}\n   Full Snippet: ${r.snippet}\n   URL: ${r.url}\n`;
     });
   });
-  const prompt = `Synthesize these research results into a dense Knowledge Brief: ${resultsText}`;
+  const prompt = `Synthesize these research results into a dense, high-fidelity Knowledge Brief. Use all the details provided to build a comprehensive view of the topic.\n\nResearch Data:\n${resultsText}\n\nKNOWLEDGE BRIEF:`;
   try {
-    if (settings.provider === 'gemini') {
-      const client = await getGeminiClient();
-      const model = client.getGenerativeModel({ 
-        model: fastModel,
-        generationConfig: { maxOutputTokens: 1024 }
-      });
-      const result = await model.generateContent(prompt);
-      return result.response.text().trim();
-    }
-    const client = await getClient();
-    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }], max_tokens: 1024 });
-    return result.choices[0]?.message?.content?.trim() ?? "";
+    return await callFastInference([{ role: "user", content: prompt }], 4096);
   } catch (error) { return ""; }
 };
 
@@ -1055,7 +1041,8 @@ export const primeSymbolicContext = async (
     const session = await contextService.getSession(contextSessionId);
     const history = await contextService.getUnfilteredHistory(contextSessionId);
     const recentHistory = history.slice(-10);
-    const historyContext = recentHistory.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+    // Strip thoughts from history items to keep input prompt focused and save context
+    const historyContext = recentHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "")}`).join('\n');
 
     // Identify previous web searches to avoid duplicates
     const previousSearches = history
@@ -1081,7 +1068,10 @@ export const primeSymbolicContext = async (
       needsNaming
     });
 
-    const prompt = `Analyze the conversation history and the new user message to identify 3 symbolic search queries and determine if web search grounding is needed. 
+    const prompt = `You are a high-speed symbolic priming engine. 
+    CRITICAL: DO NOT use any <think> tags. DO NOT reason out loud. DO NOT output any text other than the JSON object.
+    
+    Analyze the conversation history and the new user message to identify 3 symbolic search queries and determine if web search grounding is needed. 
     
     Additionally, generate 2 "orthogonal_queries" that explore the local opposite of your predictions, including antonyms, contradictory logic, or orthogonal concepts to ensure context diversity.
     
@@ -1097,7 +1087,7 @@ export const primeSymbolicContext = async (
     Previous Web Searches (DO NOT REPEAT THESE):
     ${previousSearches.length > 0 ? previousSearches.join(', ') : "None."}
 
-    Output valid JSON only:
+    Output the following valid JSON object IMMEDIATELY without any preamble, explanation, or thinking:
     {
       "queries": ["symbolic query1", "symbolic query2", ...],
       "orthogonal_queries": ["opposite query1", "orthogonal query2", ...],
@@ -1109,25 +1099,8 @@ export const primeSymbolicContext = async (
     }`;
 
     let fastResponse: any = {};
-    if (settings.provider === 'gemini') {
-      const client = await getGeminiClient();
-      const model = client.getGenerativeModel({ 
-        model: fastModel, 
-        generationConfig: { 
-          maxOutputTokens: 1024
-        } 
-      });
-      const result = await model.generateContent(prompt);
-      fastResponse = extractJson(result.response.text());
-    } else {
-      const client = await getClient();
-      const result = await client.chat.completions.create({ 
-        model: fastModel, 
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 1024
-      });
-      fastResponse = extractJson(result.choices[0]?.message?.content || "{}");
-    }
+    const fastText = await callFastInference([{ role: "user", content: prompt }], 1024);
+    fastResponse = extractJson(fastText);
 
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
 

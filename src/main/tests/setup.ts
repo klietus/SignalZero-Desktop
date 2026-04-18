@@ -3,7 +3,11 @@ import { vi } from 'vitest'
 vi.mock('electron', () => ({
   app: {
     getPath: vi.fn().mockReturnValue('/tmp/signalzero-test'),
+    getAppPath: vi.fn().mockReturnValue('/Users/klietus/workspace/LocalNode/SignalZero-Desktop'),
     isPackaged: false
+  },
+  systemPreferences: {
+    askForMediaAccess: vi.fn().mockResolvedValue(true)
   },
   ipcMain: {
     handle: vi.fn(),

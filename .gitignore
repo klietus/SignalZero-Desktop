@@ -14,3 +14,11 @@ release
 *.db-journal
 *.db-wal
 lancedb/
+models/
+sidecars/voice/python-portable/
+sidecars/voice/deps/
+sidecars/voice/*.bin
+sidecars/voice/*.onnx
+test_venv/
+
+__pycache__/

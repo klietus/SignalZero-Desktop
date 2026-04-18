@@ -1,4 +1,8 @@
 import { app, shell, BrowserWindow, ipcMain, Menu, Tray, nativeImage, desktopCapturer } from 'electron'
+
+// Increase memory limit for the main process and worker threads
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=8192');
+
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/cognitav.jpg?asset'
@@ -23,12 +27,14 @@ import { sqliteService } from './services/sqliteService.js'
 import { mcpClientService } from './services/mcpClientService.js'
 import { attachmentService } from './services/attachmentService.js'
 import { agentRunner } from './services/agentRunner.js'
+import { voiceService } from './services/voiceProcess.js'
 import fs from 'fs'
 import { dialog } from 'electron'
 
 let activeSystemPrompt = ACTIVATION_PROMPT;
 let mainWindow: BrowserWindow | null = null;
 let monitorWindow: BrowserWindow | null = null;
+export let activeSessionId: string | null = null;
 
 const broadcast = (channel: string, ...args: any[]) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -405,6 +411,7 @@ app.whenReady().then(async () => {
   
   // Initialize background runners
   agentRunner; 
+  voiceService; 
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -431,6 +438,7 @@ ipcMain.handle('context:get', async (_, id) => {
 });
 
 ipcMain.handle('context:history', async (_, id) => {
+  activeSessionId = id;
   return await contextService.getHistory(id);
 });
 
@@ -447,6 +455,7 @@ ipcMain.handle('trace:list', async (_, sessionId) => {
 });
 
 ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruction) => {
+  activeSessionId = sessionId;
   try {
     const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, sessionId);
     const session = await contextService.getSession(sessionId);
@@ -466,13 +475,21 @@ ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruc
 
     const stream = sendMessageAndHandleTools(chat, message, toolExecutor, traceNeeded, systemInstruction || activeSystemPrompt, sessionId, undefined, webResults, webBrief, undefined, 1);
 
+    let fullText = "";
     for await (const chunk of stream) {
       if (chunk.text || chunk.toolCalls) {
+        if (chunk.text) fullText += chunk.text;
         event.sender.send('inference:chunk', { ...chunk, sessionId });
       }
     }
 
     event.sender.send('inference:completed', { sessionId });
+    
+    // Voice output if active
+    voiceService.speak(fullText, event.sender).catch(err => {
+      loggerService.catError(LogCategory.SYSTEM, "Voice output failed", { error: err.message });
+    });
+
     return { success: true };
   } catch (error: any) {
     loggerService.error("IPC Inference Error", { error: error.message });

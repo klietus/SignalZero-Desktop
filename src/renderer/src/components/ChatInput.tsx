@@ -1,12 +1,16 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SendHorizontal, Loader2, Square, Plus, Smile, X, FileUp, Camera, Image as ImageIcon } from 'lucide-react';
+import { 
+    SendHorizontal, Loader2, Square, Plus, Smile, X, 
+    FileUp, Camera, Image as ImageIcon, Mic, MicOff 
+} from 'lucide-react';
 
 interface ChatInputProps {
   onSend: (message: string, options?: { attachments?: { id: string, filename: string, type: string, thumbnail?: string }[] }) => void;
   onStop?: () => void;
   disabled?: boolean;
   isProcessing?: boolean;
+  activeContextId?: string | null;
   pendingAttachments?: any[];
   onClearPendingAttachments?: () => void;
 }
@@ -18,7 +22,7 @@ const COMMON_EMOJIS = [
 ];
 
 export const ChatInput: React.FC<ChatInputProps> = ({ 
-    onSend, onStop, disabled, isProcessing, 
+    onSend, onStop, disabled, isProcessing, activeContextId,
     pendingAttachments, onClearPendingAttachments 
 }) => {
   const [text, setText] = useState('');
@@ -27,12 +31,103 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   
+  // Voice State
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isAwake, setIsAwake] = useState(false);
+  const [systemName, setSystemName] = useState('Signal');
+  
+  // REFS to avoid stale closures
+  const textRef = useRef('');
+  const attachmentsRef = useRef<any[]>([]);
+  const onSendRef = useRef(onSend);
+  const isProcessingRef = useRef(isProcessing);
+  
+  useEffect(() => { textRef.current = text; }, [text]);
+  useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
+  useEffect(() => { onSendRef.current = onSend; }, [onSend]);
+  useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const attachMenuRef = useRef<HTMLDivElement>(null);
 
-  // Sync global pending attachments (like screenshots from tray)
+  // Voice Refs
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+
+  // Sync System Name
+  useEffect(() => {
+    window.api.getSettings().then(s => {
+        if (s?.inference?.systemName) setSystemName(s.inference.systemName);
+    }).catch(() => {});
+  }, []);
+
+  // Listen for Kernel Events (Wake Word Visual Feedback)
+  useEffect(() => {
+      const removeListener = window.api.onKernelEvent((type, data) => {
+          if (type === 'CONTEXT_UPDATED' && data.type === 'voice_wake_word_detected') {
+              setIsAwake(true);
+              // Visual "awake" for 5 seconds
+              setTimeout(() => setIsAwake(false), 5000);
+          }
+      });
+      return () => removeListener();
+  }, []);
+
+  // Listen for STT results from main
+  useEffect(() => {
+      const unbindStt = window.api.onSttResult((recognizedText) => {
+          console.log("[ChatInput] Final Utterance STT Result received:", recognizedText);
+          setText(recognizedText);
+      });
+
+      // Explicit trigger from main when silence is detected and wake word was validated
+      const unbindSubmit = (window.api as any).onTriggerSubmit?.((finalText?: string) => {
+          if (isProcessingRef.current) {
+              return;
+          }
+          handleSubmit(finalText);
+      }) || (() => {});
+
+      return () => {
+          unbindStt();
+          unbindSubmit();
+      };
+  }, []);
+
+  // Listen for Audio Playback from main
+  useEffect(() => {
+      const removeListener = window.api.onPlayAudio(({ audio, samplingRate }) => {
+          playBuffer(audio, samplingRate);
+      });
+      return () => removeListener();
+  }, []);
+
+  const playBuffer = (audioData: Float32Array, sampleRate: number) => {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const buffer = ctx.createBuffer(1, audioData.length, sampleRate);
+      buffer.getChannelData(0).set(audioData);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start();
+  };
+
+  const toggleVoiceMode = async () => {
+      const newMode = !isVoiceMode;
+      const success = await window.api.toggleVoiceMode(newMode);
+      if (success) {
+          setIsVoiceMode(newMode);
+          if (!newMode) {
+              setIsAwake(false);
+          }
+      }
+  };
+
+  // Sync global pending attachments
   useEffect(() => {
       if (pendingAttachments && pendingAttachments.length > 0) {
           setAttachments(prev => [...prev, ...pendingAttachments]);
@@ -47,7 +142,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [text]);
 
-  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as unknown as Node;
@@ -64,9 +158,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showEmojiPicker, showAttachMenu]);
 
-  const handleSubmit = () => {
-    if (text.trim() || attachments.length > 0) {
-      onSend(text, { attachments });
+  const handleSubmit = (overrideText?: string) => {
+    const currentText = overrideText || textRef.current;
+    const currentAtts = attachmentsRef.current;
+
+    if (currentText.trim() || currentAtts.length > 0) {
+      console.log("[ChatInput] handleSubmit executing with:", currentText);
+      onSendRef.current(currentText, { attachments: currentAtts });
       setText('');
       setAttachments([]);
       setShowEmojiPicker(false);
@@ -107,7 +205,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           const newText = text.substring(0, start) + emoji + text.substring(end);
           setText(newText);
           
-          // Focus back to textarea and set cursor after emoji
           setTimeout(() => {
               if (textareaRef.current) {
                   textareaRef.current.focus();
@@ -136,7 +233,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           const newAttachments = [...attachments];
           for (let i = 0; i < files.length; i++) {
               const file = files[i];
-              // In Electron, the path property is available on the File object
               const result = await window.api.processAttachment({
                   name: file.name,
                   path: (file as any).path,
@@ -156,7 +252,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className="bg-transparent relative">
-        {/* Emoji Picker Overlay */}
         {showEmojiPicker && (
             <div 
                 ref={emojiPickerRef}
@@ -176,7 +271,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
         )}
 
-        {/* Attachment Menu Popover */}
         {showAttachMenu && (
             <div 
                 ref={attachMenuRef}
@@ -201,7 +295,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
         )}
 
-        {/* Attachments List */}
         {attachments.length > 0 && (
             <div className="flex flex-wrap gap-3 mb-3 px-1">
                 {attachments.map(att => (
@@ -233,7 +326,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
         )}
 
-        <div className={`relative flex items-end gap-1 p-3 rounded-2xl border border-gray-800 bg-gray-900 transition-all`}>
+        <div className={`relative flex items-end gap-1 p-3 rounded-2xl border ${isVoiceMode ? (isAwake ? 'border-emerald-500 bg-emerald-500/5 shadow-emerald-500/20' : 'border-indigo-500 bg-indigo-500/5 shadow-indigo-500/20') : 'border-gray-800 bg-gray-900'} transition-all`}>
           <div className="flex items-center">
             <button
                 type="button"
@@ -264,12 +357,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Execute symbolic instruction..."
+            placeholder={isVoiceMode ? (isAwake ? `Listening for speech...` : `Say "${systemName}" to start...`) : "Execute symbolic instruction..."}
             disabled={disabled}
-            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm py-2 max-h-[200px] resize-none overflow-y-auto text-gray-200 placeholder:text-gray-600 font-sans"
+            className={`flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-sm py-2 max-h-[200px] resize-none overflow-y-auto text-gray-200 placeholder:text-gray-600 font-sans ${isAwake ? 'animate-pulse' : ''}`}
           />
 
           <div className="flex items-center gap-1 pl-2">
+            <button
+                type="button"
+                onClick={toggleVoiceMode}
+                disabled={!activeContextId}
+                className={`p-2 rounded-xl transition-all ${isVoiceMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`}
+                title={isVoiceMode ? "Disable Voice Mode" : "Enable Voice Mode"}
+            >
+                {isVoiceMode ? <Mic size={18} /> : <MicOff size={18} />}
+            </button>
+
             {isProcessing ? (
               <button
                 type="button"

@@ -70,8 +70,13 @@ declare global {
             importProject: () => Promise<any>;
             importSampleProject: () => Promise<any>;
             openMonitor: () => Promise<void>;
-            onInferenceChunk: (callback: (chunk: string) => void) => () => void;
-            onInferenceCompleted: (callback: () => void) => () => void;
+            toggleVoiceMode: (active: boolean) => Promise<boolean>;
+            streamAudioInput: (audioData: Float32Array) => void;
+            onSttResult: (callback: (text: string) => void) => () => void;
+            onPlayAudio: (callback: (data: { audio: Float32Array, samplingRate: number }) => void) => () => void;
+            onPlayAudioB64: (callback: (data: { audio: string }) => void) => () => void;
+            onPlayChunk: (callback: (data: { audio: string, index: number, isLast: boolean }) => void) => () => void;
+            onInferenceChunk: (callback: (chunk: string) => void) => () => void;            onInferenceCompleted: (callback: () => void) => () => void;
             onTraceLogged: (callback: (trace: any) => void) => () => void;
             onKernelEvent: (callback: (type: string, data: any) => void) => () => void;
             onNavigate: (callback: (view: string) => void) => () => void;
@@ -444,6 +449,71 @@ function App() {
             }
         });
 
+        const unbindVoiceB64 = window.api.onPlayAudioB64(async (data: { audio: string }) => {
+            try {
+                const binaryStr = window.atob(data.audio);
+                const bytes = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+                
+                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const audioBuffer = await ctx.decodeAudioData(bytes.buffer);
+                const source = ctx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(ctx.destination);
+                source.onended = () => {
+                    window.api.notifyPlaybackFinished();
+                };
+                source.start();
+            } catch (e) {
+                console.error("Failed to play b64 audio", e);
+            }
+        });
+
+        // TTS Chunk Queueing
+        const playbackQueue: AudioBuffer[] = [];
+        let isPlaying = false;
+        let lastChunkReceived = false;
+
+        const processQueue = async (ctx: AudioContext) => {
+            if (isPlaying || playbackQueue.length === 0) return;
+            isPlaying = true;
+
+            const buffer = playbackQueue.shift();
+            if (buffer) {
+                const source = ctx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(ctx.destination);
+                source.onended = () => {
+                    isPlaying = false;
+                    if (playbackQueue.length > 0) {
+                        processQueue(ctx);
+                    } else if (lastChunkReceived) {
+                        window.api.notifyPlaybackFinished();
+                        lastChunkReceived = false;
+                    }
+                };
+                source.start();
+            }
+        };
+
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+        const unbindVoiceChunk = window.api.onPlayChunk(async (data: { audio: string, index: number, isLast: boolean }) => {
+            try {
+                const binaryStr = window.atob(data.audio);
+                const bytes = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+                
+                const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
+                playbackQueue.push(audioBuffer);
+                if (data.isLast) lastChunkReceived = true;
+                
+                processQueue(audioCtx);
+            } catch (e) {
+                console.error("Failed to play tts chunk", e);
+            }
+        });
+
         return () => {
             if (typeof unbindChunk === 'function') unbindChunk();
             if (typeof unbindCompleted === 'function') unbindCompleted();
@@ -451,6 +521,8 @@ function App() {
             if (typeof unbindKernel === 'function') unbindKernel();
             if (typeof removeNavListener === 'function') removeNavListener();
             if (typeof removeScreenshotListener === 'function') removeScreenshotListener();
+            if (typeof unbindVoiceB64 === 'function') unbindVoiceB64();
+            if (typeof unbindVoiceChunk === 'function') unbindVoiceChunk();
         };
     }, [activeContextId, appState]);
 
@@ -680,14 +752,14 @@ function App() {
 
                         <div className="p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent">
                             <div className="w-full max-w-full mx-auto">
-                                <ChatInput 
-                                    onSend={handleSendMessage} 
-                                    disabled={isProcessing || !activeContextId} 
+                                <ChatInput
+                                    onSend={handleSendMessage}
+                                    disabled={isProcessing || !activeContextId}
                                     isProcessing={isProcessing}
+                                    activeContextId={activeContextId}
                                     pendingAttachments={pendingAttachments}
                                     onClearPendingAttachments={() => setPendingAttachments([])}
-                                />
-                            </div>
+                                />                            </div>
                         </div>
                     </div>
 

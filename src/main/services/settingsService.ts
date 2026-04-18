@@ -23,6 +23,10 @@ export interface InferenceSettings {
   agentModel: string;
   visionModel: string;
   fastModel: string;
+  voiceEnabled?: boolean;
+  systemName?: string;
+  voiceId?: string;
+  dominantLanguage?: string;
   savedConfigs?: Record<string, InferenceConfiguration>;
 }
 
@@ -33,6 +37,10 @@ export interface InferenceConfiguration {
   agentModel: string;
   visionModel: string;
   fastModel: string;
+  voiceEnabled?: boolean;
+  systemName?: string;
+  voiceId?: string;
+  dominantLanguage?: string;
 }
 
 export interface WebSearchProviderSettings {
@@ -134,6 +142,10 @@ export const settingsService = {
       agentModel: saved.agentModel || saved.model || 'qwen3.5-122b-a10b',
       visionModel: saved.visionModel || 'zai-org/glm-4.6v-flash',
       fastModel: saved.fastModel || 'qwen3.5-0.8b',
+      voiceEnabled: saved.voiceEnabled ?? false,
+      systemName: saved.systemName || 'axiom',
+      voiceId: saved.voiceId || 'af_sarah',
+      dominantLanguage: saved.dominantLanguage || 'en',
       savedConfigs: saved.savedConfigs ? Object.fromEntries(
           Object.entries(saved.savedConfigs).map(([k, v]) => [k, { ...v, apiKey: decrypt(v.apiKey) }])
       ) : {},
