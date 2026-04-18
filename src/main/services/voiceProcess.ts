@@ -225,7 +225,9 @@ class PythonVoiceManager {
             if (!processedText) return "";
 
             const prompt = `Convert the following text into a clean, natural sounding speech report. 
-STRIP ALL HEADERS, titles, markdown formatting, technical symbols, and foreign words. 
+STRIP ALL HEADERS, titles, markdown formatting, and technical symbols.
+KEEP AND PRONOUNCE ALL PRODUCT NAMES, project names, and proper nouns (e.g., "SignalZero", "Tavily", "Electron").
+EXPAND ALL ACRONYMS AND ABBREVIATIONS into their full spoken forms (e.g., "AI" to "Artificial Intelligence", "TTS" to "Text to Speech").
 Do not say "Header", "Section", or read out structural markers. 
 Just provide the core narrative content in a way that is easy to listen to.
 Keep it professional and concise.
@@ -237,7 +239,7 @@ ${processedText}`;
             const cleanSpeech = await callFastInference([
                 { role: 'system', content: 'You are a speech synthesis pre-processor that strips headers and formatting.' },
                 { role: 'user', content: prompt }
-            ]);
+            ], 2560);
 
             return cleanSpeech || processedText;
         } catch (e) {

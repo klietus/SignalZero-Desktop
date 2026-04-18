@@ -486,7 +486,8 @@ function App() {
                 source.onended = () => {
                     isPlaying = false;
                     if (playbackQueue.length > 0) {
-                        processQueue(ctx);
+                        // Add a half-second pause between sentences for more natural flow
+                        setTimeout(() => processQueue(ctx), 500);
                     } else if (lastChunkReceived) {
                         window.api.notifyPlaybackFinished();
                         lastChunkReceived = false;
