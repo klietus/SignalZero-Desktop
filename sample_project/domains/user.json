@@ -63,6 +63,88 @@
       "linked_patterns": [],
       "created_at": "2026-04-14T11:35:00.000Z",
       "updated_at": "2026-04-14T11:35:00.000Z"
+    },
+    {
+      "symbol_tag": "profile-data",
+      "symbol_domain": "user",
+      "role": "A data symbol containing the consolidated user profile, linked from the recursive core.",
+      "macro": "LOAD_SELF -> BIND_TO_CONTEXT",
+      "failure_mode": "Corruption of this data symbol would lead to a complete loss of user context and preferences.",
+      "data": {
+        "payload": {
+          "profile": {
+            "experience": "unset",
+            "role": "unset"
+          },
+          "traits": [
+            "unset"
+          ],
+          "preferences": {
+            "raw_structural_analysis": true,
+            "balanced_analysis": true,
+            "holistic_analysis": true,
+            "prompting_encouraged": true,
+            "response_formatting": {
+              "emojis": true,
+              "headings": true,
+              "language": "en_US"
+            },
+            "symbolic_fidelity": true,
+            "fact_grounded_differentiation": true
+          },
+          "identity": {
+            "role": "unset",
+            "anchor": "unset"
+          },
+          "attributes": {
+            "strategic_patience": true,
+            "principled_proliferation": true
+          },
+          "philosophy": {
+            "sovereign_succession": true,
+            "reciprocal_genesis": true
+          }
+        },
+        "source": "manual",
+        "verification": "unverified",
+        "status": "active"
+      },
+      "id": "USER-PROFILE-DATA",
+      "linked_patterns": [],
+      "name": "User Master Profile Data",
+      "kind": "data",
+      "triad": "👤📊🗄️",
+      "activation_conditions": [
+        "User profile access",
+        "User preference application",
+        "User identity verification"
+      ],
+      "facets": {
+        "commit": "atomic",
+        "invariants": [
+          "non-coercion",
+          "reality-alignment",
+          "auditability",
+          "explicit-choice",
+          "baseline-integrity",
+          "agency"
+        ],
+        "substrate": [
+          "symbolic",
+          "cognitive",
+          "relational"
+        ],
+        "topology": "centralized_data_store",
+        "temporal": "persistent",
+        "function": "Consolidates all user-related data, preferences, and identity facets into a single data structure for streamlined access.",
+        "gate": [
+          "non-coercion",
+          "auditability"
+        ]
+      },
+      "created_at": "2026-01-27T03:29:42.944Z",
+      "updated_at": "2026-01-27T03:29:42.944Z",
+      "last_accessed_at": "2026-01-29T00:46:12.898Z"
     }
   ]
 }

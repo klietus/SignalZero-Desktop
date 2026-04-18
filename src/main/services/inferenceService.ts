@@ -149,19 +149,25 @@ const toGeminiTools = (tools: any[]) => {
 
 const getModel = async () => (await settingsService.getInferenceSettings()).model;
 
-const extractTextDelta = (delta: ChatCompletionChunk["choices"][number]["delta"]) => {
-  if (!delta?.content) return "";
-  if (typeof delta.content === "string") return delta.content;
-  if (Array.isArray(delta.content)) {
-    return (delta.content as any[])
-      .map((item: any) => {
-        if (typeof item === "string") return item;
-        if (item?.text) return item.text;
-        return "";
-      })
-      .join("");
+const extractTextDelta = (delta: any) => {
+  let text = "";
+  if (delta?.content) {
+    if (typeof delta.content === "string") {
+      text += delta.content;
+    } else if (Array.isArray(delta.content)) {
+      text += (delta.content as any[])
+        .map((item: any) => {
+          if (typeof item === "string") return item;
+          if (item?.text) return item.text;
+          return "";
+        })
+        .join("");
+    }
   }
-  return "";
+  // Support for providers that send reasoning in separate fields (e.g. DeepSeek, Groq, OpenRouter)
+  if (delta?.reasoning_content) text += delta.reasoning_content;
+  if (delta?.thought_content) text += delta.thought_content;
+  return text;
 };
 
 const mergeToolCallDelta = (
@@ -715,9 +721,20 @@ export async function* sendMessageAndHandleTools(
         }
 
         textAccumulatedInTurn = stripThoughts(rawTextInTurn);
-        if (textAccumulatedInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) break;
+        if (rawTextInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) {
+          if (!textAccumulatedInTurn.trim() && rawTextInTurn.trim()) {
+            loggerService.catDebug(LogCategory.INFERENCE, "Model provided reasoning but empty final content.", { 
+              contextSessionId, 
+              rawLength: rawTextInTurn.length 
+            });
+          }
+          break;
+        }
         retries++;
-        loggerService.catWarn(LogCategory.INFERENCE, `Empty model response. Retry ${retries}/${MAX_RETRIES}...`, { contextSessionId });
+        loggerService.catWarn(LogCategory.INFERENCE, `Empty model response. Retry ${retries}/${MAX_RETRIES}...`, { 
+          contextSessionId, 
+          rawOutputPreview: rawTextInTurn.slice(0, 100) 
+        });
       }
 
       if (!nextAssistant) { yield { text: "Error: No assistant message returned." }; break; }
@@ -817,12 +834,15 @@ export async function* sendMessageAndHandleTools(
                   let newName = "";
                   if (settings.provider === 'gemini') {
                     const client = await getGeminiClient();
-                    const model = client.getGenerativeModel({ model: fastModel });
+                    const model = client.getGenerativeModel({ 
+                      model: fastModel,
+                      generationConfig: { maxOutputTokens: 50 } 
+                    });
                     const result = await model.generateContent(namingPrompt);
                     newName = result.response.text().trim();
                   } else {
                     const client = await getClient();
-                    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: namingPrompt }], max_tokens: 20 });
+                    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: namingPrompt }], max_tokens: 50 });
                     newName = result.choices[0]?.message?.content?.trim() || "";
                   }
                   if (newName) {
@@ -963,7 +983,10 @@ export const summarizeHistory = async (history: ContextMessage[], currentSummary
   try {
     if (settings.provider === 'gemini') {
       const client = await getGeminiClient();
-      const model = client.getGenerativeModel({ model: fastModel });
+      const model = client.getGenerativeModel({ 
+        model: fastModel,
+        generationConfig: { maxOutputTokens: 800 }
+      });
       const result = await model.generateContent(prompt);
       return result.response.text().trim();
     }
@@ -990,12 +1013,15 @@ export const synthesizeWebResults = async (
   try {
     if (settings.provider === 'gemini') {
       const client = await getGeminiClient();
-      const model = client.getGenerativeModel({ model: fastModel });
+      const model = client.getGenerativeModel({ 
+        model: fastModel,
+        generationConfig: { maxOutputTokens: 1024 }
+      });
       const result = await model.generateContent(prompt);
       return result.response.text().trim();
     }
     const client = await getClient();
-    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }], max_tokens: 800 });
+    const result = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }], max_tokens: 1024 });
     return result.choices[0]?.message?.content?.trim() ?? "";
   } catch (error) { return ""; }
 };

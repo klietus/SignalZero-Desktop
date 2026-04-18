@@ -158,14 +158,18 @@ export const webFetchService = {
             let response: any = {};
             if (settings.provider === 'gemini') {
                 const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ model: fastModel });
+                const model = client.getGenerativeModel({ 
+                    model: fastModel,
+                    generationConfig: { maxOutputTokens: 2048 }
+                });
                 const result = await model.generateContent(prompt);
                 response = extractJson(result.response.text());
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({
                     model: fastModel,
-                    messages: [{ role: "user", content: prompt }]
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 2048
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }

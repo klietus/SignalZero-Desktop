@@ -379,50 +379,6 @@
       ]
     },
     {
-      "id": "CYB-RISK-CHURCHCRM-SQLI-RCE-2025",
-      "domain_id": "cyber_sec",
-      "symbol_domain": "cyber_sec",
-      "symbol_tag": "risk",
-      "name": "Risk: Critical Vulnerabilities in ChurchCRM",
-      "kind": "pattern",
-      "triad": "⛪💻🐛",
-      "role": "Identifies critical SQL Injection and RCE vulnerabilities in ChurchCRM.",
-      "macro": "ingest(cve_feed) → identify(ChurchCRM) → vuln(SQL_Injection_RCE) → severity(Critical)",
-      "lattice": null,
-      "persona": null,
-      "data": null,
-      "facets": {
-        "topology": "software_vulnerability",
-        "function": "vulnerability_tracking",
-        "substrate": [
-          "cve_feed",
-          "churchcrm_codebase"
-        ],
-        "gate": [
-          "cve_verification"
-        ],
-        "commit": "risk_identification",
-        "invariants": [
-          "reality-alignment",
-          "auditability"
-        ],
-        "temporal": "active_threat"
-      },
-      "activation_conditions": [
-        "Vulnerability scan",
-        "Risk assessment"
-      ],
-      "failure_mode": "Underestimation of impact.",
-      "created_at": "2026-04-11 23:34:51",
-      "updated_at": "2026-04-11T23:34:51.199Z",
-      "linked_patterns": [
-        {
-          "id": "CYB-LATTICE-VULNERABILITIES",
-          "link_type": "receives_data_from"
-        }
-      ]
-    },
-    {
       "id": "CYB-PROC-CONTINUAL-AUDIT",
       "domain_id": "cyber_sec",
       "symbol_domain": "cyber_sec",
@@ -1953,10 +1909,6 @@
         {
           "id": "CYB-LAT-INFRASTRUCTURE-RISK-LATTICE",
           "link_type": "derived_from"
-        },
-        {
-          "id": "CYB-RISK-CHURCHCRM-SQLI-RCE-2025",
-          "link_type": "feeds_into"
         },
         {
           "id": "CYB-RISK-CISCO-ZERO-DAY-CHINA-2025",
