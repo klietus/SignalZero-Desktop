@@ -64,6 +64,17 @@ const migrateSchema = () => {
         }
     }
 
+    // Add missing columns to messages
+    const messageTableInfo = db.prepare("PRAGMA table_info(messages)").all() as any[];
+    if (!messageTableInfo.some(col => col.name === 'metadata')) {
+        if (loggerService) loggerService.catInfo(LogCategory.SQLITE, 'Migrating: Adding metadata column to messages');
+        try {
+            db.exec("ALTER TABLE messages ADD COLUMN metadata TEXT");
+        } catch (err) {
+            if (loggerService) loggerService.catError(LogCategory.SQLITE, 'Migration failed for column metadata in messages', { error: err });
+        }
+    }
+
     // Add missing columns to attachments table
     const attTableInfo = db.prepare("PRAGMA table_info(attachments)").all() as any[];
     if (!attTableInfo.some(col => col.name === 'image_base64')) {
@@ -185,6 +196,7 @@ const initDb = () => {
                 tool_name TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                 correlation_id TEXT,
+                metadata TEXT, -- JSON object
                 FOREIGN KEY (context_id) REFERENCES contexts(id) ON DELETE CASCADE
             );
 

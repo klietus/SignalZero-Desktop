@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { monitoringService } from '../services/monitoringService.js';
 import { webFetchService } from '../services/webFetchService.js';
-import { settingsService } from '../services/settingsService.js';
 import { documentMeaningService } from '../services/documentMeaningService.js';
 import { sqliteService } from '../services/sqliteService.js';
 
@@ -207,8 +206,8 @@ describe('MonitoringService', () => {
                 ])
             );
             expect(result?.content).toBe('Mocked delta summary');
-            expect(result?.metadata.imageUrl).toBe('http://example.com/new-image.jpg');
-            expect(result?.metadata.imageSummary).toBe('A newly described scene');
+            expect(result?.metadata!.imageUrl).toBe('http://example.com/new-image.jpg');
+            expect(result?.metadata!.imageSummary).toBe('A newly described scene');
         });
     });
 

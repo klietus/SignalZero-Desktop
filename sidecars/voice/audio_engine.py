@@ -46,6 +46,7 @@ class AudioEngine:
         self.user_profiles = {}
         self.enrollment_embeddings = []
         self.verification_threshold = 0.55 
+        self.learning_rate = 0.1
         
     def get_speaker_embedding(self, audio_data):
         with self.speaker_lock:
@@ -124,6 +125,30 @@ class AudioEngine:
             return best_name, best_score
         else:
             return None, best_score
+
+    def refine_speaker_profile(self, name, audio_data, custom_lr=None):
+        """
+        Update an existing speaker profile with new high-confidence data.
+        Uses a moving average to refine the embedding.
+        """
+        new_emb = self.get_speaker_embedding(audio_data)
+        if new_emb is None:
+            return None
+            
+        new_emb = new_emb / np.linalg.norm(new_emb)
+        lr = custom_lr if custom_lr is not None else self.learning_rate
+        
+        with self.profiles_lock:
+            if name in self.user_profiles:
+                old_emb = self.user_profiles[name]
+                # Weighted moving average: (1-LR)*old + LR*new
+                updated_emb = ((1 - lr) * old_emb) + (lr * new_emb)
+                # Re-normalize
+                updated_emb = updated_emb / np.linalg.norm(updated_emb)
+                self.user_profiles[name] = updated_emb
+                logger.info(f"Refined voice profile for '{name}' (LR: {lr:.3f}).")
+                return updated_emb.tolist()
+        return None
 
     def transcribe(self, audio_data):
         with self.transcriber_lock:

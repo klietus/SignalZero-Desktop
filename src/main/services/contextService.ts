@@ -27,7 +27,8 @@ const mapRowToMessage = (row: any): ContextMessage => ({
     toolCalls: row.tool_calls ? JSON.parse(row.tool_calls) : [],
     correlationId: row.correlation_id,
     toolCallId: row.tool_call_id,
-    toolName: row.tool_name
+    toolName: row.tool_name,
+    metadata: row.metadata ? JSON.parse(row.metadata) : {}
 });
 
 export const contextService = {
@@ -83,17 +84,29 @@ export const contextService = {
   async deleteSession(id: string): Promise<boolean> {
     try {
         // 1. Find all attachments linked to this session's messages
-        const messages = sqliteService.all(`SELECT content FROM messages WHERE context_id = ?`, [id]);
+        const messages = sqliteService.all(`SELECT content, metadata FROM messages WHERE context_id = ?`, [id]);
         const attachmentIds = new Set<string>();
         
         for (const msg of messages) {
-            if (!msg.content) continue;
-            const match = msg.content.match(/<attachments>([\s\S]*?)<\/attachments>/);
-            if (match) {
+            // Check content (legacy support)
+            if (msg.content) {
+                const match = msg.content.match(/<attachments>([\s\S]*?)<\/attachments>/);
+                if (match) {
+                    try {
+                        const atts = JSON.parse(match[1]);
+                        if (Array.isArray(atts)) {
+                            atts.forEach(a => { if (a.id) attachmentIds.add(a.id); });
+                        }
+                    } catch (e) { /* ignore parse errors */ }
+                }
+            }
+
+            // Check metadata (new way)
+            if (msg.metadata) {
                 try {
-                    const atts = JSON.parse(match[1]);
-                    if (Array.isArray(atts)) {
-                        atts.forEach(a => { if (a.id) attachmentIds.add(a.id); });
+                    const meta = JSON.parse(msg.metadata);
+                    if (Array.isArray(meta.attachments)) {
+                        meta.attachments.forEach((a: any) => { if (a.id) attachmentIds.add(a.id); });
                     }
                 } catch (e) { /* ignore parse errors */ }
             }
@@ -126,18 +139,24 @@ export const contextService = {
   async recordMessage(sessionId: string, message: ContextMessage): Promise<void> {
     const now = new Date().toISOString();
     
+    // Strip attachments from content to prevent them from being piped through history multiple times
+    const cleanContent = (message.content || "")
+        .replace(/<attachments>[\s\S]*?<\/attachments>/gi, '')
+        .trim();
+
     sqliteService.run(
-        `INSERT INTO messages (id, context_id, role, content, tool_calls, tool_call_id, tool_name, timestamp, correlation_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO messages (id, context_id, role, content, tool_calls, tool_call_id, tool_name, timestamp, correlation_id, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             message.id || randomUUID(),
             sessionId,
             message.role,
-            message.content || "",
+            cleanContent,
             JSON.stringify(message.toolCalls || []),
             message.toolCallId || null,
             message.toolName || null,
             message.timestamp || now,
-            message.correlationId || null
+            message.correlationId || null,
+            JSON.stringify(message.metadata || {})
         ]
     );
 

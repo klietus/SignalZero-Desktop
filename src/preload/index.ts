@@ -55,6 +55,7 @@ const api = {
   processAttachment: (file: { name: string, path: string, type: string }) => 
     ipcRenderer.invoke('system:process-attachment', file),
   captureScreenshot: () => ipcRenderer.invoke('system:capture-screenshot'),
+  processBase64Attachment: (file: { name: string, data: string, type: string }) => ipcRenderer.invoke('attachment:process-base64', file),
 
   // Voice
   toggleVoiceMode: (active: boolean) => ipcRenderer.invoke('voice:toggle-mode', active),
@@ -83,6 +84,16 @@ const api = {
     const subscription = () => callback();
     ipcRenderer.on('voice:stop-playback', subscription);
     return () => ipcRenderer.removeListener('voice:stop-playback', subscription);
+  },
+  onPlayAckBeep: (callback: () => void) => {
+    const subscription = () => callback();
+    ipcRenderer.on('voice:play-ack-beep', subscription);
+    return () => ipcRenderer.removeListener('voice:play-ack-beep', subscription);
+  },
+  onVoiceMatch: (callback: (data: { score: number, speaker: string }) => void) => {
+    const subscription = (_event, data) => callback(data);
+    ipcRenderer.on('voice:match-score', subscription);
+    return () => ipcRenderer.removeListener('voice:match-score', subscription);
   },
   onTriggerSubmit: (callback: (data: { text: string, speaker?: string }) => void) => {
     const subscription = (_event, data: { text: string, speaker?: string }) => callback(data);

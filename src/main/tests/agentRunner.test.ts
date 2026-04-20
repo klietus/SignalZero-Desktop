@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { agentRunner } from '../services/agentRunner.js';
 import { agentService } from '../services/agentService.js';
-import { contextService } from '../services/contextService.js';
 import { MonitoringDelta } from '../types.js';
 
 vi.mock('../services/agentService.js', () => ({

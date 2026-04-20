@@ -13,7 +13,7 @@ import { Readable, Writable } from 'stream';
 class PythonVoiceManager {
     private process: ChildProcessByStdio<Writable, Readable, Readable> | null = null;
     private isVoiceModeActive = false;
-    private systemName = "axiom"; 
+    private systemName = "axiom";
     private voiceId = "af_sarah";
     private isReady = false;
     private lastSender: any = null;
@@ -49,15 +49,15 @@ class PythonVoiceManager {
         this.systemName = settings.systemName || "axiom";
         this.voiceId = settings.voiceId || "af_sarah";
 
-        const sidecarDir = app.isPackaged 
-            ? path.join(process.resourcesPath, 'sidecars', 'voice') 
+        const sidecarDir = app.isPackaged
+            ? path.join(process.resourcesPath, 'sidecars', 'voice')
             : path.join(app.getAppPath(), 'sidecars', 'voice');
 
         const pythonExe = app.isPackaged
             ? path.join(sidecarDir, 'python-portable', 'bin', 'python3')
-            : (fs.existsSync(path.join(sidecarDir, 'python-portable', 'bin', 'python3')) 
-                ? path.join(sidecarDir, 'python-portable', 'bin', 'python3') 
-                : 'python3'); 
+            : (fs.existsSync(path.join(sidecarDir, 'python-portable', 'bin', 'python3'))
+                ? path.join(sidecarDir, 'python-portable', 'bin', 'python3')
+                : 'python3');
 
         const mainScript = path.join(sidecarDir, 'main.py');
 
@@ -66,8 +66,8 @@ class PythonVoiceManager {
         this.process = spawn(pythonExe, ['-u', mainScript], {
             cwd: sidecarDir,
             stdio: ['pipe', 'pipe', 'pipe'],
-            env: { 
-                ...process.env, 
+            env: {
+                ...process.env,
                 PYTHONUNBUFFERED: '1',
                 DYLD_FRAMEWORK_PATH: '/System/Library/Frameworks',
                 DYLD_LIBRARY_PATH: path.join(sidecarDir, 'deps', 'lib'),
@@ -78,12 +78,12 @@ class PythonVoiceManager {
 
         this.process.stdout.on('data', (data) => {
             this.stdoutBuffer += data.toString();
-            
+
             let boundary = this.stdoutBuffer.indexOf('\n');
             while (boundary !== -1) {
                 const line = this.stdoutBuffer.substring(0, boundary).trim();
                 this.stdoutBuffer = this.stdoutBuffer.substring(boundary + 1);
-                
+
                 if (line) {
                     try {
                         const msg = JSON.parse(line);
@@ -113,23 +113,20 @@ class PythonVoiceManager {
             this.process = null;
             this.stdoutBuffer = "";
             loggerService.catError(LogCategory.SYSTEM, `Python Sidecar exited with code ${code} and signal ${signal}`);
-            
+
             if (this.isVoiceModeActive) {
                 setTimeout(() => this.initialize(), 5000);
             }
         });
 
         this.sendToSidecar('init', {});
-        
-        const profileCount = settings.voiceProfiles ? Object.keys(settings.voiceProfiles).length : (settings.voiceProfile ? 1 : 0);
+
+        const profileCount = settings.voiceProfiles ? Object.keys(settings.voiceProfiles).length : 0;
         loggerService.catInfo(LogCategory.SYSTEM, `Initializing voice system with ${profileCount} profile(s)...`);
 
         // Pass all user profiles
         if (settings.voiceProfiles && Object.keys(settings.voiceProfiles).length > 0) {
             this.sendToSidecar('set_profiles', { profiles: settings.voiceProfiles });
-        } else if (settings.voiceProfile) {
-            // Migration: handle old single profile
-            this.sendToSidecar('set_profiles', { profiles: { "Primary_User": settings.voiceProfile } });
         }
     }
 
@@ -156,8 +153,14 @@ class PythonVoiceManager {
             loggerService.catInfo(LogCategory.SYSTEM, `Sidecar initialized ${payload.count} voice profile(s).`);
         } else if (type === 'stt_result') {
             this.authenticatedSpeaker = payload.speaker;
+            if (this.lastSender) {
+                this.lastSender.send('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
+            }
             this.processFinalTranscription(payload.text);
         } else if (type === 'speaker_interrupt') {
+            if (this.lastSender) {
+                this.lastSender.send('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
+            }
             if (this.isSpeaking) {
                 loggerService.catInfo(LogCategory.SYSTEM, `Verified user '${payload.speaker}' interrupted AI speech.`);
                 this.interruptPlayback();
@@ -185,6 +188,14 @@ class PythonVoiceManager {
             if (this.lastSender) {
                 this.lastSender.send('voice:enroll-finalized', payload);
             }
+        } else if (type === 'profile_updated') {
+            const { name, profile } = payload;
+            loggerService.catInfo(LogCategory.SYSTEM, `Persisting refined voice profile for '${name}'...`);
+            settingsService.getInferenceSettings().then(settings => {
+                const profiles = settings.voiceProfiles || {};
+                profiles[name] = profile;
+                settingsService.update({ voiceProfiles: profiles });
+            });
         } else if (type === 'error') {
             loggerService.catError(LogCategory.SYSTEM, "Sidecar reported error", { error: payload.message });
         }
@@ -216,8 +227,8 @@ class PythonVoiceManager {
             }
 
             loggerService.catInfo(LogCategory.SYSTEM, `Wake word detected! Routing: ${cleanText}`);
-            
-            eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { 
+
+            eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, {
                 type: 'voice_wake_word_detected',
                 text: cleanText,
                 metadata: {
@@ -226,10 +237,11 @@ class PythonVoiceManager {
             });
 
             if (this.lastSender) {
+                this.lastSender.send('voice:play-ack-beep');
                 this.lastSender.send('voice:stt-result', cleanText);
-                this.lastSender.send('voice:trigger-submit', { 
-                    text: cleanText, 
-                    speaker: this.authenticatedSpeaker || 'Unknown' 
+                this.lastSender.send('voice:trigger-submit', {
+                    text: cleanText,
+                    speaker: this.authenticatedSpeaker || 'Unknown'
                 });
             }
         }
@@ -240,7 +252,7 @@ class PythonVoiceManager {
             this.isVoiceModeActive = active;
             this.lastSender = event.sender;
             if (active) {
-                await this.initialize(); 
+                await this.initialize();
                 if (this.isReady && this.isMicAccessGranted) {
                     this.sendToSidecar('mic_on', {});
                 }
@@ -264,11 +276,11 @@ class PythonVoiceManager {
             this.sendToSidecar('mic_on', {});
         });
 
-        ipcMain.on('voice:enroll-next', (event, { phrase }) => {
+        ipcMain.on('voice:enroll-next', (_, { phrase }) => {
             this.sendToSidecar('enroll_next', { phrase });
         });
 
-        ipcMain.on('voice:enroll-stop', (event, { name }) => {
+        ipcMain.on('voice:enroll-stop', (_, { name }) => {
             this.sendToSidecar('enroll_stop', { name });
             this.sendToSidecar('mic_off', {});
             loggerService.catInfo(LogCategory.SYSTEM, `Stop enrollment command for '${name}' sent to sidecar and mic disabled.`);
@@ -285,10 +297,10 @@ class PythonVoiceManager {
             if (!processedText) return "";
 
             const prompt = `Convert the following text into a clean, natural sounding speech report. 
-STRIP ALL HEADERS, titles, markdown formatting, and technical symbols.
+STRIP ALL titles, ALL markdown formatting, and technical symbols. Convert ALL headers to natural sounding transitions.
 KEEP AND PRONOUNCE ALL PRODUCT NAMES, project names, and proper nouns (e.g., "SignalZero", "Tavily", "Electron").
 EXPAND ALL ACRONYMS AND ABBREVIATIONS into their full spoken forms (e.g., "AI" to "Artificial Intelligence", "TTS" to "Text to Speech").
-Do not say "Header", "Section", or read out structural markers. 
+Do not say "Header", "Section", or read out structural markers. Do NOT repeat the same word twice in a row.
 Just provide the core narrative content in a way that is easy to listen to.
 Keep it professional and concise.
 
@@ -304,7 +316,7 @@ ${processedText}`;
             return cleanSpeech || processedText;
         } catch (e) {
             loggerService.catError(LogCategory.SYSTEM, "Failed to synthesize speech text", { error: e });
-            return rawText; 
+            return rawText;
         }
     }
 

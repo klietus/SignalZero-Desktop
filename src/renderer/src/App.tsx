@@ -30,7 +30,7 @@ declare global {
             getContext: (id: string) => Promise<any>;
             getHistory: (id: string) => Promise<any[]>;
             deleteContext: (id: string) => Promise<boolean>;
-            sendMessage: (sessionId: string, message: string, systemInstruction?: string) => Promise<any>;
+            sendMessage: (sessionId: string, message: string, systemInstruction?: string, metadata?: any) => Promise<any>;
             listDomains: () => Promise<string[]>;
             getDomain: (id: string) => Promise<any>;
             upsertDomain: (id: string, data: any) => Promise<any>;
@@ -54,6 +54,7 @@ declare global {
             listDeltas: (filter?: any) => Promise<any[]>;
             regenerateDelta: (deltaId: string) => Promise<any>;
             processAttachment: (file: { name: string, path: string, type: string }) => Promise<{ id: string, filename: string, type: string, thumbnail?: string }>;
+            processBase64Attachment: (file: { name: string, data: string, type: string }) => Promise<{ id: string, filename: string, type: string, thumbnail?: string }>;
             captureScreenshot: () => Promise<{ id: string, filename: string, type: string, thumbnail?: string } | null>;
             getRecentLogs: (limit?: number) => Promise<any[]>;
             getTraces: (sessionId: string) => Promise<any[]>;
@@ -77,6 +78,15 @@ declare global {
             onPlayAudioB64: (callback: (data: { audio: string }) => void) => () => void;
             onPlayChunk: (callback: (data: { audio: string, index: number, isLast: boolean }) => void) => () => void;
             onStopPlayback: (callback: () => void) => () => void;
+            onPlayAckBeep: (callback: () => void) => () => void;
+            onVoiceMatch: (callback: (data: { score: number, speaker: string }) => void) => () => void;
+            onTriggerSubmit: (callback: (data: { text: string, speaker?: string }) => void) => () => void;
+            startVoiceEnrollment: (phrase: string) => void;
+            nextVoiceEnrollmentPhrase: (phrase: string) => void;
+            stopVoiceEnrollment: (name: string) => void;
+            onVoiceEnrollProgress: (callback: (data: { count: number, verified: boolean, text: string }) => void) => () => void;
+            onVoiceEnrollFinalized: (callback: (data: { profile: number[], name: string }) => void) => () => void;
+            notifyPlaybackFinished: () => void;
             onInferenceChunk: (callback: (chunk: string) => void) => () => void;
             onInferenceCompleted: (callback: () => void) => () => void;
             onTraceLogged: (callback: (trace: any) => void) => () => void;
@@ -225,6 +235,7 @@ function App() {
     const [cacheSize, setCacheSize] = useState(0);
     const [lastRequestTokens, setLastRequestTokens] = useState<number>(0);
     const [focusedSymbolName, setFocusedSymbolName] = useState<string | null>(null);
+    const [lastVoiceScore, setLastVoiceScore] = useState<{ score: number, speaker: string } | null>(null);
 
     // Project Info
     const [projectMeta, setProjectMeta] = useState<ProjectMeta>({ name: 'SignalZero Desktop', version: '1.0', author: 'klietus', created_at: '', updated_at: '' });
@@ -534,6 +545,32 @@ function App() {
             window.api.notifyPlaybackFinished();
         });
 
+        const unbindAckBeep = window.api.onPlayAckBeep(() => {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+                osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1); // Slide down to A4
+                
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } catch (e) {
+                console.error("Failed to play ack beep", e);
+            }
+        });
+
+        const unbindVoiceMatch = window.api.onVoiceMatch((data) => {
+            setLastVoiceScore(data);
+        });
+
         return () => {
             if (typeof unbindChunk === 'function') unbindChunk();
             if (typeof unbindCompleted === 'function') unbindCompleted();
@@ -544,6 +581,8 @@ function App() {
             if (typeof unbindVoiceB64 === 'function') unbindVoiceB64();
             if (typeof unbindVoiceChunk === 'function') unbindVoiceChunk();
             if (typeof unbindStopPlayback === 'function') unbindStopPlayback();
+            if (typeof unbindAckBeep === 'function') unbindAckBeep();
+            if (typeof unbindVoiceMatch === 'function') unbindVoiceMatch();
         };
     }, [activeContextId, appState]);
 
@@ -805,6 +844,7 @@ function App() {
                         cacheSize={cacheSize}
                         lastRequestTokens={lastRequestTokens}
                         focusedSymbolName={focusedSymbolName}
+                        lastVoiceScore={lastVoiceScore}
                         onNavigate={(v) => { setCurrentView(v); if (v !== 'chat') setIsGraphView(false); }}
                     />                        </div>            </div>
 

@@ -56,6 +56,45 @@ export const attachmentService = {
         }
     },
 
+    async processAndSaveBase64(base64Data: string, filename: string, mimeType: string): Promise<Attachment> {
+        try {
+            const buffer = Buffer.from(base64Data, 'base64');
+            
+            // 1. Parse meaning
+            const normalized = await documentMeaningService.parse(buffer, mimeType, filename);
+            
+            const attachment: Attachment = {
+                id: `att-${randomUUID()}`,
+                filename: filename,
+                mime_type: mimeType,
+                size: buffer.length,
+                content: normalized.content,
+                structured_data: normalized.structured_data,
+                image_base64: base64Data
+            };
+
+            // 2. Persist to SQLite
+            sqliteService.run(
+                `INSERT INTO attachments (id, filename, mime_type, size, content, structured_data, image_base64) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    attachment.id, 
+                    attachment.filename, 
+                    attachment.mime_type, 
+                    attachment.size, 
+                    attachment.content, 
+                    JSON.stringify(attachment.structured_data),
+                    attachment.image_base64 || null
+                ]
+            );
+
+            loggerService.catInfo(LogCategory.SYSTEM, `Processed and saved base64 attachment: ${attachment.filename} (${attachment.id})`);
+            return attachment;
+        } catch (error) {
+            loggerService.catError(LogCategory.SYSTEM, "Failed to process base64 attachment", { filename, error });
+            throw error;
+        }
+    },
+
     async getAttachment(id: string): Promise<Attachment | null> {
         const row = sqliteService.get(`SELECT * FROM attachments WHERE id = ?`, [id]);
         if (!row) return null;

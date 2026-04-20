@@ -226,7 +226,12 @@ async function captureScreenshot() {
     // Cleanup temp file
     if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 
-    return attachment;
+    return {
+      id: attachment.id,
+      filename: attachment.filename,
+      type: attachment.mime_type,
+      thumbnail: `data:image/png;base64,${attachment.image_base64}`
+    };
   } catch (error: any) {
     loggerService.catError(LogCategory.SYSTEM, "Failed to capture screenshot", { error: error.message });
     return null;
@@ -718,13 +723,17 @@ ipcMain.handle('mcp-prompt:get', async () => {
 ipcMain.handle('mcp-prompt:set', async (_, prompt) => {
   return await mcpPromptService.setPrompt(prompt);
 });
-
 ipcMain.handle('system:process-attachment', async (_, file: { name: string, path: string, type: string }) => {
-  const attachment = await attachmentService.processAndSave(file.path, file.name, file.type);
+  return await attachmentService.processAndSave(file.path, file.name, file.type);
+});
+
+ipcMain.handle('attachment:process-base64', async (_, { data, name, type }) => {
+  const attachment = await attachmentService.processAndSaveBase64(data, name, type);
   return {
     id: attachment.id,
     filename: attachment.filename,
-    type: attachment.mime_type
+    type: attachment.mime_type,
+    thumbnail: `data:${attachment.mime_type};base64,${attachment.image_base64}`
   };
 });
 

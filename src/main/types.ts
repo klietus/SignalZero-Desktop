@@ -370,4 +370,5 @@ export interface GraphHygieneSettings {
   domainRefactor: boolean;
   bridgeLifting: boolean;
   linkPromotion: boolean;
+  latticeDecomposition: boolean
 }

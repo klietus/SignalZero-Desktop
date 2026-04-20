@@ -21,7 +21,7 @@ export interface CacheEntry {
  * - Cache is purely in-memory (in-process) for the desktop app.
  */
 export class SymbolCacheService {
-    private readonly MAX_TURNS = 5;
+    private readonly MAX_TURNS = 3;
     
     // Map of Session ID -> Map of Symbol ID -> CacheEntry
     private sessionCaches: Map<string, Map<string, CacheEntry>> = new Map();
@@ -54,8 +54,8 @@ export class SymbolCacheService {
         const entries = Array.from(cache.values());
         loggerService.catDebug(LogCategory.KERNEL, `Partitioning ${entries.length} symbols for session ${sessionId}`);
 
-        const matureEntries = entries.filter(e => e.turnCount > 3);
-        const newEntries = entries.filter(e => e.turnCount <= 3);
+        const matureEntries = entries.filter(e => e.turnCount >= 2);
+        const newEntries = entries.filter(e => e.turnCount < 2);
 
         matureEntries.sort((a, b) => (a.symbol?.id || '').localeCompare(b.symbol?.id || ''));
         newEntries.sort((a, b) => (a.symbol?.id || '').localeCompare(b.symbol?.id || ''));
@@ -149,7 +149,13 @@ export class SymbolCacheService {
         for (const [id, entry] of cache.entries()) {
             entry.turnCount += 1;
             if (entry.turnCount >= this.MAX_TURNS) {
+                loggerService.catDebug(LogCategory.KERNEL, `Evicting symbol ${id} from cache for session ${sessionId}`);
                 cache.delete(id);
+                eventBusService.emitKernelEvent(KernelEventType.SYMBOL_DELETED, { 
+                    symbolId: id,
+                    sessionId,
+                    isEviction: true
+                });
             }
         }
     }

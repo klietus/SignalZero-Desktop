@@ -1,12 +1,10 @@
+import { readFileSync } from "fs";
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { projectService } from '../services/projectService.js';
 import { domainService } from '../services/domainService.js';
 import { lancedbService } from '../services/lancedbService.js';
 import { agentService } from '../services/agentService.js';
-import { testService } from '../services/testService.js';
 import { systemPromptService } from '../services/systemPromptService.js';
-import { mcpPromptService } from '../services/mcpPromptService.js';
-import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
 import { join } from 'path';
 

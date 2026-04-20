@@ -128,7 +128,7 @@ export interface GraphHygieneSettings {
   bridgeIslands: boolean;
   domainRefactor: boolean;
   bridgeLifting: boolean;
-  linkPromotion: boolean;
+  linkPromotion: boolean; latticeDecomposition: boolean;
 }
 
 export interface SystemSettings {

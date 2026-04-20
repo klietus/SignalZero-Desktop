@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Cpu, Database, Layout, Zap, Loader2, Coins, Activity } from 'lucide-react';
+import { Cpu, Database, Layout, Zap, Loader2, Coins, Activity, Mic } from 'lucide-react';
 
 interface StatusBarProps {
     modelName: string;
@@ -11,6 +11,7 @@ interface StatusBarProps {
     cacheSize: number;
     lastRequestTokens?: number;
     focusedSymbolName?: string | null;
+    lastVoiceScore?: { score: number, speaker: string } | null;
     onNavigate: (view: any) => void;
 }
 
@@ -23,6 +24,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     cacheSize,
     lastRequestTokens,
     focusedSymbolName,
+    lastVoiceScore,
     onNavigate
 }) => {
     return (
@@ -73,10 +75,22 @@ export const StatusBar: React.FC<StatusBarProps> = ({
                 )}
 
                 {focusedSymbolName && (
-                     <div className="flex items-center gap-2 border-l border-gray-800 pl-6 animate-in fade-in slide-in-from-left-2 duration-300">
+                    <div className="flex items-center gap-2 border-l border-gray-800 pl-6 animate-in fade-in slide-in-from-left-2 duration-300">
                         <Activity size={12} className="text-emerald-400 animate-pulse" />
                         <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
                             Focusing: <span className="text-emerald-400 font-bold">{focusedSymbolName}</span>
+                        </span>
+                    </div>
+                )}
+
+                {lastVoiceScore && (
+                    <div className="flex items-center gap-2 border-l border-gray-800 pl-6 animate-in fade-in slide-in-from-left-2 duration-300">
+                        <Mic size={12} className="text-gray-600" />
+                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                            Voice_Match: <span className={lastVoiceScore.score > 0.7 ? "text-emerald-500 font-bold" : "text-amber-500 font-bold"}>
+                                {Math.round(lastVoiceScore.score * 100)}%
+                            </span>
+                            <span className="ml-2 opacity-50 text-[9px]">({lastVoiceScore.speaker})</span>
                         </span>
                     </div>
                 )}
@@ -89,12 +103,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
                         Symbolic_Recursion_Active
                     </div>
                 )}
-                <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${isBusy ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'bg-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]'}`} />
-                    <span className="text-[9px] font-mono text-gray-600 uppercase tracking-tighter">
-                        Kernel_Live
-                    </span>
-                </div>
             </div>
         </div>
     );

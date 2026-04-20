@@ -50,10 +50,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     profileNameRef.current = profileName;
   }, [profileName]);
 
-  const [voiceProfile, setVoiceProfile] = useState<number[] | undefined>(undefined);
   const [voiceProfiles, setVoiceProfiles] = useState<Record<string, number[]>>({});
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const [isAiEnrolling, setIsAiEnrolling] = useState(false);
   const [enrollmentProgress, setEnrollmentProgress] = useState(0);
   const [isEnrollmentComplete, setIsEnrollmentComplete] = useState(false);
 
@@ -92,7 +90,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     bridgeIslands: false,
     domainRefactor: false,
     bridgeLifting: false,
-    linkPromotion: false
+    linkPromotion: false,
+    latticeDecomposition: false as any
   });
 
   // UI Settings
@@ -170,7 +169,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         bridgeIslands: false,
         domainRefactor: false,
         bridgeLifting: false,
-        linkPromotion: false
+        linkPromotion: false,
+        latticeDecomposition: false as any
     };
 
     setSerpApiKey(serpApi.apiKey || '');
@@ -245,7 +245,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }) || (() => {});
 
     const unbindFinalized = window.api.onVoiceEnrollFinalized?.(async (data: { profile: number[], name: string }) => {
-        setVoiceProfile(data.profile);
+         // setVoiceProfile(data.profile);
         setIsEnrolling(false);
         setIsEnrollmentComplete(true);
         setEnrollmentProgress(0);
@@ -1081,6 +1081,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                   <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Intelligence Automation</div>
                                   <div className="space-y-3">
                                       {[
+                                          { id: 'positional', label: 'Positional Intelligence', desc: 'Analyzes spatial and relative positioning of symbols.', icon: Layout },
                                           { id: 'semantic', label: 'Semantic Intelligence', desc: 'Vector-based similarity analysis.', icon: Cpu },
                                           { id: 'triadic', label: 'Triadic Resonance', desc: 'Emoji-based structural analysis.', icon: Database }
                                       ].map(strat => (
@@ -1146,6 +1147,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                           { id: 'reflexive', settingKey: 'reflexiveLinks', label: 'Reflexive Link Synthesis', desc: 'Automatically creates reciprocal relationships (e.g., A part_of B -> B contains A).' },
                                           { id: 'bridge', settingKey: 'bridgeIslands', label: 'Island Bridging & Orphan Healing', desc: 'Analyzes disconnected subgraphs and orphaned symbols, suggesting bridge links to the mainland.' },
                                           { id: 'domainRefactor', settingKey: 'domainRefactor', label: 'Domain Lattice Docking', desc: 'Anchors unlinked patterns into appropriate domain lattices.' },
+                                          { id: 'latticeDecomposition', settingKey: 'latticeDecomposition', label: 'Lattice Decomposition', desc: 'Refactors high-linkage lattices (50+ nodes) into hierarchical sub-graphs.' },
                                           { id: 'bridgeLifting', settingKey: 'bridgeLifting', label: 'Bridge Lifting', desc: 'Elevates cross-domain pattern links to the lattice level for structural clarity.' },
                                           { id: 'promotion', settingKey: 'linkPromotion', label: 'Link Promotion', desc: 'Promotes high-confidence "relates_to" links to specific semantic types.' },
                                           { id: 'deadLinkCleanup', settingKey: 'deadLinkCleanup', label: 'Dead Link Cleanup', desc: 'Removes links pointing to non-existent symbols.' }

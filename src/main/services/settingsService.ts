@@ -252,7 +252,8 @@ export const settingsService = {
       bridgeIslands: saved.bridgeIslands === true,
       domainRefactor: saved.domainRefactor === true,
       bridgeLifting: saved.bridgeLifting === true,
-      linkPromotion: saved.linkPromotion === true
+      linkPromotion: saved.linkPromotion === true,
+      latticeDecomposition: saved.latticeDecomposition === true
     };
   },
 

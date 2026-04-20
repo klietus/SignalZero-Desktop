@@ -564,7 +564,7 @@ export async function* sendMessageAndHandleTools(
     await contextService.recordMessage(contextSessionId, {
       id: correlationId,
       role: "user",
-      content: resolvedContent,
+      content: message, // Record original with tag, so it can be stripped
       timestamp: new Date().toISOString(),
       metadata: {
         kind: "user_prompt",

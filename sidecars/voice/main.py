@@ -154,6 +154,14 @@ class VoiceSidecar:
                     elif self.engine:
                         self.processing_queue.put({"type": "stt", "audio": audio_np})
 
+    def calculate_lr(self, score):
+        """Tiered learning rate based on confidence."""
+        if score >= 0.70:
+            return 0.15 # Fast adaptation for very clear samples
+        if score >= 0.58:
+            return 0.05 # Cautious adaptation for typical matches
+        return None
+
     def processing_worker(self):
         logger.info("Processing worker thread started")
         while self.is_running:
@@ -169,6 +177,12 @@ class VoiceSidecar:
                     speaker_name, score = self.engine.identify_speaker(audio_np)
                     if speaker_name and speaker_name != "Unknown_Speaker":
                         self.send_to_electron("speaker_interrupt", {"speaker": speaker_name, "score": score})
+                        # Continual Training: Use tiered LR
+                        lr = self.calculate_lr(score)
+                        if lr:
+                            updated_profile = self.engine.refine_speaker_profile(speaker_name, audio_np, custom_lr=lr)
+                            if updated_profile:
+                                self.send_to_electron("profile_updated", {"name": speaker_name, "profile": updated_profile})
                 
                 elif task_type == "enroll":
                     transcription = self.engine.transcribe(audio_np)
@@ -192,8 +206,16 @@ class VoiceSidecar:
                     if result and result.get('text'):
                         self.send_to_electron("stt_result", {
                             "text": result['text'].strip(),
-                            "speaker": result.get('speaker', 'Unknown')
+                            "speaker": result.get('speaker', 'Unknown'),
+                            "score": result.get('score', 0)
                         })
+                        # Continual Training on full segment
+                        score = result.get('score', 0)
+                        lr = self.calculate_lr(score)
+                        if result.get('speaker') and result.get('speaker') != 'Unknown' and lr:
+                            updated_profile = self.engine.refine_speaker_profile(result['speaker'], audio_np, custom_lr=lr)
+                            if updated_profile:
+                                self.send_to_electron("profile_updated", {"name": result['speaker'], "profile": updated_profile})
             except queue.Empty:
                 continue
             except Exception as e:
@@ -201,17 +223,23 @@ class VoiceSidecar:
 
     def audio_loop(self):
         logger.info("Audio loop thread started")
-        self.device_index = self.find_input_device()
         while self.is_running:
+            if not self.mic_enabled:
+                time.sleep(0.5)
+                continue
+                
+            self.device_index = self.find_input_device()
             if self.device_index is None:
-                self.device_index = self.find_input_device()
-                if self.device_index is None:
-                    time.sleep(1)
-                    continue
+                logger.error("No input device found, retrying...")
+                time.sleep(2)
+                continue
+                
             try:
+                logger.info(f"Opening microphone stream on device {self.device_index}...")
                 with sd.InputStream(samplerate=SAMPLE_RATE, device=self.device_index, channels=1, callback=self.audio_callback, blocksize=CHUNK_SIZE):
-                    while self.is_running and self.device_index is not None:
+                    while self.is_running and self.mic_enabled:
                         sd.sleep(100)
+                logger.info("Microphone stream closed.")
             except Exception as e:
                 logger.error(f"InputStream error: {e}")
                 time.sleep(2)

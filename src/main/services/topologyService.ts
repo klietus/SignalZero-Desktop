@@ -20,6 +20,7 @@ export interface TopologyStats {
     islandsBridged: number;
     domainLatticeLinksCreated: number;
     crossDomainBridgesLifted: number;
+    latticesDecomposed: number;
 }
 
 interface PredictedLink {
@@ -29,7 +30,7 @@ interface PredictedLink {
     confidence: number;
 }
 
-class TopologyService {
+export class TopologyService {
     private readonly CONFIDENCE_THRESHOLD = 0.85;
     private readonly REDUNDANCY_THRESHOLD = 0.98;
     private isAnalyzing = false;
@@ -100,6 +101,7 @@ class TopologyService {
             let islandsBridged = 0;
             let domainLatticeLinksCreated = 0;
             let crossDomainBridgesLifted = 0;
+            let latticesDecomposed = 0;
 
             // Relational analysis requires at least 2 symbols
             const canRunRelational = symbols.length >= 2;
@@ -120,9 +122,14 @@ class TopologyService {
                 islandsBridged = await this.bridgeIsolatedSubgraphs(symbols);
             }
 
-            // --- STRATEGY: Domain Lattice Refactoring ---
-            if (canRunRelational && (specificStrategy === 'domainRefactor' || (specificStrategy === undefined && hygiene.domainRefactor))) {
-                domainLatticeLinksCreated = await this.refactorDomainLattices(symbols);
+            // --- STRATEGY: Domain Lattice Refactoring & Decomposition ---
+            if (canRunRelational && (specificStrategy === 'domainRefactor' || specificStrategy === 'latticeDecomposition' || (specificStrategy === undefined && (hygiene.domainRefactor || hygiene.latticeDecomposition)))) {
+                if (specificStrategy === 'domainRefactor' || (specificStrategy === undefined && hygiene.domainRefactor)) {
+                    domainLatticeLinksCreated = await this.refactorDomainLattices(symbols);
+                }
+                if (specificStrategy === 'latticeDecomposition' || (specificStrategy === undefined && hygiene.latticeDecomposition)) {
+                    latticesDecomposed = await this.decomposeHighDegreeLattices(symbols);
+                }
             }
 
             // --- STRATEGY: Cross-Domain Bridge Lifting ---
@@ -175,7 +182,8 @@ class TopologyService {
                 reflexiveLinksCreated,
                 islandsBridged,
                 domainLatticeLinksCreated,
-                crossDomainBridgesLifted
+                crossDomainBridgesLifted,
+                latticesDecomposed
             };
 
             this.lastRunTimestamp = currentRunTimestamp;
@@ -872,7 +880,7 @@ class TopologyService {
 
                         const prompt = `### KNOWLEDGE GRAPH ARCHITECT: DOMAIN DOCKING MISSION
 
-                        Analyze the following symbolic pattern and determine if it should be "docked" into one or more of the provided domain lattices.
+                        Analyze the following symbolic pattern and determine if it should be "docked" into the provided domain lattices.
 
                         PATTERN TO DOCK:
                         ID: ${pattern.id}
@@ -884,13 +892,14 @@ class TopologyService {
                         ${lattices.map((l, i) => `${i + 1}. ID: ${l.id} | Name: ${l.name} | Role: ${l.role}`).join('\n')}
 
                         #### MISSION GOAL:
-                        Identify 1-3 lattices that best characterize the structural context for this pattern. 
+                        Identify the SINGLE BEST lattice that best characterizes the structural context for this pattern. 
 
                         #### CONSTRAINTS:
                         1. **ID ACCURACY**: Use the EXACT ID string provided in the list (e.g. "LATTICE_ID", NOT "[LATTICE_ID]").
-                        2. **CONCISENESS**: Keep "reason" fields to a single sentence maximum.
-                        3. **FORMAT**: Output EXCLUSIVELY valid JSON. No preamble.
-                        4. **LINKS**: Use canonical link types (e.g. "part_of", "exemplifies", "relates_to").
+                        2. **SINGLE MATCH**: You must return exactly ONE match in the array if "shouldLink" is true.
+                        3. **CONCISENESS**: Keep "reason" fields to a single sentence maximum.
+                        4. **FORMAT**: Output EXCLUSIVELY valid JSON. No preamble.
+                        5. **LINKS**: Use canonical link types (e.g. "part_of", "exemplifies", "relates_to").
 
                         #### OUTPUT SCHEMA:
                         {
@@ -927,24 +936,24 @@ class TopologyService {
                             response = extractJson(result.choices[0]?.message?.content || "{}");
                         }
 
-                        if (response.shouldLink && Array.isArray(response.matches)) {
-                            for (const match of response.matches) {
-                                // SANITIZE ID: Remove brackets if model hallucinated them
-                                const cleanMatchId = (match.id || '').replace(/^\[|\]$/g, '');
+                        if (response.shouldLink && Array.isArray(response.matches) && response.matches.length > 0) {
+                            // Strictly only take the FIRST (best) match
+                            const match = response.matches[0];
 
-                                if (cleanMatchId === pattern.id) continue; // NO SELF LINKS
-                                if (lattices.some(l => l.id === cleanMatchId)) {
-                                    loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Docking pattern ${pattern.id} into lattice ${cleanMatchId} via ${match.linkType}`);
+                            // SANITIZE ID: Remove brackets if model hallucinated them
+                            const cleanMatchId = (match.id || '').replace(/^\[|\]$/g, '');
 
-                                    pattern.linked_patterns = pattern.linked_patterns || [];
-                                    if (!pattern.linked_patterns.some(l => l.id === cleanMatchId)) {
-                                        pattern.linked_patterns.push({
-                                            id: cleanMatchId,
-                                            link_type: match.linkType || 'part_of'
-                                        });
-                                        await domainService.addSymbol(pattern.symbol_domain, pattern);
-                                        linksCreated++;
-                                    }
+                            if (cleanMatchId !== pattern.id && lattices.some(l => l.id === cleanMatchId)) {
+                                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Docking pattern ${pattern.id} into lattice ${cleanMatchId} via ${match.linkType}`);
+
+                                pattern.linked_patterns = pattern.linked_patterns || [];
+                                if (!pattern.linked_patterns.some(l => l.id === cleanMatchId)) {
+                                    pattern.linked_patterns.push({
+                                        id: cleanMatchId,
+                                        link_type: match.linkType || 'part_of'
+                                    });
+                                    await domainService.addSymbol(pattern.symbol_domain, pattern);
+                                    linksCreated++;
                                 }
                             }
                         }
@@ -1217,9 +1226,9 @@ A Lattice is a high-level abstract container providing structural "docking point
 
             return !!resultJson.shouldLift;
         } catch (error) {
-            loggerService.catError(LogCategory.KERNEL, "TopologyService: Bridge lifting evaluation failed", { 
+            loggerService.catError(LogCategory.KERNEL, "TopologyService: Bridge lifting evaluation failed", {
                 error: error instanceof Error ? error.message : String(error),
-                fullResponse 
+                fullResponse
             });
             return false;
         }
@@ -1462,6 +1471,246 @@ A Lattice is a high-level abstract container providing structural "docking point
         }
 
         return bridgedCount;
+    }
+
+    private async decomposeHighDegreeLattices(symbols: SymbolDef[]): Promise<number> {
+        const DECOMPOSITION_THRESHOLD = 50;
+        const saturatedLattices = symbols.filter(s => s.kind === 'lattice' && (s.linked_patterns?.length || 0) >= DECOMPOSITION_THRESHOLD);
+
+        if (saturatedLattices.length === 0) return 0;
+
+        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Found ${saturatedLattices.length} saturated lattices (>= ${DECOMPOSITION_THRESHOLD} links) for decomposition.`);
+        const idToSymbol = new Map(symbols.map(s => [s.id, s]));
+        let decomposedCount = 0;
+
+        for (const rootLattice of saturatedLattices) {
+            try {
+                const settings = await settingsService.getInferenceSettings();
+                const bigModel = settings.agentModel || settings.model;
+                if (!bigModel) continue;
+
+                // 1. Separate links into Patterns and Existing Sub-Lattices
+                const memberPatterns = (rootLattice.linked_patterns || [])
+                    .map(l => idToSymbol.get(l.id))
+                    .filter((s): s is SymbolDef => !!s && s.kind === 'pattern');
+
+                const existingSubLattices = (rootLattice.linked_patterns || [])
+                    .map(l => idToSymbol.get(l.id))
+                    .filter((s): s is SymbolDef => !!s && s.kind === 'lattice');
+
+                if (memberPatterns.length < DECOMPOSITION_THRESHOLD) continue;
+
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Decomposing saturated lattice ${rootLattice.id} (${memberPatterns.length} patterns)`);
+
+                // --- PROMPT 1: DOWNWARD MIGRATION ANALYSIS ---
+                const migrationPrompt = `### KNOWLEDGE GRAPH ARCHITECT: DOWNWARD MIGRATION MISSION
+
+The root lattice [${rootLattice.id}] is saturated. You must decide which patterns can be pushed down into EXISTING sub-lattices.
+
+ROOT LATTICE:
+ID: ${rootLattice.id} | Name: "${rootLattice.name}" | Role: ${rootLattice.role}
+
+EXISTING SUB-LATTICES (Children of Root):
+${existingSubLattices.length > 0 ? existingSubLattices.map(l => `- ID: ${l.id} | Name: "${l.name}" | Role: ${l.role}`).join('\n') : "NONE"}
+
+PATTERNS TO ANALYZE:
+${memberPatterns.map(p => `- ID: ${p.id} | Name: "${p.name}" | Role: ${p.role}`).join('\n')}
+
+#### MISSION GOAL:
+For each pattern, determine if it conceptually belongs inside one of the EXISTING sub-lattices.
+- If it fits an existing sub-lattice, return that sub-lattice ID.
+- If it does NOT fit any existing sub-lattice and needs a NEW container, return "NEEDS_SYNTHESIS".
+
+#### OUTPUT SCHEMA:
+{
+  "mappings": [
+    { "pattern_id": "ID_HERE", "target_id": "EXISTING_SUB_LATTICE_ID or NEEDS_SYNTHESIS" }
+  ]
+}
+
+#### CONSTRAINTS:
+1. **EXHAUSTIVE**: You MUST provide a mapping for every pattern ID listed.
+2. **STRICT IDS**: Use the EXACT IDs provided in the lists.
+3. **FORMAT**: Output EXCLUSIVELY valid JSON.`;
+
+                let migrationResponse: any = {};
+                if (settings.provider === 'gemini') {
+                    const client = await getGeminiClient();
+                    const model = client.getGenerativeModel({ model: bigModel, generationConfig: { temperature: 0.1 } });
+                    const result = await model.generateContent(migrationPrompt);
+                    migrationResponse = extractJson(result.response.text());
+                } else {
+                    const client = await getClient();
+                    const result = await client.chat.completions.create({ model: bigModel, messages: [{ role: "user", content: migrationPrompt }], temperature: 0.1 });
+                    migrationResponse = extractJson(result.choices[0]?.message?.content || "{}");
+                }
+
+                const patternsNeedingSynthesis: SymbolDef[] = [];
+                const patternsToMigrate: { pattern: SymbolDef, targetLattice: SymbolDef }[] = [];
+
+                if (Array.isArray(migrationResponse.mappings)) {
+                    for (const map of migrationResponse.mappings) {
+                        const pid = (map.pattern_id || '').replace(/^[|\s]*\[|\][|\s]*$/g, '');
+                        const tid = (map.target_id || '').replace(/^[|\s]*\[|\][|\s]*$/g, '');
+                        const pattern = idToSymbol.get(pid);
+                        if (!pattern) continue;
+
+                        if (tid === 'NEEDS_SYNTHESIS') {
+                            patternsNeedingSynthesis.push(pattern);
+                        } else {
+                            const target = existingSubLattices.find(l => l.id === tid);
+                            if (target) {
+                                patternsToMigrate.push({ pattern, targetLattice: target });
+                            } else {
+                                patternsNeedingSynthesis.push(pattern); // Fallback
+                            }
+                        }
+                    }
+                } else {
+                    patternsNeedingSynthesis.push(...memberPatterns);
+                }
+
+                // --- PROMPT 2: HIERARCHICAL SYNTHESIS ANALYSIS ---
+                const synthesizedSubLattices: SymbolDef[] = [];
+                if (patternsNeedingSynthesis.length > 5) {
+                    const synthesisPrompt = `### KNOWLEDGE GRAPH ARCHITECT: LATTICE SYNTHESIS MISSION
+
+You must synthesize 2-5 NEW sub-lattices for patterns that didn't fit existing ones.
+
+ROOT PARENT LATTICE:
+ID: ${rootLattice.id} | Name: "${rootLattice.name}"
+
+PATTERNS REQUIRING NEW CONTAINERS:
+${patternsNeedingSynthesis.map(p => `- ID: ${p.id} | Name: "${p.name}" | Role: ${p.role}`).join('\n')}
+
+#### MISSION GOAL:
+1. Cluster patterns by functional/semantic commonality.
+2. Synthesize a NEW Sub-Lattice for each cluster.
+3. Every pattern MUST be assigned to exactly ONE new sub-lattice.
+
+#### OUTPUT SCHEMA:
+{
+  "subLattices": [
+    {
+      "id": "UNIQUE_ID",
+      "name": "Name",
+      "role": "Role",
+      "macro": "INPUT -> PROCESS -> OUTPUT",
+      "triad": "EMOJI_EMOJI_EMOJI",
+      "member_ids": ["id1", "id2"],
+      "lattice": { "topology": "inductive|deductive|bidirectional|invariant|energy|constellation", "closure": "loop|branch|collapse|constellation|synthesis" },
+      "facets": { "commit": "atomic|volatile|shared", "temporal": "perpetual|static|episodic|transient", "gate": [], "substrate": [], "invariants": [] },
+      "failure_mode": "Description"
+    }
+  ]
+}
+#### CONSTRAINTS:
+1. **EXHAUSTIVE**: All patterns MUST be assigned.
+2. **FORMAT**: Output EXCLUSIVELY valid JSON.`;
+
+                    let synthesisResponse: any = {};
+                    if (settings.provider === 'gemini') {
+                        const client = await getGeminiClient();
+                        const model = client.getGenerativeModel({ model: bigModel, generationConfig: { temperature: 0.1 } });
+                        const result = await model.generateContent(synthesisPrompt);
+                        synthesisResponse = extractJson(result.response.text());
+                    } else {
+                        const client = await getClient();
+                        const result = await client.chat.completions.create({ model: bigModel, messages: [{ role: "user", content: synthesisPrompt }], temperature: 0.1 });
+                        synthesisResponse = extractJson(result.choices[0]?.message?.content || "{}");
+                    }
+
+                    if (Array.isArray(synthesisResponse.subLattices)) {
+                        for (const subDef of synthesisResponse.subLattices) {
+                            const cleanId = subDef.id.toUpperCase().replace(/\s+/g, '_').replace(/^[|\s]*\[|\][|\s]*$/g, '');
+                            const cleanMemberIds = (subDef.member_ids || [])
+                                .map((mid: string) => mid.replace(/^[|\s]*\[|\][|\s]*$/g, ''))
+                                .filter((mid: string) => idToSymbol.has(mid));
+
+                            if (cleanMemberIds.length === 0) continue;
+
+                            const subLattice: SymbolDef = {
+                                id: cleanId,
+                                name: subDef.name,
+                                role: subDef.role,
+                                macro: subDef.macro,
+                                kind: 'lattice',
+                                symbol_domain: rootLattice.symbol_domain,
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString(),
+                                last_accessed_at: new Date().toISOString(),
+                                triad: subDef.triad || '🛠️⚙️💎',
+                                activation_conditions: subDef.activation_conditions || [],
+                                symbol_tag: 'decomposed_sublattice',
+                                failure_mode: subDef.failure_mode || `Loss of ${subDef.name}`,
+                                facets: {
+                                    function: subDef.role,
+                                    topology: subDef.lattice?.topology || 'inductive',
+                                    commit: subDef.facets?.commit || 'shared',
+                                    temporal: subDef.facets?.temporal || 'static',
+                                    gate: subDef.facets?.gate || [],
+                                    substrate: subDef.facets?.substrate || [],
+                                    invariants: subDef.facets?.invariants || []
+                                },
+                                lattice: {
+                                    topology: subDef.lattice?.topology || 'inductive',
+                                    closure: subDef.lattice?.closure || 'synthesis'
+                                },
+                                linked_patterns: cleanMemberIds.map((mid: string) => ({ id: mid, link_type: 'contains' }))
+                            };
+                            subLattice.linked_patterns!.push({ id: rootLattice.id, link_type: 'part_of' });
+                            synthesizedSubLattices.push(subLattice);
+                        }
+                    }
+                }
+
+                // --- EXECUTION ---
+                const rootLinksToRemove = new Set<string>();
+
+                for (const item of patternsToMigrate) {
+                    const { pattern, targetLattice } = item;
+                    rootLinksToRemove.add(pattern.id);
+                    targetLattice.linked_patterns = targetLattice.linked_patterns || [];
+                    if (!targetLattice.linked_patterns.some(l => l.id === pattern.id)) {
+                        targetLattice.linked_patterns.push({ id: pattern.id, link_type: 'contains' });
+                    }
+                    pattern.linked_patterns = (pattern.linked_patterns || []).filter(l => l.id !== rootLattice.id);
+                    pattern.linked_patterns.push({ id: targetLattice.id, link_type: 'part_of' });
+
+                    await domainService.addSymbol(targetLattice.symbol_domain, targetLattice);
+                    await domainService.addSymbol(pattern.symbol_domain, pattern);
+                }
+
+                if (synthesizedSubLattices.length > 0) {
+                    await domainService.bulkUpsertSymbols(synthesizedSubLattices);
+                    for (const sl of synthesizedSubLattices) {
+                        rootLattice.linked_patterns = rootLattice.linked_patterns || [];
+                        rootLattice.linked_patterns.push({ id: sl.id, link_type: 'contains' });
+                        const childIds = sl.linked_patterns!.filter(l => l.id !== rootLattice.id).map(l => l.id);
+                        for (const mid of childIds) {
+                            rootLinksToRemove.add(mid);
+                            const pattern = idToSymbol.get(mid);
+                            if (pattern) {
+                                pattern.linked_patterns = (pattern.linked_patterns || []).filter(l => l.id !== rootLattice.id);
+                                pattern.linked_patterns.push({ id: sl.id, link_type: 'part_of' });
+                                await domainService.addSymbol(pattern.symbol_domain, pattern);
+                            }
+                        }
+                    }
+                }
+
+                if (rootLinksToRemove.size > 0) {
+                    rootLattice.linked_patterns = (rootLattice.linked_patterns || []).filter(l => !rootLinksToRemove.has(l.id));
+                    await domainService.addSymbol(rootLattice.symbol_domain, rootLattice);
+                }
+
+                decomposedCount++;
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Successfully refactored ${rootLattice.id}`);
+            } catch (err) {
+                loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed decomposition for ${rootLattice.id}`, { error: err });
+            }
+        }
+        return decomposedCount;
     }
 }
 
