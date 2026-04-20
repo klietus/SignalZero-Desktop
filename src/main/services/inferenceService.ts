@@ -648,13 +648,18 @@ export async function* sendMessageAndHandleTools(
           const result = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
           contextMessages = result.messages;
           
-          if (loops === 0 && attachments.length > 0) {
+          if (loops === 0) {
               const lastUserMsgIdx = contextMessages.findLastIndex(m => m.role === 'user');
               if (lastUserMsgIdx !== -1) {
                   const userMsg = contextMessages[lastUserMsgIdx];
-                  if (typeof userMsg.content === 'string') {
+                  
+                  // 1. Inject Resolved Content (Descriptions)
+                  userMsg.content = resolvedContent;
+
+                  // 2. Inject Multimodal Data (Pixels) if available
+                  if (attachments.length > 0) {
                       if (settings.provider === 'gemini') {
-                          const contentParts: any[] = [{ text: userMsg.content }];
+                          const contentParts: any[] = [{ text: resolvedContent }];
                           for (const att of attachments) {
                               if (att.image_base64) {
                                   contentParts.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
@@ -662,7 +667,7 @@ export async function* sendMessageAndHandleTools(
                           }
                           contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
                       } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-                          const contentParts: any[] = [{ type: 'text', text: userMsg.content }];
+                          const contentParts: any[] = [{ type: 'text', text: resolvedContent }];
                           for (const att of attachments) {
                               if (att.image_base64) {
                                   contentParts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
