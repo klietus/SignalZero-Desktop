@@ -2,6 +2,7 @@ import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { TraceData } from '../types.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
+import { symbolCacheService } from './symbolCacheService.js';
 
 export const traceService = {
     async addTrace(trace: TraceData): Promise<void> {
@@ -27,6 +28,16 @@ export const traceService = {
                     trace.updated_at
                 ]
             );
+
+            // Touch symbols in cache to refresh their lease
+            if (trace.sessionId && trace.activation_path) {
+                for (const step of trace.activation_path) {
+                    const sId = step.symbol_id || (step as any).id;
+                    if (sId) {
+                        await symbolCacheService.touchSymbol(trace.sessionId, sId);
+                    }
+                }
+            }
 
             eventBusService.emitKernelEvent(KernelEventType.TRACE_LOGGED, trace);
             if (loggerService) {

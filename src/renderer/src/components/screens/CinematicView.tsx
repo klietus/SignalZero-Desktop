@@ -39,6 +39,7 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) =
     const [isLoading, setIsLoading] = useState(true);
     const eventQueue = useRef<any[]>([]);
     const lastEventTime = useRef<number>(Date.now());
+    const lastUserEventTime = useRef<number>(Date.now());
     const graphData = useRef<{ nodes: GraphNode[], links: GraphLink[] }>({ nodes: [], links: [] });
     
     // Track symbols per session: sessionId -> Map<symbolId, SymbolDef>
@@ -161,15 +162,22 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) =
                         const timeSeconds = time * 0.001;
                         const camera = graphRef.current.camera();
                         const controls = graphRef.current.controls();
-                        const isIdle = (time - lastEventTime.current) > 5000;
+                        
+                        // Use lastUserEventTime so high-frequency perception updates don't block idle rotation
+                        const isIdle = (time - lastUserEventTime.current) > 5000;
 
-                        if (camera && controls && isIdle) {
-                            const angle = 0.0003;
-                            const x = camera.position.x;
-                            const z = camera.position.z;
-                            camera.position.x = x * Math.cos(angle) - z * Math.sin(angle);
-                            camera.position.z = x * Math.sin(angle) + z * Math.cos(angle);
-                            camera.position.y += Math.sin(timeSeconds * 0.4) * 0.2;
+                        if (camera && controls) {
+                            if (isIdle) {
+                                // Slight rotation
+                                const angle = 0.0003;
+                                const x = camera.position.x;
+                                const z = camera.position.z;
+                                camera.position.x = x * Math.cos(angle) - z * Math.sin(angle);
+                                camera.position.z = x * Math.sin(angle) + z * Math.cos(angle);
+                                camera.position.y += Math.sin(timeSeconds * 0.4) * 0.1;
+                            }
+                            
+                            // Always ensure we are looking at the center
                             camera.lookAt(0, 0, 0);
                             controls.target.set(0, 0, 0);
                         }
@@ -194,6 +202,10 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) =
             eventQueue.current.push({ type: 'trace:visualize', data: trace });
         });
 
+        const unbindRealtime = window.api.onRealtimeUpdate((update) => {
+            eventQueue.current.push({ type: 'realtime:scene-update', data: update });
+        });
+
         return () => {
             alive.current = false;
             isMounted = false;
@@ -201,6 +213,7 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) =
             if (resizeObserver) resizeObserver.disconnect();
             if (typeof unbindKernel === 'function') unbindKernel();
             if (typeof unbindTrace === 'function') unbindTrace();
+            if (typeof unbindRealtime === 'function') unbindRealtime();
             if (graphRef.current) {
                 if (graphRef.current._destructor) graphRef.current._destructor();
                 graphRef.current = null;
@@ -283,7 +296,7 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) =
              // const scene = graphRef.current.scene();
             if (onSymbolFocus) onSymbolFocus(node.name || node.id);
             if (!skipCameraMove && alive.current) {
-                const distance = 120;
+                const distance = 60; // Closer view (was 120)
                 const nodeX = node.x || 0; const nodeY = node.y || 0; const nodeZ = node.z || 0;
                 const distRatio = 1 + distance / (Math.hypot(nodeX, nodeY, nodeZ) || 1);
                 graphRef.current.cameraPosition({ x: nodeX * distRatio, y: nodeY * distRatio, z: nodeZ * distRatio }, node, 2000);
@@ -347,11 +360,22 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) =
 
         graphData.current.links = newLinks;
         graphRef.current.graphData(graphData.current);
+
+        // Initial "Immersive Focus" zoom-in if first time loading
+        if (graphData.current.nodes.length > 0 && graphRef.current.camera().position.z > 800) {
+            graphRef.current.cameraPosition({ z: 160 }, { x: 0, y: 0, z: 0 }, 3000);
+        }
     };
 
     const handleVisualEvent = async (event: any) => {
         const { type, data } = event;
         lastEventTime.current = Date.now();
+        
+        // Track "Active" events to reset idle timer
+        if (type !== 'realtime:scene-update' && type !== 'kernel:event') {
+            lastUserEventTime.current = Date.now();
+        }
+
         switch (type) {
             case 'symbol:upserted': {
                 const s = await window.api.getSymbolById(data.symbolId);
@@ -368,12 +392,25 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) =
             case 'cache:load': {
                 const sessionId = data.sessionId;
                 const symbols = data.symbols || [];
-                const filteredSymbols = symbols.filter((s: any) => s.kind !== 'data');
                 
-                // Update specific session cache
+                // 1. Map session cache as before
+                const filteredSymbols = symbols.filter((s: any) => s.kind !== 'data');
                 const sessionMap = new Map<string, SymbolDef>();
                 filteredSymbols.forEach((s: SymbolDef) => sessionMap.set(s.id, s));
                 sessionCaches.current.set(sessionId, sessionMap);
+                
+                // 2. NEW: Deep Fetch active domains to populate the rest of the graph
+                const activeDomains = new Set<string>(filteredSymbols.map((s: SymbolDef) => s.symbol_domain).filter(Boolean));
+                for (const domainId of activeDomains) {
+                    window.api.getSymbolsByDomain(domainId).then(domainSymbols => {
+                            const domainMap = sessionCaches.current.get(sessionId) || new Map();
+                            domainSymbols.forEach((s: SymbolDef) => {
+                                if (s.kind !== 'data') domainMap.set(s.id, s);
+                            });
+                            sessionCaches.current.set(sessionId, domainMap);
+                            refreshGraphFromCaches();
+                        });
+                }
                 
                 refreshGraphFromCaches();
                 break;
@@ -402,6 +439,47 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus }) =
                     const firstStep = data.activation_path[0];
                     const sId = firstStep.symbol_id || firstStep.id;
                     if (sId) await pulseNode(sId);
+                }
+                break;
+            }
+            case 'realtime:scene-update': {
+                const { type: streamType, state: streamState } = data;
+                
+                // 1. Emotion Spikes -> Massive bursts at center or random node
+                if (streamType === 'camera' && streamState.people && streamState.people.length > 0) {
+                    const person = streamState.people[0];
+                    if (person.expression !== 'neutral' && person.expression !== 'focused' && person.expression !== 'blinking') {
+                        // High intensity burst
+                        const color = person.expression === 'happy' ? '#10b981' : '#f43f5e';
+                        const randomNode = graphData.current.nodes[Math.floor(Math.random() * graphData.current.nodes.length)];
+                        if (randomNode) {
+                            createParticleBurst(randomNode.x || 0, randomNode.y || 0, randomNode.z || 0, color, 'high');
+                        }
+                    }
+                }
+
+                // 2. Audio "Pulsing"
+                if (streamType === 'audio' && streamState.isSpeaking) {
+                    if (graphRef.current) {
+                        // Subtle camera zoom/shake on loud speech
+                        const camera = graphRef.current.camera();
+                        if (camera && streamState.rmsLevel > 0.1) {
+                            camera.position.x += (Math.random() - 0.5) * 2;
+                            camera.position.y += (Math.random() - 0.5) * 2;
+                        }
+                    }
+                }
+                break;
+            }
+            case 'perception:spike-promoted': {
+                // Flash the entire background or trigger high-intensity particle rain
+                if (graphRef.current) {
+                    const scene = graphRef.current.scene();
+                    const flashColor = new THREE.Color('#4f46e5');
+                    scene.background = flashColor;
+                    setTimeout(() => {
+                        scene.background = new THREE.Color('#000000');
+                    }, 500);
                 }
                 break;
             }

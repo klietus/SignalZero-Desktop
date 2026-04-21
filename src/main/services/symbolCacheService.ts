@@ -91,8 +91,8 @@ export class SymbolCacheService {
             const existing = cache.get(symbol.id);
             if (existing) {
                 cache.set(symbol.id, {
-                    ...existing,
                     symbol,
+                    turnCount: initialTurnCount, // Reset turn count to refresh its lease
                     lastUsed: now
                 });
                 updated++;

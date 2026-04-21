@@ -36,7 +36,7 @@ declare global {
             getDomain: (id: string) => Promise<any>;
             upsertDomain: (id: string, data: any) => Promise<any>;
             updateDomain: (id: string, data: any) => Promise<any>;
-            getMetadata: () => Promise<any[]>;
+            getMetadata: () => Promise<any>;
             searchSymbols: (query: string, limit?: number, options?: any) => Promise<any[]>;
             upsertSymbol: (domainId: string, symbol: any) => Promise<any>;
             getSymbolsByDomain: (domainId: string) => Promise<any[]>;
