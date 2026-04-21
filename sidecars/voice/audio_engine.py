@@ -212,14 +212,19 @@ class AudioEngine:
             
         logger.info(f"Speaker: {display_name}, Score: {score:.4f}, Emotion: {vocal_emotion}")
         raw_text = self.transcribe(audio_np)
+        clean_text = raw_text.strip()
         
         # 4. Format with timestamp and emotion notation
         timestamp = time.strftime("%H:%M:%S")
-        formatted_text = f"[{timestamp}] <{vocal_emotion}> {raw_text}"
-        
+        formatted_text = f"[{timestamp}] <{vocal_emotion}> {clean_text}"
+
+        if not clean_text:
+            return None
+
         return {
             "text": formatted_text,
             "raw_text": raw_text,
+
             "speaker": display_name,
             "score": score,
             "vocal_emotion": vocal_emotion,

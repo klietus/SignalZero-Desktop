@@ -80,6 +80,13 @@ class WorkerPool {
     async parseJson(str: string) { return this.runTask('parseJson', str); }
     async stringifyJson(obj: any) { return this.runTask('stringifyJson', obj); }
     async stripThoughts(text: string) { return this.runTask('stripThoughts', text); }
+    
+    async embedTexts(texts: string[]) {
+        const modelPath = app.isPackaged 
+            ? path.join(process.resourcesPath, 'models') 
+            : path.join(app.getAppPath(), 'models');
+        return this.runTask('embedTexts', { texts, modelPath });
+    }
 }
 
 export const workerService = new WorkerPool();

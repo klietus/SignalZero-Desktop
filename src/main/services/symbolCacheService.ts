@@ -15,13 +15,13 @@ export interface CacheEntry {
  * Symbols in the cache are part of the DYNAMIC_SYMBOLS block in the context window.
  * 
  * Logic:
- * - Symbols stay in cache for MAX_TURNS (default 5).
- * - Mature symbols (turnCount > 3) are stable.
- * - New symbols (turnCount <= 3) are volatile.
+ * - Symbols stay in cache for MAX_TURNS (default 4).
+ * - Mature symbols (turnCount >= 2) are stable.
+ * - New symbols (turnCount < 2) are volatile.
  * - Cache is purely in-memory (in-process) for the desktop app.
  */
 export class SymbolCacheService {
-    private readonly MAX_TURNS = 3;
+    private readonly MAX_TURNS = 4;
     
     // Map of Session ID -> Map of Symbol ID -> CacheEntry
     private sessionCaches: Map<string, Map<string, CacheEntry>> = new Map();

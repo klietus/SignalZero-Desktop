@@ -25,7 +25,7 @@ vi.mock('../services/settingsService.js', () => ({
             deadLinkCleanup: false,
             orphanAnalysis: false
         }),
-        getInferenceSettings: vi.fn().mockResolvedValue({ fastModel: 'test-model' })
+        getInferenceSettings: vi.fn().mockResolvedValue({ model: 'test-model' })
     }
 }));
 

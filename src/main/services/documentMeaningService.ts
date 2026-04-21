@@ -2,10 +2,7 @@ import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import Parser from 'rss-parser';
 import pdf from 'pdf-parse';
-import OpenAI from "openai";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { loggerService } from './loggerService.js';
-import { settingsService } from './settingsService.js';
 import { sqliteService } from './sqliteService.js';
 import crypto from 'crypto';
 
@@ -172,86 +169,46 @@ class DocumentMeaningService {
     }
 
     private async extractImageMeaning(buffer: Buffer, contentType: string, url?: string): Promise<NormalizedDocument> {
-        const settings = await settingsService.getInferenceSettings();
-        const apiKey = settings.apiKey;
-        let visionModel = settings.visionModel;
-
-        if (settings.provider === 'gemini') {
-            visionModel = visionModel || 'gemini-2.5-flash';
-        } else {
-            visionModel = visionModel || 'gpt-4o-mini';
-        }
-
         // --- CACHE CHECK ---
         const hash = crypto.createHash('sha256').update(buffer).digest('hex');
         try {
             const cached = sqliteService.get(`SELECT * FROM media_cache WHERE hash = ?`, [hash]);
             if (cached) {
                 loggerService.info(`DocumentMeaningService: Cache hit for image ${hash.substring(0, 8)}`);
-                const cachedMetadata = cached.metadata ? JSON.parse(cached.metadata) : {};
                 return {
                     type: 'image',
                     metadata: { 
                         url, 
-                        model: cachedMetadata.model || visionModel,
+                        model: 'llama-sidecar-qwen',
                         base64: buffer.toString('base64'),
                         mimeType: contentType || 'image/jpeg',
                         cached: true
                     },
                     content: cached.content,
-                    structured_data: { analysis_model: cachedMetadata.model || visionModel, cache_hit: true }
+                    structured_data: { analysis_model: 'llama-sidecar-qwen', cache_hit: true }
                 };
             }
         } catch (e) {
             loggerService.error(`DocumentMeaningService: Cache check failed`, { error: e });
         }
 
-        if (!apiKey && (settings.provider === 'openai' || settings.provider === 'gemini')) {
-             return {
-                type: 'image',
-                metadata: { url, error: "No API Key configured" },
-                content: `[Image content cannot be analyzed: Missing API Key]`
-            };
-        }
-
         try {
-            let description = "No description generated.";
-            if (settings.provider === 'gemini') {
-                const client = new GoogleGenerativeAI(apiKey);
-                const model = client.getGenerativeModel({ model: visionModel });
-                const result = await model.generateContent([
-                    "Analyze this image. Describe the setting, identify key objects, and explain the relationships.",
-                    { inlineData: { data: buffer.toString('base64'), mimeType: contentType || 'image/jpeg' } }
-                ]);
-                description = result.response.text();
-            } else {
-                const client = new OpenAI({ 
-                    apiKey: apiKey || 'local', 
-                    baseURL: settings.provider === 'local' ? settings.endpoint : undefined 
-                });
-                const response = await client.chat.completions.create({
-                    model: visionModel,
-                    messages: [
-                        {
-                            role: "user",
-                            content: [
-                                { type: "text", text: "Analyze this image." },
-                                { type: "image_url", image_url: { url: `data:${contentType || 'image/jpeg'};base64,${buffer.toString('base64')}` } }
-                            ]
-                        }
-                    ],
-                    max_tokens: 1024
-                } as any);
-                description = response.choices[0]?.message?.content || "";
-            }
+            loggerService.info(`DocumentMeaningService: Analyzing image ${hash.substring(0, 8)} via Llama Sidecar`);
+            
+            const prompt = "Analyze this image. Describe the setting, identify key objects, and explain the relationships.";
+            const result = await llamaService.completion(prompt, {
+                images: [{ base64: buffer.toString('base64') }],
+                maxTokens: 1024
+            });
 
+            const description = result.content || "No description generated.";
             const cleanDescription = this.stripThinking(description);
 
             // --- CACHE SAVE ---
             try {
                 sqliteService.run(
                     `INSERT OR REPLACE INTO media_cache (hash, content, metadata) VALUES (?, ?, ?)`,
-                    [hash, cleanDescription, JSON.stringify({ model: visionModel, contentType })]
+                    [hash, cleanDescription, JSON.stringify({ model: 'llama-sidecar-qwen', contentType })]
                 );
                 loggerService.info(`DocumentMeaningService: Cached description for image ${hash.substring(0, 8)}`);
             } catch (e) {
@@ -262,12 +219,12 @@ class DocumentMeaningService {
                 type: 'image',
                 metadata: { 
                     url, 
-                    model: visionModel,
+                    model: 'llama-sidecar-qwen',
                     base64: buffer.toString('base64'),
                     mimeType: contentType || 'image/jpeg'
                 },
                 content: cleanDescription,
-                structured_data: { analysis_model: visionModel }
+                structured_data: { analysis_model: 'llama-sidecar-qwen' }
             };
         } catch (error: any) {
             loggerService.error(`DocumentMeaningService: Image analysis failed for ${url}`, { error: error.message });

@@ -35,8 +35,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [inferenceEndpoint, setInferenceEndpoint] = useState('');
   const [inferenceModel, setInferenceModel] = useState('');
   const [inferenceAgentModel, setInferenceAgentModel] = useState('');
-  const [inferenceVisionModel, setInferenceVisionModel] = useState('');
-  const [inferenceFastModel, setInferenceFastModel] = useState('');
 
   // Realtime Assistance State
   const [realtimeAssistanceEnabled, setRealtimeAssistanceEnabled] = useState(false);
@@ -197,9 +195,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setInferenceEndpoint(inference.endpoint || '');
     setInferenceModel(inference.model || '');
     setInferenceAgentModel(inference.agentModel || inference.model || '');
-    setInferenceVisionModel(inference.visionModel || '');
-    setInferenceFastModel(inference.fastModel || '');
-
     setRealtimeAssistanceEnabled(settings.realtimeAssistance?.enabled || false);
     setSpikeThreshold(settings.realtimeAssistance?.spikeThreshold || 0.4);
     // Voice settings are now top-level in settings object, but with fallbacks
@@ -290,9 +285,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           apiKey: inferenceApiKey,
           endpoint: inferenceEndpoint,
           model: inferenceModel,
-          agentModel: inferenceAgentModel,
-          visionModel: inferenceVisionModel,
-          fastModel: inferenceFastModel
+          agentModel: inferenceAgentModel
       };
       const updatedConfigs = { ...storedConfigs, [inferenceProvider]: currentConfig };
       setStoredConfigs(updatedConfigs);
@@ -304,34 +297,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           setInferenceEndpoint(saved.endpoint || '');
           setInferenceModel(saved.model || '');
           setInferenceAgentModel(saved.agentModel || '');
-          setInferenceVisionModel(saved.visionModel || '');
-          setInferenceFastModel(saved.fastModel || '');
       } else {
           setInferenceApiKey('');
           if (newProvider === 'openai') {
               setInferenceEndpoint('https://api.openai.com/v1');
               setInferenceModel('gpt-4o');
               setInferenceAgentModel('gpt-4o');
-              setInferenceVisionModel('gpt-4o');
-              setInferenceFastModel('gpt-4o-mini');
           } else if (newProvider === 'gemini') {
               setInferenceEndpoint('');
               setInferenceModel('gemini-2.5-pro');
               setInferenceAgentModel('gemini-2.5-pro');
-              setInferenceVisionModel('gemini-2.5-pro');
-              setInferenceFastModel('gemini-2.5-flash');
           } else if (newProvider === 'kimi2') {
               setInferenceEndpoint('https://api.moonshot.cn/v1');
               setInferenceModel('moonshot-v1-8k');
               setInferenceAgentModel('moonshot-v1-8k');
-              setInferenceVisionModel('moonshot-v1-8k');
-              setInferenceFastModel('moonshot-v1-8k');
           } else {
               setInferenceEndpoint('http://127.0.0.1:1234/v1');
               setInferenceModel('');
               setInferenceAgentModel('');
-              setInferenceVisionModel('');
-              setInferenceFastModel('');
           }
       }
   };
@@ -346,9 +329,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           apiKey: inferenceApiKey,
           endpoint: inferenceEndpoint,
           model: inferenceModel,
-          agentModel: inferenceAgentModel,
-          visionModel: inferenceVisionModel,
-          fastModel: inferenceFastModel
+          agentModel: inferenceAgentModel
         };
         const finalConfigs = { ...storedConfigs, [inferenceProvider]: currentInferenceConfig };
 
@@ -374,8 +355,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 endpoint: inferenceEndpoint,
                 model: inferenceModel,
                 agentModel: inferenceAgentModel,
-                visionModel: inferenceVisionModel,
-                fastModel: inferenceFastModel,
                 savedConfigs: finalConfigs
             },
             mcpConfigs,
@@ -484,15 +463,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                           <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Agent Model</label>
                                           <input type="text" value={inferenceAgentModel} onChange={(e) => setInferenceAgentModel(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
                                       </div>
-                                      <div className="space-y-2">
-                                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Fast Model</label>
-                                          <input type="text" value={inferenceFastModel} onChange={(e) => setInferenceFastModel(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
-                                      </div>
-                                      <div className="space-y-2">
-                                          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Vision Model</label>
-                                          <input type="text" value={inferenceVisionModel} onChange={(e) => setInferenceVisionModel(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
-                                      </div>
-                                      </div>
+                                  </div>
                                       </div>
 
                                       <div className="pt-4 border-t border-gray-100 dark:border-gray-800">

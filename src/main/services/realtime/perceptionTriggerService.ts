@@ -4,6 +4,8 @@ import { inferenceService } from '../inferenceService.js';
 import { eventBusService } from '../eventBusService.js';
 import { loggerService, LogCategory } from '../loggerService.js';
 import { settingsService } from '../settingsService.js';
+import { activeSessionId } from '../../index.js';
+import { voiceService } from './voiceProcess.js';
 
 interface SceneSnapshot {
     timestamp: number;
@@ -143,6 +145,11 @@ class PerceptionTriggerService {
     private async evaluateSpikes() {
         if (this.isProcessingFlashRound || this.window.length < 6) return;
 
+        // SKIP evaluation if AI is currently speaking to avoid feedback loops or interruptions
+        if (voiceService.getIsSpeaking()) {
+            return;
+        }
+
         let detectedReason: string | null = null;
         
         // Execute all evaluation strategies to find candidate spikes
@@ -252,9 +259,11 @@ FORMAT: Return a JSON object with:
                         synthesis: result.synthesis,
                         reason: result.reason,
                         sceneSnapshot: sceneSnapshot,
-                        transcriptSlice
+                        transcriptSlice,
+                        sessionId: activeSessionId
                     });
-                } else {
+                }
+ else {
                     loggerService.catDebug(LogCategory.SYSTEM, `Flash Round Ignored Spike: ${result.reason}`);
                 }
             }

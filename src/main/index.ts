@@ -28,24 +28,27 @@ import { mcpClientService } from './services/mcpClientService.js'
 import { attachmentService } from './services/attachmentService.js'
 import { agentRunner } from './services/agentRunner.js'
 import { realtimeService } from './services/realtime/realtimeService.js'
+import { llamaService } from './services/llamaService.js'
 
 // --- IPC Batching Engine ---
 const ipcBatchQueues = new Map<string, any>();
 const ipcBatchTimers = new Map<string, NodeJS.Timeout>();
 
 function broadcastBatched(channel: string, data: any, intervalMs: number = 100) {
-    ipcBatchQueues.set(channel, data);
-    
-    if (!ipcBatchTimers.has(channel)) {
-        const timer = setInterval(() => {
-            const batchedData = ipcBatchQueues.get(channel);
-            if (batchedData) {
-                broadcast(channel, batchedData);
-                ipcBatchQueues.delete(channel);
-            }
-        }, intervalMs);
-        ipcBatchTimers.set(channel, timer);
-    }
+  // Prevent different stream types (camera vs screen) from overwriting each other in the batch queue
+  const batchKey = data?.type ? `${channel}:${data.type}` : channel;
+  ipcBatchQueues.set(batchKey, data);
+
+  if (!ipcBatchTimers.has(batchKey)) {
+    const timer = setInterval(() => {
+      const batchedData = ipcBatchQueues.get(batchKey);
+      if (batchedData) {
+        broadcast(channel, batchedData);
+        ipcBatchQueues.delete(batchKey);
+      }
+    }, intervalMs);
+    ipcBatchTimers.set(batchKey, timer);
+  }
 }
 import fs from 'fs'
 import { dialog } from 'electron'
@@ -58,32 +61,32 @@ export let activeSessionId: string | null = null;
 export const broadcast = (channel: string, ...args: any[]) => {
   // --- Safe Serialization Layer ---
   const safeArgs = args.map(arg => {
-      try {
-          // If it's a simple primitive, return as is
-          if (arg === null || typeof arg !== 'object') return arg;
+    try {
+      // If it's a simple primitive, return as is
+      if (arg === null || typeof arg !== 'object') return arg;
 
-          // Handle Error objects specifically (they don't serialize to JSON well)
-          if (arg instanceof Error) {
-              return {
-                  message: arg.message,
-                  stack: arg.stack,
-                  name: arg.name
-              };
-          }
-
-          // Use a replacer to handle potential circular references
-          const cache = new Set();
-          const json = JSON.stringify(arg, (_key, value) => {
-              if (typeof value === 'object' && value !== null) {
-                  if (cache.has(value)) return '[Circular]';
-                  cache.add(value);
-              }
-              return value;
-          });
-          return JSON.parse(json);
-      } catch (e) {
-          return `[Unserializable Data: ${String(e)}]`;
+      // Handle Error objects specifically (they don't serialize to JSON well)
+      if (arg instanceof Error) {
+        return {
+          message: arg.message,
+          stack: arg.stack,
+          name: arg.name
+        };
       }
+
+      // Use a replacer to handle potential circular references
+      const cache = new Set();
+      const json = JSON.stringify(arg, (_key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (cache.has(value)) return '[Circular]';
+          cache.add(value);
+        }
+        return value;
+      });
+      return JSON.parse(json);
+    } catch (e) {
+      return `[Unserializable Data: ${String(e)}]`;
+    }
   });
 
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -93,7 +96,7 @@ export const broadcast = (channel: string, ...args: any[]) => {
     monitorWindow.webContents.send(channel, ...safeArgs);
   }
 }
-;
+  ;
 
 async function performRecovery() {
   try {
@@ -264,7 +267,7 @@ async function captureScreenshot() {
     fs.writeFileSync(tempPath, png);
 
     const attachment = await attachmentService.processAndSave(tempPath, `screenshot-${new Date().toISOString()}.png`, 'image/png');
-    
+
     // Notify renderer that a screenshot was taken and is ready to be attached
     broadcast('screenshot:captured', {
       id: attachment.id,
@@ -292,12 +295,12 @@ function setupTray() {
   if (tray) return;
 
   try {
-    const iconPath = is.dev 
-      ? join(app.getAppPath(), 'resources/cognitav.jpg') 
+    const iconPath = is.dev
+      ? join(app.getAppPath(), 'resources/cognitav.jpg')
       : join(process.resourcesPath, 'cognitav.jpg');
-      
+
     let trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
-    
+
     // On macOS, make it a template image so it works in light/dark mode
     if (process.platform === 'darwin') {
       trayIcon.setTemplateImage(true);
@@ -309,7 +312,7 @@ function setupTray() {
     const emptyIcon = nativeImage.createEmpty();
     tray = new Tray(emptyIcon);
   }
-  
+
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Signal Zero', enabled: false },
     { type: 'separator' },
@@ -463,9 +466,14 @@ app.whenReady().then(async () => {
 
   createWindow()
   await performRecovery();
-  
+
   // Initialize background runners
-  agentRunner; 
+  agentRunner;
+
+  // Initialize Llama Sidecar
+  llamaService.initialize().catch(err => {
+    loggerService.catError(LogCategory.SYSTEM, "Failed to initialize Llama Sidecar", { error: err.message });
+  });
 
   // Initialize Real-time services
   await realtimeService.initialize();
@@ -486,12 +494,29 @@ app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => {
+  llamaService.stop();
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
+app.on('before-quit', () => {
+  llamaService.stop();
+});
+
 // IPC Handlers
+ipcMain.handle('realtime:toggle-stream', async (_, type) => {
+  return await realtimeService.toggleStream(type);
+});
+
+ipcMain.handle('realtime:set-voice-enabled', async (_, enabled) => {
+  return await realtimeService.setVoiceEnabled(enabled);
+});
+
+ipcMain.handle('realtime:cancel-speech', async () => {
+  return await realtimeService.cancelSpeech();
+});
+
 ipcMain.handle('context:create', async (_, type, metadata, name) => {
   return await contextService.createSession(type, metadata, name);
 });
@@ -523,6 +548,10 @@ ipcMain.handle('trace:list', async (_, sessionId) => {
 
 ipcMain.handle('inference:send', async (_, sessionId, message, systemInstruction, metadata?: Record<string, any>) => {
   activeSessionId = sessionId;
+
+  // Interrupt ongoing speech if user sends new message
+  realtimeService.cancelSpeech();
+
   const toolExecutor = createToolExecutor(sessionId);
   const finalSystemInstruction = systemInstruction || activeSystemPrompt;
 
@@ -535,11 +564,9 @@ ipcMain.handle('inference:send', async (_, sessionId, message, systemInstruction
 
 // Listener for voice output completion (event-driven)
 eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (data) => {
-  if (data.fullText) {
-    realtimeService.speak(data.fullText, null).catch(err => {
-      loggerService.catError(LogCategory.SYSTEM, "Event-driven Voice output failed", { error: err.message });
-    });
-  }
+  realtimeService.speak(data.fullText, null).catch(err => {
+    loggerService.catError(LogCategory.SYSTEM, "Event-driven Voice output failed", { error: err.message });
+  });
 });
 
 ipcMain.handle('domain:list', async () => {
@@ -612,8 +639,8 @@ ipcMain.handle('settings:get', async () => {
 
 ipcMain.handle('settings:update', async (_, settings) => {
   loggerService.catInfo(LogCategory.SYSTEM, "IPC Handle: settings:update", {
-      hasInference: !!settings.inference,
-      voiceProfilesCount: settings.inference?.voiceProfiles ? Object.keys(settings.inference.voiceProfiles).length : 0
+    hasInference: !!settings.inference,
+    voiceProfilesCount: settings.inference?.voiceProfiles ? Object.keys(settings.inference.voiceProfiles).length : 0
   });
   const updated = await settingsService.update(settings);
   await monitoringService.refreshIntervals();
@@ -727,7 +754,7 @@ ipcMain.handle('project:import', async () => {
 });
 
 ipcMain.handle('project:import-sample', async () => {
-  const samplePath = is.dev 
+  const samplePath = is.dev
     ? join(app.getAppPath(), '../../signalzero_sample.szproject')
     : join(process.resourcesPath, 'signalzero_sample.szproject');
 
@@ -788,18 +815,18 @@ ipcMain.handle('realtime:get-state', () => {
   return realtimeService.getState();
 });
 
-ipcMain.on('realtime:start-stream', (_, type: 'camera' | 'screen' | 'audio') => {
-  realtimeService.startStream(type);
+ipcMain.handle('realtime:start-stream', async (_, type: 'camera' | 'screen' | 'audio') => {
+  return await realtimeService.startStream(type);
 });
 
-ipcMain.on('realtime:stop-stream', (_, type: 'camera' | 'screen' | 'audio') => {
-  realtimeService.stopStream(type);
+ipcMain.handle('realtime:stop-stream', async (_, type: 'camera' | 'screen' | 'audio') => {
+  return await realtimeService.stopStream(type);
 });
 
 ipcMain.handle('voice:toggle-mode', async (_, enabled: boolean) => {
   if (enabled) {
-      await realtimeService.startStream('audio');
+    await realtimeService.startStream('audio');
   } else {
-      await realtimeService.stopStream('audio');
+    await realtimeService.stopStream('audio');
   }
 });

@@ -5,7 +5,7 @@ import { loggerService, LogCategory } from './loggerService.js';
 import { sqliteService } from './sqliteService.js';
 import { lancedbService } from './lancedbService.js';
 import { eventBusService } from './eventBusService.js';
-import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
+import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
 import { MonitoringSourceConfig, MonitoringDelta, MonitoringPeriod } from '../types.js';
 import { randomUUID } from 'crypto';
 import { AcledProvider } from './monitoring/providers/acled.js';
@@ -232,10 +232,6 @@ class MonitoringService {
     }
 
     private async itemizeData(source: MonitoringSourceConfig, rawData: string): Promise<any[] | null> {
-        const settings = await settingsService.getInferenceSettings();
-        const fastModel = settings.fastModel;
-        if (!fastModel) return null;
-
         loggerService.catDebug(LogCategory.MONITORING, `Itemizing data for ${source.name} (type: ${source.type})`, { length: rawData.length });
 
         // Specialized itemization logic for common formats
@@ -302,24 +298,8 @@ class MonitoringService {
         Output valid JSON: { "items": [{ "id": "...", "title": "...", "content": "...", "link": "...", "image": "..." }, ...] }`;
 
         try {
-            let response: any = {};
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({
-                    model: fastModel,
-                    generationConfig: { maxOutputTokens: 1024 }
-                });
-                const result = await model.generateContent(prompt);
-                response = extractJson(result.response.text());
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 1024
-                });
-                response = extractJson(result.choices[0]?.message?.content || "{}");
-            }
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 1024);
+            const response = await extractJson(fastText);
             return response.items || null;
         } catch (error) {
             loggerService.catError(LogCategory.MONITORING, "Itemization failed", { error });
@@ -328,10 +308,6 @@ class MonitoringService {
     }
 
     private async summarizeArticle(source: MonitoringSourceConfig, item: any): Promise<{ summary: string, imageUrl?: string, imageDescription?: string } | null> {
-        const settings = await settingsService.getInferenceSettings();
-        const fastModel = settings.fastModel;
-        if (!fastModel) return null;
-
         let articleData = item;
         let imageUrl = item.image || item.imageUrl;
         let imageDescription = "";
@@ -392,27 +368,10 @@ class MonitoringService {
         Output a concise bulleted summary. Incorporate visual details if relevant.`;
 
         try {
-            let summary = "";
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({
-                    model: fastModel,
-                    generationConfig: { maxOutputTokens: 1024 }
-                });
-                const result = await model.generateContent(prompt);
-                summary = result.response.text().trim();
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 1024
-                });
-                summary = result.choices[0]?.message?.content?.trim() || "";
-            }
+            const summary = await callFastInference([{ role: "user", content: prompt }], 1024);
 
             return {
-                summary,
+                summary: (summary || "").trim(),
                 imageUrl,
                 imageDescription
             };
@@ -423,10 +382,6 @@ class MonitoringService {
     }
 
     private async summarizeRawData(source: MonitoringSourceConfig, rawData: string): Promise<{ hasChanges: boolean, content: string, articleUrl?: string, imageUrl?: string, imageSummary?: string } | null> {
-        const settings = await settingsService.getInferenceSettings();
-        const fastModel = settings.fastModel;
-        if (!fastModel) return null;
-
         const prompt = `You are a world-state monitoring agent. Analyze the following raw data from source "${source.name}" and create a concise summary of significant changes or new information since the last observation.
         
         Raw Data:
@@ -442,24 +397,8 @@ class MonitoringService {
         Output valid JSON: { "hasChanges": boolean, "content": "...", "articleUrl": "...", "imageUrl": "...", "imageSummary": "..." }`;
 
         try {
-            let response: any = {};
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({
-                    model: fastModel,
-                    generationConfig: { maxOutputTokens: 1024 }
-                });
-                const result = await model.generateContent(prompt);
-                response = extractJson(result.response.text());
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 1024
-                });
-                response = extractJson(result.choices[0]?.message?.content || "{}");
-            }
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 1024);
+            const response = await extractJson(fastText);
             return response;
         } catch (error) {
             loggerService.catError(LogCategory.MONITORING, "Summarization failed", { error });
@@ -702,10 +641,6 @@ class MonitoringService {
         if (delta.period === 'hour') {
             loggerService.catInfo(LogCategory.MONITORING, `Refining hour delta: ${deltaId}`);
 
-            const settings = await settingsService.getInferenceSettings();
-            const fastModel = settings.fastModel;
-            if (!fastModel) return delta;
-
             const meta = typeof delta.metadata === 'string' ? JSON.parse(delta.metadata) : (delta.metadata || {});
             let articleContent = delta.content;
             let imageUrl = meta.imageUrl;
@@ -737,24 +672,7 @@ class MonitoringService {
             Output a concise, impactful bulleted summary. Incorporate visual details if relevant.`;
 
             try {
-                let refined = "";
-                if (settings.provider === 'gemini') {
-                    const client = await getGeminiClient();
-                    const model = client.getGenerativeModel({
-                        model: fastModel,
-                        generationConfig: { maxOutputTokens: 1024 }
-                    });
-                    const result = await model.generateContent(prompt);
-                    refined = result.response.text().trim();
-                } else {
-                    const client = await getClient();
-                    const result = await client.chat.completions.create({
-                        model: fastModel,
-                        messages: [{ role: "user", content: prompt }],
-                        max_tokens: 1024
-                    });
-                    refined = result.choices[0]?.message?.content?.trim() || "";
-                }
+                const refined = await callFastInference([{ role: "user", content: prompt }], 1024);
 
                 if (refined) {
                     const updatedMeta = {
@@ -765,10 +683,10 @@ class MonitoringService {
 
                     sqliteService.run(
                         `UPDATE monitoring_deltas SET content = ?, metadata = ? WHERE id = ?`,
-                        [refined, JSON.stringify(updatedMeta), deltaId]
+                        [refined.trim(), JSON.stringify(updatedMeta), deltaId]
                     );
 
-                    const updated = { ...delta, content: refined, metadata: updatedMeta };
+                    const updated = { ...delta, content: refined.trim(), metadata: updatedMeta };
                     await lancedbService.indexDeltaBatch([updated]);
                     return updated;
                 }

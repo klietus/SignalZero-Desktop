@@ -2,8 +2,7 @@ import { domainService, RECIPROCAL_MAP } from './domainService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
-import { settingsService } from './settingsService.js';
-import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
+import { extractJson, callFastInference } from './inferenceService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { SymbolDef, GraphHygieneSettings } from '../types.js';
 import { embedTexts } from './embeddingService.js';
@@ -513,10 +512,6 @@ export class TopologyService {
 
     private async validateLink(s1: SymbolDef, s2: SymbolDef): Promise<{ shouldLink: boolean, linkType?: string }> {
         try {
-            const settings = await settingsService.getInferenceSettings();
-            const fastModel = settings.fastModel;
-            if (!fastModel) return { shouldLink: true, linkType: 'relates_to' };
-
             const prompt = `Analyze the two symbols from a symbolic knowledge graph. Determine if there is a STRONG and MEANINGFUL semantic relationship between them that justifies an automated link.
             
             Symbol 1:
@@ -587,27 +582,8 @@ export class TopologyService {
               "linkType": "chosen_link_type"
             }`;
 
-            let resultJson: any = {};
-
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({
-                    model: fastModel,
-                    generationConfig: { maxOutputTokens: 800 }
-                });
-                const result = await model.generateContent(prompt);
-                const response = result.response.text();
-                resultJson = extractJson(response);
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 800
-                });
-                const response = result.choices[0]?.message?.content || "{}";
-                resultJson = extractJson(response);
-            }
+            const fastText = await callFastInference([{ role: 'user', content: prompt }], 800);
+            const resultJson = await extractJson(fastText);
 
             return {
                 shouldLink: !!resultJson.shouldLink,
@@ -647,10 +623,6 @@ export class TopologyService {
         }
 
         try {
-            const settings = await settingsService.getInferenceSettings();
-            const fastModel = settings.fastModel;
-            if (!fastModel) return candidates[0].id;
-
             const prompt = `You are a knowledge graph curator. Choose the most "Canonical" symbol identity from this group of redundant symbols.
             
             CRITERIA:
@@ -664,24 +636,8 @@ export class TopologyService {
             
             Output ONLY the ID of the winner. Valid JSON: { "winnerId": "..." }`;
 
-            let response: any = {};
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({
-                    model: fastModel,
-                    generationConfig: { maxOutputTokens: 100 }
-                });
-                const result = await model.generateContent(prompt);
-                response = extractJson(result.response.text());
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 100
-                });
-                response = extractJson(result.choices[0]?.message?.content || "{}");
-            }
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 100);
+            const response = await extractJson(fastText);
 
             const winnerId = response.winnerId;
             const cleanWinner = candidates.find(c => c.id === winnerId)?.id;
@@ -874,10 +830,6 @@ export class TopologyService {
                     loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Pattern ${pattern.id} is unanchored in domain ${domainId}. Attempting reconciliation...`);
 
                     try {
-                        const settings = await settingsService.getInferenceSettings();
-                        const fastModel = settings.fastModel;
-                        if (!fastModel) continue;
-
                         const prompt = `### KNOWLEDGE GRAPH ARCHITECT: DOMAIN DOCKING MISSION
 
                         Analyze the following symbolic pattern and determine if it should be "docked" into the provided domain lattices.
@@ -913,28 +865,8 @@ export class TopologyService {
                         ]
                         }`;
 
-                        let response: any = {};
-                        if (settings.provider === 'gemini') {
-                            const client = await getGeminiClient();
-                            const model = client.getGenerativeModel({
-                                model: fastModel,
-                                generationConfig: {
-                                    maxOutputTokens: 2048,
-                                    temperature: 0.1
-                                }
-                            });
-                            const result = await model.generateContent(prompt);
-                            response = extractJson(result.response.text());
-                        } else {
-                            const client = await getClient();
-                            const result = await client.chat.completions.create({
-                                model: fastModel,
-                                messages: [{ role: "user", content: prompt }],
-                                max_tokens: 2048,
-                                temperature: 0.1
-                            });
-                            response = extractJson(result.choices[0]?.message?.content || "{}");
-                        }
+                        const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
+                        const response = await extractJson(fastText);
 
                         if (response.shouldLink && Array.isArray(response.matches) && response.matches.length > 0) {
                             // Strictly only take the FIRST (best) match
@@ -1168,10 +1100,6 @@ A Lattice is a high-level abstract container providing structural "docking point
     private async evaluateBridgeLifting(sourceLattice: SymbolDef, pattern: SymbolDef, target: SymbolDef, targetLattice?: SymbolDef): Promise<boolean> {
         let fullResponse = "";
         try {
-            const settings = await settingsService.getInferenceSettings();
-            const fastModel = settings.fastModel;
-            if (!fastModel) return false;
-
             const prompt = `Analyze if a cross-domain semantic relationship should be "lifted" from a specific pattern to its parent lattice.
             
             SOURCE LATTICE (Domain: ${sourceLattice.symbol_domain}):
@@ -1203,26 +1131,8 @@ A Lattice is a high-level abstract container providing structural "docking point
               "reason": "Brief explanation"
             }`;
 
-            let resultJson: any = {};
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({
-                    model: fastModel,
-                    generationConfig: { maxOutputTokens: 400 }
-                });
-                const result = await model.generateContent(prompt);
-                fullResponse = result.response.text();
-                resultJson = extractJson(fullResponse);
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 400
-                });
-                fullResponse = result.choices[0]?.message?.content || "{}";
-                resultJson = extractJson(fullResponse);
-            }
+            fullResponse = await callFastInference([{ role: "user", content: prompt }], 400);
+            const resultJson = await extractJson(fullResponse);
 
             return !!resultJson.shouldLift;
         } catch (error) {

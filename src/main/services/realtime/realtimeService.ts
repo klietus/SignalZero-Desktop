@@ -6,8 +6,16 @@ import { sceneManager } from './sceneManager.js';
 import { voiceService } from './voiceProcess.js';
 import { visionProcess } from './visionProcess.js';
 import { loggerService, LogCategory } from '../loggerService.js';
+import { settingsService } from '../settingsService.js';
 
 class RealtimeService {
+    constructor() {
+        voiceService.on('interrupt', () => {
+            loggerService.catInfo(LogCategory.SYSTEM, "Interrupted: Clearing AI speech queue.");
+            this.speechQueue = [];
+        });
+    }
+
     async initialize() {
         loggerService.catInfo(LogCategory.SYSTEM, "Initializing Realtime Service...");
         try {
@@ -118,8 +126,78 @@ class RealtimeService {
         return Object.keys(snapshot).length > 0 ? snapshot : null;
     }
 
+    private speechQueue: { text: string, sender: any }[] = [];
+    private isProcessingQueue = false;
+
+    async cancelSpeech() {
+        this.speechQueue = [];
+        // This will stop the current sidecar playback AND clear the renderer queue
+        voiceService.interrupt();
+        loggerService.catInfo(LogCategory.SYSTEM, "AI speech cancelled by user/system command.");
+    }
+
     async speak(text: string, sender: any) {
-        return voiceService.speak(text, sender);
+        const settings = await settingsService.get();
+        if (!settings.voiceEnabled) {
+            loggerService.catDebug(LogCategory.SYSTEM, "AI Speech suppressed: voiceEnabled is false.");
+            return;
+        }
+
+        loggerService.catDebug(LogCategory.SYSTEM, `Queueing TTS message: "${text.substring(0, 50)}..."`);
+        this.speechQueue.push({ text, sender });
+        
+        if (!this.isProcessingQueue) {
+            this.processSpeechQueue().catch(err => {
+                loggerService.catError(LogCategory.SYSTEM, `Speech queue processing error: ${err.message}`);
+                this.isProcessingQueue = false;
+            });
+        }
+    }
+
+    async setVoiceEnabled(enabled: boolean) {
+        if (!enabled) {
+            await this.cancelSpeech();
+        }
+        await settingsService.update({ voiceEnabled: enabled });
+        return enabled;
+    }
+
+    private async processSpeechQueue() {
+        if (this.isProcessingQueue) return;
+        this.isProcessingQueue = true;
+
+        try {
+            while (this.speechQueue.length > 0) {
+                // If voice system is currently speaking from a previous direct call or slow process
+                while (voiceService.getIsSpeaking()) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+
+                const item = this.speechQueue.shift();
+                if (!item) break;
+
+                loggerService.catInfo(LogCategory.SYSTEM, `Processing queued speech: "${item.text.substring(0, 100)}..."`);
+                
+                // This triggers the synthesis and playback start. 
+                // It returns after synthesis is done and playback has been commanded to start.
+                await voiceService.speak(item.text, item.sender);
+
+                // If it successfully started speaking, wait for it to finish
+                if (voiceService.getIsSpeaking()) {
+                    while (voiceService.getIsSpeaking()) {
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    }
+                }
+
+                // NICE PAUSE between messages
+                if (this.speechQueue.length > 0) {
+                    loggerService.catDebug(LogCategory.SYSTEM, "Speech queue: waiting 800ms before next message...");
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+            }
+        } finally {
+            this.isProcessingQueue = false;
+        }
     }
 }
 

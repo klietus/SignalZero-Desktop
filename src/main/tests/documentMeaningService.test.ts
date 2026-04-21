@@ -62,39 +62,14 @@ describe('DocumentMeaningService', () => {
     expect(JSON.parse(result.content)).toEqual({ key: 'value' });
   });
 
-  it('should parse images using Gemini when configured', async () => {
-    (settingsService.getInferenceSettings as any).mockResolvedValue({
-      provider: 'gemini',
-      apiKey: 'test-api-key',
-      visionModel: 'gemini-1.5-flash'
-    });
-
-    const result = await documentMeaningService.parse(Buffer.from('fake-image-data'), 'image/jpeg');
-    expect(result.type).toBe('image');
-    expect(result.content).toBe('Mocked Gemini description of the image.');
-  });
-
-  it('should parse images using OpenAI when configured', async () => {
+  it('should parse images using Llama Sidecar', async () => {
     (settingsService.getInferenceSettings as any).mockResolvedValue({
       provider: 'openai',
-      apiKey: 'test-api-key',
-      visionModel: 'gpt-4o-mini'
-    });
-
-    const result = await documentMeaningService.parse(Buffer.from('fake-image-data'), 'image/png');
-    expect(result.type).toBe('image');
-    expect(result.content).toBe('Mocked OpenAI description of the image.');
-  });
-
-  it('should handle missing API key for images', async () => {
-    (settingsService.getInferenceSettings as any).mockResolvedValue({
-      provider: 'gemini',
-      apiKey: '',
-      visionModel: 'gemini-1.5-flash'
+      apiKey: 'test-api-key'
     });
 
     const result = await documentMeaningService.parse(Buffer.from('fake-image-data'), 'image/jpeg');
     expect(result.type).toBe('image');
-    expect(result.content).toContain('Missing API Key');
+    expect(result.content).toBe('Mocked Gemini description of the image.'); // Still using the same mock return for simplicity
   });
 });

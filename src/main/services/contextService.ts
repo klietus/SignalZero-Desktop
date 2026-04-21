@@ -1,7 +1,7 @@
 import { sqliteService } from './sqliteService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { attachmentService } from './attachmentService.js';
-import { eventBusService } from './eventBusService.js';
+import { eventBusService, KernelEventType } from './eventBusService.js';
 import { ContextMessage, ContextSession } from '../types.js';
 import { randomUUID } from 'crypto';
 
@@ -49,7 +49,7 @@ export const contextService = {
     const session = await this.getSession(id);
     if (!session) throw new Error("Failed to create session");
     
-    eventBusService.emitKernelEvent('context:created' as any, session);
+    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_CREATED, session);
     
     return session;
   },
@@ -123,7 +123,12 @@ export const contextService = {
 
         // 3. Delete the session (cascades to messages in DB)
         const result = sqliteService.run(`DELETE FROM contexts WHERE id = ?`, [id]);
-        return result.changes > 0;
+        
+        if (result.changes > 0) {
+            eventBusService.emitKernelEvent(KernelEventType.CONTEXT_DELETED, { id });
+            return true;
+        }
+        return false;
     } catch (error) {
         console.error("Failed to delete session and attachments", error);
         return false;

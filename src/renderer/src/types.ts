@@ -55,8 +55,6 @@ export interface InferenceConfiguration {
   endpoint: string;
   model: string;
   agentModel: string;
-  visionModel: string;
-  fastModel: string;
 }
 
 export interface InferenceSettings {
@@ -65,8 +63,6 @@ export interface InferenceSettings {
   endpoint?: string;
   model?: string;
   agentModel?: string;
-  visionModel?: string;
-  fastModel?: string;
   savedConfigs?: Record<string, InferenceConfiguration>;
 }
 
@@ -76,8 +72,6 @@ export interface InferenceSettingsUpdate {
   endpoint?: string;
   model?: string;
   agentModel?: string;
-  visionModel?: string;
-  fastModel?: string;
 }
 
 export interface WebSearchProviderSettings {

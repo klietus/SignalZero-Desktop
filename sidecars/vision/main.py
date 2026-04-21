@@ -12,6 +12,7 @@ import io
 import subprocess
 import os
 import functools
+import gc
 
 # Research-backed Emotion Recognition
 try:
@@ -44,6 +45,8 @@ class CalibrationEngine:
             for name in blendshapes.keys():
                 self.baseline[name] = sum(s[name] for s in self.samples) / len(self.samples)
             self.is_calibrated = True
+            self.samples = [] # Free memory after baseline is set
+            self.log("Baseline calibration complete. Samples cleared.")
 
     def get_delta(self, name, value):
         if not self.is_calibrated: return value
@@ -242,8 +245,10 @@ class VisionSidecar:
 
                 if recognizer and face_img.size > 0:
                     try:
-                        # 1. Raw HSEmotion Prediction
-                        _, raw_scores = recognizer.predict_emotions(face_img, logits=False)
+                        # Ensure we don't track gradients (OOM prevention)
+                        with torch.no_grad():
+                            # 1. Raw HSEmotion Prediction
+                            _, raw_scores = recognizer.predict_emotions(face_img, logits=False)
                         
                         # 2. Clean and convert to dict with NaN safety
                         labels = ['anger', 'contempt', 'disgust', 'fear', 'happiness', 'neutral', 'sadness', 'surprise']
@@ -307,27 +312,44 @@ class VisionSidecar:
 
         self.log("Camera loop active.")
         start_time = time.time()
+        frame_count = 0
         while self.camera_running:
-            ret, frame = cap.read()
-            if not ret: break
+            try:
+                ret, frame = cap.read()
+                if not ret: break
 
-            ts_ms = (time.time() - start_time) * 1000
-            people, _, has_people = self.process_frame(frame, ts_ms)
+                ts_ms = (time.time() - start_time) * 1000
+                people, _, has_people = self.process_frame(frame, ts_ms)
+                
+                target_width = 640
+                h_orig, w_orig = frame.shape[:2]
+                target_height = int(h_orig * (target_width / w_orig))
+                small_frame = cv2.resize(frame, (target_width, target_height))
+                _, buffer = cv2.imencode('.jpg', small_frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
+                frame_data = f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}"
+
+                self.emit("camera_update", {
+                    "lastFrame": frame_data,
+                    "detectedObjects": [],
+                    "people": people,
+                    "hasPeople": has_people,
+                    "timestamp": time.time()
+                })
+                
+                # Periodic memory hygiene (every 100 frames = ~10s)
+                frame_count += 1
+                if frame_count % 100 == 0:
+                    if sys.platform == 'darwin':
+                        try:
+                            import torch
+                            if hasattr(torch, 'mps') and torch.backends.mps.is_available():
+                                torch.mps.empty_cache()
+                        except: pass
+                    gc.collect()
+
+            except Exception as e:
+                self.log(f"Camera loop error: {str(e)}")
             
-            target_width = 640
-            h_orig, w_orig = frame.shape[:2]
-            target_height = int(h_orig * (target_width / w_orig))
-            small_frame = cv2.resize(frame, (target_width, target_height))
-            _, buffer = cv2.imencode('.jpg', small_frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
-            frame_data = f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}"
-
-            self.emit("camera_update", {
-                "lastFrame": frame_data,
-                "detectedObjects": [],
-                "people": people,
-                "hasPeople": has_people,
-                "timestamp": time.time()
-            })
             time.sleep(0.1) # 10 FPS
 
         cap.release()
@@ -351,15 +373,23 @@ class VisionSidecar:
         except: return "Unknown"
 
     def screen_loop(self):
+        frame_count = 0
         while self.screen_running:
             try:
                 monitor = self.sct.monitors[1]
                 sct_img = self.sct.grab(monitor)
-                img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
-                frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+                # mss ScreenShot -> numpy BGRA -> BGR
+                frame = np.array(sct_img)
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+                
                 active_app = self.get_active_app_info()
                 
-                small_frame = cv2.resize(frame, (640, int(640 * frame.shape[0] / frame.shape[1])))
+                # Resize more efficiently
+                h_orig, w_orig = frame.shape[:2]
+                target_width = 640
+                target_height = int(h_orig * (target_width / w_orig))
+                small_frame = cv2.resize(frame, (target_width, target_height))
+                
                 _, buffer = cv2.imencode('.jpg', small_frame, [cv2.IMWRITE_JPEG_QUALITY, 40])
                 frame_data = f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}"
 
@@ -369,7 +399,20 @@ class VisionSidecar:
                     "ocrText": "OCR Active",
                     "timestamp": time.time()
                 })
-            except: pass
+
+                # Memory hygiene
+                frame_count += 1
+                if frame_count % 10 == 0:
+                    if sys.platform == 'darwin':
+                        try:
+                            import torch
+                            if torch.backends.mps.is_available():
+                                torch.mps.empty_cache()
+                        except: pass
+                    gc.collect()
+
+            except Exception as e:
+                self.log(f"Screen loop error: {str(e)}")
             time.sleep(1.0)
 
     def start_camera(self):

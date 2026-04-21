@@ -21,6 +21,7 @@ class PythonVoiceManager extends EventEmitter {
     private isMicAccessGranted = false;
     private isSpeaking = false;
     private authenticatedSpeaker: string | null = null;
+    private lastInterruptTime = 0;
 
     constructor() {
         super();
@@ -159,7 +160,7 @@ class PythonVoiceManager extends EventEmitter {
             broadcast('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
             if (this.isSpeaking) {
                 loggerService.catInfo(LogCategory.SYSTEM, `Verified user '${payload.speaker}' interrupted AI speech.`);
-                this.interruptPlayback();
+                this.interrupt();
             }
         } else if (type === 'tts_chunk') {
             this.isSpeaking = true;
@@ -195,8 +196,14 @@ class PythonVoiceManager extends EventEmitter {
 
     private interruptPlayback() {
         this.isSpeaking = false;
+        this.lastInterruptTime = Date.now();
         this.sendToSidecar('interrupt_tts', {});
         broadcast('voice:stop-playback');
+    }
+
+    public interrupt() {
+        this.emit('interrupt');
+        this.interruptPlayback();
     }
 
     private async processFinalTranscription(text: string) {
@@ -312,12 +319,38 @@ ${processedText}`;
             return;
         }
         
+        const startTime = Date.now();
+
         // Suppress mic during synthesis/playback
         this.sendToSidecar('mic_suppress_on', {});
         
-        const speechText = await this.synthesizeSpeechText(text);
-        this.isSpeaking = true;
-        this.sendToSidecar('speak', { text: speechText, voice: this.voiceId });
+        try {
+            const speechText = await this.synthesizeSpeechText(text);
+            
+            // ABORT: If an interrupt occurred while we were synthesizing
+            if (this.lastInterruptTime > startTime) {
+                loggerService.catInfo(LogCategory.SYSTEM, "Aborting speech synthesis: User interrupted during processing.");
+                this.sendToSidecar('mic_suppress_off', {});
+                this.isSpeaking = false;
+                return;
+            }
+
+            if (!speechText) {
+                this.sendToSidecar('mic_suppress_off', {});
+                this.isSpeaking = false;
+                return;
+            }
+            this.isSpeaking = true;
+            this.sendToSidecar('speak', { text: speechText, voice: this.voiceId });
+        } catch (e) {
+            loggerService.catError(LogCategory.SYSTEM, "Failed to speak text", { error: e });
+            this.sendToSidecar('mic_suppress_off', {});
+            this.isSpeaking = false;
+        }
+    }
+
+    getIsSpeaking() {
+        return this.isSpeaking;
     }
 }
 

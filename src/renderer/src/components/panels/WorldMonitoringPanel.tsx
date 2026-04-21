@@ -20,14 +20,21 @@ export const WorldMonitoringPanel: React.FC<WorldMonitoringPanelProps> = ({ widt
             const enabledSources = (settings.monitoring?.sources || []).filter((s: any) => s.enabled);
             setSources(enabledSources);
 
-            const deltasMap: Record<string, any> = {};
-            for (const source of enabledSources) {
-                const deltas = await window.api.listDeltas({ sourceId: source.id, limit: 1 });
-                if (deltas && deltas.length > 0) {
-                    deltasMap[source.id] = deltas[0];
+            // Fetch deltas in parallel, but update state incrementally so fast sources appear immediately
+            enabledSources.forEach(async (source: any) => {
+                try {
+                    const deltas = await window.api.listDeltas({ sourceId: source.id, limit: 1 });
+                    if (deltas && deltas.length > 0) {
+                        setLatestDeltas(prev => ({
+                            ...prev,
+                            [source.id]: deltas[0]
+                        }));
+                    }
+                } catch (err) {
+                    console.error(`Failed to fetch delta for source ${source.id}`, err);
                 }
-            }
-            setLatestDeltas(deltasMap);
+            });
+
         } catch (error) {
             console.error("Failed to fetch monitoring data", error);
         } finally {

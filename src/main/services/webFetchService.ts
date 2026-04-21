@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { settingsService } from './settingsService.js';
-import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
+import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { documentMeaningService } from './documentMeaningService.js';
 
@@ -128,10 +128,6 @@ export const webFetchService = {
     },
 
     async extractMetadata(text: string, url: string, imageUrl: string = "", imageDescription: string = ""): Promise<any> {
-        const settings = await settingsService.getInferenceSettings();
-        const fastModel = settings.fastModel;
-        if (!fastModel) throw new Error("Fast model not configured");
-
         const prompt = `Analyze the following text from ${url} and extract structured information.
         
         TEXT:
@@ -155,24 +151,8 @@ export const webFetchService = {
         }`;
 
         try {
-            let response: any = {};
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ 
-                    model: fastModel,
-                    generationConfig: { maxOutputTokens: 2048 }
-                });
-                const result = await model.generateContent(prompt);
-                response = extractJson(result.response.text());
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: fastModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 2048
-                });
-                response = extractJson(result.choices[0]?.message?.content || "{}");
-            }
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
+            const response = await extractJson(fastText);
             return response;
         } catch (error) {
             loggerService.catError(LogCategory.TOOL, "WebFetchService: Metadata extraction failed", { error });

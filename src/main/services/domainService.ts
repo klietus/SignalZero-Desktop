@@ -3,9 +3,7 @@ import { lancedbService } from './lancedbService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
-import { settingsService } from './settingsService.js';
-import { getClient, getGeminiClient } from './inferenceService.js';
-import { extractJson } from './inferenceService.js';
+import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
 
 const mapRowToDomain = (row: any): any => ({
@@ -328,112 +326,90 @@ export const domainService = {
     // 1. Synthesis via Fast Model
     let synthesized = { ...canonical };
     try {
-        const settings = await settingsService.getInferenceSettings();
-        const fastModel = settings.fastModel;
+        const prompt = `Synthesize these two symbolic definitions from a knowledge graph into one canonical symbol.
         
-        if (fastModel) {
-            const prompt = `Synthesize these two symbolic definitions from a knowledge graph into one canonical symbol.
-            
-            Canonical Symbol Candidate (${canonicalId}) in domain "${canonical.symbol_domain}":
-            ${JSON.stringify({ 
-                id: canonical.id,
-                domain: canonical.symbol_domain,
-                name: canonical.name, 
-                role: canonical.role, 
-                macro: canonical.macro, 
-                kind: canonical.kind,
-                lattice: canonical.lattice,
-                persona: canonical.persona,
-                data: canonical.data,
-                activation_conditions: canonical.activation_conditions, 
-                updated_at: canonical.updated_at 
-            })}
-            
-            Redundant Symbol Candidate (${redundantId}) in domain "${redundant.symbol_domain}":
-            ${JSON.stringify({ 
-                id: redundant.id,
-                domain: redundant.symbol_domain,
-                name: redundant.name, 
-                role: redundant.role, 
-                macro: redundant.macro, 
-                kind: redundant.kind,
-                lattice: redundant.lattice,
-                persona: redundant.persona,
-                data: redundant.data,
-                activation_conditions: redundant.activation_conditions, 
-                updated_at: redundant.updated_at 
-            })}
-            
-            CRITERIA:
-            1. Determine if they represent the EXACT same concept or if one is a direct evolution of the other.
-            2. SYNTHESIZE a HIGHER-LEVEL concept if they represent related ideas at different levels of abstraction.
-            3. CHOOSE the most descriptive and canonical "name" based on domain specificity (User > Root > State) and technical accuracy.
-            4. You MUST preserve and deduplicate all "activation_conditions" from both symbols.
-            5. MERGE all fields (macros, roles, facets) if the symbols have evolved, ensuring no knowledge is lost.
-            6. If they are fundamentally different concepts that should NOT be merged, output { "canMerge": false }.
-            
-            OUTPUT (Valid JSON only):
-            {
-              "canMerge": true/false,
-              "reason": "Brief explanation of synthesis approach and why this name was chosen",
-              "synthesized": {
-                 "name": "Synthesized canonical name",
-                 "role": "Synthesized role/definition",
-                 "macro": "Merged and evolved symbolic macro logic",
-                 "kind": "pattern/lattice/persona/data",
-                 "activation_conditions": ["merged", "unique", "conditions", ...],
-                 "lattice": { ... },
-                 "persona": { ... },
-                 "data": { ... }
-              }
-            }`;
+        Canonical Symbol Candidate (${canonicalId}) in domain "${canonical.symbol_domain}":
+        ${JSON.stringify({ 
+            id: canonical.id,
+            domain: canonical.symbol_domain,
+            name: canonical.name, 
+            role: canonical.role, 
+            macro: canonical.macro, 
+            kind: canonical.kind,
+            lattice: canonical.lattice,
+            persona: canonical.persona,
+            data: canonical.data,
+            activation_conditions: canonical.activation_conditions, 
+            updated_at: canonical.updated_at 
+        })}
+        
+        Redundant Symbol Candidate (${redundantId}) in domain "${redundant.symbol_domain}":
+        ${JSON.stringify({ 
+            id: redundant.id,
+            domain: redundant.symbol_domain,
+            name: redundant.name, 
+            role: redundant.role, 
+            macro: redundant.macro, 
+            kind: redundant.kind,
+            lattice: redundant.lattice,
+            persona: redundant.persona,
+            data: redundant.data,
+            activation_conditions: redundant.activation_conditions, 
+            updated_at: redundant.updated_at 
+        })}
+        
+        CRITERIA:
+        1. Determine if they represent the EXACT same concept or if one is a direct evolution of the other.
+        2. SYNTHESIZE a HIGHER-LEVEL concept if they represent related ideas at different levels of abstraction.
+        3. CHOOSE the most descriptive and canonical "name" based on domain specificity (User > Root > State) and technical accuracy.
+        4. You MUST preserve and deduplicate all "activation_conditions" from both symbols.
+        5. MERGE all fields (macros, roles, facets) if the symbols have evolved, ensuring no knowledge is lost.
+        6. If they are fundamentally different concepts that should NOT be merged, output { "canMerge": false }.
+        
+        OUTPUT (Valid JSON only):
+        {
+          "canMerge": true/false,
+          "reason": "Brief explanation of synthesis approach and why this name was chosen",
+          "synthesized": {
+             "name": "Synthesized canonical name",
+             "role": "Synthesized role/definition",
+             "macro": "Merged and evolved symbolic macro logic",
+             "kind": "pattern/lattice/persona/data",
+             "activation_conditions": ["merged", "unique", "conditions", ...],
+             "lattice": { ... },
+             "persona": { ... },
+             "data": { ... }
+          }
+        }`;
 
-            let response: any = {};
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({ 
-                    model: fastModel, 
-                    generationConfig: { maxOutputTokens: 1000 } 
-                });
-                const result = await model.generateContent(prompt);
-                const text = result.response.text();
-                response = await extractJson(text);
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({ 
-                    model: fastModel, 
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 1000
-                });
-                response = await extractJson(result.choices[0]?.message?.content || "{}");
-            }
+        const fastText = await callFastInference([{ role: "user", content: prompt }], 1000);
+        const response = await extractJson(fastText);
 
-            if (response.canMerge === false) {
-                loggerService.catWarn(LogCategory.DOMAIN, `Merge rejected by model: ${response.reason || 'Fundamentally different'}`);
-                return;
-            }
+        if (response.canMerge === false) {
+            loggerService.catWarn(LogCategory.DOMAIN, `Merge rejected by model: ${response.reason || 'Fundamentally different'}`);
+            return;
+        }
 
-            if (response.canMerge === true && response.synthesized) {
-                // Merge facets intelligently
-                const mergedFacets = {
-                    ...(canonical.facets || {}),
-                    ...(redundant.facets || {}),
-                    ...(response.synthesized.facets || {})
-                };
+        if (response.canMerge === true && response.synthesized) {
+            // Merge facets intelligently
+            const mergedFacets = {
+                ...(canonical.facets || {}),
+                ...(redundant.facets || {}),
+                ...(response.synthesized.facets || {})
+            };
 
-                // Deduplicate array facets
-                if (mergedFacets.gate) mergedFacets.gate = Array.from(new Set([...(canonical.facets?.gate || []), ...(redundant.facets?.gate || []), ...(response.synthesized.facets?.gate || [])]));
-                if (mergedFacets.substrate) mergedFacets.substrate = Array.from(new Set([...(canonical.facets?.substrate || []), ...(redundant.facets?.substrate || []), ...(response.synthesized.facets?.substrate || [])]));
-                if (mergedFacets.invariants) mergedFacets.invariants = Array.from(new Set([...(canonical.facets?.invariants || []), ...(redundant.facets?.invariants || []), ...(response.synthesized.facets?.invariants || [])]));
+            // Deduplicate array facets
+            if (mergedFacets.gate) mergedFacets.gate = Array.from(new Set([...(canonical.facets?.gate || []), ...(redundant.facets?.gate || []), ...(response.synthesized.facets?.gate || [])]));
+            if (mergedFacets.substrate) mergedFacets.substrate = Array.from(new Set([...(canonical.facets?.substrate || []), ...(redundant.facets?.substrate || []), ...(response.synthesized.facets?.substrate || [])]));
+            if (mergedFacets.invariants) mergedFacets.invariants = Array.from(new Set([...(canonical.facets?.invariants || []), ...(redundant.facets?.invariants || []), ...(response.synthesized.facets?.invariants || [])]));
 
-                synthesized = { 
-                    ...canonical, 
-                    ...response.synthesized, 
-                    id: canonicalId,
-                    facets: mergedFacets
-                }; 
-                loggerService.catInfo(LogCategory.DOMAIN, `Model-assisted synthesis complete for ${canonicalId}`, { reason: response.reason });
-            }
+            synthesized = { 
+                ...canonical, 
+                ...response.synthesized, 
+                id: canonicalId,
+                facets: mergedFacets
+            }; 
+            loggerService.catInfo(LogCategory.DOMAIN, `Model-assisted synthesis complete for ${canonicalId}`, { reason: response.reason });
         }
     } catch (err) {
         loggerService.catError(LogCategory.DOMAIN, `Synthesis failed, falling back to basic merge`, { error: err });

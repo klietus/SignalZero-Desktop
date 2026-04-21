@@ -224,6 +224,7 @@ function App() {
     const [contexts, setContexts] = useState<ContextSession[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
     const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor' | 'agents' | 'realtime'>('chat');
     const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
@@ -244,6 +245,9 @@ function App() {
     const [focusedSymbolName, setFocusedSymbolName] = useState<string | null>(null);
     const [lastVoiceScore, setLastVoiceScore] = useState<{ score: number, speaker: string } | null>(null);
     const [realtimeStatus, setRealtimeStatus] = useState<any>(null);
+    const [isAudioSpeaking, setIsAudioSpeaking] = useState(false);
+    const [voiceEnabled, setVoiceEnabled] = useState(false);
+    const [audioAnalyser, setAudioAnalyser] = useState<AnalyserNode | null>(null);
 
     useEffect(() => {
         // Initial fetch
@@ -254,6 +258,10 @@ function App() {
                 screen: state.screen.status
             });
         });
+
+        window.api.getSettings().then(s => {
+            setVoiceEnabled(!!s.voiceEnabled);
+        }).catch(() => {});
 
         // Listen only for status changes (low frequency)
         const unbind = window.api.onRealtimeStatusUpdate((update) => {
@@ -388,9 +396,16 @@ function App() {
         // as it would overwrite the active streaming state.
         if (isProcessing) return;
 
+        setIsLoadingHistory(true);
+        setMessages([]);
+
         window.api.getHistory(activeContextId).then(history => {
             if (history) setMessages(groupHistoryByCorrelation(history));
-        }).catch(e => console.error("History fetch failed", e));
+        }).catch(e => {
+            console.error("History fetch failed", e);
+        }).finally(() => {
+            setIsLoadingHistory(false);
+        });
     }, [activeContextId, appState, currentView, isProcessing]);
 
     useEffect(() => {
@@ -442,6 +457,11 @@ function App() {
             if (activeContextId && sessionId !== activeContextId) return;
 
             setIsProcessing(false);
+            
+            // Immediately clear any streaming messages to prevent double-display 
+            // before the history fetch completes
+            setMessages(prev => prev.filter(m => !m.isStreaming));
+
             if (activeContextId) {
                 window.api.getHistory(activeContextId).then(history => {
                     if (history) {
@@ -469,6 +489,10 @@ function App() {
                     if (prev.find(s => s.id === data.id)) return prev;
                     return [data, ...prev];
                 });
+            }
+            if (type === 'context:deleted') {
+                setContexts(prev => prev.filter(c => c.id !== data.id));
+                setActiveContextId(current => current === data.id ? null : current);
             }
             if (type === 'context:updated') {
                 setContexts(prev => prev.map(c =>
@@ -522,32 +546,43 @@ function App() {
         let lastChunkReceived = false;
         let currentSource: AudioBufferSourceNode | null = null;
 
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.connect(audioCtx.destination);
+        setAudioAnalyser(analyser);
+
         const processQueue = async (ctx: AudioContext) => {
-            if (isPlaying || playbackQueue.length === 0) return;
+            if (isPlaying || playbackQueue.length === 0) {
+                if (playbackQueue.length === 0 && !isPlaying) setIsAudioSpeaking(false);
+                return;
+            }
             isPlaying = true;
+            setIsAudioSpeaking(true);
 
             const buffer = playbackQueue.shift();
             if (buffer) {
                 const source = ctx.createBufferSource();
                 currentSource = source;
                 source.buffer = buffer;
-                source.connect(ctx.destination);
+                source.connect(analyser); // Connect to analyser
                 source.onended = () => {
                     isPlaying = false;
                     currentSource = null;
                     if (playbackQueue.length > 0) {
                         // Add a half-second pause between sentences for more natural flow
                         setTimeout(() => processQueue(ctx), 500);
-                    } else if (lastChunkReceived) {
-                        window.api.notifyPlaybackFinished();
-                        lastChunkReceived = false;
+                    } else {
+                        setIsAudioSpeaking(false);
+                        if (lastChunkReceived) {
+                            window.api.notifyPlaybackFinished();
+                            lastChunkReceived = false;
+                        }
                     }
                 };
                 source.start();
             }
         };
-
-        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
 
         const unbindVoiceChunk = window.api.onPlayChunk(async (data: { audio: string, index: number, isLast: boolean }) => {
             try {
@@ -575,6 +610,7 @@ function App() {
             }
             playbackQueue = [];
             isPlaying = false;
+            setIsAudioSpeaking(false);
             lastChunkReceived = false;
             window.api.notifyPlaybackFinished();
         });
@@ -652,6 +688,16 @@ function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    const handleToggleVoiceEnabled = async () => {
+        const newState = !voiceEnabled;
+        setVoiceEnabled(newState);
+        await (window.api as any).setVoiceEnabled(newState);
+    };
+
+    const handleCancelSpeech = async () => {
+        await (window.api as any).cancelSpeech();
+    };
+
     const handleSendMessage = async (text: string, options?: { attachments?: { id: string, filename: string, type: string }[], metadata?: Record<string, any> }) => {
         if (!activeContextId || isProcessing) return;
         setIsProcessing(true);
@@ -683,18 +729,13 @@ function App() {
     const handleCreateContext = async () => {
         const session = await window.api.createContext('conversation');
         if (session) {
-            setContexts(prev => [session, ...prev]);
             setActiveContextId(session.id);
             setCurrentView('chat');
         }
     };
 
     const handleArchiveContext = async (id: string) => {
-        const success = await window.api.deleteContext(id);
-        if (success) {
-            setContexts(prev => prev.filter(c => c.id !== id));
-            if (activeContextId === id) setActiveContextId(null);
-        }
+        await window.api.deleteContext(id);
     };
 
     const getHeaderProps = (title: string, icon?: React.ReactNode): HeaderProps => ({
@@ -708,7 +749,7 @@ function App() {
     });
 
     const renderCurrentView = () => {
-        if (currentView === 'monitor') return <CinematicView onSymbolFocus={setFocusedSymbolName} />;
+        if (currentView === 'monitor') return <CinematicView onSymbolFocus={setFocusedSymbolName} isSpeaking={isAudioSpeaking} audioAnalyser={audioAnalyser} />;
 
         switch (currentView) {
             case 'chat':
@@ -776,7 +817,7 @@ function App() {
                 {/* CinematicView (Graph) - Fixed background or focused view */}
                 {showGraphviz && (
                     <div className={`absolute inset-0 transition-opacity duration-700 ${isGraphView ? 'opacity-100 z-20 pointer-events-auto' : 'opacity-20 z-0 pointer-events-none'}`}>
-                        <CinematicView onSymbolFocus={setFocusedSymbolName} />
+                        <CinematicView onSymbolFocus={setFocusedSymbolName} isSpeaking={isAudioSpeaking} audioAnalyser={audioAnalyser} />
                     </div>
                 )}
 
@@ -834,7 +875,12 @@ function App() {
                     <div className={`flex-1 flex flex-col min-w-0 transition-opacity duration-300 ${isGraphView ? 'opacity-0' : 'opacity-100 pointer-events-auto'}`}>
                         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth bg-transparent">
                             <div className="w-full max-w-full mx-auto space-y-10 pb-12">
-                                {messages.length === 0 ? (
+                                {isLoadingHistory ? (
+                                    <div className="h-full flex flex-col items-center justify-center opacity-40 mt-32 text-center animate-pulse">
+                                        <Loader2 size={48} className="mb-4 mx-auto animate-spin text-indigo-500" />
+                                        <p className="text-sm font-mono uppercase tracking-[0.2em]">Accessing_Symbolic_History...</p>
+                                    </div>
+                                ) : messages.length === 0 ? (
                                     <div className="h-full flex flex-col items-center justify-center opacity-20 mt-32 text-center">
                                         <MessageSquare size={64} className="mb-4 mx-auto" />
                                         <p className="text-xl font-light tracking-widest uppercase">SignalZero Kernel</p>
@@ -876,6 +922,10 @@ function App() {
                                     pendingAttachments={pendingAttachments}
                                     onClearPendingAttachments={() => setPendingAttachments([])}
                                     realtimeStatus={realtimeStatus}
+                                    voiceEnabled={voiceEnabled}
+                                    isAudioSpeaking={isAudioSpeaking}
+                                    onToggleVoiceEnabled={handleToggleVoiceEnabled}
+                                    onCancelSpeech={handleCancelSpeech}
                                 />
                             </div>
                         </div>

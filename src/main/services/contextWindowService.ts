@@ -222,6 +222,10 @@ export class ContextWindowService {
             content: msg.content || null,
         };
 
+        if (msg.metadata?.reasoning_content) {
+            chatMsg.reasoning_content = msg.metadata.reasoning_content;
+        }
+
         if (msg.toolCalls && msg.toolCalls.length > 0) {
             chatMsg.tool_calls = msg.toolCalls.map((tc: any) => ({
                 id: tc.id,
@@ -352,15 +356,15 @@ export class ContextWindowService {
             await this.recursiveSymbolLoad('SELF-RECURSIVE-CORE', 1, coreSet);
 
             const coreSymbols = Array.from(coreSet.values());
-            // Inject with turnCount 4 to stabilize immediately
-            symbolCacheService.batchUpsertSymbols(contextSessionId, coreSymbols, 4);
+            // Inject with turnCount 2 to stabilize immediately
+            symbolCacheService.batchUpsertSymbols(contextSessionId, coreSymbols, 2);
 
             // Query 3: Root Domain
             const rootSet = new Map<string, SymbolDef>();
             await this.recursiveSymbolLoad('ROOT-SYNTHETIC-CORE', 1, rootSet);
 
             const rootSymbols = Array.from(rootSet.values());
-            symbolCacheService.batchUpsertSymbols(contextSessionId, rootSymbols, 4);
+            symbolCacheService.batchUpsertSymbols(contextSessionId, rootSymbols, 2);
 
             const fullContext = results.join('');
             loggerService.catInfo(LogCategory.KERNEL, `Built Stable Context`, {
@@ -410,7 +414,7 @@ export class ContextWindowService {
 
                 const userSymbols = Array.from(userSet.values());
                 userCoreCount = userSymbols.length;
-                await symbolCacheService.batchUpsertSymbols(contextSessionId, userSymbols, 4);
+                await symbolCacheService.batchUpsertSymbols(contextSessionId, userSymbols, 2);
             }
 
             // After all possible population, get what's in the cache for the context window

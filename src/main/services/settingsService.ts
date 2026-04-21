@@ -21,8 +21,6 @@ export interface InferenceSettings {
   endpoint: string;
   model: string;
   agentModel: string;
-  visionModel: string;
-  fastModel: string;
   voiceEnabled?: boolean;
   systemName?: string;
   voiceId?: string;
@@ -36,8 +34,6 @@ export interface InferenceConfiguration {
   endpoint: string;
   model: string;
   agentModel: string;
-  visionModel: string;
-  fastModel: string;
   voiceEnabled?: boolean;
   systemName?: string;
   voiceId?: string;
@@ -156,8 +152,6 @@ export const settingsService = {
       endpoint: saved.endpoint || 'http://localhost:1234/v1',
       model: saved.model || 'qwen3.5-122b-a10b',
       agentModel: saved.agentModel || saved.model || 'qwen3.5-122b-a10b',
-      visionModel: saved.visionModel || 'zai-org/glm-4.6v-flash',
-      fastModel: saved.fastModel || 'qwen3.5-0.8b',
       voiceEnabled: settings.voiceEnabled ?? saved.voiceEnabled ?? false,
       systemName: settings.systemName ?? saved.systemName ?? 'axiom',
       voiceId: settings.voiceId ?? saved.voiceId ?? 'af_sarah',

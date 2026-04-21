@@ -87,7 +87,8 @@
     ],
     "extraResources": [
       "signalzero_sample.szproject",
-      "models/**/*"
+      "models/**/*",
+      "sidecars/llama/**/*"
     ],
     "mac": {
       "icon": "resources/cognitav.jpg"

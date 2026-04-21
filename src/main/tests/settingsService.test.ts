@@ -22,9 +22,7 @@ describe('SettingsService with safeStorage', () => {
             apiKey: 'secret-key-123',
             endpoint: 'https://api.openai.com/v1',
             model: 'gpt-4',
-            agentModel: 'gpt-4',
-            visionModel: 'gpt-4-v',
-            fastModel: 'gpt-3.5'
+            agentModel: 'gpt-4'
         });
 
         expect(encryptSpy).toHaveBeenCalledWith('secret-key-123');
@@ -43,9 +41,7 @@ describe('SettingsService with safeStorage', () => {
             apiKey: 'secret-key-123',
             endpoint: '...',
             model: '...',
-            agentModel: '...',
-            visionModel: '...',
-            fastModel: '...'
+            agentModel: '...'
         });
 
         const retrieved = await settingsService.getInferenceSettings();

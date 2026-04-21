@@ -30,7 +30,7 @@ vi.mock('../services/inferenceService.js', () => ({
 
 vi.mock('../services/settingsService.js', () => ({
     settingsService: {
-        getInferenceSettings: vi.fn().mockResolvedValue({ fastModel: 'm', model: 'm' })
+        getInferenceSettings: vi.fn().mockResolvedValue({ model: 'm' })
     }
 }));
 

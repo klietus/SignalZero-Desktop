@@ -224,6 +224,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
     }
   };
 
+  // ... existing copy logic ...
+  
+  const cleanContent = (text: string) => {
+    if (!text) return "";
+    return text
+      .replace(/\[\d{2}:\d{2}:\d{2}\]\s*/g, '') // Hide timestamps
+      // Hide emotion/voice tags (lowercase, simple words) while preserving complex structural tags
+      .replace(/<(?:neutral|emphatic|whispering\/calm|happy|sad|angry|fearful|disgust|surprise|focused|blinking|excited\/loud)>\s*/gi, '')
+      .trim();
+  };
+
   // Formatter to handle code blocks and Markdown text (with integrated sz tags)
   const formatText = (text: string) => {
     // Split ONLY by Code Blocks to isolate them
@@ -242,6 +253,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
 
       // 2. Handle Markdown and integrated custom tags
       let markdownContent = part;
+      
+      // MASK TIMESTAMPS AND TAGS FOR UI DISPLAY
+      markdownContent = cleanContent(markdownContent);
 
       // Handle <think> tags (convert to a format ReactMarkdown component can catch)
       markdownContent = markdownContent.replace(/<(?:seed:)?think>([\s\S]*?)<\/(?:seed:)?think>/g, (_, content) => {

@@ -22,6 +22,7 @@ import { eventBusService, KernelEventType } from './eventBusService.js';
 import { webSearchService } from './webSearchService.js';
 import { workerService } from './workerService.js';
 import { realtimeService } from './realtime/realtimeService.js';
+import { llamaService } from './llamaService.js';
 
 interface ChatSessionState {
   messages: ChatCompletionMessageParam[];
@@ -84,49 +85,52 @@ class InferenceLockManager {
 
 export const inferenceLock = new InferenceLockManager();
 
-export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 512, attachments?: any[]): Promise<string> => {
-    const settings = await settingsService.getInferenceSettings();
-    const fastModel = settings.fastModel;
-    
-    if (settings.provider === 'gemini') {
-        const client = await getGeminiClient();
-        const model = client.getGenerativeModel({ 
-            model: fastModel,
-            generationConfig: { maxOutputTokens: maxTokens } 
-        });
-        
-        const contentParts: any[] = [{ text: messages.map(m => m.content).join('\n') }];
-        if (attachments && attachments.length > 0) {
-            for (const att of attachments) {
-                if (att.image_base64) {
-                    contentParts.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
-                }
-            }
-        }
-        
-        const result = await model.generateContent(contentParts);
-        return result.response.text().trim();
-    } else {
-        const client = await getClient();
-        let userContent: any = messages.map(m => m.content).join('\n');
-        
-        if (attachments && attachments.length > 0) {
-            const parts: any[] = [{ type: 'text', text: userContent }];
-            for (const att of attachments) {
-                if (att.image_base64) {
-                    parts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
-                }
-            }
-            userContent = parts;
-        }
+export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 512, _attachments?: any[]): Promise<string> => {
+  const startTime = performance.now();
+  const requestId = randomUUID();
+  
+  eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_STARTED, { requestId, timestamp: new Date().toISOString() });
 
-        const result = await client.chat.completions.create({ 
-            model: fastModel, 
-            messages: [{ role: 'user', content: userContent }] as any, 
-            max_tokens: maxTokens 
-        });
-        return result.choices[0]?.message?.content?.trim() || "";
+  try {
+    // Qwen/ChatML template
+    let prompt = "";
+    for (const m of messages) {
+        prompt += `<|im_start|>${m.role}\n${m.content}<|im_end|>\n`;
     }
+    prompt += `<|im_start|>assistant\n`;
+
+    const result = await llamaService.completion(prompt, { 
+        maxTokens,
+        stop: ["<|im_end|>", "<|im_start|>", "assistant:", "user:", "system:"]
+    });
+    
+    const duration = performance.now() - startTime;
+    const responseText = result.content.trim();
+    
+    eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, { 
+      requestId, 
+      durationMs: duration,
+      tokenCount: responseText.length / 4, // Rough approximation
+      status: 'success',
+      timestamp: new Date().toISOString()
+    });
+
+    loggerService.catDebug(LogCategory.INFERENCE, "Fast inference metrics", { durationMs: duration, requestId });
+
+    return responseText;
+  } catch (error: any) {
+    const duration = performance.now() - startTime;
+    eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, { 
+      requestId, 
+      durationMs: duration, 
+      status: 'error',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+    
+    loggerService.catError(LogCategory.INFERENCE, "Fast inference (llama sidecar) failed", { error: error.message, durationMs: duration });
+    throw error;
+  }
 };
 
 export const getClient = async () => {
@@ -492,11 +496,20 @@ const _streamAssistantResponseInternal = async function* (
   });
 
   let textAccumulator = "";
+  let reasoningAccumulator = "";
   const collectedToolCalls = new Map<number, ChatCompletionMessageToolCall>();
 
   for await (const part of stream) {
     const delta = part.choices?.[0]?.delta;
     if (!delta) continue;
+
+    // Capture Reasoning Content (Thinking)
+    if ((delta as any).reasoning_content) {
+        const reasoning = (delta as any).reasoning_content;
+        reasoningAccumulator += reasoning;
+        yield { text: `<seed:think>${reasoning}</seed:think>` };
+    }
+
     const textChunk = extractTextDelta(delta);
     if (textChunk) {
       textAccumulator += textChunk;
@@ -514,6 +527,11 @@ const _streamAssistantResponseInternal = async function* (
     content: textAccumulator,
     ...(completedToolCalls.length > 0 ? { tool_calls: completedToolCalls } : {}),
   };
+
+  if (reasoningAccumulator) {
+      (assistantMessage as any).reasoning_content = reasoningAccumulator;
+  }
+
   yield { assistantMessage };
 };
 
@@ -576,7 +594,8 @@ export async function* sendMessageAndHandleTools(
   monitoringDeltas?: any[],
   priority: number = 1, // Default to High (User Chat)
   cleanMessage?: string,
-  sceneAttachments?: any[]
+  sceneAttachments?: any[],
+  metadata?: Record<string, any>
 ): AsyncGenerator<
   { text?: string; toolCalls?: any[]; isComplete?: boolean },
   void,
@@ -603,12 +622,11 @@ export async function* sendMessageAndHandleTools(
       content: cleanMessage || message, // Use cleanMessage for history
       timestamp: new Date().toISOString(),
       metadata: {
-        kind: "user_prompt",
+        ...metadata,
+        kind: metadata?.is_autonomous ? "autonomous_trigger" : "user_prompt",
         ...(attachments.length > 0 ? { attachments } : {})
       },
     } as any);
-    await symbolCacheService.incrementTurns(contextSessionId);
-    await tentativeLinkService.incrementTurns();
   }
 
   const settings = await settingsService.getInferenceSettings();
@@ -937,34 +955,48 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
 
       if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) yield { text: totalTextAccumulatedAcrossLoops.trim() };
 
+      // Record Assistant message if it contained tool calls OR if it's the final turn
+      if (contextSessionId && nextAssistant) {
+        const hasTools = (nextAssistant as any).tool_calls && (nextAssistant as any).tool_calls.length > 0;
+        const reasoning = (nextAssistant as any).reasoning_content;
+        
+        if (hasTools || isEndingTurn) {
+          await contextService.recordMessage(contextSessionId, { 
+            id: randomUUID(), 
+            role: "assistant", 
+            content: isEndingTurn ? stripThoughts(totalTextAccumulatedAcrossLoops) : (nextAssistant.content as string || ""), 
+            timestamp: new Date().toISOString(), 
+            toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ id: call.id, name: call.function?.name, arguments: call.function?.arguments })), 
+            metadata: { 
+              kind: hasTools ? "assistant_tool_call" : "assistant_response",
+              ...(reasoning ? { reasoning_content: reasoning } : {})
+            }, 
+            correlationId: correlationId 
+          } as any);
+        }
+      }
+
       transientMessages.push(nextAssistant!);
       if (toolResponses.length > 0) transientMessages.push(...toolResponses);
 
       if (isEndingTurn) {
         if (contextSessionId) {
-          await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "assistant", content: stripThoughts(totalTextAccumulatedAcrossLoops), timestamp: new Date().toISOString(), toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ id: call.id, name: call.function?.name, arguments: call.function?.arguments })), metadata: { kind: "assistant_response" }, correlationId: correlationId } as any);
-          
           try {
             const session = await contextService.getSession(contextSessionId);
             if (session && (!session.name || session.name.startsWith('Context '))) {
               const history = await contextService.getUnfilteredHistory(contextSessionId);
               if (history.length >= 2 && history.length <= 4) {
-                const settings = await settingsService.getInferenceSettings();
-                const fastModel = settings.fastModel;
-                if (fastModel) {
-                  const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
-                  const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
-                  
-                  const newName = await callFastInference([{ role: "user", content: namingPrompt }], 50);
+                 const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
+                 const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
 
-                  if (newName) {
-                    const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                    await contextService.updateSession({ ...session, name: cleanName });
-                    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
-                  }
-                }
-              }
-            }
+                 const newName = await callFastInference([{ role: "user", content: namingPrompt }], 50);
+
+                 if (newName) {
+                   const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                   await contextService.updateSession({ ...session, name: cleanName });
+                   eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
+                 }
+              }            }
           } catch (namingError) { }
         }
         break;
@@ -1093,23 +1125,18 @@ export const extractJson = async (text: string): Promise<any> => {
 };
 
 export const summarizeHistory = async (history: ContextMessage[], currentSummary?: string): Promise<string> => {
-  const settings = await settingsService.getInferenceSettings();
-  const fastModel = settings.fastModel;
-  if (!fastModel) return currentSummary || "";
   const cleanHistory = contextWindowService.stripTools(history);
   const historyText = cleanHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "")}`).join('\n');
   const prompt = `Summarize the following conversation concisely: ${currentSummary ? `Previous Summary: ${currentSummary}\n` : ''} \n\nRecent Conversation History:\n${historyText}\n\nREFINED SUMMARY:`;
   try {
-    return await callFastInference([{ role: "user", content: prompt }], 2048);
+    return await callFastInference([{ role: "user", content: prompt }], 4096);
   } catch (error) { return currentSummary || ""; }
 };
 
 export const synthesizeWebResults = async (
   queryResults: { query: string, results: { title: string, snippet: string, url: string }[] }[]
 ): Promise<string> => {
-  const settings = await settingsService.getInferenceSettings();
-  const fastModel = settings.fastModel;
-  if (!fastModel || queryResults.length === 0) return "";
+  if (queryResults.length === 0) return "";
   let resultsText = "";
   queryResults.forEach(qr => {
     resultsText += `\n[RESULTS FOR QUERY: "${qr.query}"]\n`;
@@ -1143,13 +1170,6 @@ export const primeSymbolicContext = async (
   let webBrief: string | undefined;
 
   try {
-    const settings = await settingsService.getInferenceSettings();
-    const fastModel = settings.fastModel;
-    if (!fastModel) {
-      loggerService.catWarn(LogCategory.INFERENCE, "No fastModel configured, skipping symbolic priming.");
-      return { symbols: [], webResults: [], traceNeeded };
-    }
-
     const session = await contextService.getSession(contextSessionId);
     const history = await contextService.getUnfilteredHistory(contextSessionId);
     const recentHistory = history.slice(-10);
@@ -1174,7 +1194,7 @@ export const primeSymbolicContext = async (
     const userMessageCount = history.filter(m => m.role === 'user').length + 1;
     const needsNaming = !currentName || currentName.startsWith('Context ') || (userMessageCount % 10 === 0);
 
-    loggerService.catInfo(LogCategory.INFERENCE, `Priming symbolic context with fastModel: ${fastModel}`, {
+    loggerService.catInfo(LogCategory.INFERENCE, "Priming symbolic context via Llama Sidecar", {
       contextSessionId,
       historyCount: recentHistory.length,
       needsNaming
@@ -1299,6 +1319,7 @@ export const processMessageAsync = async (
   messageId?: string,
   metadata?: Record<string, any>
 ) => {
+  eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { contextSessionId });
   let messageTraceNeeded = false;
   try {
     const sceneSnapshot = realtimeService.getSnapshot();
@@ -1363,7 +1384,13 @@ export const processMessageAsync = async (
       });
     }
     const chat = await getChatSession(finalSystemInstruction, contextSessionId);
-    const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, monitoringDeltas, 1, message, sceneAttachments);
+    
+    // Increment turns AFTER load so that newly loaded/refreshed symbols have turnCount 0 (touched)
+    // and only then get incremented to 1, avoiding immediate eviction.
+    await symbolCacheService.incrementTurns(contextSessionId);
+    await tentativeLinkService.incrementTurns();
+    
+    const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, monitoringDeltas, 1, message, sceneAttachments, metadata);
     
     const isSilent = metadata?.silent === true;
     if (!isSilent) {
@@ -1378,7 +1405,12 @@ export const processMessageAsync = async (
       }
       if (chunk.isComplete) {
           if (!isSilent) {
-              eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId, fullText });
+              eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { 
+                  sessionId: contextSessionId, 
+                  messageId, 
+                  fullText,
+                  metadata: { ...metadata } 
+              });
           }
           return { fullText, sessionId: contextSessionId };
       }

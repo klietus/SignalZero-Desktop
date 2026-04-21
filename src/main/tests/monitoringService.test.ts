@@ -14,7 +14,6 @@ vi.mock('../services/webFetchService.js', () => ({
 vi.mock('../services/settingsService.js', () => ({
     settingsService: {
         getInferenceSettings: vi.fn().mockResolvedValue({
-            fastModel: 'gemini-1.5-flash',
             agentModel: 'gemini-1.5-pro',
             provider: 'gemini'
         }),

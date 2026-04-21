@@ -63,6 +63,7 @@ class VoiceSidecar:
         self.early_id_sent_count = 0
         self.early_id_threshold = 20 # ~600ms (20 * 30ms)
         self.early_id_interval = 25  # Re-check every ~750ms if long segment
+        self.verified_interrupt = False # Track if current segment has a verified human
 
     def send_to_electron(self, msg_type, data):
         """Send JSON message to Electron via stdout"""
@@ -116,8 +117,8 @@ class VoiceSidecar:
 
         # 1. Update Noise Floor
         current_noise_floor = self.noise_tracker.update(rms)
-        # Calculate signal-to-noise ratio in dB
-        snr = 20 * np.log10(rms / (current_noise_floor + 1e-6))
+        # Calculate signal-to-noise ratio in dB (with epsilons for stability)
+        snr = 20 * np.log10((rms + 1e-6) / (current_noise_floor + 1e-6))
         
         # Periodic metrics for UI
         if self.callback_count % 10 == 0:
@@ -128,7 +129,7 @@ class VoiceSidecar:
                 "snr": float(snr)
             })
 
-        if not self.mic_enabled or self.mic_suppressed:
+        if not self.mic_enabled:
             if self.triggered:
                 self.triggered = False
                 self.speech_frames = []
@@ -139,7 +140,7 @@ class VoiceSidecar:
         # 2. VAD Logic (Gated by SNR and Noise Floor)
         is_speech = False
         # We need a minimum SNR to consider it speech, otherwise it's just louder background noise
-        if snr > 3.0: 
+        if snr > 5.0: 
             try:
                 is_speech = self.vad.is_speech(pcm_frame, SAMPLE_RATE)
             except:
@@ -150,6 +151,7 @@ class VoiceSidecar:
                 self.send_to_electron("speech_start", {})
                 self.triggered = True
                 self.early_id_sent_count = 0
+                self.verified_interrupt = False # Reset human detection for new segment
             self.silence_counter = 0
             self.speech_frames.append(audio_frame)
 
@@ -182,7 +184,14 @@ class VoiceSidecar:
                 audio_np = np.concatenate(self.speech_frames)
                 self.speech_frames = []
 
-                if len(audio_np) >= SAMPLE_RATE * 0.5:
+                # ECHOCANCELLATION GATE:
+                # If the mic is still suppressed (AI is speaking) and we never verified 
+                # a human speaker in this segment, throw it away.
+                if self.mic_suppressed and not self.verified_interrupt:
+                    logger.info("Discarding segment: Mic is suppressed and no verified human speaker detected (likely AI echo).")
+                    return
+
+                if len(audio_np) >= SAMPLE_RATE * 0.7:
                     if self.enroll_mode:
                         self.processing_queue.put({"type": "enroll", "audio": audio_np})
                     elif self.engine:
@@ -210,6 +219,7 @@ class VoiceSidecar:
                 if task_type == "early_id":
                     speaker_name, score = self.engine.identify_speaker(audio_np)
                     if speaker_name and speaker_name != "Unknown_Speaker":
+                        self.verified_interrupt = True # Human detected, allow segment collection
                         self.send_to_electron("speaker_interrupt", {"speaker": speaker_name, "score": score})
                         # Continual Training: Use tiered LR
                         lr = self.calculate_lr(score)
@@ -238,18 +248,31 @@ class VoiceSidecar:
                 elif task_type == "stt":
                     result = self.engine.process_segment(audio_np)
                     if result and result.get('text'):
-                        self.send_to_electron("stt_result", {
-                            "text": result['text'].strip(),
-                            "speaker": result.get('speaker', 'Unknown'),
-                            "score": result.get('score', 0)
-                        })
-                        # Continual Training on full segment
-                        score = result.get('score', 0)
-                        lr = self.calculate_lr(score)
-                        if result.get('speaker') and result.get('speaker') != 'Unknown' and lr:
-                            updated_profile = self.engine.refine_speaker_profile(result['speaker'], audio_np, custom_lr=lr)
-                            if updated_profile:
-                                self.send_to_electron("profile_updated", {"name": result['speaker'], "profile": updated_profile})
+                        text = result.get('raw_text', '').lower().strip()
+                        
+                        # WHISPER HALLUCINATION FILTER
+                        hallucinations = ["thank you", "thank you.", "watching", "you", "thanks for watching", "thank you very much", "thank you very much."]
+                        duration = len(audio_np) / SAMPLE_RATE
+                        
+                        is_hallucination = False
+                        if text in hallucinations:
+                            is_hallucination = True
+                        elif duration < 1.2 and any(h in text for h in ["thank you", "watching"]):
+                            is_hallucination = True
+                            
+                        if is_hallucination:
+                            logger.info(f"Filtered suspected hallucination: '{text}' ({duration:.2f}s)")
+                        else:
+                            # Finalized Result
+                            self.send_to_electron("stt_result", result)
+                            
+                            # Continual Training on full segment
+                            score = result.get('score', 0)
+                            lr = self.calculate_lr(score)
+                            if result.get('speaker') and result.get('speaker') != 'Unknown' and lr:
+                                updated_profile = self.engine.refine_speaker_profile(result['speaker'], audio_np, custom_lr=lr)
+                                if updated_profile:
+                                    self.send_to_electron("profile_updated", {"name": result['speaker'], "profile": updated_profile})
             except queue.Empty:
                 continue
             except Exception as e:
@@ -355,9 +378,9 @@ class VoiceSidecar:
                         profiles = payload.get('profiles', {})
                         self.engine.set_profiles(profiles)
                         self.send_to_electron("profiles_ready", {"count": len(profiles)})
-                elif action == 'suppress_mic':
+                elif action == 'suppress_mic' or action == 'mic_suppress_on':
                     self.mic_suppressed = True
-                elif action == 'resume_mic':
+                elif action == 'resume_mic' or action == 'mic_suppress_off':
                     self.mic_suppressed = False
                 elif action == 'speak':
                     self.tts_queue.put(payload)

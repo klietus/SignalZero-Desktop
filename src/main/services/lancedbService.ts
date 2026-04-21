@@ -2,7 +2,7 @@ import * as lancedb from '@lancedb/lancedb';
 import { join } from 'path';
 import { app } from 'electron';
 import fs from 'fs';
-import { embedTexts } from './embeddingService.js';
+import { workerService } from './workerService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 
 // Types (Mirrored from LocalNode/types.ts)
@@ -119,7 +119,7 @@ export const lancedbService = {
             for (let i = 0; i < symbols.length; i += EMBED_CHUNK_SIZE) {
                 const chunk = symbols.slice(i, i + EMBED_CHUNK_SIZE);
                 const contents = chunk.map(symbolToContent);
-                const vectors = await embedTexts(contents);
+                const vectors = await workerService.embedTexts(contents);
                 
                 for (let j = 0; j < chunk.length; j++) {
                     const symbol = chunk[j];
@@ -192,7 +192,7 @@ export const lancedbService = {
             const table = await getTable();
             if (!table) return [];
 
-            const [queryVector] = await embedTexts([query]);
+            const [queryVector] = await workerService.embedTexts([query]);
             
             let searchBuilder = table.search(queryVector).limit(nResults);
             
@@ -368,7 +368,7 @@ export const lancedbService = {
             for (let i = 0; i < deltas.length; i += EMBED_CHUNK_SIZE) {
                 const chunk = deltas.slice(i, i + EMBED_CHUNK_SIZE);
                 const contents = chunk.map(d => `Source: ${d.sourceId}\nPeriod: ${d.period}\nContent: ${d.content}`);
-                const vectors = await embedTexts(contents);
+                const vectors = await workerService.embedTexts(contents);
                 
                 for (let j = 0; j < chunk.length; j++) {
                     const delta = chunk[j];
@@ -407,7 +407,7 @@ export const lancedbService = {
             const table = await getDeltasTable();
             if (!table) return [];
 
-            const [queryVector] = await embedTexts([query]);
+            const [queryVector] = await workerService.embedTexts([query]);
             // We search by vector and sort by timestamp descending (most recent first)
             // Note: sorting in LanceDB might be expensive if the table is huge, but for monitoring it should be fine.
             let searchBuilder = table.search(queryVector).limit(nResults);

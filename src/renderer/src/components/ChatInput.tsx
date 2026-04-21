@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
     SendHorizontal, Loader2, Square, Plus, Smile, X, 
-    FileUp, Camera, Image as ImageIcon, Mic, MicOff, Monitor 
+    FileUp, Camera, Image as ImageIcon, Mic, MicOff, Monitor,
+    Volume2, VolumeX, AudioLines
 } from 'lucide-react';
 
 interface ChatInputProps {
@@ -17,6 +18,10 @@ interface ChatInputProps {
   pendingAttachments?: any[];
   onClearPendingAttachments?: () => void;
   realtimeStatus?: any;
+  voiceEnabled?: boolean;
+  isAudioSpeaking?: boolean;
+  onToggleVoiceEnabled?: () => void;
+  onCancelSpeech?: () => void;
 }
 
 const COMMON_EMOJIS = [
@@ -27,7 +32,8 @@ const COMMON_EMOJIS = [
 
 export const ChatInput: React.FC<ChatInputProps> = ({ 
     onSend, onStop, disabled, isProcessing, activeContextId,
-    pendingAttachments, onClearPendingAttachments, realtimeStatus
+    pendingAttachments, onClearPendingAttachments, realtimeStatus,
+    voiceEnabled, isAudioSpeaking, onToggleVoiceEnabled, onCancelSpeech
 }) => {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<{ id: string, filename: string, type: string, thumbnail?: string }[]>([]);
@@ -374,6 +380,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 title={isCameraEnabled ? "Disable Camera" : "Enable Camera"}
             >
                 <Camera size={18} />
+            </button>
+            <button
+                type="button"
+                onClick={isAudioSpeaking ? onCancelSpeech : onToggleVoiceEnabled}
+                className={`p-2 rounded-xl transition-all ${
+                    isAudioSpeaking 
+                        ? 'bg-red-600 text-white shadow-lg shadow-red-500/40 animate-pulse' 
+                        : voiceEnabled 
+                            ? 'bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30' 
+                            : 'bg-gray-800 text-gray-500 hover:text-gray-400'
+                }`}
+                title={isAudioSpeaking ? "Stop AI Speech" : voiceEnabled ? "Disable AI Voice" : "Enable AI Voice"}
+            >
+                {isAudioSpeaking ? <AudioLines size={18} /> : voiceEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             </button>
             <button type="button" onClick={toggleVoiceMode} disabled={!activeContextId} className={`p-2 rounded-xl transition-all ${isVoiceMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`} title={isVoiceMode ? "Disable Voice Mode" : "Enable Voice Mode"}>
                 {isVoiceMode ? <Mic size={18} /> : <MicOff size={18} />}

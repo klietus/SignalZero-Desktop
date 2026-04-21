@@ -4,14 +4,20 @@ import path from 'path';
 
 let embeddingPipelinePromise: Promise<any> | null = null;
 
-async function getEmbeddingPipeline() {
+async function getEmbeddingPipeline(modelPath?: string) {
     if (!embeddingPipelinePromise) {
         embeddingPipelinePromise = (async () => {
             const { pipeline, env } = await import('@huggingface/transformers');
             env.allowRemoteModels = false;
-            env.localModelPath = app.isPackaged 
-                ? path.join(process.resourcesPath, 'models') 
-                : path.join(app.getAppPath(), 'models');
+            
+            if (modelPath) {
+                env.localModelPath = modelPath;
+            } else if (app) {
+                env.localModelPath = app.isPackaged 
+                    ? path.join(process.resourcesPath, 'models') 
+                    : path.join(app.getAppPath(), 'models');
+            }
+            
             return pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
         })();
     }
@@ -35,14 +41,14 @@ function tensorToVectors(result: any, fallbackCount: number): number[][] {
     return [list as number[]];
 }
 
-export async function embedTexts(texts: string[]): Promise<number[][]> {
+export async function embedTextsWithModelPath(texts: string[], modelPath: string): Promise<number[][]> {
     if (!texts || texts.length === 0) return [];
 
     const BATCH_SIZE = 32;
     const allVectors: number[][] = [];
 
     try {
-        const embedder = await getEmbeddingPipeline();
+        const embedder = await getEmbeddingPipeline(modelPath);
         
         for (let i = 0; i < texts.length; i += BATCH_SIZE) {
             const batch = texts.slice(i, i + BATCH_SIZE);
@@ -56,6 +62,16 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
         console.error('[EmbeddingService] Embedding generation failed', error);
         return texts.map(() => []);
     }
+}
+
+export async function embedTexts(texts: string[]): Promise<number[][]> {
+    if (!texts || texts.length === 0) return [];
+
+    const modelPath = app.isPackaged 
+        ? path.join(process.resourcesPath, 'models') 
+        : path.join(app.getAppPath(), 'models');
+
+    return embedTextsWithModelPath(texts, modelPath);
 }
 
 export async function embedText(text: string): Promise<number[]> {

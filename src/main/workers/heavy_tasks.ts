@@ -1,9 +1,12 @@
+
 import { parentPort } from 'worker_threads';
+import { embedTextsWithModelPath } from '../services/embeddingService.js';
 
 // This worker handles CPU intensive tasks that block the main event loop
 // 1. Large JSON parsing/stringifying
 // 2. Complex symbolic synthesis logic
 // 3. String manipulation and thought stripping for long histories
+// 4. Vector embeddings via transformers.js
 
 function stripThoughts(text: string): string {
     if (!text) return "";
@@ -31,16 +34,21 @@ const tasks: Record<string, (data: any) => any> = {
         } catch (e: any) {
             return { data: {}, error: e.message };
         }
+    },
+
+    embedTexts: async (data: { texts: string[], modelPath: string }) => {
+        return await embedTextsWithModelPath(data.texts, data.modelPath);
     }
 };
 
 if (parentPort) {
-    parentPort.on('message', (msg) => {
+    parentPort.on('message', async (msg) => {
         const { taskId, type, data } = msg;
         const task = tasks[type];
         if (task) {
             try {
-                const result = task(data);
+                // Handle both sync and async tasks
+                const result = await Promise.resolve(task(data));
                 parentPort?.postMessage({ taskId, result });
             } catch (error: any) {
                 parentPort?.postMessage({ taskId, error: error.message });
