@@ -1,7 +1,6 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
-import { settingsService } from './settingsService.js';
-import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
+import { extractJson, callFastInference } from './inferenceService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { documentMeaningService } from './documentMeaningService.js';
 
@@ -151,7 +150,7 @@ export const webFetchService = {
         }`;
 
         try {
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 4096);
             const response = await extractJson(fastText);
             return response;
         } catch (error) {

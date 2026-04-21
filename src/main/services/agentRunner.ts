@@ -1,4 +1,4 @@
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
 import { agentService } from './agentService.js';
 import { contextService } from './contextService.js';
 import { systemPromptService } from './systemPromptService.js';
@@ -14,7 +14,6 @@ import { createToolExecutor } from './toolsService.js';
 import { settingsService } from './settingsService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { MonitoringDelta, AgentDefinition } from '../types.js';
-import { activeSessionId } from '../index.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
 
@@ -195,11 +194,11 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
             let session = contexts.find(c => c.name === `Agent: ${agent.id}` && c.status === 'open');
 
             if (!session) {
-                session = await contextService.createSession(`Agent: ${agent.id}`);
+                session = await contextService.createSession('agent', {}, `Agent: ${agent.id}`);
             }
 
             const settings = await settingsService.getInferenceSettings();
-            const activeSystemPrompt = await systemPromptService.loadPrompt(agent.system_prompt || ACTIVATION_PROMPT);
+            const activeSystemPrompt = await systemPromptService.loadPrompt(agent.prompt || ACTIVATION_PROMPT);
             const agentModel = settings.agentModel || settings.model;
 
             const chat = await getChatSession(activeSystemPrompt, session.id, agentModel);
@@ -224,10 +223,8 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
 
             const stream = sendMessageAndHandleTools(chat, message, toolExecutor, false, activeSystemPrompt, session.id, undefined, undefined, undefined, undefined, 1, message, [], { is_autonomous: true });
             
-            for await (const chunk of stream) {
-                if (chunk.error) {
-                    loggerService.catError(LogCategory.AGENT, `Agent ${agent.id} stream error`, { error: chunk.error });
-                }
+            for await (const _chunk of stream) {
+                // Potential future: log or process assistant response chunks
             }
         } catch (error: any) {
             loggerService.catError(LogCategory.AGENT, `Failed to execute batch for agent ${agent.id}`, { error: error.message });

@@ -85,16 +85,27 @@ class InferenceLockManager {
 
 export const inferenceLock = new InferenceLockManager();
 
-export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 512, _attachments?: any[]): Promise<string> => {
+export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 2048, _attachments?: any[]): Promise<string> => {
   const startTime = performance.now();
   const requestId = randomUUID();
   
   eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_STARTED, { requestId, timestamp: new Date().toISOString() });
 
   try {
+    // Inject "No Thinking" constraint into the first system message if it exists, otherwise add one.
+    const augmentedMessages = [...messages];
+    const systemIdx = augmentedMessages.findIndex(m => m.role === 'system');
+    const noThinkingDirective = "CRITICAL: Output ONLY the final result. Do NOT include any reasoning, thinking, or <think> blocks.";
+    
+    if (systemIdx !== -1) {
+        augmentedMessages[systemIdx].content = `${noThinkingDirective}\n\n${augmentedMessages[systemIdx].content}`;
+    } else {
+        augmentedMessages.unshift({ role: 'system', content: noThinkingDirective });
+    }
+
     // Qwen/ChatML template
     let prompt = "";
-    for (const m of messages) {
+    for (const m of augmentedMessages) {
         prompt += `<|im_start|>${m.role}\n${m.content}<|im_end|>\n`;
     }
     prompt += `<|im_start|>assistant\n`;
@@ -105,7 +116,9 @@ export const callFastInference = async (messages: { role: string, content: strin
     });
     
     const duration = performance.now() - startTime;
-    const responseText = result.content.trim();
+    // Strip thoughts if the model ignored the directive
+    const rawResponse = result.content || "";
+    const responseText = stripThoughts(rawResponse).trim();
     
     eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, { 
       requestId, 
@@ -1053,7 +1066,10 @@ export const extractJson = async (text: string): Promise<any> => {
         .replace(/":\s*"([\s\S]*?)"(\s*[,}\n])/g, (_match, p1, p2) => {
            // Replace literal newlines with escaped \n if they exist
            const withEscapedNewlines = p1.replace(/\n/g, "\\n");
-           const escapedQuotes = withEscapedNewlines.replace(/(?<!\\)"/g, '\\"');
+           // Fix invalid backslashes (common in LaTeX or math output)
+           // This replaces \ with \\ unless it's followed by a valid JSON escape char
+           const fixedBackslashes = withEscapedNewlines.replace(/\\(?![bfnrtu"\/])/g, "\\\\");
+           const escapedQuotes = fixedBackslashes.replace(/(?<!\\)"/g, '\\"');
            return `": "${escapedQuotes}"${p2}`;
         })
         .replace(/,(\s*[}\]])/g, '$1');

@@ -3,7 +3,7 @@ import { lancedbService } from './lancedbService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
-import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
+import { extractJson, callFastInference } from './inferenceService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
 
 const mapRowToDomain = (row: any): any => ({

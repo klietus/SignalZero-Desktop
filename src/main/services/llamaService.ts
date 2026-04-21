@@ -120,10 +120,13 @@ class LlamaService extends EventEmitter {
         return this.limit(async () => {
             const body: any = {
                 prompt,
-                n_predict: options.maxTokens || 1024,
+                n_predict: options.maxTokens || options.n_predict || 1024,
                 stream: false,
                 ...options
             };
+
+            // Remove maxTokens if it exists to avoid confusion in llama-server
+            delete body.maxTokens;
 
             // Handle images for multimodal support
             if (options.images && options.images.length > 0) {

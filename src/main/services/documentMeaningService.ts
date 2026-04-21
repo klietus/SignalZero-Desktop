@@ -4,6 +4,7 @@ import Parser from 'rss-parser';
 import pdf from 'pdf-parse';
 import { loggerService } from './loggerService.js';
 import { sqliteService } from './sqliteService.js';
+import { llamaService } from './llamaService.js';
 import crypto from 'crypto';
 
 export interface NormalizedDocument {
