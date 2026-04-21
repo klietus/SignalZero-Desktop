@@ -35,15 +35,30 @@ const ipcBatchQueues = new Map<string, any>();
 const ipcBatchTimers = new Map<string, NodeJS.Timeout>();
 
 function broadcastBatched(channel: string, data: any, intervalMs: number = 100) {
-  // Prevent different stream types (camera vs screen) from overwriting each other in the batch queue
   const batchKey = data?.type ? `${channel}:${data.type}` : channel;
-  ipcBatchQueues.set(batchKey, data);
+
+  // Use array accumulation for monitoring deltas to prevent data loss
+  if (channel === 'kernel-event' && data?.type === 'monitoring:delta-created') {
+    const existing = ipcBatchQueues.get(batchKey) || [];
+    if (Array.isArray(existing)) {
+        existing.push(data.payload);
+        ipcBatchQueues.set(batchKey, existing);
+    }
+  } else {
+    // Default behavior for high-frequency streams: last-one-wins
+    ipcBatchQueues.set(batchKey, data);
+  }
 
   if (!ipcBatchTimers.has(batchKey)) {
     const timer = setInterval(() => {
       const batchedData = ipcBatchQueues.get(batchKey);
       if (batchedData) {
-        broadcast(channel, batchedData);
+        if (Array.isArray(batchedData) && channel === 'kernel:event') {
+            // Send as a special batched event type
+            broadcast(channel, { type: 'monitoring:deltas-batched', data: batchedData });
+        } else {
+            broadcast(channel, batchedData);
+        }
         ipcBatchQueues.delete(batchKey);
       }
     }, intervalMs);
@@ -347,7 +362,11 @@ function createWindow(): void {
     eventBusService.onKernelEvent(type, (data) => {
       // Skip ultra-high frequency events from the main monitor stream
       if (type !== KernelEventType.INFERENCE_CHUNK) {
-        broadcast('kernel:event', { type, data });
+        if (type === 'monitoring:delta-created' as any) {
+            broadcastBatched('kernel:event', { type, payload: data }, 100);
+        } else {
+            broadcast('kernel:event', { type, data });
+        }
       }
 
       // Legacy/Specific forwards

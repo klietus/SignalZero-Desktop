@@ -66,7 +66,30 @@ export const WorldMonitoringPanel: React.FC<WorldMonitoringPanelProps> = ({ widt
     useEffect(() => {
         fetchData();
         const interval = setInterval(fetchData, 60000); // Refresh every minute
-        return () => clearInterval(interval);
+        
+        const unbind = window.api.onKernelEvent((type, data) => {
+            if (type === 'monitoring:delta-created') {
+                setLatestDeltas(prev => ({
+                    ...prev,
+                    [data.sourceId]: data
+                }));
+            }
+            if (type === 'monitoring:deltas-batched') {
+                const batch = data as any[];
+                setLatestDeltas(prev => {
+                    const next = { ...prev };
+                    for (const d of batch) {
+                        next[d.sourceId] = d;
+                    }
+                    return next;
+                });
+            }
+        });
+
+        return () => {
+            clearInterval(interval);
+            unbind();
+        };
     }, []);
 
     return (

@@ -4,6 +4,7 @@ import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { extractJson, callFastInference } from './inferenceService.js';
+import { LlamaPriority } from './llamaService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
 
 const mapRowToDomain = (row: any): any => ({
@@ -382,7 +383,7 @@ export const domainService = {
           }
         }`;
 
-        const fastText = await callFastInference([{ role: "user", content: prompt }], 2000);
+        const fastText = await callFastInference([{ role: "user", content: prompt }], 2000, undefined, LlamaPriority.MEDIUM);
         const response = await extractJson(fastText);
 
         if (response.canMerge === false) {

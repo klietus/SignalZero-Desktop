@@ -4,7 +4,7 @@ import Parser from 'rss-parser';
 import pdf from 'pdf-parse';
 import { loggerService } from './loggerService.js';
 import { sqliteService } from './sqliteService.js';
-import { llamaService } from './llamaService.js';
+import { llamaService, LlamaPriority } from './llamaService.js';
 import crypto from 'crypto';
 
 export interface NormalizedDocument {
@@ -28,7 +28,7 @@ class DocumentMeaningService {
         this.rssParser = new Parser();
     }
 
-    async parse(content: Buffer | string, contentType: string, url?: string): Promise<NormalizedDocument> {
+    async parse(content: Buffer | string, contentType: string, url?: string, contextHint?: string): Promise<NormalizedDocument> {
         const type = this.detectType(contentType, url, content);
         
         loggerService.info(`DocumentMeaningService: Detected type ${type} for ${url}`);
@@ -46,7 +46,7 @@ class DocumentMeaningService {
                      return this.parseJson(content.toString());
                 case 'image':
                     const imgBuffer = Buffer.isBuffer(content) ? content : Buffer.from(content);
-                    return await this.extractImageMeaning(imgBuffer, contentType, url);
+                    return await this.extractImageMeaning(imgBuffer, contentType, url, contextHint);
                 default:
                     return {
                         type: 'text',
@@ -169,7 +169,7 @@ class DocumentMeaningService {
          }
     }
 
-    private async extractImageMeaning(buffer: Buffer, contentType: string, url?: string): Promise<NormalizedDocument> {
+    private async extractImageMeaning(buffer: Buffer, contentType: string, url?: string, contextHint?: string): Promise<NormalizedDocument> {
         // --- CACHE CHECK ---
         const hash = crypto.createHash('sha256').update(buffer).digest('hex');
         try {
@@ -196,10 +196,14 @@ class DocumentMeaningService {
         try {
             loggerService.info(`DocumentMeaningService: Analyzing image ${hash.substring(0, 8)} via Llama Sidecar`);
             
-            const prompt = "Analyze this image. Describe the setting, identify key objects, and explain the relationships.";
+            const prompt = contextHint 
+                ? `Analyze this image in the context of: "${contextHint}". Describe how the visual evidence relates to this topic, identify key objects, and explain the setting.`
+                : "Analyze this image. Describe the setting, identify key objects, and explain the relationships.";
+
             const result = await llamaService.completion(prompt, {
                 images: [{ base64: buffer.toString('base64') }],
-                maxTokens: 2048
+                maxTokens: 2048,
+                priority: LlamaPriority.MEDIUM
             });
 
             const description = result.content || "No description generated.";

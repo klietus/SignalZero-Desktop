@@ -6,6 +6,7 @@ import { sqliteService } from './sqliteService.js';
 import { lancedbService } from './lancedbService.js';
 import { eventBusService } from './eventBusService.js';
 import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
+import { LlamaPriority } from './llamaService.js';
 import { MonitoringSourceConfig, MonitoringDelta, MonitoringPeriod } from '../types.js';
 import { randomUUID } from 'crypto';
 import { AcledProvider } from './monitoring/providers/acled.js';
@@ -298,7 +299,7 @@ class MonitoringService {
         Output valid JSON: { "items": [{ "id": "...", "title": "...", "content": "...", "link": "...", "image": "..." }, ...] }`;
 
         try {
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 2048, undefined, LlamaPriority.LOW);
             const response = await extractJson(fastText);
             return response.items || null;
         } catch (error) {
@@ -347,7 +348,7 @@ class MonitoringService {
                 if (imgResp.ok) {
                     const buffer = await imgResp.arrayBuffer();
                     const contentType = imgResp.headers.get('content-type') || 'image/jpeg';
-                    const meaning = await documentMeaningService.parse(Buffer.from(buffer), contentType, imageUrl);
+                    const meaning = await documentMeaningService.parse(Buffer.from(buffer), contentType, imageUrl, articleData.title);
                     if (meaning.type === 'image' && meaning.content) {
                         imageDescription = meaning.content;
                     }
@@ -357,18 +358,24 @@ class MonitoringService {
             }
         }
 
-        const prompt = `Summarize the following article/event from source "${source.name}". 
-        Focus on identifying the core delta (the change in the world).
-        
-        ARTICLE DATA:
-        ${JSON.stringify(articleData)}
+        const prompt = `### WORLD-STATE MONITORING AGENT
+Summarize the following article/event from source "${source.name}". 
 
-        ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` : ""}
+GOAL: Extract the core DELTA (the meaningful change in the world state). 
+TONE: Dense, high-fidelity, and ultra-concise. No conversational filler.
 
-        Output a concise bulleted summary. Incorporate visual details if relevant.`;
+ARTICLE DATA:
+${JSON.stringify(articleData)}
+
+${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` : ""}
+
+#### OUTPUT INSTRUCTIONS:
+- Provide a concise bulleted summary of the facts.
+- Incorporate visual details only if they add critical evidence.
+- Focus on "What changed?" and "Why does it matter?".`;
 
         try {
-            const summary = await callFastInference([{ role: "user", content: prompt }], 2048);
+            const summary = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.LOW);
 
             return {
                 summary: (summary || "").trim(),
@@ -397,7 +404,7 @@ class MonitoringService {
         Output valid JSON: { "hasChanges": boolean, "content": "...", "articleUrl": "...", "imageUrl": "...", "imageSummary": "..." }`;
 
         try {
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 4192, undefined, LlamaPriority.LOW);
             const response = await extractJson(fastText);
             return response;
         } catch (error) {
@@ -595,7 +602,7 @@ class MonitoringService {
                 const result = await client.chat.completions.create({
                     model: agentModel,
                     messages: [{ role: "user", content: prompt }],
-                    max_tokens: 4096
+                    max_tokens: 16384
                 });
                 response = extractJson(result.choices[0]?.message?.content || "{}");
             }
@@ -672,7 +679,7 @@ class MonitoringService {
             Output a concise, impactful bulleted summary. Incorporate visual details if relevant.`;
 
             try {
-                const refined = await callFastInference([{ role: "user", content: prompt }], 2048);
+                const refined = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.LOW);
 
                 if (refined) {
                     const updatedMeta = {

@@ -1,6 +1,7 @@
 import { sceneManager } from './sceneManager.js';
 import { realtimeService } from './realtimeService.js';
 import { inferenceService } from '../inferenceService.js';
+import { LlamaPriority } from '../llamaService.js';
 import { eventBusService } from '../eventBusService.js';
 import { loggerService, LogCategory } from '../loggerService.js';
 import { settingsService } from '../settingsService.js';
@@ -249,7 +250,7 @@ FORMAT: Return a JSON object with:
 `.trim();
 
             // 2. Execute Flash Round via correct pattern
-            const flashResult = await inferenceService.callFastInference([{ role: 'user', content: prompt }], 1024, sceneAttachments);
+            const flashResult = await inferenceService.callFastInference([{ role: 'user', content: prompt }], 1024, sceneAttachments, LlamaPriority.HIGH);
 
             if (flashResult) {
                 const result = await inferenceService.extractJson(flashResult);

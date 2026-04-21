@@ -5,6 +5,7 @@ import { eventBusService, KernelEventType } from '../eventBusService.js';
 import { contextService } from '../contextService.js';
 import { activeSessionId, broadcast } from '../../index.js';
 import { callFastInference } from '../inferenceService.js';
+import { LlamaPriority } from '../llamaService.js';
 import { ipcMain, app, systemPreferences } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -305,7 +306,7 @@ ${processedText}`;
             const cleanSpeech = await callFastInference([
                 { role: 'system', content: 'You are a speech synthesis pre-processor that strips headers and formatting.' },
                 { role: 'user', content: prompt }
-            ], 2560);
+            ], 5120, undefined, LlamaPriority.HIGH);
 
             return cleanSpeech || processedText;
         } catch (e) {

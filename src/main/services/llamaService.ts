@@ -5,20 +5,27 @@ import path from 'path';
 import fs from 'fs';
 import { EventEmitter } from 'events';
 
+export enum LlamaPriority {
+    LOW = 0,
+    MEDIUM = 5,
+    HIGH = 10,
+    URGENT = 20
+}
+
 class LlamaService extends EventEmitter {
     private process: ChildProcess | null = null;
     private isInitializing = false;
     private port = 8080;
-    private limit: any = null;
+    private queue: any = null;
 
     async initialize() {
         if (this.process || this.isInitializing) return;
         this.isInitializing = true;
 
         try {
-            if (!this.limit) {
-                const pLimit = (await import('p-limit')).default;
-                this.limit = pLimit(4); // Default concurrency for small model on Apple Silicon
+            if (!this.queue) {
+                const PQueue = (await import('p-queue')).default;
+                this.queue = new PQueue({ concurrency: 4 });
             }
 
             const projectRoot = app.getAppPath();
@@ -113,11 +120,14 @@ class LlamaService extends EventEmitter {
     }
 
     async completion(prompt: string, options: any = {}) {
-        if (!this.limit) {
-            const pLimit = (await import('p-limit')).default;
-            this.limit = pLimit(4);
+        if (!this.queue) {
+            const PQueue = (await import('p-queue')).default;
+            this.queue = new PQueue({ concurrency: 4 });
         }
-        return this.limit(async () => {
+
+        const priority = options.priority !== undefined ? options.priority : LlamaPriority.LOW;
+
+        return this.queue.add(async () => {
             const body: any = {
                 prompt,
                 n_predict: options.maxTokens || options.n_predict || 2048,
@@ -125,8 +135,9 @@ class LlamaService extends EventEmitter {
                 ...options
             };
 
-            // Remove maxTokens if it exists to avoid confusion in llama-server
+            // Clean up body
             delete body.maxTokens;
+            delete body.priority;
 
             // Handle images for multimodal support
             if (options.images && options.images.length > 0) {
@@ -151,10 +162,10 @@ class LlamaService extends EventEmitter {
             loggerService.catDebug(LogCategory.SYSTEM, "Llama Sidecar Raw Response", { 
                 promptLength: prompt.length, 
                 responseLength: json.content?.length || 0,
-                firstChars: json.content?.substring(0, 100)
+                priority
             });
             return json;
-        });
+        }, { priority });
     }
 
     stop() {

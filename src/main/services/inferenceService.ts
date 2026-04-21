@@ -22,7 +22,7 @@ import { eventBusService, KernelEventType } from './eventBusService.js';
 import { webSearchService } from './webSearchService.js';
 import { workerService } from './workerService.js';
 import { realtimeService } from './realtime/realtimeService.js';
-import { llamaService } from './llamaService.js';
+import { llamaService, LlamaPriority } from './llamaService.js';
 
 interface ChatSessionState {
   messages: ChatCompletionMessageParam[];
@@ -85,7 +85,12 @@ class InferenceLockManager {
 
 export const inferenceLock = new InferenceLockManager();
 
-export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 4096, _attachments?: any[]): Promise<string> => {
+export const callFastInference = async (
+  messages: { role: string, content: string }[], 
+  maxTokens: number = 4096, 
+  _attachments?: any[],
+  priority: LlamaPriority = LlamaPriority.LOW
+): Promise<string> => {
   const startTime = performance.now();
   const requestId = randomUUID();
   
@@ -112,6 +117,7 @@ export const callFastInference = async (messages: { role: string, content: strin
 
     const result = await llamaService.completion(prompt, { 
         maxTokens,
+        priority,
         stop: ["<|im_end|>", "<|im_start|>", "assistant:", "user:", "system:"]
     });
     
@@ -932,7 +938,7 @@ RESPONSE:
 Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains actual useful content or a valid conclusion.`;
 
           try {
-              const auditResult = await callFastInference([{ role: 'user', content: auditCheckPrompt }], 20);
+              const auditResult = await callFastInference([{ role: 'user', content: auditCheckPrompt }], 20, undefined, LlamaPriority.HIGH);
               if (auditResult.toUpperCase().includes('YES')) {
                   loggerService.catInfo(LogCategory.INFERENCE, "Audit Failure Narrative detected. Discarding and forcing retry loop.", { 
                     contextSessionId, 
@@ -1246,7 +1252,7 @@ export const primeSymbolicContext = async (
     }`;
 
     let fastResponse: any = {};
-    const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
+    const fastText = await callFastInference([{ role: "user", content: prompt }], 2048, undefined, LlamaPriority.HIGH);
     fastResponse = extractJson(fastText);
 
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });

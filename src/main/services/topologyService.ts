@@ -4,6 +4,7 @@ import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { settingsService } from './settingsService.js';
 import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
+import { LlamaPriority } from './llamaService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { SymbolDef, GraphHygieneSettings } from '../types.js';
 import { embedTexts } from './embeddingService.js';
@@ -583,7 +584,7 @@ export class TopologyService {
               "linkType": "chosen_link_type"
             }`;
 
-            const fastText = await callFastInference([{ role: 'user', content: prompt }], 1600);
+            const fastText = await callFastInference([{ role: 'user', content: prompt }], 1600, undefined, LlamaPriority.MEDIUM);
             const resultJson = await extractJson(fastText);
 
             return {
@@ -637,7 +638,7 @@ export class TopologyService {
             
             Output ONLY the ID of the winner. Valid JSON: { "winnerId": "..." }`;
 
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 200);
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 200, undefined, LlamaPriority.MEDIUM);
             const response = await extractJson(fastText);
 
             const winnerId = response.winnerId;
@@ -866,7 +867,7 @@ export class TopologyService {
                         ]
                         }`;
 
-                        const fastText = await callFastInference([{ role: "user", content: prompt }], 4096);
+                        const fastText = await callFastInference([{ role: "user", content: prompt }], 4096, undefined, LlamaPriority.MEDIUM);
                         const response = await extractJson(fastText);
 
                         if (response.shouldLink && Array.isArray(response.matches) && response.matches.length > 0) {
@@ -1132,7 +1133,7 @@ A Lattice is a high-level abstract container providing structural "docking point
               "reason": "Brief explanation"
             }`;
 
-            fullResponse = await callFastInference([{ role: "user", content: prompt }], 800);
+            fullResponse = await callFastInference([{ role: "user", content: prompt }], 800, undefined, LlamaPriority.MEDIUM);
             const resultJson = await extractJson(fullResponse);
 
             return !!resultJson.shouldLift;

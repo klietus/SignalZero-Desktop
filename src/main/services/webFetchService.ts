@@ -91,7 +91,7 @@ export const webFetchService = {
                     if (imgResp.ok) {
                         const buffer = await imgResp.arrayBuffer();
                         const contentType = imgResp.headers.get('content-type') || 'image/jpeg';
-                        const meaning = await documentMeaningService.parse(Buffer.from(buffer), contentType, selectedImageUrl);
+                        const meaning = await documentMeaningService.parse(Buffer.from(buffer), contentType, selectedImageUrl, article?.title || "");
                         if (meaning.type === 'image' && meaning.content && !meaning.content.includes('[Image analysis failed]')) {
                             imageDescription = meaning.content;
                             loggerService.catDebug(LogCategory.TOOL, "WebFetchService: Image description generated successfully");
