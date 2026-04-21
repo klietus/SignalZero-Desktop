@@ -382,7 +382,7 @@ export const domainService = {
           }
         }`;
 
-        const fastText = await callFastInference([{ role: "user", content: prompt }], 1000);
+        const fastText = await callFastInference([{ role: "user", content: prompt }], 2000);
         const response = await extractJson(fastText);
 
         if (response.canMerge === false) {

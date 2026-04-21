@@ -249,7 +249,7 @@ FORMAT: Return a JSON object with:
 `.trim();
 
             // 2. Execute Flash Round via correct pattern
-            const flashResult = await inferenceService.callFastInference([{ role: 'user', content: prompt }], 512, sceneAttachments);
+            const flashResult = await inferenceService.callFastInference([{ role: 'user', content: prompt }], 1024, sceneAttachments);
 
             if (flashResult) {
                 const result = await inferenceService.extractJson(flashResult);

@@ -583,7 +583,7 @@ export class TopologyService {
               "linkType": "chosen_link_type"
             }`;
 
-            const fastText = await callFastInference([{ role: 'user', content: prompt }], 800);
+            const fastText = await callFastInference([{ role: 'user', content: prompt }], 1600);
             const resultJson = await extractJson(fastText);
 
             return {
@@ -637,7 +637,7 @@ export class TopologyService {
             
             Output ONLY the ID of the winner. Valid JSON: { "winnerId": "..." }`;
 
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 100);
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 200);
             const response = await extractJson(fastText);
 
             const winnerId = response.winnerId;
@@ -866,7 +866,7 @@ export class TopologyService {
                         ]
                         }`;
 
-                        const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
+                        const fastText = await callFastInference([{ role: "user", content: prompt }], 4096);
                         const response = await extractJson(fastText);
 
                         if (response.shouldLink && Array.isArray(response.matches) && response.matches.length > 0) {
@@ -1132,7 +1132,7 @@ A Lattice is a high-level abstract container providing structural "docking point
               "reason": "Brief explanation"
             }`;
 
-            fullResponse = await callFastInference([{ role: "user", content: prompt }], 400);
+            fullResponse = await callFastInference([{ role: "user", content: prompt }], 800);
             const resultJson = await extractJson(fullResponse);
 
             return !!resultJson.shouldLift;

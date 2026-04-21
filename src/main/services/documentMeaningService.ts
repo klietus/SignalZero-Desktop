@@ -199,7 +199,7 @@ class DocumentMeaningService {
             const prompt = "Analyze this image. Describe the setting, identify key objects, and explain the relationships.";
             const result = await llamaService.completion(prompt, {
                 images: [{ base64: buffer.toString('base64') }],
-                maxTokens: 1024
+                maxTokens: 2048
             });
 
             const description = result.content || "No description generated.";

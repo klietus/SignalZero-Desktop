@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Activity, Zap } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
 const MAX_NODES = 10000;
 const MAX_EDGES = 8000;
@@ -141,7 +141,6 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus, isS
     const edgeTimes = useRef<Float32Array>(new Float32Array(MAX_EDGES * 2));
 
     const [isLoading, setIsLoading] = useState(true);
-    const [lastFastMetric, setLastFastMetric] = useState<{ durationMs: number, status: string } | null>(null);
 
     const symbolToIndex = useRef<Map<string, number>>(new Map());
     const nextAvailableIndex = useRef(0);
@@ -270,7 +269,6 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus, isS
             update: (now) => {
                 const alpha = Math.max(0, 1.0 - (now - mesh.userData.startTime) / 800);
                 (mesh.material as THREE.MeshBasicMaterial).opacity = alpha;
-                mesh.scale.setScalar(1.0 + (1.0 - alpha) * 0.5);
                 return alpha <= 0;
             }
         });
@@ -552,9 +550,6 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus, isS
                     break;
 
                 case 'fast-inference:completed':
-                    setLastFastMetric({ durationMs: data.durationMs, status: data.status });
-                    setTimeout(() => setLastFastMetric(null), 5000);
-
                     if (data.status === 'success') {
                         // Golden explosion at a random active node or center
                         const activeIds = Array.from(symbolToIndex.current.keys());
@@ -598,23 +593,6 @@ export const CinematicView: React.FC<CinematicViewProps> = ({ onSymbolFocus, isS
         <div className="h-full w-full relative bg-black">
             <div ref={containerRef} className="absolute inset-0" />
             {isLoading && <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20"><Activity className="text-emerald-500 animate-spin" size={48} /></div>}
-            
-            {/* Fast Inference Overlay */}
-            {lastFastMetric && (
-                <div className="absolute top-8 left-8 z-30 p-3 bg-black/60 border border-amber-500/30 rounded-lg backdrop-blur-md animate-in slide-in-from-left-4 duration-500">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-1.5 rounded-full ${lastFastMetric.status === 'success' ? 'bg-amber-500/20 text-amber-500' : 'bg-red-500/20 text-red-500'}`}>
-                            <Zap size={14} className={lastFastMetric.status === 'success' ? 'animate-pulse' : ''} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">Edge_Inference_Latency</p>
-                            <p className="text-sm font-bold font-mono text-white">
-                                {lastFastMetric.durationMs.toFixed(0)}<span className="text-[10px] text-gray-500 ml-1">MS</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

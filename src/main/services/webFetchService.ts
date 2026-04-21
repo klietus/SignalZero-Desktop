@@ -150,7 +150,7 @@ export const webFetchService = {
         }`;
 
         try {
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 4096);
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 8192);
             const response = await extractJson(fastText);
             return response;
         } catch (error) {

@@ -78,13 +78,13 @@ class EdgeInferenceService {
 
             loggerService.catInfo(LogCategory.INFERENCE, "Executing Edge Inference pipeline call...", { 
                 promptLength: prompt.length,
-                maxTokens: options.max_tokens || 512
+                maxTokens: options.max_tokens || 1024
             });
 
             const start = Date.now();
             const output = await this.textPipeline(prompt, {
-                max_new_tokens: options.max_tokens || 512,
-                temperature: options.temperature || 0.7,
+                max_new_tokens: options.max_tokens || 1024,
+                temperature: options.temperature || 0.1,
                 do_sample: options.temperature > 0,
                 return_full_text: false,
             });

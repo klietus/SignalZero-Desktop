@@ -22,8 +22,8 @@ class LlamaService extends EventEmitter {
             }
 
             const projectRoot = app.getAppPath();
-            const modelPath = path.join(projectRoot, 'models', 'Qwen3.5-2B-Q4_K_M.gguf');
-            const mmprojPath = path.join(projectRoot, 'models', 'mmproj-Qwen3.5-2B-BF16.gguf');
+            const modelPath = path.join(projectRoot, 'models', 'Qwen3.5-0.8B-Q8_0.gguf');
+            const mmprojPath = path.join(projectRoot, 'models', 'mmproj-Qwen3.5-0.8B-BF16.gguf');
 
             // Check if model exists
             if (!fs.existsSync(modelPath)) {
@@ -120,7 +120,7 @@ class LlamaService extends EventEmitter {
         return this.limit(async () => {
             const body: any = {
                 prompt,
-                n_predict: options.maxTokens || options.n_predict || 1024,
+                n_predict: options.maxTokens || options.n_predict || 2048,
                 stream: false,
                 ...options
             };

@@ -298,7 +298,7 @@ class MonitoringService {
         Output valid JSON: { "items": [{ "id": "...", "title": "...", "content": "...", "link": "...", "image": "..." }, ...] }`;
 
         try {
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 1024);
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
             const response = await extractJson(fastText);
             return response.items || null;
         } catch (error) {
@@ -368,7 +368,7 @@ class MonitoringService {
         Output a concise bulleted summary. Incorporate visual details if relevant.`;
 
         try {
-            const summary = await callFastInference([{ role: "user", content: prompt }], 1024);
+            const summary = await callFastInference([{ role: "user", content: prompt }], 2048);
 
             return {
                 summary: (summary || "").trim(),
@@ -397,7 +397,7 @@ class MonitoringService {
         Output valid JSON: { "hasChanges": boolean, "content": "...", "articleUrl": "...", "imageUrl": "...", "imageSummary": "..." }`;
 
         try {
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 1024);
+            const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
             const response = await extractJson(fastText);
             return response;
         } catch (error) {
@@ -672,7 +672,7 @@ class MonitoringService {
             Output a concise, impactful bulleted summary. Incorporate visual details if relevant.`;
 
             try {
-                const refined = await callFastInference([{ role: "user", content: prompt }], 1024);
+                const refined = await callFastInference([{ role: "user", content: prompt }], 2048);
 
                 if (refined) {
                     const updatedMeta = {

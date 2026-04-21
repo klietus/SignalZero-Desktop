@@ -85,7 +85,7 @@ class InferenceLockManager {
 
 export const inferenceLock = new InferenceLockManager();
 
-export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 2048, _attachments?: any[]): Promise<string> => {
+export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 4096, _attachments?: any[]): Promise<string> => {
   const startTime = performance.now();
   const requestId = randomUUID();
   
@@ -932,7 +932,7 @@ RESPONSE:
 Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains actual useful content or a valid conclusion.`;
 
           try {
-              const auditResult = await callFastInference([{ role: 'user', content: auditCheckPrompt }], 10);
+              const auditResult = await callFastInference([{ role: 'user', content: auditCheckPrompt }], 20);
               if (auditResult.toUpperCase().includes('YES')) {
                   loggerService.catInfo(LogCategory.INFERENCE, "Audit Failure Narrative detected. Discarding and forcing retry loop.", { 
                     contextSessionId, 
@@ -1002,8 +1002,7 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
                  const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
                  const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
 
-                 const newName = await callFastInference([{ role: "user", content: namingPrompt }], 50);
-
+                 const newName = await callFastInference([{ role: "user", content: namingPrompt }], 1024);
                  if (newName) {
                    const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
                    await contextService.updateSession({ ...session, name: cleanName });
@@ -1145,7 +1144,7 @@ export const summarizeHistory = async (history: ContextMessage[], currentSummary
   const historyText = cleanHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "")}`).join('\n');
   const prompt = `Summarize the following conversation concisely: ${currentSummary ? `Previous Summary: ${currentSummary}\n` : ''} \n\nRecent Conversation History:\n${historyText}\n\nREFINED SUMMARY:`;
   try {
-    return await callFastInference([{ role: "user", content: prompt }], 4096);
+    return await callFastInference([{ role: "user", content: prompt }], 8192);
   } catch (error) { return currentSummary || ""; }
 };
 
@@ -1163,7 +1162,7 @@ export const synthesizeWebResults = async (
   });
   const prompt = `Synthesize these research results into a dense, high-fidelity Knowledge Brief. Use all the details provided to build a comprehensive view of the topic.\n\nResearch Data:\n${resultsText}\n\nKNOWLEDGE BRIEF:`;
   try {
-    return await callFastInference([{ role: "user", content: prompt }], 4096);
+    return await callFastInference([{ role: "user", content: prompt }], 8192);
   } catch (error) { return ""; }
 };
 
@@ -1247,7 +1246,7 @@ export const primeSymbolicContext = async (
     }`;
 
     let fastResponse: any = {};
-    const fastText = await callFastInference([{ role: "user", content: prompt }], 1024);
+    const fastText = await callFastInference([{ role: "user", content: prompt }], 2048);
     fastResponse = extractJson(fastText);
 
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
