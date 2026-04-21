@@ -1,6 +1,7 @@
 import { sqliteService } from './sqliteService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { attachmentService } from './attachmentService.js';
+import { eventBusService } from './eventBusService.js';
 import { ContextMessage, ContextSession } from '../types.js';
 import { randomUUID } from 'crypto';
 
@@ -47,6 +48,9 @@ export const contextService = {
 
     const session = await this.getSession(id);
     if (!session) throw new Error("Failed to create session");
+    
+    eventBusService.emitKernelEvent('context:created' as any, session);
+    
     return session;
   },
 

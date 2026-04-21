@@ -54,6 +54,12 @@ export interface MonitoringSettings {
   sources: MonitoringSourceConfig[];
 }
 
+export interface RealtimeAssistanceSettings {
+  enabled: boolean;
+  spikeThreshold: number;
+  cooldownMs: number;
+}
+
 export interface SystemSettings {
   inference?: Partial<InferenceSettings>;
   voiceProfiles?: Record<string, number[]>; 
@@ -67,6 +73,7 @@ export interface SystemSettings {
   hygiene?: GraphHygieneSettings;
   mcpConfigs?: McpConfiguration[];
   monitoring?: MonitoringSettings;
+  realtimeAssistance?: RealtimeAssistanceSettings;
   ui?: {
     showGraphviz?: boolean;
   };
@@ -285,6 +292,21 @@ export const settingsService = {
     saveToFile(current);
   },
 
+  getRealtimeAssistanceSettings: async (): Promise<RealtimeAssistanceSettings> => {
+    const settings = loadFromFile();
+    return settings.realtimeAssistance || {
+      enabled: false,
+      spikeThreshold: 0.4,
+      cooldownMs: 30000
+    };
+  },
+
+  setRealtimeAssistanceSettings: async (realtimeAssistance: RealtimeAssistanceSettings) => {
+    const current = loadFromFile();
+    current.realtimeAssistance = realtimeAssistance;
+    saveToFile(current);
+  },
+
   get: async (): Promise<SystemSettings> => {
     const settings = loadFromFile();
     // Return decrypted view for UI/Runtime use
@@ -293,6 +315,7 @@ export const settingsService = {
     const braveSearch = await settingsService.getBraveSearchSettings();
     const tavily = await settingsService.getTavilySettings();
     const monitoring = await settingsService.getMonitoringSettings();
+    const realtimeAssistance = await settingsService.getRealtimeAssistanceSettings();
     return {
         ...settings,
         inference,
@@ -300,6 +323,7 @@ export const settingsService = {
         braveSearch,
         tavily,
         monitoring,
+        realtimeAssistance,
         voiceProfiles: settings.voiceProfiles || inference.voiceProfiles,
         systemName: settings.systemName || inference.systemName,
         voiceId: settings.voiceId || inference.voiceId,

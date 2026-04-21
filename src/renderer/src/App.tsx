@@ -464,6 +464,12 @@ function App() {
             if (type === 'inference:tokens') {
                 setLastRequestTokens(data.totalTokens || 0);
             }
+            if (type === 'context:created') {
+                setContexts(prev => {
+                    if (prev.find(s => s.id === data.id)) return prev;
+                    return [data, ...prev];
+                });
+            }
             if (type === 'context:updated') {
                 setContexts(prev => prev.map(c =>
                     c.id === data.sessionId ? { ...c, name: data.name } : c

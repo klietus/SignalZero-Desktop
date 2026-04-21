@@ -1,6 +1,7 @@
 import { cameraStreamService } from './cameraStreamService.js';
 import { screenStreamService } from './screenStreamService.js';
 import { audioStreamService } from './audioStreamService.js';
+import { perceptionTriggerService } from './perceptionTriggerService.js';
 import { sceneManager } from './sceneManager.js';
 import { voiceService } from './voiceProcess.js';
 import { visionProcess } from './visionProcess.js';
@@ -14,6 +15,7 @@ class RealtimeService {
             audioStreamService;
             cameraStreamService;
             screenStreamService;
+            perceptionTriggerService;
 
             await visionProcess.initialize();
             loggerService.catInfo(LogCategory.SYSTEM, "Realtime Service: Optical & Acoustic links initialized.");
@@ -80,7 +82,7 @@ class RealtimeService {
                 lastSpeaker: state.audio.lastSpeaker,
                 confidence: state.audio.recognitionConfidence,
                 isSpeaking: state.audio.isSpeaking,
-                transcription: state.audio.transcription
+                transcription: state.audio.runningTranscript
             };
         }
 

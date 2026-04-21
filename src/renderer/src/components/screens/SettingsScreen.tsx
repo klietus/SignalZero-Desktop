@@ -37,8 +37,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [inferenceAgentModel, setInferenceAgentModel] = useState('');
   const [inferenceVisionModel, setInferenceVisionModel] = useState('');
   const [inferenceFastModel, setInferenceFastModel] = useState('');
-  
+
+  // Realtime Assistance State
+  const [realtimeAssistanceEnabled, setRealtimeAssistanceEnabled] = useState(false);
+  const [spikeThreshold, setSpikeThreshold] = useState(0.4);
+
   // Voice State
+
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [systemName, setSystemName] = useState('Signal');
   const [voiceId, setVoiceId] = useState('af_sarah');
@@ -194,7 +199,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setInferenceAgentModel(inference.agentModel || inference.model || '');
     setInferenceVisionModel(inference.visionModel || '');
     setInferenceFastModel(inference.fastModel || '');
-    
+
+    setRealtimeAssistanceEnabled(settings.realtimeAssistance?.enabled || false);
+    setSpikeThreshold(settings.realtimeAssistance?.spikeThreshold || 0.4);
     // Voice settings are now top-level in settings object, but with fallbacks
     setVoiceEnabled(settings.voiceEnabled ?? inference.voiceEnabled ?? false);
     setSystemName(settings.systemName || inference.systemName || 'axiom');
@@ -375,8 +382,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             monitoring: {
                 enabled: monitoringEnabled,
                 sources: monitoringSources
+            },
+            realtimeAssistance: {
+                enabled: realtimeAssistanceEnabled,
+                spikeThreshold: spikeThreshold,
+                cooldownMs: 30000
             }
-        });
+            });
+
         alert('Settings saved!');
     } catch (err) {
         setError('Failed to save settings.');
@@ -479,9 +492,57 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                           <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Vision Model</label>
                                           <input type="text" value={inferenceVisionModel} onChange={(e) => setInferenceVisionModel(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
                                       </div>
-                                  </div>
-                              </div>
-                          </div>
+                                      </div>
+                                      </div>
+
+                                      <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                                      <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-3">
+                                          <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
+                                              <Activity size={20} />
+                                          </div>
+                                          <div>
+                                              <h4 className="text-sm font-bold font-mono uppercase tracking-wider dark:text-white">Realtime Assistance</h4>
+                                              <p className="text-xs text-gray-500 font-mono mt-0.5">Enable proactive interventions based on perception spikes.</p>
+                                          </div>
+                                      </div>
+                                      <button 
+                                          onClick={() => setRealtimeAssistanceEnabled(!realtimeAssistanceEnabled)}
+                                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${realtimeAssistanceEnabled ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-800'}`}
+                                      >
+                                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${realtimeAssistanceEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                                      </button>
+                                      </div>
+
+                                      {realtimeAssistanceEnabled && (
+                                      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                                          <div className="space-y-2">
+                                              <div className="flex justify-between">
+                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 font-mono">Spike Sensitivity</label>
+                                                  <span className="text-[10px] font-mono text-indigo-400">{Math.round(spikeThreshold * 100)}%</span>
+                                              </div>
+                                              <input 
+                                                  type="range" 
+                                                  min="0.1" max="0.9" step="0.05"
+                                                  value={spikeThreshold} 
+                                                  onChange={(e) => setSpikeThreshold(parseFloat(e.target.value))}
+                                                  className="w-full accent-indigo-500 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer" 
+                                              />
+                                          </div>
+                                          <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3">
+                                              <div className="flex items-center gap-2 mb-1">
+                                                  <AlertCircle size={14} className="text-amber-500" />
+                                                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500 font-mono">Autonomous Mode</span>
+                                              </div>
+                                              <p className="text-[9px] font-mono text-gray-500 leading-tight">
+                                                  System will silently evaluate scene spikes using the fast model and promote high-priority events to the kernel.
+                                              </p>
+                                          </div>
+                                      </div>
+                                      )}
+                                      </div>
+                                      </div>
+
                       </section>
                   )}
 

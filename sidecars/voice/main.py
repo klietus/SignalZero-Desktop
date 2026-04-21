@@ -24,10 +24,28 @@ SILENCE_THRESHOLD_MS = 2000
 SILENCE_CHUNKS = int(SILENCE_THRESHOLD_MS / CHUNK_DURATION_MS)
 RMS_THRESHOLD = 0.005 
 
+class NoiseFloorTracker:
+    def __init__(self, alpha_up=0.01, alpha_down=0.001):
+        self.noise_floor = None
+        self.alpha_up = alpha_up
+        self.alpha_down = alpha_down
+
+    def update(self, frame_energy):
+        if self.noise_floor is None:
+            self.noise_floor = frame_energy
+            return self.noise_floor
+        # Track the floor (lower energy states)
+        if frame_energy > self.noise_floor:
+            self.noise_floor += self.alpha_up * (frame_energy - self.noise_floor)
+        else:
+            self.noise_floor += self.alpha_down * (frame_energy - self.noise_floor)
+        return self.noise_floor
+
 class VoiceSidecar:
     def __init__(self):
         self.engine = None
-        self.vad = webrtcvad.Vad(VAD_MODE)
+        self.vad = webrtcvad.Vad(1) # Mode 1: less aggressive filtering (we'll use SNR for gating)
+        self.noise_tracker = NoiseFloorTracker()
         self.mic_enabled = False
         self.mic_suppressed = False
         self.enroll_mode = False
@@ -95,10 +113,20 @@ class VoiceSidecar:
         
         audio_frame = indata.flatten()
         rms = np.sqrt(np.mean(audio_frame**2))
+
+        # 1. Update Noise Floor
+        current_noise_floor = self.noise_tracker.update(rms)
+        # Calculate signal-to-noise ratio in dB
+        snr = 20 * np.log10(rms / (current_noise_floor + 1e-6))
         
         # Periodic metrics for UI
         if self.callback_count % 10 == 0:
-            self.send_to_electron("audio_metrics", {"rms": float(rms), "is_speaking": self.triggered})
+            self.send_to_electron("audio_metrics", {
+                "rms": float(rms), 
+                "is_speaking": self.triggered,
+                "noise_floor": float(current_noise_floor),
+                "snr": float(snr)
+            })
 
         if not self.mic_enabled or self.mic_suppressed:
             if self.triggered:
@@ -108,8 +136,10 @@ class VoiceSidecar:
 
         pcm_frame = (audio_frame * 32768).astype(np.int16).tobytes()
         
+        # 2. VAD Logic (Gated by SNR and Noise Floor)
         is_speech = False
-        if rms > RMS_THRESHOLD:
+        # We need a minimum SNR to consider it speech, otherwise it's just louder background noise
+        if snr > 3.0: 
             try:
                 is_speech = self.vad.is_speech(pcm_frame, SAMPLE_RATE)
             except:

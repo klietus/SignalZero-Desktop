@@ -4,7 +4,8 @@ export interface AudioStreamState {
     recognitionConfidence: number;
     isSpeaking: boolean;
     rmsLevel: number;
-    transcription: string;
+    runningTranscript: string;
+    vocalEmotion: string;
 }
 
 export interface DetectedObject {
@@ -24,6 +25,7 @@ export interface CameraStreamState {
     lastFrame: string | null; // Base64 or path to latest grab
     detectedObjects: DetectedObject[];
     people: PersonDetection[];
+    hasPeople: boolean;
     timestamp: number;
 }
 
@@ -40,10 +42,17 @@ export interface StreamStatus {
     errorMessage?: string;
 }
 
+export interface AutonomousState {
+    lastSpikeReason: string | null;
+    isProcessingFlashRound: boolean;
+    recentSpikeTimeline: { timestamp: number, reason: string }[];
+}
+
 export interface SceneState {
     audio: AudioStreamState & { status: StreamStatus };
     camera: CameraStreamState & { status: StreamStatus };
     screen: ScreenStreamState & { status: StreamStatus };
+    autonomous: AutonomousState;
 }
 
 export interface RealtimeMessage {

@@ -13,7 +13,7 @@ class AudioStreamService {
             if (data.type === 'voice_wake_word_detected') {
                 sceneManager.updateAudio({
                     lastSpeaker: data.metadata?.voice_authenticated_username || 'Unknown',
-                    transcription: data.text,
+                    runningTranscript: data.text,
                     isSpeaking: true
                 });
             }
@@ -24,10 +24,19 @@ class AudioStreamService {
             const { type, payload } = msg;
             
             if (type === 'stt_result') {
+                const state = sceneManager.getState().audio;
+                const newEntry = payload.text?.trim();
+                
+                if (!newEntry) return; // Ignore empty lines
+
+                // Append and limit size
+                const updatedTranscript = (state.runningTranscript + "\n" + newEntry).trim().split("\n").slice(-20).join("\n");
+
                 sceneManager.updateAudio({
                     lastSpeaker: payload.speaker,
                     recognitionConfidence: payload.score || 0,
-                    transcription: payload.text,
+                    runningTranscript: updatedTranscript,
+                    vocalEmotion: payload.vocal_emotion || 'neutral',
                     isSpeaking: false
                 });
             } else if (type === 'audio_metrics') {

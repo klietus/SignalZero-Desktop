@@ -3,11 +3,12 @@ import { agentService } from './agentService.js';
 import { contextService } from './contextService.js';
 import { systemPromptService } from './systemPromptService.js';
 import { ACTIVATION_PROMPT } from '../symbolic_system/activation_prompt.js';
-import { sendMessageAndHandleTools, getChatSession, getGeminiClient, getClient, extractJson } from './inferenceService.js';
+import { sendMessageAndHandleTools, getChatSession, getGeminiClient, getClient, extractJson, processMessageAsync } from './inferenceService.js';
 import { createToolExecutor } from './toolsService.js';
 import { settingsService } from './settingsService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { MonitoringDelta, AgentDefinition } from '../types.js';
+import { broadcast } from '../index.js';
 
 class AgentRunner {
     private isProcessingBatch = false;
@@ -23,8 +24,60 @@ class AgentRunner {
         // Background: Trigger the Batch Execution Round every 5 minutes
         setInterval(() => this.runBatchRound(), 5 * 60 * 1000);
 
+        // Perception Promotion
+        eventBusService.onKernelEvent('perception:spike-promoted' as any, (data) => {
+            this.handlePromotedPerception(data);
+        });
+
         // Initial catch-up and first batch run
         setTimeout(() => this.catchUpAndRoute(), 10000);
+    }
+
+    private lastPromotionTime = 0;
+    private readonly PROMOTION_COOLDOWN_MS = 60000; // 1 minute rate limit
+
+    private async handlePromotedPerception(data: any) {
+        const now = Date.now();
+        if (now - this.lastPromotionTime < this.PROMOTION_COOLDOWN_MS) {
+            loggerService.catDebug(LogCategory.AGENT, `Rate-limiting perception promotion: ${data.synthesis}`);
+            return;
+        }
+        
+        this.lastPromotionTime = now;
+        loggerService.catInfo(LogCategory.AGENT, `Autonomous Reaction Triggered: ${data.synthesis}`);
+        
+        // Find or create a SINGLE persistent autonomous situational context
+        const sessions = await contextService.listSessions();
+        let session = sessions.find(s => s.metadata?.kind === 'autonomous_reaction');
+        
+        if (!session) {
+            session = await contextService.createSession('agent', { 
+                kind: 'autonomous_reaction',
+                source: 'perception_spike'
+            }, "Autonomous Reasoning Stream");
+        }
+
+        const prompt = `
+[Situational Awareness Update]
+Event: ${data.synthesis}
+Evaluation Reason: ${data.reason}
+Recent Context: ${data.transcriptSlice}
+
+TASK: Based on this new awareness, provide a brief, helpful intervention or observation.
+Keep it concise and high-signal. Use tools if a concrete problem is detected.
+`.trim();
+
+        // Trigger a high-priority agent round
+        const toolExecutor = createToolExecutor(session.id);
+        const settings = await settingsService.getInferenceSettings();
+        
+        // Switch UI to this new autonomous context
+        broadcast('navigate', 'chat');
+        broadcast('kernel:event', { type: 'context:selected', data: { sessionId: session.id } });
+
+        processMessageAsync(session.id, prompt, toolExecutor, settings.systemName || 'axiom', undefined, {
+            voice_authenticated_username: 'SYSTEM'
+        });
     }
 
     /**

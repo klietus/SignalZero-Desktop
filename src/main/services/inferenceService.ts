@@ -84,7 +84,7 @@ class InferenceLockManager {
 
 export const inferenceLock = new InferenceLockManager();
 
-export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 512): Promise<string> => {
+export const callFastInference = async (messages: { role: string, content: string }[], maxTokens: number = 512, attachments?: any[]): Promise<string> => {
     const settings = await settingsService.getInferenceSettings();
     const fastModel = settings.fastModel;
     
@@ -94,11 +94,37 @@ export const callFastInference = async (messages: { role: string, content: strin
             model: fastModel,
             generationConfig: { maxOutputTokens: maxTokens } 
         });
-        const result = await model.generateContent(messages.map(m => m.content).join('\n'));
+        
+        const contentParts: any[] = [{ text: messages.map(m => m.content).join('\n') }];
+        if (attachments && attachments.length > 0) {
+            for (const att of attachments) {
+                if (att.image_base64) {
+                    contentParts.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
+                }
+            }
+        }
+        
+        const result = await model.generateContent(contentParts);
         return result.response.text().trim();
     } else {
         const client = await getClient();
-        const result = await client.chat.completions.create({ model: fastModel, messages: messages as any, max_tokens: maxTokens });
+        let userContent: any = messages.map(m => m.content).join('\n');
+        
+        if (attachments && attachments.length > 0) {
+            const parts: any[] = [{ type: 'text', text: userContent }];
+            for (const att of attachments) {
+                if (att.image_base64) {
+                    parts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
+                }
+            }
+            userContent = parts;
+        }
+
+        const result = await client.chat.completions.create({ 
+            model: fastModel, 
+            messages: [{ role: 'user', content: userContent }] as any, 
+            max_tokens: maxTokens 
+        });
         return result.choices[0]?.message?.content?.trim() || "";
     }
 };
@@ -1339,21 +1365,29 @@ export const processMessageAsync = async (
     const chat = await getChatSession(finalSystemInstruction, contextSessionId);
     const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, monitoringDeltas, 1, message, sceneAttachments);
     
-    eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
+    const isSilent = metadata?.silent === true;
+    if (!isSilent) {
+        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
+    }
     
     let fullText = "";
     for await (const chunk of stream) {
       if (chunk.text) fullText += chunk.text;
-      if (chunk.text || chunk.toolCalls) {
+      if (!isSilent && (chunk.text || chunk.toolCalls)) {
           eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId });
       }
       if (chunk.isComplete) {
-          eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId, fullText });
+          if (!isSilent) {
+              eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId, fullText });
+          }
+          return { fullText, sessionId: contextSessionId };
       }
     }
+    return { success: false, reason: "Inference loop ended without completion flag" };
   } catch (error: any) {
     loggerService.catError(LogCategory.INFERENCE, "Async Message Processing Failed", { contextSessionId, error: error.message });
     eventBusService.emitKernelEvent(KernelEventType.INFERENCE_ERROR, { sessionId: contextSessionId, messageId, error: error.message });
+    return { success: false, error: error.message };
   }
 };
 
@@ -1365,5 +1399,6 @@ export const inferenceService = {
   summarizeHistory,
   extractJson,
   streamAssistantResponse,
-  resolveAttachments
+  resolveAttachments,
+  callFastInference
 };

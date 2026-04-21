@@ -252,6 +252,7 @@ class PythonVoiceManager extends EventEmitter {
         ipcMain.on('voice:playback-finished', () => {
             // We no longer suppress mic automatically, but keeping the event for state tracking if needed
             this.isSpeaking = false;
+            this.sendToSidecar('mic_suppress_off', {});
         });
 
         ipcMain.on('voice:enroll-start', async (_, { phrase }) => {
@@ -310,6 +311,10 @@ ${processedText}`;
         if (!this.process || !this.isReady) {
             return;
         }
+        
+        // Suppress mic during synthesis/playback
+        this.sendToSidecar('mic_suppress_on', {});
+        
         const speechText = await this.synthesizeSpeechText(text);
         this.isSpeaking = true;
         this.sendToSidecar('speak', { text: speechText, voice: this.voiceId });

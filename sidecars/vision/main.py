@@ -200,17 +200,20 @@ class VisionSidecar:
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGBA, data=rgba_frame)
         h, w, _ = frame.shape
         people = []
+        has_people = False
         
         landmarker = self.face_landmarker
         recognizer = self.fer
         
-        if not landmarker: return [], []
+        if not landmarker: return [], [], False
 
         try:
-            results = landmarker.detect_for_video(mp_image, int(timestamp_ms))
+            results = landmarker.detect_for_video( mp_image, int(timestamp_ms))
             
-            if not results.face_landmarks: return [], []
+            if not results.face_landmarks: 
+                return [], [], False
 
+            has_people = True
             # Use the RGB version for neural inference (HSEmotion expects 3 channels)
             rgb_frame = cv2.cvtColor(rgba_frame, cv2.COLOR_RGBA2RGB)
 
@@ -293,7 +296,7 @@ class VisionSidecar:
         except Exception as e:
             self.log(f"Processing error: {str(e)}")
 
-        return people, []
+        return people, [], has_people
 
     def camera_loop(self):
         cap = cv2.VideoCapture(0)
@@ -309,7 +312,7 @@ class VisionSidecar:
             if not ret: break
 
             ts_ms = (time.time() - start_time) * 1000
-            people, _ = self.process_frame(frame, ts_ms)
+            people, _, has_people = self.process_frame(frame, ts_ms)
             
             target_width = 640
             h_orig, w_orig = frame.shape[:2]
@@ -322,6 +325,7 @@ class VisionSidecar:
                 "lastFrame": frame_data,
                 "detectedObjects": [],
                 "people": people,
+                "hasPeople": has_people,
                 "timestamp": time.time()
             })
             time.sleep(0.1) # 10 FPS
@@ -330,7 +334,19 @@ class VisionSidecar:
 
     def get_active_app_info(self):
         try:
-            script = 'tell application "System Events" to get {name, title of window 1} of first process whose frontmost is true'
+            # Improved AppleScript that checks for window existence to avoid -1719 error
+            script = '''
+            tell application "System Events"
+                set p to first process whose frontmost is true
+                set pName to name of p
+                if (count of windows of p) > 0 then
+                    set wTitle to title of window 1 of p
+                    return pName & ": " & wTitle
+                else
+                    return pName
+                end if
+            end tell
+            '''
             return subprocess.check_output(['osascript', '-e', script]).decode('utf-8').strip()
         except: return "Unknown"
 

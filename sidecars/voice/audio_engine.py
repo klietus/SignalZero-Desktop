@@ -1,6 +1,7 @@
 import os
 import torch
 import threading
+import time
 from faster_whisper import WhisperModel
 import numpy as np
 import warnings
@@ -12,6 +13,7 @@ import sys
 import io
 from scipy.spatial.distance import cosine
 from speechbrain.inference.speaker import EncoderClassifier
+from diarization import DiarizationEngine
 
 # Suppress noisy numpy warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="faster_whisper")
@@ -42,11 +44,12 @@ class AudioEngine:
             savedir=os.path.join(base_dir, "spkrec-model")
         )
         
-        # Multi-user support: { "name": embedding_numpy_array }
         self.user_profiles = {}
         self.enrollment_embeddings = []
         self.verification_threshold = 0.55 
         self.learning_rate = 0.1
+        self.diarization = DiarizationEngine(threshold=self.verification_threshold)
+        self.running_avg_rms = 0.01 
         
     def get_speaker_embedding(self, audio_data):
         with self.speaker_lock:
@@ -166,23 +169,59 @@ class AudioEngine:
             sf.write(buffer, samples, sample_rate, format='WAV')
             return buffer.getvalue()
 
+    def estimate_vocal_emotion(self, audio_data):
+        """
+        Refined prosody heuristic based on relative energy (SNR).
+        """
+        rms = np.sqrt(np.mean(audio_data**2))
+        zcr = np.mean(np.abs(np.diff(np.sign(audio_data)))) / 2
+
+        # Update baseline energy (slow adaptation)
+        self.running_avg_rms = (0.95 * self.running_avg_rms) + (0.05 * rms)
+        
+        # Calculate Relative Intensity
+        # How much louder is this segment than our recent average?
+        rel_intensity = rms / (self.running_avg_rms + 1e-6)
+        
+        # Highly sensitive relative thresholds
+        if rel_intensity > 2.5: return "excited/loud"
+        if zcr > 0.14: return "tense/sharp"
+        if rel_intensity < 0.4: return "whispering/calm"
+        if 1.5 < rel_intensity < 2.5: return "emphatic"
+        
+        return "neutral"
+
     def process_segment(self, audio_data):
         if audio_data.dtype != np.float32:
             audio_np = audio_data.astype(np.float32) / 32768.0
         else:
             audio_np = audio_data
         
+        # 1. Identity (Known User)
         speaker_name, score = self.identify_speaker(audio_np)
         
-        if speaker_name is None:
-            logger.info(f"Speaker verification failed. Best score: {score:.4f} (Threshold: {self.verification_threshold})")
-            return None
+        # 2. Diarization (Multi-Speaker Tracking)
+        emb = self.get_speaker_embedding(audio_np)
+        diarized_id = self.diarization.cluster(emb)
+        
+        # If identity failed but diarization exists, use guest ID
+        display_name = speaker_name if speaker_name else diarized_id
+        
+        # 3. Vocal Emotion (Prosody)
+        vocal_emotion = self.estimate_vocal_emotion(audio_np)
             
-        logger.info(f"Speaker verified as '{speaker_name}' (Score: {score:.4f})")
-        text = self.transcribe(audio_np)
+        logger.info(f"Speaker: {display_name}, Score: {score:.4f}, Emotion: {vocal_emotion}")
+        raw_text = self.transcribe(audio_np)
+        
+        # 4. Format with timestamp and emotion notation
+        timestamp = time.strftime("%H:%M:%S")
+        formatted_text = f"[{timestamp}] <{vocal_emotion}> {raw_text}"
         
         return {
-            "text": text,
-            "speaker": speaker_name,
-            "score": score
+            "text": formatted_text,
+            "raw_text": raw_text,
+            "speaker": display_name,
+            "score": score,
+            "vocal_emotion": vocal_emotion,
+            "time": timestamp
         }

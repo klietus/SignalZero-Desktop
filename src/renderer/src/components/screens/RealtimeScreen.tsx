@@ -7,7 +7,8 @@ interface AudioStreamState {
     recognitionConfidence: number;
     isSpeaking: boolean;
     rmsLevel: number;
-    transcription: string;
+    runningTranscript: string;
+    vocalEmotion: string;
     status: { isActive: boolean; isError: boolean; errorMessage?: string };
 }
 
@@ -40,10 +41,17 @@ interface ScreenStreamState {
     status: { isActive: boolean; isError: boolean; errorMessage?: string };
 }
 
+interface AutonomousState {
+    lastSpikeReason: string | null;
+    isProcessingFlashRound: boolean;
+    recentSpikeTimeline: { timestamp: number, reason: string }[];
+}
+
 interface SceneState {
     audio: AudioStreamState;
     camera: CameraStreamState;
     screen: ScreenStreamState;
+    autonomous: AutonomousState;
 }
 
 interface RealtimeScreenProps {
@@ -241,10 +249,36 @@ export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) =
                                 <div className="text-gray-800 font-mono text-[9px] uppercase tracking-[0.4em]">{state.screen.status.isActive ? 'Syncing_Buffer...' : 'Perception_Offline'}</div>
                             )}
                         </div>
-                        <div className="px-3 py-2 bg-black/20">
-                            <span className="text-[8px] text-gray-500 font-mono uppercase font-bold">Character_Recognition_Stream</span>
-                            <div className="mt-1 bg-black/40 rounded p-2 font-mono text-[9px] text-gray-500 h-20 overflow-y-auto border border-gray-800/60 leading-tight scrollbar-none">
-                                {state.screen.status.isActive ? (state.screen.ocrText || 'Syncing content...') : 'OCR_Suspended'}
+                        <div className="px-3 py-2 bg-black/20 flex gap-4">
+                            <div className="flex-1">
+                                <span className="text-[8px] text-gray-500 font-mono uppercase font-bold">Character_Recognition_Stream</span>
+                                <div className="mt-1 bg-black/40 rounded p-2 font-mono text-[9px] text-gray-500 h-20 overflow-y-auto border border-gray-800/60 leading-tight scrollbar-none">
+                                    {state.screen.status.isActive ? (state.screen.ocrText || 'Syncing content...') : 'OCR_Suspended'}
+                                </div>
+                            </div>
+                            <div className="w-48 border-l border-gray-800/40 pl-3">
+                                <span className="text-[8px] text-gray-500 font-mono uppercase font-bold">Autonomous_Intel</span>
+                                <div className="mt-1 space-y-2">
+                                    <div className={`p-1.5 rounded border ${state.autonomous.isProcessingFlashRound ? 'bg-indigo-500/10 border-indigo-500/40 animate-pulse' : 'bg-gray-800/20 border-gray-800/40'}`}>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[8px] font-mono text-gray-400">Flash Round:</span>
+                                            <span className={`text-[8px] font-mono ${state.autonomous.isProcessingFlashRound ? 'text-indigo-400 font-bold' : 'text-gray-600'}`}>
+                                                {state.autonomous.isProcessingFlashRound ? 'EVALUATING' : 'IDLE'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1 max-h-[45px] overflow-y-auto pr-1">
+                                        {state.autonomous.recentSpikeTimeline.map((spike, i) => (
+                                            <div key={i} className="flex items-start gap-1.5 leading-none">
+                                                <div className="w-1 h-1 rounded-full bg-rose-500 mt-0.5 shrink-0" />
+                                                <span className="text-[7px] font-mono text-gray-400 truncate" title={spike.reason}>{spike.reason}</span>
+                                            </div>
+                                        ))}
+                                        {state.autonomous.recentSpikeTimeline.length === 0 && (
+                                            <span className="text-[7px] font-mono text-gray-700 italic">No recent spikes detected</span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -260,13 +294,19 @@ export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) =
                                 </div>
                                 <div>
                                     <h3 className="font-mono text-[11px] font-bold uppercase tracking-wider leading-none">Acoustic_Diagnostics</h3>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <p className="text-[9px] text-gray-500 font-mono leading-none">Ident:</p>
-                                        <span className={`text-[10px] font-mono font-bold leading-none ${
-                                            state.audio.recognitionConfidence > 0.7 ? "text-emerald-500" : "text-amber-500"
-                                        }`}>
-                                            {state.audio.lastSpeaker || 'Listening...'}
-                                        </span>
+                                    <div className="flex flex-col gap-1 mt-0.5">
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-[9px] text-gray-500 font-mono leading-none">Ident:</p>
+                                            <span className={`text-[10px] font-mono font-bold leading-none ${
+                                                state.audio.recognitionConfidence > 0.7 ? "text-emerald-500" : "text-amber-500"
+                                            }`}>
+                                                {state.audio.lastSpeaker || 'Listening...'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-[9px] text-gray-500 font-mono leading-none">Prosody:</p>
+                                            <span className="text-[9px] font-mono text-indigo-400 uppercase">{state.audio.vocalEmotion}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -286,10 +326,10 @@ export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) =
                         </div>
                         <div className="flex-1 flex gap-4 p-3 min-h-0 overflow-hidden">
                             <div className="flex-1 flex flex-col min-h-0 bg-black/20 rounded-lg border border-gray-800/40 p-3">
-                                <span className="text-[8px] text-gray-500 font-mono uppercase font-bold mb-1.5">Transcription_Buffer</span>
-                                <p className="text-[13px] font-light text-gray-300 overflow-y-auto leading-relaxed scrollbar-none">
-                                    {state.audio.status.isActive ? (state.audio.transcription || '...') : 'Awaiting_Signal'}
-                                </p>
+                                <span className="text-[8px] text-gray-500 font-mono uppercase font-bold mb-1.5">Transcription_History_Buffer</span>
+                                <div className="text-[12px] font-mono text-gray-300 overflow-y-auto leading-relaxed scrollbar-none whitespace-pre-wrap flex flex-col-reverse">
+                                    {state.audio.status.isActive ? (state.audio.runningTranscript || 'Awaiting_Signal') : 'Awaiting_Signal'}
+                                </div>
                             </div>
                             <div className="w-24 flex flex-col justify-center border-l border-gray-800/40 pl-4">
                                 <span className="text-[8px] text-gray-500 font-mono uppercase mb-2 font-bold text-center">Intensity</span>
