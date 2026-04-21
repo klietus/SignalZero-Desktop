@@ -10,23 +10,42 @@ SignalZero Recursive Symbolic Kernel - Desktop Edition.
 
 ## Overview
 
-SignalZero Desktop is a sophisticated recursive symbolic reasoning engine built as a desktop application using Electron, Vite, and React. It provides a robust environment for managing symbolic contexts, executing tool-based reasoning, and visualizing complex information traces.
+SignalZero Desktop is a sophisticated recursive symbolic reasoning engine that serves as an autonomous "situational agent." Built on Electron, Vite, and React, it bridges the gap between raw neural perception and structured symbolic reasoning. It uses local hardware (optimized for M4 Max) to monitor audio, camera, and screen feeds, detecting real-time environmental "spikes" and promoting significant events to its symbolic core for proactive assistance.
 
 ## Key Features
 
-- **Recursive Symbolic Reasoning:** Advanced inference engine with multi-step tool integration and trace-based reasoning.
-- **Autonomous Event-Driven Agents:** Specialized agents (like the *Symbolic Cartographer*) that react to world events in real-time. Supports persistent delta tracking, keyword subscriptions, and automatic state resume.
-- **Neural Gating & Resource Awareness:** High-performance resource management for local hardware. Uses a tiny **0.8B model "Vibe Check"** to gate expensive inference tasks and a **Priority Inference Lock** to ensure smooth UI interaction while agents run in the background.
-- **World Monitoring & Visual Deltas:** Real-time ingestion of global events from conflict, market, and news feeds (ACLED, GDELT, AlphaVantage, RSS). Now supports **Article Images** and direct source linking.
-- **Autonomous Synthesis & Rollups:** Automatic synthesis of raw data into hierarchical time periods (hour, day, week, month, year) for efficient AI grounding.
-- **Interactive AI Regeneration:** Redo any monitoring summary or hierarchical rollup on-demand. Individual hour-deltas are refined, while rollups are re-synthesized from their constituent sub-summaries.
-- **Symbolic Store & Graph Hygiene:** Integrated knowledge store with vector search. Includes automated "Symbolic Compression," "Canonical Merging," and "Bridge Lifting" to maintain a clean, high-signal knowledge graph.
-- **System Tray & Screenshot Tool:** Integrated system bar icon for quick access. Includes a native **Screenshot Capture** tool that automatically processes, analyzes, and attaches visual context to your reasoning turns.
-- **Multimodal Attachment Support:** Deep grounding in local files (PDF, HTML, RSS, JSON) and images. Vision models receive both a **symbolic grounding description** and the **raw base64 pixels** for direct visual reasoning.
-- **Trace Visualization:** Real-time visualization of the reasoning process, showing activated symbols, tool execution paths, and multimodal grounding events.
-- **Context Management:** Persistent conversation sessions with automated "Priming" for pre-caching relevant symbols and world deltas.
-- **MCP Integration:** Native support for the Model Context Protocol (MCP), enabling extensible tool capabilities across local and remote servers.
-- **Integrated Search:** Grounded web search and fetch capabilities with automated symbolic extraction.
+### 💠 Recursive Symbolic Core
+- **Recursive Reasoning:** Multi-step tool integration with recursive trace-based inference.
+- **Symbolic Store & Graph Hygiene:** Knowledge store with vector search. Includes automated "Symbolic Compression," "Canonical Merging," and "Bridge Lifting" to maintain a high-signal knowledge graph.
+- **Context Management:** Persistent conversation sessions with automated "Priming" to pre-cache relevant symbols and world deltas.
+- **Trace Visualization:** Real-time visualization of activated symbols, tool execution paths, and multimodal grounding.
+
+### 👁️ Real-time Perception (Optical & Acoustic Link)
+- **Neural Perception Dashboard:** A high-density, real-time monitoring interface for camera, screen, and acoustic streams.
+- **HSEmotion (Metal-Accelerated):** State-of-the-art research-backed emotion recognition utilizing **EfficientNet-B0** with **Metal (MPS) acceleration**.
+- **MediaPipe V2 Integration:** High-fidelity 52-coefficient blendshape tracking (ARKit standard) for physical facial movement validation and **Neutral Baseline Calibration**.
+- **Optical App Tracking:** Uses macOS Accessibility features to track the active application and window titles in real-time.
+- **Diarized Acoustic Stream:** Real-time multi-speaker separation and tracking. Detects vocal prosody (Excited, Tense, Calm) directly from the acoustic waveform.
+- **High-Fidelity Multimodal Inference:** Automatically extracts perception frames and attaches them as **raw multimodal image parts** to inference rounds, allowing the model to "see" your screen and face directly.
+
+### 🧠 Autonomous Situational Intelligence
+- **Perception Spike Detection:** A "subconscious" background layer that monitors sensory deltas over a 15-second sliding window.
+- **Situational Flash Rounds:** Silent, lightweight background evaluations that decide if a perceived event (emotion shift, app crash, intense debate) warrants kernel attention.
+- **Autonomous Promotion:** Proactively "promotes" significant events to the main Symbolic Kernel, triggering autonomous interventions in a dedicated reasoning stream.
+- **Acoustic Feedback Filtering:** "Mic Suppression" logic that automatically silences the microphone during AI speech playback to prevent self-looping hallucinations.
+
+### 🌍 World Monitoring & Ingestion
+- **Event-Driven Agents:** Specialized agents (like the *Symbolic Cartographer*) that react to global feeds in real-time with persistent delta tracking.
+- **Dynamic Feed Monitoring:** Ingestion of global events from ACLED (conflict), Market signals, and high-fidelity RSS (NYT, CNN, Al Jazeera).
+- **Hierarchical Synthesis:** Automatic rollup of raw world data into temporal summaries (hour, day, week, month, year) for efficient AI grounding.
+
+## Technical Architecture & Performance
+
+- **M4 Max Hardware Optimization:** Specifically engineered for Apple Silicon with **Metal (MPS)** offloading for neural vision and speaker verification models.
+- **Asynchronous Worker Pool:** Offloads CPU-intensive tasks (Large JSON parsing, thought-stripping) to a multi-threaded **WorkerPool** to maintain a fluid 60FPS UI.
+- **IPC Batching Engine:** High-frequency perception data is throttled via a 5Hz/10Hz batching engine to minimize renderer process overhead.
+- **Hybrid Persistence Layer:** Structured SQLite for relational metadata and LanceDB for high-dimensional vector retrieval.
+- **Neural Gating Layer:** A 0.8B parameter "Vibe Check" model validates events against agent subscriptions before engaging heavy reasoning models.
 
 ## Installation
 
@@ -53,22 +72,12 @@ Ensure you have [Node.js](https://nodejs.org/) installed on your system.
    npm install
    ```
 
-## Technical Architecture
-
-- **Hardware-Aware Inference Engine:** Priority-based locking system (User: High, Agent: Background) designed for high-performance Apple Silicon (M4) and local GPU rigs.
-- **Neural Gating Layer:** A 0.8B parameter gating model that validates events against agent subscriptions before waking the heavy reasoning models.
-- **Hierarchical Context Compression:** Multi-layered history management using semantic tool-stripping, 12-round summarization heartbeats, and token-aware sliding windows.
-- **Normalized Persistence Layer:** Structured SQLite storage for relational metadata and attachments, paired with LanceDB for high-dimensional vector retrieval.
-- **Event Bus Backbone:** Real-time communication between the main process (runners, providers) and the renderer (streaming thoughts, trace updates, system events).
-
-## Data Providers
-
-The kernel includes specialized handlers for:
-- **Conflict Monitoring:** ACLED API integration for real-time conflict tracking.
-- **Global Events:** GDELT Project integration for worldwide news events.
-- **Financial Markets:** AlphaVantage and MarketStack for real-time market signals.
-- **Regional News:** High-fidelity RSS processing for NYT, CNN, Al Jazeera, etc.
-- **Custom Feeds:** Generic RSS, Web Scraping, and API polling support.
+3. Setup Sidecar Environments:
+   ```bash
+   # Initialize the portable Python environments
+   ./sidecars/voice/setup_portable.sh
+   ./sidecars/vision/setup_portable.sh
+   ```
 
 ## Running the Application
 
@@ -86,16 +95,12 @@ npm run start
 
 ## Building
 
-To build the application for your current platform:
-
 ```bash
 # General build (runs typecheck and electron-vite build)
 npm run build
 
 # Platform specific builds
 npm run build:mac
-npm run build:win
-npm run build:linux
 ```
 
 ## Testing
@@ -110,24 +115,20 @@ npm test
 SignalZero is grounded in emerging research at the intersection of semiotics, cognitive science, and autonomous systems.
 
 ### 💠 Semiotics & Sign Systems
-- **[Language Models as Semiotic Machines](https://arxiv.org/abs/2410.13065)** - Reconceptualizing AI through structuralist and post-structuralist linguistic theories.
-- **[Not Minds, but Signs: Reframing LLMs through Semiotics](https://arxiv.org/abs/2505.17080)** - Analyzing LLMs as semiotic agents rather than cognitive ones.
+- **[Language Models as Semiotic Machines](https://arxiv.org/abs/2410.13065)**
+- **[Not Minds, but Signs: Reframing LLMs through Semiotics](https://arxiv.org/abs/2505.17080)**
 
 ### 🧠 Neuro-Symbolic Systems
-- **[Neuro-Symbolic AI in 2024: A Systematic Review](https://arxiv.org/abs/2501.05435)** - The state of the art in integrating symbolic logic with neural networks.
-- **[Neuro-Symbolic Artificial Intelligence: The State of the Art](https://arxiv.org/abs/2109.06133)** - Foundational concepts of hybrid AI architectures.
+- **[Neuro-Symbolic AI in 2024: A Systematic Review](https://arxiv.org/abs/2501.05435)**
+- **[Neuro-Symbolic Artificial Intelligence: The State of the Art](https://arxiv.org/abs/2109.06133)**
 
 ### 🌍 World Model AIs
-- **[A Path Towards Autonomous Machine Intelligence](https://arxiv.org/abs/2306.02572)** - Yann LeCun's proposal for JEPA (Joint-Embedding Predictive Architecture).
-- **[Mastering Diverse Domains through World Models](https://arxiv.org/abs/2301.04104)** - Detailed overview of the DreamerV3 reinforcement learning framework.
-
-### ♻️ Recursive Context & Memory
-- **[MemGPT: Towards LLMs as Operating Systems](https://arxiv.org/abs/2310.08560)** - Managing infinite context through hierarchical memory and paging.
-- **[Recursive Summarization for Long-Form Comprehension](https://arxiv.org/abs/2109.10686)** - Techniques for hierarchical state compression in LLM contexts.
+- **[A Path Towards Autonomous Machine Intelligence](https://arxiv.org/abs/2306.02572)**
+- **[Mastering Diverse Domains through World Models](https://arxiv.org/abs/2301.04104)**
 
 ### ⚓ Semantic Grounding
-- **[Understanding AI: Semantic Grounding in Large Language Models](https://arxiv.org/abs/2402.10992)** - Investigating functional and causal grounding in modern transformers.
-- **[Semantic Partial Grounding via LLMs](https://arxiv.org/abs/2602.22067)** - Using LLMs to prune irrelevant search spaces in classical planning tasks.
+- **[Understanding AI: Semantic Grounding in Large Language Models](https://arxiv.org/abs/2402.10992)**
+- **[Semantic Partial Grounding via LLMs](https://arxiv.org/abs/2602.22067)**
 
 ## License
 
