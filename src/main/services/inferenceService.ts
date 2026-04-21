@@ -20,6 +20,8 @@ import { attachmentService, Attachment } from './attachmentService.js';
 import { mcpClientService } from './mcpClientService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { webSearchService } from './webSearchService.js';
+import { workerService } from './workerService.js';
+import { realtimeService } from './realtime/realtimeService.js';
 
 interface ChatSessionState {
   messages: ChatCompletionMessageParam[];
@@ -547,13 +549,21 @@ export async function* sendMessageAndHandleTools(
   anticipatedWebBrief?: string,
   monitoringDeltas?: any[],
   priority: number = 1, // Default to High (User Chat)
+  cleanMessage?: string,
+  sceneAttachments?: any[]
 ): AsyncGenerator<
   { text?: string; toolCalls?: any[]; isComplete?: boolean },
   void,
   unknown
 > {
   const correlationId = userMessageId || randomUUID();
-  const { resolvedContent, attachments } = await inferenceService.resolveAttachments(message);
+  const { resolvedContent, attachments: userAttachments } = await inferenceService.resolveAttachments(message);
+
+  const attachments = [...userAttachments, ...(sceneAttachments || [])];
+  
+  if (attachments.length > 0) {
+      loggerService.catDebug(LogCategory.INFERENCE, `Preparing multimodal inference with ${attachments.length} image part(s).`);
+  }
 
   if (systemInstruction && chat.systemInstruction !== systemInstruction) {
     chat.messages = [{ role: "system", content: systemInstruction }];
@@ -564,7 +574,7 @@ export async function* sendMessageAndHandleTools(
     await contextService.recordMessage(contextSessionId, {
       id: correlationId,
       role: "user",
-      content: message, // Record original with tag, so it can be stripped
+      content: cleanMessage || message, // Use cleanMessage for history
       timestamp: new Date().toISOString(),
       metadata: {
         kind: "user_prompt",
@@ -653,13 +663,28 @@ export async function* sendMessageAndHandleTools(
               if (lastUserMsgIdx !== -1) {
                   const userMsg = contextMessages[lastUserMsgIdx];
                   
-                  // 1. Inject Resolved Content (Descriptions)
-                  userMsg.content = resolvedContent;
+                  // Priority logic for first turn content:
+                  // 1. If we have an augmented message (scene context prepended), 
+                  //    we need to replace the original part of it with resolvedContent (user files)
+                  let finalUserContentText = message || resolvedContent;
+                  
+                  if (message && message !== resolvedContent) {
+                      // We have scene context prepended to 'message'
+                      // We must ensure the 'user message' part of that is also resolved
+                      const sceneBlockMatch = message.match(/^(\[Realtime Scene Context\][\s\S]*?---\n\n)/);
+                      if (sceneBlockMatch) {
+                          const { resolvedContent: resolvedUserPart } = await inferenceService.resolveAttachments(message.replace(sceneBlockMatch[1], ""));
+                          finalUserContentText = sceneBlockMatch[1] + resolvedUserPart;
+                      } else {
+                          const { resolvedContent: resolvedFull } = await inferenceService.resolveAttachments(message);
+                          finalUserContentText = resolvedFull;
+                      }
+                  }
 
                   // 2. Inject Multimodal Data (Pixels) if available
                   if (attachments.length > 0) {
                       if (settings.provider === 'gemini') {
-                          const contentParts: any[] = [{ text: resolvedContent }];
+                          const contentParts: any[] = [{ text: finalUserContentText }];
                           for (const att of attachments) {
                               if (att.image_base64) {
                                   contentParts.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
@@ -667,28 +692,33 @@ export async function* sendMessageAndHandleTools(
                           }
                           contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
                       } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-                          const contentParts: any[] = [{ type: 'text', text: resolvedContent }];
+                          const contentParts: any[] = [{ type: 'text', text: finalUserContentText }];
                           for (const att of attachments) {
                               if (att.image_base64) {
                                   contentParts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
                               }
                           }
                           contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
+                          loggerService.catDebug(LogCategory.INFERENCE, `Final user content updated with ${contentParts.length} parts (text + images).`);
                       }
+                  } else {
+                      userMsg.content = finalUserContentText;
+                      loggerService.catDebug(LogCategory.INFERENCE, "Final user content updated (text only).");
                   }
               }
           }
           eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens: result.totalTokens });
         } else {
-          let userContent: any = resolvedContent;
+          const finalUserContentText = message || resolvedContent;
+          let userContent: any = finalUserContentText;
           if (attachments.length > 0) {
               if (settings.provider === 'gemini') {
-                  userContent = [{ text: resolvedContent }];
+                  userContent = [{ text: finalUserContentText }];
                   for (const att of attachments) {
                       if (att.image_base64) userContent.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
                   }
               } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-                  userContent = [{ type: 'text', text: resolvedContent }];
+                  userContent = [{ type: 'text', text: finalUserContentText }];
                   for (const att of attachments) {
                       if (att.image_base64) userContent.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
                   }
@@ -947,7 +977,14 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
   yield { isComplete: true };
 }
 
-export const extractJson = (text: string): any => {
+export const extractJson = async (text: string): Promise<any> => {
+  try {
+      const result = await workerService.runTask('parseJson', text);
+      if (result) return result;
+  } catch (e) {
+      // Fallback to existing manual extraction logic if simple parse fails
+  }
+
   const tryParse = (str: string) => {
     if (!str || str.trim() === "") return null;
     try {
@@ -1233,10 +1270,56 @@ export const processMessageAsync = async (
   message: string,
   toolExecutor: (name: string, args: any) => Promise<any>,
   systemInstruction: string,
-  messageId?: string
+  messageId?: string,
+  metadata?: Record<string, any>
 ) => {
   let messageTraceNeeded = false;
   try {
+    const sceneSnapshot = realtimeService.getSnapshot();
+    let augmentedMessage = message;
+    const sceneAttachments: any[] = [];
+
+    if (sceneSnapshot) {
+        // 1. Extract and remove heavy base64 from the textual snapshot
+        if (sceneSnapshot.camera?.lastFrame) {
+            const raw = sceneSnapshot.camera.lastFrame;
+            const data = raw.includes(',') ? raw.split(',')[1] : raw;
+            sceneAttachments.push({
+                id: 'scene-camera',
+                mime_type: 'image/jpeg',
+                image_base64: data,
+                filename: 'camera_perception.jpg'
+            });
+            loggerService.catInfo(LogCategory.INFERENCE, `Extracted Camera Frame: ${Math.round(data.length / 1024)}KB`);
+            delete sceneSnapshot.camera.lastFrame;
+        }
+        if (sceneSnapshot.screen?.lastFrame) {
+            const raw = sceneSnapshot.screen.lastFrame;
+            const data = raw.includes(',') ? raw.split(',')[1] : raw;
+            sceneAttachments.push({
+                id: 'scene-screen',
+                mime_type: 'image/jpeg',
+                image_base64: data,
+                filename: 'screen_perception.jpg'
+            });
+            loggerService.catInfo(LogCategory.INFERENCE, `Extracted Screen Frame: ${Math.round(data.length / 1024)}KB`);
+            delete sceneSnapshot.screen.lastFrame;
+        }
+
+        // 2. Format the structured metadata (OCR, emotions, etc)
+        const sceneContextBlock = `[Realtime Scene Context]\n${JSON.stringify(sceneSnapshot, null, 2)}\n\n---\n\n`;
+        
+        // 3. Prepend to message (which sendMessageAndHandleTools will later merge with resolvedContent)
+        augmentedMessage = sceneContextBlock + message;
+    }
+
+    const speakerName = metadata?.voice_authenticated_username;
+    let finalSystemInstruction = systemInstruction;
+    
+    if (speakerName && speakerName !== 'Unknown') {
+        finalSystemInstruction = `${finalSystemInstruction}\n\n[Voice Authentication Metadata]\n- Current Speaker: ${speakerName}\n- Verification Status: Authenticated via Voice Fingerprint`;
+    }
+
     const { webResults, webBrief, monitoringDeltas, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
     const session = await contextService.getSession(contextSessionId);
     if (session) {
@@ -1248,15 +1331,25 @@ export const processMessageAsync = async (
         metadata: {
           ...session.metadata,
           trace_needed: traceNeeded,
-          trace_reason: traceReason
+          trace_reason: traceReason,
+          voice_authenticated_username: speakerName
         }
       });
     }
-    const chat = await getChatSession(systemInstruction, contextSessionId);
-    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, messageTraceNeeded, systemInstruction, contextSessionId, messageId, webResults, webBrief, monitoringDeltas);
+    const chat = await getChatSession(finalSystemInstruction, contextSessionId);
+    const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, monitoringDeltas, 1, message, sceneAttachments);
+    
     eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
+    
+    let fullText = "";
     for await (const chunk of stream) {
-      if (chunk.isComplete) eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId });
+      if (chunk.text) fullText += chunk.text;
+      if (chunk.text || chunk.toolCalls) {
+          eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId });
+      }
+      if (chunk.isComplete) {
+          eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { sessionId: contextSessionId, messageId, fullText });
+      }
     }
   } catch (error: any) {
     loggerService.catError(LogCategory.INFERENCE, "Async Message Processing Failed", { contextSessionId, error: error.message });

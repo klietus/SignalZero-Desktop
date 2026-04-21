@@ -32,6 +32,12 @@ class AgentRunner {
      */
     private async catchUpAndRoute() {
         try {
+            const settings = await settingsService.getMonitoringSettings();
+            if (!settings.enabled) {
+                loggerService.catDebug(LogCategory.AGENT, "Monitoring disabled; skipping catch-up routing.");
+                return;
+            }
+
             const agents = await agentService.listAgents();
             const activeAgents = agents.filter(a => a.enabled && a.subscriptions && a.subscriptions.length > 0);
             if (activeAgents.length === 0) return;
@@ -59,6 +65,12 @@ class AgentRunner {
         if (this.routedDeltas.has(delta.id)) return;
 
         try {
+            const settings = await settingsService.getMonitoringSettings();
+            if (!settings.enabled) {
+                loggerService.catDebug(LogCategory.AGENT, `Ignoring incoming delta ${delta.id}: World monitoring is OFF.`);
+                return;
+            }
+
             this.routedDeltas.add(delta.id);
             const agents = await agentService.listAgents();
             const activeAgents = agents.filter(a => a.enabled && a.subscriptions && a.subscriptions.length > 0);
@@ -153,11 +165,11 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
                 const client = await getGeminiClient();
                 const model = client.getGenerativeModel({ model: fastModel, generationConfig: { maxOutputTokens: 200, temperature: 0.1 } });
                 const response = await model.generateContent(prompt);
-                result = extractJson(response.response.text());
+                result = await extractJson(response.response.text());
             } else {
                 const client = await getClient();
                 const response = await client.chat.completions.create({ model: fastModel, messages: [{ role: "user", content: prompt }], max_tokens: 200, temperature: 0.1 });
-                result = extractJson(response.choices[0]?.message?.content || "{}");
+                result = await extractJson(response.choices[0]?.message?.content || "{}");
             }
             return result.winnerId ? agents.find(a => a.id === result.winnerId) || null : null;
         } catch (e) { return null; }

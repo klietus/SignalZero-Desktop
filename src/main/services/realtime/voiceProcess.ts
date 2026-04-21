@@ -1,28 +1,29 @@
 import { spawn, ChildProcessByStdio } from 'child_process';
-import { loggerService, LogCategory } from './loggerService.js';
-import { settingsService } from './settingsService.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
-import { contextService } from './contextService.js';
-import { activeSessionId } from '../index.js';
-import { callFastInference } from './inferenceService.js';
+import { loggerService, LogCategory } from '../loggerService.js';
+import { settingsService } from '../settingsService.js';
+import { eventBusService, KernelEventType } from '../eventBusService.js';
+import { contextService } from '../contextService.js';
+import { activeSessionId, broadcast } from '../../index.js';
+import { callFastInference } from '../inferenceService.js';
 import { ipcMain, app, systemPreferences } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { Readable, Writable } from 'stream';
+import { EventEmitter } from 'events';
 
-class PythonVoiceManager {
+class PythonVoiceManager extends EventEmitter {
     private process: ChildProcessByStdio<Writable, Readable, Readable> | null = null;
     private isVoiceModeActive = false;
     private systemName = "axiom";
     private voiceId = "af_sarah";
     private isReady = false;
-    private lastSender: any = null;
     private stdoutBuffer = "";
     private isMicAccessGranted = false;
     private isSpeaking = false;
     private authenticatedSpeaker: string | null = null;
 
     constructor() {
+        super();
         this.setupIpc();
     }
 
@@ -89,9 +90,7 @@ class PythonVoiceManager {
                         const msg = JSON.parse(line);
                         this.handleSidecarMessage(msg);
                     } catch (e) {
-                        if (!line.startsWith('{') && !line.startsWith('"')) {
-                            loggerService.catInfo(LogCategory.SYSTEM, `Sidecar Log: ${line}`);
-                        }
+                        // Suppress noisy logs for malformed JSON or binary debris leaked to stdout
                     }
                 }
                 boundary = this.stdoutBuffer.indexOf('\n');
@@ -140,6 +139,7 @@ class PythonVoiceManager {
 
     private handleSidecarMessage(msg: any) {
         const { type, payload } = msg;
+        this.emit('message', msg);
 
         if (type === 'alive') {
             // Heartbeat/Alive
@@ -153,41 +153,33 @@ class PythonVoiceManager {
             loggerService.catInfo(LogCategory.SYSTEM, `Sidecar initialized ${payload.count} voice profile(s).`);
         } else if (type === 'stt_result') {
             this.authenticatedSpeaker = payload.speaker;
-            if (this.lastSender) {
-                this.lastSender.send('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
-            }
+            broadcast('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
             this.processFinalTranscription(payload.text);
         } else if (type === 'speaker_interrupt') {
-            if (this.lastSender) {
-                this.lastSender.send('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
-            }
+            broadcast('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
             if (this.isSpeaking) {
                 loggerService.catInfo(LogCategory.SYSTEM, `Verified user '${payload.speaker}' interrupted AI speech.`);
                 this.interruptPlayback();
             }
         } else if (type === 'tts_chunk') {
-            if (this.lastSender) {
-                this.isSpeaking = true;
-                this.lastSender.send('voice:play-chunk', {
-                    audio: payload.audio,
-                    index: payload.index,
-                    isLast: payload.isLast
-                });
-            }
+            this.isSpeaking = true;
+            broadcast('voice:play-chunk', {
+                audio: payload.audio,
+                index: payload.index,
+                isLast: payload.isLast
+            });
         } else if (type === 'tts_complete') {
             loggerService.catInfo(LogCategory.SYSTEM, "Sidecar finished generating all TTS chunks.");
         } else if (type === 'enroll_progress') {
-            if (this.lastSender) {
-                this.lastSender.send('voice:enroll-progress', {
-                    count: payload.count,
-                    verified: payload.verified,
-                    text: payload.text
-                });
-            }
+            broadcast('voice:enroll-progress', {
+                count: payload.count,
+                verified: payload.verified,
+                text: payload.text
+            });
         } else if (type === 'enroll_finalized') {
-            if (this.lastSender) {
-                this.lastSender.send('voice:enroll-finalized', payload);
-            }
+            broadcast('voice:enroll-finalized', payload);
+        } else if (type === 'audio_metrics') {
+            // Already emitting via this.emit('message', msg) at top of function
         } else if (type === 'profile_updated') {
             const { name, profile } = payload;
             loggerService.catInfo(LogCategory.SYSTEM, `Persisting refined voice profile for '${name}'...`);
@@ -204,9 +196,7 @@ class PythonVoiceManager {
     private interruptPlayback() {
         this.isSpeaking = false;
         this.sendToSidecar('interrupt_tts', {});
-        if (this.lastSender) {
-            this.lastSender.send('voice:stop-playback');
-        }
+        broadcast('voice:stop-playback');
     }
 
     private async processFinalTranscription(text: string) {
@@ -236,39 +226,35 @@ class PythonVoiceManager {
                 }
             });
 
-            if (this.lastSender) {
-                this.lastSender.send('voice:play-ack-beep');
-                this.lastSender.send('voice:stt-result', cleanText);
-                this.lastSender.send('voice:trigger-submit', {
-                    text: cleanText,
-                    speaker: this.authenticatedSpeaker || 'Unknown'
-                });
-            }
+            broadcast('voice:play-ack-beep');
+            broadcast('voice:stt-result', cleanText);
+            broadcast('voice:trigger-submit', {
+                text: cleanText,
+                speaker: this.authenticatedSpeaker || 'Unknown'
+            });
         }
     }
 
-    private setupIpc() {
-        ipcMain.handle('voice:toggle-mode', async (event, active: boolean) => {
-            this.isVoiceModeActive = active;
-            this.lastSender = event.sender;
-            if (active) {
-                await this.initialize();
-                if (this.isReady && this.isMicAccessGranted) {
-                    this.sendToSidecar('mic_on', {});
-                }
-            } else {
-                this.sendToSidecar('mic_off', {});
+    async toggleVoiceMode(active: boolean) {
+        this.isVoiceModeActive = active;
+        if (active) {
+            await this.initialize();
+            if (this.isReady && this.isMicAccessGranted) {
+                this.sendToSidecar('mic_on', {});
             }
-            return this.isVoiceModeActive;
-        });
+        } else {
+            this.sendToSidecar('mic_off', {});
+        }
+        return this.isVoiceModeActive;
+    }
 
+    private setupIpc() {
         ipcMain.on('voice:playback-finished', () => {
             // We no longer suppress mic automatically, but keeping the event for state tracking if needed
             this.isSpeaking = false;
         });
 
-        ipcMain.on('voice:enroll-start', async (event, { phrase }) => {
-            this.lastSender = event.sender;
+        ipcMain.on('voice:enroll-start', async (_, { phrase }) => {
             if (!this.process) {
                 await this.initialize();
             }
@@ -320,11 +306,10 @@ ${processedText}`;
         }
     }
 
-    async speak(text: string, sender: any) {
+    async speak(text: string, _sender: any) {
         if (!this.process || !this.isReady) {
             return;
         }
-        this.lastSender = sender;
         const speechText = await this.synthesizeSpeechText(text);
         this.isSpeaking = true;
         this.sendToSidecar('speak', { text: speechText, voice: this.voiceId });

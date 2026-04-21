@@ -173,6 +173,21 @@ const api = {
     return () => ipcRenderer.removeListener('screenshot:captured', subscription);
   },
   
+  // Realtime
+  getRealtimeState: () => ipcRenderer.invoke('realtime:get-state'),
+  startRealtimeStream: (type: 'camera' | 'screen') => ipcRenderer.send('realtime:start-stream', type),
+  stopRealtimeStream: (type: 'camera' | 'screen') => ipcRenderer.send('realtime:stop-stream', type),
+  onRealtimeUpdate: (callback: (update: { type: string, state: any }) => void) => {
+    const subscription = (_event, update) => callback(update);
+    ipcRenderer.on('realtime:scene-update', subscription);
+    return () => ipcRenderer.removeListener('realtime:scene-update', subscription);
+  },
+  onRealtimeStatusUpdate: (callback: (update: { type: string, status: any }) => void) => {
+    const subscription = (_event, update) => callback(update);
+    ipcRenderer.on('realtime:status-change', subscription);
+    return () => ipcRenderer.removeListener('realtime:status-change', subscription);
+  },
+  
   removeInferenceListeners: () => {
     ipcRenderer.removeAllListeners('inference:chunk');
     ipcRenderer.removeAllListeners('inference:completed');

@@ -9,7 +9,7 @@ import icon from '../../resources/cognitav.jpg?asset'
 
 // Kernel Services
 import { contextService } from './services/contextService.js'
-import { sendMessageAndHandleTools, getChatSession, primeSymbolicContext, processMessageAsync } from './services/inferenceService.js'
+import { processMessageAsync } from './services/inferenceService.js'
 import { domainService } from './services/domainService.js'
 import { settingsService } from './services/settingsService.js'
 import { createToolExecutor } from './services/toolsService.js'
@@ -27,7 +27,26 @@ import { sqliteService } from './services/sqliteService.js'
 import { mcpClientService } from './services/mcpClientService.js'
 import { attachmentService } from './services/attachmentService.js'
 import { agentRunner } from './services/agentRunner.js'
-import { voiceService } from './services/voiceProcess.js'
+import { realtimeService } from './services/realtime/realtimeService.js'
+
+// --- IPC Batching Engine ---
+const ipcBatchQueues = new Map<string, any>();
+const ipcBatchTimers = new Map<string, NodeJS.Timeout>();
+
+function broadcastBatched(channel: string, data: any, intervalMs: number = 100) {
+    ipcBatchQueues.set(channel, data);
+    
+    if (!ipcBatchTimers.has(channel)) {
+        const timer = setInterval(() => {
+            const batchedData = ipcBatchQueues.get(channel);
+            if (batchedData) {
+                broadcast(channel, batchedData);
+                ipcBatchQueues.delete(channel);
+            }
+        }, intervalMs);
+        ipcBatchTimers.set(channel, timer);
+    }
+}
 import fs from 'fs'
 import { dialog } from 'electron'
 
@@ -36,14 +55,45 @@ let mainWindow: BrowserWindow | null = null;
 let monitorWindow: BrowserWindow | null = null;
 export let activeSessionId: string | null = null;
 
-const broadcast = (channel: string, ...args: any[]) => {
+export const broadcast = (channel: string, ...args: any[]) => {
+  // --- Safe Serialization Layer ---
+  const safeArgs = args.map(arg => {
+      try {
+          // If it's a simple primitive, return as is
+          if (arg === null || typeof arg !== 'object') return arg;
+
+          // Handle Error objects specifically (they don't serialize to JSON well)
+          if (arg instanceof Error) {
+              return {
+                  message: arg.message,
+                  stack: arg.stack,
+                  name: arg.name
+              };
+          }
+
+          // Use a replacer to handle potential circular references
+          const cache = new Set();
+          const json = JSON.stringify(arg, (_key, value) => {
+              if (typeof value === 'object' && value !== null) {
+                  if (cache.has(value)) return '[Circular]';
+                  cache.add(value);
+              }
+              return value;
+          });
+          return JSON.parse(json);
+      } catch (e) {
+          return `[Unserializable Data: ${String(e)}]`;
+      }
+  });
+
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send(channel, ...args);
+    mainWindow.webContents.send(channel, ...safeArgs);
   }
   if (monitorWindow && !monitorWindow.isDestroyed()) {
-    monitorWindow.webContents.send(channel, ...args);
+    monitorWindow.webContents.send(channel, ...safeArgs);
   }
-};
+}
+;
 
 async function performRecovery() {
   try {
@@ -300,8 +350,8 @@ function createWindow(): void {
       // Legacy/Specific forwards
       if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', data);
       if (type === KernelEventType.INFERENCE_CHUNK) {
-        broadcast(`inference:chunk:${data.sessionId}`, data.text);
-        broadcast('inference:chunk', { sessionId: data.sessionId, text: data.text });
+        broadcastBatched(`inference:chunk:${data.sessionId}`, data.text, 50);
+        broadcastBatched('inference:chunk', { sessionId: data.sessionId, text: data.text }, 50);
       }
       if (type === KernelEventType.INFERENCE_COMPLETED) {
         broadcast(`inference:completed:${data.sessionId}`, data);
@@ -416,7 +466,19 @@ app.whenReady().then(async () => {
   
   // Initialize background runners
   agentRunner; 
-  voiceService; 
+
+  // Initialize Real-time services
+  await realtimeService.initialize();
+
+  // Listen for scene updates and broadcast to all windows
+  realtimeService.onUpdate((update) => {
+    broadcastBatched('realtime:scene-update', update, 200); // 5Hz UI update is plenty for perception
+  });
+
+  // Listen for status changes (high-priority, non-batched)
+  realtimeService.onStatusChange((update) => {
+    broadcast('realtime:status-change', update);
+  });
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -459,54 +521,24 @@ ipcMain.handle('trace:list', async (_, sessionId) => {
   return await traceService.getBySession(sessionId);
 });
 
-ipcMain.handle('inference:send', async (event, sessionId, message, systemInstruction, metadata?: Record<string, any>) => {
+ipcMain.handle('inference:send', async (_, sessionId, message, systemInstruction, metadata?: Record<string, any>) => {
   activeSessionId = sessionId;
-  try {
-    const speakerName = metadata?.voice_authenticated_username;
-    let finalSystemInstruction = systemInstruction || activeSystemPrompt;
-    
-    if (speakerName && speakerName !== 'Unknown') {
-        finalSystemInstruction = `${finalSystemInstruction}\n\n[Voice Authentication Metadata]\n- Current Speaker: ${speakerName}\n- Verification Status: Authenticated via Voice Fingerprint`;
-    }
+  const toolExecutor = createToolExecutor(sessionId);
+  const finalSystemInstruction = systemInstruction || activeSystemPrompt;
 
-    const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, sessionId);
-    const session = await contextService.getSession(sessionId);
-    if (session) {
-      await contextService.updateSession({
-        ...session,
-        metadata: {
-          ...session.metadata,
-          trace_needed: traceNeeded,
-          trace_reason: traceReason,
-          voice_authenticated_username: speakerName
-        }
-      });
-    }
+  // Run in background, do not await the full stream
+  processMessageAsync(sessionId, message, toolExecutor, finalSystemInstruction, undefined, metadata);
 
-    const chat = await getChatSession(finalSystemInstruction, sessionId);
-    const toolExecutor = createToolExecutor(sessionId);
+  // Return immediately to keep UI responsive
+  return { success: true };
+});
 
-    const stream = sendMessageAndHandleTools(chat, message, toolExecutor, traceNeeded, finalSystemInstruction, sessionId, undefined, webResults, webBrief, undefined, 1);
-
-    let fullText = "";
-    for await (const chunk of stream) {
-      if (chunk.text || chunk.toolCalls) {
-        if (chunk.text) fullText += chunk.text;
-        event.sender.send('inference:chunk', { ...chunk, sessionId });
-      }
-    }
-
-    event.sender.send('inference:completed', { sessionId });
-    
-    // Voice output if active
-    voiceService.speak(fullText, event.sender).catch(err => {
-      loggerService.catError(LogCategory.SYSTEM, "Voice output failed", { error: err.message });
+// Listener for voice output completion (event-driven)
+eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (data) => {
+  if (data.fullText) {
+    realtimeService.speak(data.fullText, null).catch(err => {
+      loggerService.catError(LogCategory.SYSTEM, "Event-driven Voice output failed", { error: err.message });
     });
-
-    return { success: true };
-  } catch (error: any) {
-    loggerService.error("IPC Inference Error", { error: error.message });
-    throw error;
   }
 });
 
@@ -743,11 +775,31 @@ ipcMain.handle('system:capture-screenshot', async () => {
   return {
     id: attachment.id,
     filename: attachment.filename,
-    type: attachment.mime_type,
-    thumbnail: `data:image/png;base64,${attachment.image_base64}`
+    type: attachment.type,
+    thumbnail: attachment.thumbnail
   };
 });
 
 ipcMain.handle('window:open-monitor', async () => {
   createMonitorWindow();
+});
+
+ipcMain.handle('realtime:get-state', () => {
+  return realtimeService.getState();
+});
+
+ipcMain.on('realtime:start-stream', (_, type: 'camera' | 'screen' | 'audio') => {
+  realtimeService.startStream(type);
+});
+
+ipcMain.on('realtime:stop-stream', (_, type: 'camera' | 'screen' | 'audio') => {
+  realtimeService.stopStream(type);
+});
+
+ipcMain.handle('voice:toggle-mode', async (_, enabled: boolean) => {
+  if (enabled) {
+      await realtimeService.startStream('audio');
+  } else {
+      await realtimeService.stopStream('audio');
+  }
 });

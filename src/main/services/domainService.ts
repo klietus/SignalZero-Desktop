@@ -4,7 +4,8 @@ import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService, KernelEventType } from './eventBusService.js';
 import { settingsService } from './settingsService.js';
-import { getClient, getGeminiClient, extractJson } from './inferenceService.js';
+import { getClient, getGeminiClient } from './inferenceService.js';
+import { extractJson } from './inferenceService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
 
 const mapRowToDomain = (row: any): any => ({
@@ -396,7 +397,7 @@ export const domainService = {
                 });
                 const result = await model.generateContent(prompt);
                 const text = result.response.text();
-                response = extractJson(text);
+                response = await extractJson(text);
             } else {
                 const client = await getClient();
                 const result = await client.chat.completions.create({ 
@@ -404,7 +405,7 @@ export const domainService = {
                     messages: [{ role: "user", content: prompt }],
                     max_tokens: 1000
                 });
-                response = extractJson(result.choices[0]?.message?.content || "{}");
+                response = await extractJson(result.choices[0]?.message?.content || "{}");
             }
 
             if (response.canMerge === false) {

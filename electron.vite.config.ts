@@ -8,7 +8,8 @@ export default defineConfig({
     build: {
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/main/index.ts')
+          index: resolve(__dirname, 'src/main/index.ts'),
+          heavy_tasks: resolve(__dirname, 'src/main/workers/heavy_tasks.ts')
         },
         external: ['@huggingface/transformers', 'better-sqlite3', 'kokoro-js']
       }

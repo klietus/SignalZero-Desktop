@@ -16,6 +16,7 @@ import { Header, HeaderProps } from './components/Header';
 import { ContextListPanel } from './components/panels/ContextListPanel';
 import { WorldMonitoringPanel } from './components/panels/WorldMonitoringPanel';
 import { SetupScreen } from './components/screens/SetupScreen';
+import { RealtimeScreen } from './components/screens/RealtimeScreen';
 import { TracePanel } from './components/panels/TracePanel';
 import { StatusBar } from './components/StatusBar';
 
@@ -93,7 +94,13 @@ declare global {
             onKernelEvent: (callback: (type: string, data: any) => void) => () => void;
             onNavigate: (callback: (view: string) => void) => () => void;
             onScreenshotCaptured: (callback: (attachment: any) => void) => () => void;
+            getRealtimeState: () => Promise<any>;
+            startRealtimeStream: (type: 'camera' | 'screen' | 'audio') => void;
+            stopRealtimeStream: (type: 'camera' | 'screen' | 'audio') => void;
+            onRealtimeUpdate: (callback: (update: { type: string, state: any }) => void) => () => void;
+            onRealtimeStatusUpdate: (callback: (update: { type: string, status: any }) => void) => () => void;
             removeInferenceListeners: () => void;
+
             platform: string;
         }
     }
@@ -218,7 +225,7 @@ function App() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor' | 'agents'>('chat');
+    const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor' | 'agents' | 'realtime'>('chat');
     const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
     const [selectedSymbol, setSelectedSymbol] = useState<SymbolDef | null>(null);
     const [isGraphView, setIsGraphView] = useState(false);
@@ -236,6 +243,27 @@ function App() {
     const [lastRequestTokens, setLastRequestTokens] = useState<number>(0);
     const [focusedSymbolName, setFocusedSymbolName] = useState<string | null>(null);
     const [lastVoiceScore, setLastVoiceScore] = useState<{ score: number, speaker: string } | null>(null);
+    const [realtimeStatus, setRealtimeStatus] = useState<any>(null);
+
+    useEffect(() => {
+        // Initial fetch
+        window.api.getRealtimeState().then(state => {
+            setRealtimeStatus({
+                audio: state.audio.status,
+                camera: state.camera.status,
+                screen: state.screen.status
+            });
+        });
+
+        // Listen only for status changes (low frequency)
+        const unbind = window.api.onRealtimeStatusUpdate((update) => {
+            setRealtimeStatus(prev => {
+                if (!prev) return prev;
+                return { ...prev, [update.type]: update.status };
+            });
+        });
+        return () => unbind();
+    }, []);
 
     // Project Info
     const [projectMeta, setProjectMeta] = useState<ProjectMeta>({ name: 'SignalZero Desktop', version: '1.0', author: 'klietus', created_at: '', updated_at: '' });
@@ -705,6 +733,8 @@ function App() {
                 return <MonitoringScreen headerProps={getHeaderProps('World Monitoring')} />;
             case 'agents':
                 return <AgentScreen headerProps={getHeaderProps('Agent Orchestrator')} />;
+            case 'realtime':
+                return <RealtimeScreen headerProps={getHeaderProps('Realtime Perception')} />;
             default:
                 return <div className="flex-1 flex items-center justify-center text-gray-500 font-mono uppercase tracking-[0.3em]">Module_Loading: {currentView}</div>;
         }
@@ -757,6 +787,17 @@ function App() {
                         >
                             <Activity size={14} />
                             Agents
+                        </button>
+                        <button 
+                            onClick={() => setCurrentView('realtime')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all ${
+                                currentView === 'realtime' 
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
+                                : 'bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-indigo-400 border border-gray-800'
+                            }`}
+                        >
+                            <Activity size={14} />
+                            Perception
                         </button>
                     </Header>
                 </div>
@@ -828,7 +869,9 @@ function App() {
                                     activeContextId={activeContextId}
                                     pendingAttachments={pendingAttachments}
                                     onClearPendingAttachments={() => setPendingAttachments([])}
-                                />                            </div>
+                                    realtimeStatus={realtimeStatus}
+                                />
+                            </div>
                         </div>
                     </div>
 

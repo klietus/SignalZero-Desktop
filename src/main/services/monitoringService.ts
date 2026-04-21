@@ -165,13 +165,18 @@ class MonitoringService {
                 loggerService.catInfo(LogCategory.MONITORING, `Source ${source.name} returned ${items.length} items. Checking cache...`);
 
                 for (const item of items) {
-                    const articleId = item.id || item.link || item.title;
+                    let articleId = item.id || item.link || item.title;
                     if (!articleId) continue;
+
+                    // Ensure articleId is a string or number (not an object from a complex API)
+                    if (typeof articleId !== 'string' && typeof articleId !== 'number') {
+                        articleId = JSON.stringify(articleId);
+                    }
 
                     // 2. Check SQLite cache
                     const cached = sqliteService.get(
                         `SELECT summary FROM monitoring_article_cache WHERE source_id = ? AND article_id = ?`,
-                        [source.id, articleId]
+                        [String(source.id), articleId]
                     );
 
                     if (cached) {
@@ -185,7 +190,7 @@ class MonitoringService {
                         // 4. Cache the result
                         sqliteService.run(
                             `INSERT INTO monitoring_article_cache (source_id, article_id, summary) VALUES (?, ?, ?)`,
-                            [source.id, articleId, result.summary]
+                            [String(source.id), articleId, result.summary]
                         );
 
                         // 5. Feed to delta engine
@@ -478,14 +483,17 @@ class MonitoringService {
         // Persist to SQLite
         sqliteService.run(
             `INSERT INTO monitoring_deltas (id, source_id, period, content, timestamp, metadata) VALUES (?, ?, ?, ?, ?, ?)`,
-            [delta.id, delta.sourceId, delta.period, delta.content, delta.timestamp, JSON.stringify(delta.metadata)]
+            [delta.id, String(delta.sourceId), String(delta.period), delta.content, delta.timestamp, JSON.stringify(delta.metadata)]
         );
 
         // Index in LanceDB
         await lancedbService.indexDeltaBatch([delta]);
 
-        // Notify any listeners (e.g. Agents)
-        eventBusService.emitKernelEvent('monitoring:delta-created' as any, delta);
+        // Notify any listeners (e.g. Agents) - ONLY if monitoring is enabled globally
+        const settings = await settingsService.getMonitoringSettings();
+        if (settings.enabled) {
+            eventBusService.emitKernelEvent('monitoring:delta-created' as any, delta);
+        }
 
         loggerService.catInfo(LogCategory.MONITORING, `Recorded new ${period} delta for ${sourceId} at ${timestamp}`, { metadata });
     }

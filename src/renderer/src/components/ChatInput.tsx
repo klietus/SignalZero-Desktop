@@ -16,6 +16,7 @@ interface ChatInputProps {
   activeContextId?: string | null;
   pendingAttachments?: any[];
   onClearPendingAttachments?: () => void;
+  realtimeStatus?: any;
 }
 
 const COMMON_EMOJIS = [
@@ -26,7 +27,7 @@ const COMMON_EMOJIS = [
 
 export const ChatInput: React.FC<ChatInputProps> = ({ 
     onSend, onStop, disabled, isProcessing, activeContextId,
-    pendingAttachments, onClearPendingAttachments 
+    pendingAttachments, onClearPendingAttachments, realtimeStatus
 }) => {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<{ id: string, filename: string, type: string, thumbnail?: string }[]>([]);
@@ -34,14 +35,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   
-  // Voice State
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  // Voice State (Now synced with realtimeStatus)
+  const isVoiceMode = !!realtimeStatus?.audio?.isActive;
   const [isAwake, setIsAwake] = useState(false);
   const [systemName, setSystemName] = useState('Signal');
 
-  // Camera State
-  const [isCameraEnabled, setIsCameraEnabled] = useState(false);
-  const [isScreenVisionEnabled, setIsScreenVisionEnabled] = useState(false);
+  // Camera/Screen State (Now synced with realtimeStatus)
+  const isCameraEnabled = !!realtimeStatus?.camera?.isActive;
+  const isScreenVisionEnabled = !!realtimeStatus?.screen?.isActive;
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
@@ -50,15 +51,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const attachmentsRef = useRef<any[]>([]);
   const onSendRef = useRef(onSend);
   const isProcessingRef = useRef(isProcessing);
-  const isCameraEnabledRef = useRef(false);
-  const isScreenVisionEnabledRef = useRef(false);
   
   useEffect(() => { textRef.current = text; }, [text]);
   useEffect(() => { attachmentsRef.current = attachments; }, [attachments]);
   useEffect(() => { onSendRef.current = onSend; }, [onSend]);
   useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
-  useEffect(() => { isCameraEnabledRef.current = isCameraEnabled; }, [isCameraEnabled]);
-  useEffect(() => { isScreenVisionEnabledRef.current = isScreenVisionEnabled; }, [isScreenVisionEnabled]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +84,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 }
             } catch (err) {
                 console.error("Failed to start camera", err);
-                setIsCameraEnabled(false);
+                window.api.stopRealtimeStream('camera');
             }
         } else {
             if (streamRef.current) {
@@ -151,11 +148,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       const newMode = !isVoiceMode;
       try {
           await window.api.toggleVoiceMode(newMode);
-          setIsVoiceMode(newMode);
+          // isVoiceMode will update via realtimeState prop in next render
           if (!newMode) setIsAwake(false);
       } catch (err) {
           console.error("Failed to toggle voice mode", err);
       }
+  };
+
+  const toggleCamera = () => {
+      if (isCameraEnabled) window.api.stopRealtimeStream('camera');
+      else window.api.startRealtimeStream('camera');
+  };
+
+  const toggleScreenVision = () => {
+      if (isScreenVisionEnabled) window.api.stopRealtimeStream('screen');
+      else window.api.startRealtimeStream('screen');
   };
 
   // Sync global pending attachments
@@ -186,38 +193,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const handleSubmit = async (overrideText?: string, metadata?: Record<string, any>) => {
     const currentText = overrideText || textRef.current;
     let currentAtts = [...attachmentsRef.current];
-    const cameraActive = isCameraEnabledRef.current;
-    const screenActive = isScreenVisionEnabledRef.current;
 
-    if (currentText.trim() || currentAtts.length > 0 || cameraActive || screenActive) {
+    if (currentText.trim() || currentAtts.length > 0) {
       setIsUploading(true);
       try {
-          // Auto-capture camera frame
-          if (cameraActive && videoRef.current && videoRef.current.readyState >= 2) {
-              const canvas = document.createElement('canvas');
-              canvas.width = videoRef.current.videoWidth;
-              canvas.height = videoRef.current.videoHeight;
-              const ctx = canvas.getContext('2d');
-              if (ctx && canvas.width > 0) {
-                  ctx.drawImage(videoRef.current, 0, 0);
-                  const base64 = canvas.toDataURL('image/jpeg').split(',')[1];
-                  const result = await window.api.processBase64Attachment({
-                      name: `camera-frame-${Date.now()}.jpg`,
-                      data: base64,
-                      type: 'image/jpeg'
-                  });
-                  currentAtts.push(result);
-              }
-          }
-
-          // Auto-capture screen
-          if (screenActive) {
-              const result = await window.api.captureScreenshot();
-              if (result) {
-                  currentAtts.push(result);
-              }
-          }
-
           onSendRef.current(currentText, { attachments: currentAtts, metadata });
           setText('');
           setAttachments([]);
@@ -380,7 +359,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <div className="flex items-center gap-1 pl-2">
             <button
                 type="button"
-                onClick={() => setIsScreenVisionEnabled(prev => !prev)}
+                onClick={toggleScreenVision}
                 disabled={!activeContextId}
                 className={`p-2 rounded-xl transition-all ${isScreenVisionEnabled ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`}
                 title={isScreenVisionEnabled ? "Disable Screen Vision" : "Enable Screen Vision"}
@@ -389,7 +368,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </button>
             <button
                 type="button"
-                onClick={() => setIsCameraEnabled(prev => !prev)}
+                onClick={toggleCamera}
                 disabled={!activeContextId}
                 className={`p-2 rounded-xl transition-all ${isCameraEnabled ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/40' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`}
                 title={isCameraEnabled ? "Disable Camera" : "Enable Camera"}

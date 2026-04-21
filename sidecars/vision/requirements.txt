@@ -1,0 +1,12 @@
+opencv-python
+mediapipe>=0.10.14
+protobuf<5
+numpy
+pytesseract
+Pillow
+mss
+hsemotion
+torch
+torchvision
+timm==0.9.16
+requests

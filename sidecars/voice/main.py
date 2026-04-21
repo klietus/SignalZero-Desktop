@@ -96,6 +96,10 @@ class VoiceSidecar:
         audio_frame = indata.flatten()
         rms = np.sqrt(np.mean(audio_frame**2))
         
+        # Periodic metrics for UI
+        if self.callback_count % 10 == 0:
+            self.send_to_electron("audio_metrics", {"rms": float(rms), "is_speaking": self.triggered})
+
         if not self.mic_enabled or self.mic_suppressed:
             if self.triggered:
                 self.triggered = False
