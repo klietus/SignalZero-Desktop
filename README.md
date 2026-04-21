@@ -16,11 +16,19 @@ SignalZero Desktop is a sophisticated recursive symbolic reasoning engine that s
 
 ### 💠 Recursive Symbolic Core
 - **Recursive Reasoning:** Multi-step tool integration with recursive trace-based inference.
-- **Symbolic Store & Graph Hygiene:** Knowledge store with vector search. Includes automated "Symbolic Compression," "Canonical Merging," and "Bridge Lifting" to maintain a high-signal knowledge graph.
+- **Symbolic Store & Graph Hygiene:** Knowledge store with vector search. Includes automated "Symbolic Compression," "Canonical Merging," and "Bridge Lifting" to maintain a clean, high-signal knowledge graph.
 - **Context Management:** Persistent conversation sessions with automated "Priming" to pre-cache relevant symbols and world deltas.
 - **Trace Visualization:** Real-time visualization of activated symbols, tool execution paths, and multimodal grounding.
 
+### 🏠 Local-First & Cross-Model Flexibility
+- **Provider Agnostic:** Native support for **Gemini 1.5/2.0**, **OpenAI (GPT-4o/o1)**, and **Local Models** (Ollama, LM Studio, vLLM).
+- **Privacy-Centric Architecture:** Primary processing, symbolic storage, and high-frequency perception data remain on local hardware.
+- **MCP Integration:** Native support for the **Model Context Protocol (MCP)**, enabling extensible tool capabilities across local and remote servers.
+- **Integrated Search & Fetch:** Grounded web search (SerpApi, Brave, Tavily) and fetch capabilities with automated symbolic extraction.
+- **Universal Attachment Support:** Deep grounding in local files (**PDF, HTML, RSS, JSON**) and images.
+
 ### 👁️ Real-time Perception (Optical & Acoustic Link)
+
 - **Neural Perception Dashboard:** A high-density, real-time monitoring interface for camera, screen, and acoustic streams.
 - **HSEmotion (Metal-Accelerated):** State-of-the-art research-backed emotion recognition utilizing **EfficientNet-B0** with **Metal (MPS) acceleration**.
 - **MediaPipe V2 Integration:** High-fidelity 52-coefficient blendshape tracking (ARKit standard) for physical facial movement validation and **Neutral Baseline Calibration**.
