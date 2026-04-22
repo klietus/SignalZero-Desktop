@@ -28,7 +28,7 @@ import { mcpClientService } from './services/mcpClientService.js'
 import { attachmentService } from './services/attachmentService.js'
 import { agentRunner } from './services/agentRunner.js'
 import { realtimeService } from './services/realtime/realtimeService.js'
-import { llamaService } from './services/llamaService.js'
+import { llamaService, urgentLlamaService } from './services/llamaService.js'
 
 // --- IPC Batching Engine ---
 const ipcBatchQueues = new Map<string, any>();
@@ -489,9 +489,12 @@ app.whenReady().then(async () => {
   // Initialize background runners
   agentRunner;
 
-  // Initialize Llama Sidecar
-  llamaService.initialize().catch(err => {
-    loggerService.catError(LogCategory.SYSTEM, "Failed to initialize Llama Sidecar", { error: err.message });
+  // Initialize Llama Sidecars
+  Promise.all([
+    llamaService.initialize(),
+    urgentLlamaService.initialize()
+  ]).catch(err => {
+    loggerService.catError(LogCategory.SYSTEM, "Failed to initialize Llama Sidecars", { error: err.message });
   });
 
   // Initialize Real-time services
@@ -514,6 +517,7 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   llamaService.stop();
+  urgentLlamaService.stop();
   if (process.platform !== 'darwin') {
     app.quit()
   }
@@ -521,6 +525,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   llamaService.stop();
+  urgentLlamaService.stop();
 });
 
 // IPC Handlers

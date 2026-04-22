@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Camera, Monitor, Mic, MicOff, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Camera, Monitor, Mic, MicOff, Loader2, Activity, Volume2, ShieldAlert, Cpu, Zap, ZapOff, Clock, User, Mic2, Bell, VolumeX, AudioLines, BrainCircuit, Heart, Smile, Frown, Angry, Annoyed } from 'lucide-react';
 import { Header, HeaderProps } from '../Header';
 
 interface AudioStreamState {
@@ -12,12 +12,6 @@ interface AudioStreamState {
     status: { isActive: boolean; isError: boolean; errorMessage?: string };
 }
 
-interface DetectedObject {
-    label: string;
-    confidence: number;
-    bbox: [number, number, number, number];
-}
-
 interface PersonDetection {
     id: string;
     expression: string;
@@ -27,7 +21,6 @@ interface PersonDetection {
 
 interface CameraStreamState {
     lastFrame: string | null;
-    detectedObjects: DetectedObject[];
     people: PersonDetection[];
     timestamp: number;
     status: { isActive: boolean; isError: boolean; errorMessage?: string };
@@ -36,7 +29,6 @@ interface CameraStreamState {
 interface ScreenStreamState {
     lastFrame: string | null;
     activeApplication: string | null;
-    ocrText: string;
     timestamp: number;
     status: { isActive: boolean; isError: boolean; errorMessage?: string };
 }
@@ -58,12 +50,30 @@ interface RealtimeScreenProps {
     headerProps: HeaderProps;
 }
 
+const EMOTION_CONFIG: Record<string, { color: string, icon: any }> = {
+    'neutral': { color: 'text-gray-400', icon: Activity },
+    'happiness': { color: 'text-emerald-400', icon: Smile },
+    'sadness': { color: 'text-blue-400', icon: Frown },
+    'anger': { color: 'text-rose-500', icon: Angry },
+    'fear': { color: 'text-purple-400', icon: ShieldAlert },
+    'surprise': { color: 'text-amber-400', icon: Zap },
+    'disgust': { color: 'text-orange-400', icon: Annoyed },
+    'contempt': { color: 'text-pink-400', icon: Heart }
+};
+
 export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) => {
     const [state, setState] = useState<SceneState | null>(null);
+    const [isAutonomousEnabled, setIsAutonomousEnabled] = useState(false);
+    const [voiceEnabled, setVoiceEnabled] = useState(false);
+    const transcriptEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         // Initial fetch
         window.api.getRealtimeState().then(setState);
+        window.api.getSettings().then(s => {
+            setIsAutonomousEnabled(!!s.realtimeAssistance?.enabled);
+            setVoiceEnabled(!!s.voiceEnabled);
+        });
 
         // Listen for full scene updates (high frequency)
         const unbind = window.api.onRealtimeUpdate((update) => {
@@ -78,6 +88,12 @@ export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) =
 
         return () => unbind();
     }, []);
+
+    useEffect(() => {
+        if (transcriptEndRef.current) {
+            transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [state?.audio.runningTranscript]);
 
     const toggleCamera = () => {
         if (state?.camera.status.isActive) {
@@ -103,244 +119,324 @@ export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) =
         }
     };
 
+    const toggleAutonomous = async () => {
+        const settings = await window.api.getSettings();
+        const newState = !isAutonomousEnabled;
+        await window.api.updateSettings({
+            ...settings,
+            realtimeAssistance: {
+                ...settings.realtimeAssistance,
+                enabled: newState
+            }
+        });
+        setIsAutonomousEnabled(newState);
+    };
+
+    const toggleVoiceEnabled = async () => {
+        const newState = !voiceEnabled;
+        await window.api.toggleVoiceEnabled(newState);
+        setVoiceEnabled(newState);
+    };
+
+    const cancelSpeech = () => {
+        window.api.cancelSpeech();
+    };
+
     if (!state) return (
         <div className="flex-1 flex flex-col min-h-0 bg-gray-950 items-center justify-center">
             <Loader2 className="animate-spin text-indigo-500" size={32} />
         </div>
     );
 
+    const dominantEmotion = state.camera.people[0]?.expression || 'neutral';
+    const emotionConfig = EMOTION_CONFIG[dominantEmotion] || EMOTION_CONFIG.neutral;
+    const EmotionIcon = emotionConfig.icon;
+
     return (
         <div className="flex-1 flex flex-col h-full bg-gray-950 overflow-hidden text-gray-100 font-sans">
             <Header {...headerProps} />
             
-            <div className="flex-1 flex flex-col p-3 gap-3 min-h-0">
-                {/* Top Row: Camera and Screen side-by-side */}
-                <div className="flex-[2] grid grid-cols-1 lg:grid-cols-2 gap-3 min-h-0 overflow-hidden">
+            {/* 1. TOP METRICS & CONTROLS BAR */}
+            <div className="px-6 py-3 border-b border-gray-800 bg-gray-900/40 flex items-center justify-between shrink-0 h-16">
+                <div className="flex items-center gap-6 h-full">
                     
-                    {/* Camera Stream */}
-                    <div className="bg-gray-900/40 border border-gray-800/60 rounded-xl overflow-hidden flex flex-col shadow-inner">
-                        <div className="px-3 py-2 border-b border-gray-800/60 flex items-center justify-between bg-gray-900/20">
-                            <div className="flex items-center gap-2">
-                                <div className={`p-1.5 rounded-lg transition-colors ${state.camera.status.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-800 text-gray-500'}`}>
-                                    <Camera size={16} />
-                                </div>
-                                <div>
-                                    <h3 className="font-mono text-[11px] font-bold uppercase tracking-wider leading-none">Camera_Link</h3>
-                                    <p className="text-[9px] text-gray-500 font-mono mt-0.5">{state.camera.status.isActive ? 'Status: Active' : 'Status: Offline'}</p>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={toggleCamera}
-                                className={`p-1.5 rounded-lg transition-all ${state.camera.status.isActive ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30' : 'bg-gray-800 text-gray-400 hover:text-gray-200 border border-gray-700'}`}
-                            >
-                                <Camera size={14} />
-                            </button>
+                    {/* Vertical Intensity Bar */}
+                    <div className="flex flex-col items-center justify-center h-full px-2 gap-1 border-r border-gray-800 pr-6">
+                        <div className="flex-1 w-2.5 bg-gray-800 rounded-full relative overflow-hidden border border-white/5 shadow-inner">
+                            <div 
+                                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-indigo-600 to-indigo-400 transition-all duration-75 shadow-[0_0_8px_rgba(99,102,241,0.5)]" 
+                                style={{ height: `${Math.min(100, state.audio.rmsLevel * 250)}%` }}
+                            />
                         </div>
-                        <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden min-h-0 border-b border-gray-800/40">
-                            {state.camera.lastFrame && state.camera.status.isActive ? (
-                                <div className="relative h-full w-full flex items-center justify-center">
-                                    <img 
-                                        src={state.camera.lastFrame} 
-                                        className="max-h-full max-w-full block" 
-                                        alt="Camera Feed" 
+                        <p className="text-[7px] font-mono text-gray-500 uppercase tracking-tighter">Level</p>
+                    </div>
+
+                    {/* Vertical Emotion Bars */}
+                    <div className="flex items-center gap-2 h-full border-r border-gray-800 pr-6">
+                        {state.camera.people[0]?.attributes.emotion_scores && 
+                            Object.entries(state.camera.people[0].attributes.emotion_scores)
+                                .sort(([,a], [,b]) => (b as number) - (a as number))
+                                .slice(0, 4)
+                                .map(([emotion, score]) => (
+                            <div key={emotion} className="flex flex-col items-center justify-end h-full w-4 gap-1">
+                                <div className="flex-1 w-1.5 bg-gray-900 rounded-full relative overflow-hidden shadow-inner">
+                                    <div 
+                                        className={`absolute bottom-0 left-0 right-0 transition-all duration-500 ${emotion === state.camera.people[0].expression ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : 'bg-gray-700'}`}
+                                        style={{ height: `${(Number(score) || 0) * 100}%` }}
                                     />
-                                    <div className="absolute inset-0 pointer-events-none">
-                                        {state.camera.people.map(person => (
-                                            <div 
-                                                key={person.id}
-                                                className="absolute border-2 border-emerald-500/60 bg-emerald-500/5 rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.2)] transition-all duration-100"
-                                                style={{
-                                                    left: `${person.bbox[0]}%`,
-                                                    top: `${person.bbox[1]}%`,
-                                                    width: `${person.bbox[2]}%`,
-                                                    height: `${person.bbox[3]}%`
-                                                }}
-                                            >
-                                                <div className="absolute -top-3.5 left-[-1.5px] bg-emerald-500 text-black text-[7px] font-black px-1 py-0.5 uppercase whitespace-nowrap rounded-t-sm">
-                                                    {person.expression}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
-                            ) : (
-                                <div className="text-gray-800 font-mono text-[9px] uppercase tracking-[0.4em] animate-pulse">
-                                    {state.camera.status.isActive ? 'Initializing_Optical_Link...' : 'Perception_Offline'}
-                                </div>
-                            )}
-                        </div>
-                        <div className="px-3 py-2 bg-black/20">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <span className="text-[8px] text-gray-500 font-mono uppercase font-bold">Neural Analysis</span>
-                                    <div className="mt-1 space-y-2 max-h-[85px] overflow-y-auto pr-1">
-                                        {state.camera.status.isActive && state.camera.people.map((p, i) => (
-                                            <div key={i} className="bg-gray-800/20 p-1.5 rounded border border-gray-800/40">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[8px] font-bold font-mono text-emerald-400 uppercase">P_{p.id}</span>
-                                                    <span className="text-[7px] font-mono text-gray-600">D_Conf: {Math.round(p.attributes.detection_confidence * 100)}%</span>
-                                                </div>
-                                                {p.attributes.emotion_scores && (
-                                                    <div className="space-y-1.5 mt-1">
-                                                        {Object.entries(p.attributes.emotion_scores)
-                                                            .sort(([,a], [,b]) => (b as number) - (a as number))
-                                                            .slice(0, 4)
-                                                            .map(([emotion, score]) => (
-                                                            <div key={emotion} className="space-y-0.5">
-                                                                <div className="flex justify-between items-center text-[7px] font-mono uppercase leading-none">
-                                                                    <span className={p.expression === emotion ? 'text-indigo-400 font-bold' : 'text-gray-500'}>
-                                                                        {emotion}
-                                                                    </span>
-                                                                    <span className="text-gray-600">{Math.round((Number(score) || 0) * 100)}%</span>
-                                                                </div>
-                                                                <div className="h-1 bg-gray-900/50 rounded-full overflow-hidden border border-gray-800/20">
-                                                                    <div 
-                                                                        className={`h-full transition-all duration-500 ${p.expression === emotion ? 'bg-indigo-500 shadow-[0_0_5px_rgba(99,102,241,0.5)]' : 'bg-gray-700'}`}
-                                                                        style={{ width: `${(Number(score) || 0) * 100}%` }}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="border-l border-gray-800/40 pl-3">
-                                    <span className="text-[8px] text-gray-500 font-mono uppercase font-bold">World Objects</span>
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                        {state.camera.status.isActive && state.camera.detectedObjects.length > 0 ? (
-                                            state.camera.detectedObjects.map((obj, i) => (
-                                                <span key={i} className="text-[7px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1 rounded uppercase font-mono">{obj.label}</span>
-                                            ))
-                                        ) : (
-                                            <span className="text-[7px] text-gray-700 font-mono">No_Detections</span>
-                                        )}
-                                    </div>
-                                </div>
+                                <p className={`text-[6px] font-mono uppercase truncate w-full text-center ${emotion === state.camera.people[0].expression ? 'text-emerald-400 font-bold' : 'text-gray-600'}`}>{emotion.substring(0, 3)}</p>
                             </div>
+                        ))}
+                        {!state.camera.people[0] && (
+                            <div className="flex items-center justify-center w-24 h-full opacity-10 italic text-[8px] font-mono">Sensors_Cold</div>
+                        )}
+                    </div>
+
+                    {/* Dominant Emotion Callout */}
+                    <div className="flex items-center gap-3 border-r border-gray-800 pr-6">
+                         <div className={`p-1.5 rounded-full bg-gray-800 ${emotionConfig.color}`}>
+                            <EmotionIcon size={14} />
+                        </div>
+                        <div>
+                            <p className="text-[8px] font-mono text-gray-500 uppercase tracking-widest leading-none mb-1">Visual_Affect</p>
+                            <p className={`text-[10px] font-mono font-bold leading-none uppercase ${emotionConfig.color}`}>
+                                {dominantEmotion}
+                            </p>
                         </div>
                     </div>
 
-                    {/* Screen Stream */}
-                    <div className="bg-gray-900/40 border border-gray-800/60 rounded-xl overflow-hidden flex flex-col shadow-inner">
-                        <div className="px-3 py-2 border-b border-gray-800/60 flex items-center justify-between bg-gray-900/20">
-                            <div className="flex items-center gap-2">
-                                <div className={`p-1.5 rounded-lg transition-colors ${state.screen.status.isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-800 text-gray-500'}`}>
-                                    <Monitor size={16} />
-                                </div>
-                                <div>
-                                    <h3 className="font-mono text-[11px] font-bold uppercase tracking-wider leading-none">Screen_Link</h3>
-                                    <p className="text-[9px] text-gray-500 font-mono mt-0.5 truncate max-w-[150px]">{state.screen.status.isActive ? (state.screen.activeApplication || 'Initializing...') : 'Feed Disabled'}</p>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={toggleScreen}
-                                className={`p-1.5 rounded-lg transition-all ${state.screen.status.isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-800 text-gray-400 hover:text-gray-200 border border-gray-700'}`}
-                            >
-                                <Monitor size={14} />
-                            </button>
+                    {/* AI Vocalization Status */}
+                    <div className="flex items-center gap-3 border-r border-gray-800 pr-6">
+                         <div className={`p-1.5 rounded-full ${state.audio.status.isActive && state.audio.lastSpeaker !== 'USER' && state.audio.isSpeaking ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 'bg-gray-800 text-gray-500'}`}>
+                            <Mic2 size={14} />
                         </div>
-                        <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden min-h-0 border-b border-gray-800/40">
-                            {state.screen.lastFrame && state.screen.status.isActive ? (
-                                <img src={state.screen.lastFrame} className="max-h-full max-w-full object-contain" alt="Screen Feed" />
-                            ) : (
-                                <div className="text-gray-800 font-mono text-[9px] uppercase tracking-[0.4em]">{state.screen.status.isActive ? 'Syncing_Buffer...' : 'Perception_Offline'}</div>
-                            )}
+                        <div>
+                            <p className="text-[8px] font-mono text-gray-500 uppercase tracking-widest leading-none mb-1">AI_Vocalization</p>
+                            <p className={`text-[10px] font-mono font-bold leading-none uppercase ${state.audio.status.isActive && state.audio.lastSpeaker !== 'USER' && state.audio.isSpeaking ? 'text-blue-400' : 'text-gray-600'}`}>
+                                {state.audio.status.isActive && state.audio.lastSpeaker !== 'USER' && state.audio.isSpeaking ? 'SPEAKING' : 'SILENT'}
+                            </p>
                         </div>
-                        <div className="px-3 py-2 bg-black/20 flex gap-4">
-                            <div className="flex-1">
-                                <span className="text-[8px] text-gray-500 font-mono uppercase font-bold">Character_Recognition_Stream</span>
-                                <div className="mt-1 bg-black/40 rounded p-2 font-mono text-[9px] text-gray-500 h-20 overflow-y-auto border border-gray-800/60 leading-tight scrollbar-none">
-                                    {state.screen.status.isActive ? (state.screen.ocrText || 'Syncing content...') : 'OCR_Suspended'}
-                                </div>
-                            </div>
-                            <div className="w-48 border-l border-gray-800/40 pl-3">
-                                <span className="text-[8px] text-gray-500 font-mono uppercase font-bold">Autonomous_Intel</span>
-                                <div className="mt-1 space-y-2">
-                                    <div className={`p-1.5 rounded border ${state.autonomous.isProcessingFlashRound ? 'bg-indigo-500/10 border-indigo-500/40 animate-pulse' : 'bg-gray-800/20 border-gray-800/40'}`}>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-[8px] font-mono text-gray-400">Flash Round:</span>
-                                            <span className={`text-[8px] font-mono ${state.autonomous.isProcessingFlashRound ? 'text-indigo-400 font-bold' : 'text-gray-600'}`}>
-                                                {state.autonomous.isProcessingFlashRound ? 'EVALUATING' : 'IDLE'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1 max-h-[45px] overflow-y-auto pr-1">
-                                        {state.autonomous.recentSpikeTimeline.map((spike, i) => (
-                                            <div key={i} className="flex items-start gap-1.5 leading-none">
-                                                <div className="w-1 h-1 rounded-full bg-rose-500 mt-0.5 shrink-0" />
-                                                <span className="text-[7px] font-mono text-gray-400 truncate" title={spike.reason}>{spike.reason}</span>
-                                            </div>
-                                        ))}
-                                        {state.autonomous.recentSpikeTimeline.length === 0 && (
-                                            <span className="text-[7px] font-mono text-gray-700 italic">No recent spikes detected</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                    </div>
+
+                    {/* Vocal Prosody */}
+                    <div className="flex items-center gap-3 border-r border-gray-800 pr-6">
+                         <div className="p-1.5 rounded-full bg-gray-800 text-rose-400">
+                            <Activity size={14} />
+                        </div>
+                        <div>
+                            <p className="text-[8px] font-mono text-gray-500 uppercase tracking-widest leading-none mb-1">Acoustic_Prosody</p>
+                            <p className="text-[10px] font-mono font-bold leading-none text-rose-300 uppercase">
+                                {state.audio.vocalEmotion || '---'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Promotion Badge (Active during reasoning) */}
+                    <div className={`flex items-center gap-2 transition-all duration-700 ${state.autonomous.isProcessingFlashRound ? 'opacity-100' : 'opacity-20'}`}>
+                         <div className={`p-1.5 rounded-full ${state.autonomous.isProcessingFlashRound ? 'bg-amber-500/20 text-amber-500 animate-pulse' : 'bg-gray-800 text-gray-500'}`}>
+                            <BrainCircuit size={14} />
+                        </div>
+                        <div className={`px-2 py-0.5 rounded text-[9px] font-black font-mono tracking-tighter transition-all ${state.autonomous.isProcessingFlashRound ? 'bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.4)]' : 'bg-gray-800 text-gray-500'}`}>
+                            {state.autonomous.isProcessingFlashRound ? 'PROMOTED_REASONING' : 'QUIET_STATE'}
                         </div>
                     </div>
                 </div>
 
-                {/* Bottom Row: Audio Diagnostics */}
-                <div className="flex-1 min-h-0">
-                    <div className="bg-gray-900/40 border border-gray-800/60 rounded-xl overflow-hidden flex flex-col h-full shadow-inner">
-                        <div className="px-3 py-2 border-b border-gray-800/60 flex items-center justify-between bg-gray-900/20">
-                            <div className="flex items-center gap-2">
-                                <div className={`p-1.5 rounded-lg transition-colors ${state.audio.status.isActive ? 'bg-indigo-500/20 text-indigo-400' : 'bg-gray-800 text-gray-500'}`}>
-                                    {state.audio.status.isActive ? <Mic size={16} /> : <MicOff size={16} />}
-                                </div>
-                                <div>
-                                    <h3 className="font-mono text-[11px] font-bold uppercase tracking-wider leading-none">Acoustic_Diagnostics</h3>
-                                    <div className="flex flex-col gap-1 mt-0.5">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-[9px] text-gray-500 font-mono leading-none">Ident:</p>
-                                            <span className={`text-[10px] font-mono font-bold leading-none ${
-                                                state.audio.recognitionConfidence > 0.7 ? "text-emerald-500" : "text-amber-500"
-                                            }`}>
-                                                {state.audio.lastSpeaker || 'Listening...'}
-                                            </span>
+                {/* Compact Control Box */}
+                <div className="flex items-center gap-2 p-1 bg-black/40 border border-gray-800 rounded-xl shadow-xl">
+                    <button 
+                        onClick={toggleVoice}
+                        title="Toggle Microphone"
+                        className={`p-1.5 rounded-lg transition-all ${state.audio.status.isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-800 text-gray-500 hover:text-gray-300'}`}
+                    >
+                        {state.audio.status.isActive ? <Mic size={16} /> : <MicOff size={16} />}
+                    </button>
+                    <button 
+                        onClick={toggleCamera}
+                        title="Toggle Camera"
+                        className={`p-1.5 rounded-lg transition-all ${state.camera.status.isActive ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-gray-800 text-gray-500 hover:text-gray-300'}`}
+                    >
+                        <Camera size={16} />
+                    </button>
+                    <button 
+                        onClick={toggleScreen}
+                        title="Toggle Screen Capture"
+                        className={`p-1.5 rounded-lg transition-all ${state.screen.status.isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-gray-800 text-gray-500 hover:text-gray-300'}`}
+                    >
+                        <Monitor size={16} />
+                    </button>
+                    <button
+                        onClick={state.audio.isSpeaking && state.audio.lastSpeaker !== 'USER' ? cancelSpeech : toggleVoiceEnabled}
+                        className={`p-1.5 rounded-lg transition-all border-l border-gray-800 pl-2.5 ml-1 ${
+                            state.audio.isSpeaking && state.audio.lastSpeaker !== 'USER'
+                                ? 'bg-red-600 text-white shadow-lg shadow-red-500/40 animate-pulse' 
+                                : voiceEnabled 
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' 
+                                    : 'bg-gray-800 text-gray-500 hover:text-gray-400'
+                        }`}
+                        title={state.audio.isSpeaking && state.audio.lastSpeaker !== 'USER' ? "Stop AI Speech" : voiceEnabled ? "Disable AI Voice" : "Enable AI Voice"}
+                    >
+                        {state.audio.isSpeaking && state.audio.lastSpeaker !== 'USER' ? <AudioLines size={16} /> : voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                    </button>
+                    <button 
+                        onClick={toggleAutonomous}
+                        title="Toggle Autonomous Help"
+                        className={`p-1.5 rounded-lg transition-all ${isAutonomousEnabled ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20' : 'bg-gray-800 text-gray-500 hover:text-gray-300'}`}
+                    >
+                        {isAutonomousEnabled ? <Zap size={16} /> : <ZapOff size={16} />}
+                    </button>
+                </div>
+            </div>
+            
+            {/* 2. EVEN FOUR SQUARE THEATER BODY */}
+            <div className="flex-1 flex flex-col min-h-0">
+                
+                {/* Row 1: Camera | Audio (Table) */}
+                <div className="flex-1 flex min-h-0 border-b border-gray-800">
+                    {/* Camera Quadrant */}
+                    <div className="w-1/2 bg-black relative flex items-center justify-center overflow-hidden group border-r border-gray-800">
+                        {state.camera.lastFrame && state.camera.status.isActive ? (
+                            <div className="relative h-full w-full flex items-center justify-center">
+                                <img 
+                                    src={state.camera.lastFrame} 
+                                    className="max-h-full max-w-full object-cover" 
+                                    alt="Camera" 
+                                />
+                                <div className="absolute inset-0 pointer-events-none">
+                                    {state.camera.people.map(person => (
+                                        <div 
+                                            key={person.id}
+                                            className="absolute border-2 border-emerald-500/40 bg-emerald-500/5 rounded-sm"
+                                            style={{
+                                                left: `${person.bbox[0]}%`,
+                                                top: `${person.bbox[1]}%`,
+                                                width: `${person.bbox[2]}%`,
+                                                height: `${person.bbox[3]}%`
+                                            }}
+                                        >
+                                            <div className="absolute -top-4 left-[-2px] bg-emerald-500 text-black text-[8px] font-black px-1.5 py-0.5 uppercase rounded-t-sm shadow-lg">
+                                                {person.expression}
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-[9px] text-gray-500 font-mono leading-none">Prosody:</p>
-                                            <span className="text-[9px] font-mono text-indigo-400 uppercase">{state.audio.vocalEmotion}</span>
-                                        </div>
-                                    </div>
+                                    ))}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="flex flex-col items-end mr-1">
-                                    <span className="text-[7px] text-gray-600 font-mono uppercase font-bold tracking-tighter">Confidence</span>
-                                    <span className="text-[10px] font-mono text-rose-400 leading-none">{state.audio.status.isActive ? `${Math.round(state.audio.recognitionConfidence * 100)}%` : '0%'}</span>
-                                </div>
-                                <div className={`w-2.5 h-2.5 rounded-full ${state.audio.status.isActive && state.audio.isSpeaking ? 'bg-rose-500 animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'bg-gray-800'}`} />
-                                <button 
-                                    onClick={toggleVoice}
-                                    className={`p-1.5 rounded-lg transition-all ${state.audio.status.isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-gray-800 text-gray-400 hover:text-gray-200 border border-gray-700'}`}
-                                >
-                                    {state.audio.status.isActive ? <Mic size={14} /> : <MicOff size={14} />}
-                                </button>
+                        ) : (
+                            <div className="flex flex-col items-center gap-3 opacity-20 group-hover:opacity-40 transition-opacity">
+                                <Camera size={48} className="text-emerald-500" />
+                                <span className="text-xs font-mono uppercase tracking-[0.4em]">Optical_Link_Offline</span>
                             </div>
+                        )}
+                        <div className="absolute top-3 left-3 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[9px] font-mono uppercase tracking-widest text-emerald-400">Camera</div>
+                    </div>
+
+                    {/* Audio Quadrant (Table Format) */}
+                    <div className="w-1/2 flex flex-col bg-gray-950/60 relative overflow-hidden">
+                        <div className="flex-1 overflow-y-auto scrollbar-none">
+                            <table className="w-full text-left border-collapse font-mono text-[11px]">
+                                <thead className="sticky top-0 bg-gray-900 z-20">
+                                    <tr className="border-b border-gray-800">
+                                        <th className="px-4 py-2 text-gray-500 uppercase tracking-widest font-black w-16"><Clock size={10} /></th>
+                                        <th className="px-4 py-2 text-gray-500 uppercase tracking-widest font-black w-24">Speaker</th>
+                                        <th className="px-4 py-2 text-gray-500 uppercase tracking-widest font-black w-24">Prosody</th>
+                                        <th className="px-4 py-2 text-gray-500 uppercase tracking-widest font-black">Content</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(() => {
+                                        const lines = state.audio.runningTranscript.split('\n').filter(l => l.trim());
+                                        const rows: any[] = [];
+                                        let currentSpeaker = "UNKNOWN";
+                                        
+                                        lines.forEach((line, i) => {
+                                            if (line.startsWith('[') && line.includes(']')) {
+                                                currentSpeaker = line.replace(/[\[\]]/g, '');
+                                            } else {
+                                                rows.push({
+                                                    id: i,
+                                                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                                                    speaker: currentSpeaker,
+                                                    prosody: state.audio.vocalEmotion,
+                                                    content: line
+                                                });
+                                            }
+                                        });
+
+                                        return rows.map(row => (
+                                            <tr key={row.id} className="border-b border-gray-800/40 hover:bg-white/5 transition-colors">
+                                                <td className="px-4 py-2 text-gray-600 tabular-nums">{row.time}</td>
+                                                <td className={`px-4 py-2 font-bold ${row.speaker === 'USER' ? 'text-indigo-400' : 'text-emerald-400'}`}>{row.speaker}</td>
+                                                <td className="px-4 py-2 text-rose-400/80 uppercase text-[9px]">{row.prosody}</td>
+                                                <td className="px-4 py-2 text-gray-300 leading-relaxed">{row.content}</td>
+                                            </tr>
+                                        ));
+                                    })()}
+                                </tbody>
+                            </table>
+                            {(!state.audio.runningTranscript) && (
+                                <div className="h-full flex flex-col items-center justify-center opacity-10 py-12 text-center">
+                                    <Activity size={32} className="mb-4 mx-auto animate-pulse text-indigo-500" />
+                                    <p className="text-[10px] uppercase tracking-[0.3em]">Awaiting_Acoustic_Input...</p>
+                                </div>
+                            )}
+                            <div ref={transcriptEndRef} />
                         </div>
-                        <div className="flex-1 flex gap-4 p-3 min-h-0 overflow-hidden">
-                            <div className="flex-1 flex flex-col min-h-0 bg-black/20 rounded-lg border border-gray-800/40 p-3">
-                                <span className="text-[8px] text-gray-500 font-mono uppercase font-bold mb-1.5">Transcription_History_Buffer</span>
-                                <div className="text-[12px] font-mono text-gray-300 overflow-y-auto leading-relaxed scrollbar-none whitespace-pre-wrap flex flex-col-reverse">
-                                    {state.audio.status.isActive ? (state.audio.runningTranscript || 'Awaiting_Signal') : 'Awaiting_Signal'}
-                                </div>
+                        <div className="absolute top-3 right-3 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[9px] font-mono uppercase tracking-widest text-indigo-400">Audio</div>
+                    </div>
+                </div>
+
+                {/* Row 2: Screen | Attention (Table) */}
+                <div className="flex-1 flex min-h-0">
+                    {/* Screen Quadrant */}
+                    <div className="w-1/2 bg-black relative flex items-center justify-center overflow-hidden group border-r border-gray-800">
+                        {state.screen.lastFrame && state.screen.status.isActive ? (
+                            <img src={state.screen.lastFrame} className="max-h-full max-w-full object-contain" alt="Screen" />
+                        ) : (
+                            <div className="flex flex-col items-center gap-3 opacity-20 group-hover:opacity-40 transition-opacity">
+                                <Monitor size={48} className="text-blue-500" />
+                                <span className="text-xs font-mono uppercase tracking-[0.4em]">Screen_Buffer_Offline</span>
                             </div>
-                            <div className="w-24 flex flex-col justify-center border-l border-gray-800/40 pl-4">
-                                <span className="text-[8px] text-gray-500 font-mono uppercase mb-2 font-bold text-center">Intensity</span>
-                                <div className="flex-1 w-3 bg-gray-900 rounded-full mx-auto relative overflow-hidden border border-gray-800/60">
-                                    <div 
-                                        className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-indigo-600 to-rose-400 transition-all duration-75 shadow-lg" 
-                                        style={{ height: `${state.audio.status.isActive ? Math.min(100, state.audio.rmsLevel * 200) : 0}%` }}
-                                    />
-                                </div>
+                        )}
+                        <div className="absolute top-3 left-3 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[9px] font-mono uppercase tracking-widest text-blue-400">Screen</div>
+                        {state.screen.status.isActive && state.screen.activeApplication && (
+                            <div className="absolute bottom-3 left-3 right-3 px-3 py-1.5 bg-black/80 backdrop-blur-md rounded-lg border border-white/10 text-[10px] font-mono text-gray-300 truncate">
+                                {state.screen.activeApplication}
                             </div>
+                        )}
+                    </div>
+
+                    {/* Attention Quadrant (Table Format) */}
+                    <div className="w-1/2 flex flex-col bg-gray-900/20 relative overflow-hidden">
+                        <div className="flex-1 overflow-y-auto scrollbar-none">
+                            <table className="w-full text-left border-collapse font-mono text-[11px]">
+                                <thead className="sticky top-0 bg-gray-900 z-20">
+                                    <tr className="border-b border-gray-800">
+                                        <th className="px-4 py-2 text-gray-500 uppercase tracking-widest font-black w-16"><Clock size={10} /></th>
+                                        <th className="px-4 py-2 text-gray-500 uppercase tracking-widest font-black">Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {state.autonomous.recentSpikeTimeline.map((spike, i) => (
+                                        <tr key={i} className="border-b border-gray-800/40 hover:bg-white/5 transition-colors">
+                                            <td className="px-4 py-2 text-gray-600 tabular-nums">
+                                                {new Date(spike.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                            </td>
+                                            <td className="px-4 py-2 text-gray-300 leading-relaxed font-light">
+                                                {spike.reason}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {state.autonomous.recentSpikeTimeline.length === 0 && (
+                                <div className="h-full flex flex-col items-center justify-center opacity-10 py-12 text-center">
+                                    <ShieldAlert size={32} className="mb-4 mx-auto text-gray-500" />
+                                    <p className="text-[10px] uppercase tracking-[0.3em]">Zero_Anomalies_Detected</p>
+                                </div>
+                            )}
                         </div>
+                        <div className="absolute top-3 right-3 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[9px] font-mono uppercase tracking-widest text-rose-500">Attention</div>
                     </div>
                 </div>
 

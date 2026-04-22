@@ -8,12 +8,6 @@ export interface AudioStreamState {
     vocalEmotion: string;
 }
 
-export interface DetectedObject {
-    label: string;
-    confidence: number;
-    bbox: [number, number, number, number]; // [x, y, w, h] or [x1, y1, x2, y2]
-}
-
 export interface PersonDetection {
     id: string;
     expression: string;
@@ -23,7 +17,6 @@ export interface PersonDetection {
 
 export interface CameraStreamState {
     lastFrame: string | null; // Base64 or path to latest grab
-    detectedObjects: DetectedObject[];
     people: PersonDetection[];
     hasPeople: boolean;
     timestamp: number;
@@ -32,7 +25,6 @@ export interface CameraStreamState {
 export interface ScreenStreamState {
     lastFrame: string | null;
     activeApplication: string | null;
-    ocrText: string;
     timestamp: number;
 }
 

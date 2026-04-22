@@ -14,7 +14,6 @@ class SceneManager extends EventEmitter {
         },
         camera: {
             lastFrame: null,
-            detectedObjects: [],
             people: [],
             hasPeople: false,
             timestamp: 0,
@@ -23,7 +22,6 @@ class SceneManager extends EventEmitter {
         screen: {
             lastFrame: null,
             activeApplication: null,
-            ocrText: "",
             timestamp: 0,
             status: { isActive: false, isError: false }
         },

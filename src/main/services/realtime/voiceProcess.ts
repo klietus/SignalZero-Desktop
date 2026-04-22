@@ -155,6 +155,9 @@ class PythonVoiceManager extends EventEmitter {
             loggerService.catInfo(LogCategory.SYSTEM, `Sidecar initialized ${payload.count} voice profile(s).`);
         } else if (type === 'stt_result') {
             this.authenticatedSpeaker = payload.speaker;
+            // 1. Always emit for the perception transcript
+            this.emit('message', msg);
+            
             broadcast('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
             this.processFinalTranscription(payload.text);
         } else if (type === 'speaker_interrupt') {
@@ -282,17 +285,51 @@ class PythonVoiceManager extends EventEmitter {
         });
     }
 
+    private stripMarkdown(text: string): string {
+        return text
+            // Remove code blocks
+            .replace(/```[\s\S]*?```/g, '')
+            // Remove inline code
+            .replace(/`([^`]+)`/g, '$1')
+            // Remove images
+            .replace(/!\[([^\]]*)\]\([^\)]+\)/g, '')
+            // Remove links but keep text
+            .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+            // Remove headers
+            .replace(/^#{1,6}\s+/gm, '')
+            // Remove bold/italic
+            .replace(/(\*\*|__)(.*?)\1/g, '$2')
+            // Remove single star/underscore italic
+            .replace(/(\*|_)(.*?)\1/g, '$2')
+            // Remove blockquotes
+            .replace(/^\s*>\s+/gm, '')
+            // Remove horizontal rules
+            .replace(/^[-\*_]{3,}\s*$/gm, '')
+            // Remove list markers
+            .replace(/^\s*[\-\*\+]\s+/gm, '')
+            .replace(/^\s*\d+\.\s+/gm, '')
+            // Remove custom tags
+            .replace(/<[^>]*>/g, '')
+            // Trim extra whitespace
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
+
     private async synthesizeSpeechText(rawText: string): Promise<string> {
         try {
+            // Pre-process to remove thoughts and attachments which should never be spoken
             let processedText = rawText
-                .replace(/<thought>[\s\S]*?<\/thought>/g, '')
+                .replace(/<(?:seed:)?thought>[\s\S]*?<\/(?:seed:)?thought>/g, '')
                 .replace(/<attachments>[\s\S]*?<\/attachments>/g, '')
                 .trim();
 
             if (!processedText) return "";
 
+            // Strip markdown before sending to LLM for final natural language synthesis
+            processedText = this.stripMarkdown(processedText);
+
             const prompt = `Convert the following text into a clean, natural sounding speech report. 
-STRIP ALL titles, ALL markdown formatting, and technical symbols. Convert ALL headers to natural sounding transitions.
+STRIP ALL remaining titles, markdown formatting, and technical symbols. Convert ALL headers to natural sounding transitions.
 KEEP AND PRONOUNCE ALL PRODUCT NAMES, project names, and proper nouns (e.g., "SignalZero", "Tavily", "Electron").
 EXPAND ALL ACRONYMS AND ABBREVIATIONS into their full spoken forms (e.g., "AI" to "Artificial Intelligence", "TTS" to "Text to Speech").
 Do not say "Header", "Section", or read out structural markers. Do NOT repeat the same word twice in a row.
@@ -306,12 +343,12 @@ ${processedText}`;
             const cleanSpeech = await callFastInference([
                 { role: 'system', content: 'You are a speech synthesis pre-processor that strips headers and formatting.' },
                 { role: 'user', content: prompt }
-            ], 5120, undefined, LlamaPriority.HIGH);
+            ], 5120, undefined, LlamaPriority.URGENT);
 
             return cleanSpeech || processedText;
         } catch (e) {
             loggerService.catError(LogCategory.SYSTEM, "Failed to synthesize speech text", { error: e });
-            return rawText;
+            return this.stripMarkdown(rawText);
         }
     }
 

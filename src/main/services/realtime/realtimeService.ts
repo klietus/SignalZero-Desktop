@@ -106,23 +106,20 @@ class RealtimeService {
                     expression: p.expression,
                     confidence: p.attributes.detection_confidence,
                     emotions: p.attributes.emotion_scores
-                })),
-                detectedObjects: state.camera.detectedObjects
+                }))
             };
-        }
+            }
 
-        if (state.screen.status.isActive) {
+            if (state.screen.status.isActive) {
             const hasFrame = !!state.screen.lastFrame;
             const frameSize = state.screen.lastFrame ? Math.round(state.screen.lastFrame.length / 1024) : 0;
             loggerService.catDebug(LogCategory.SYSTEM, `Capture: Screen frame availability: ${hasFrame}, size: ${frameSize}KB`);
-            
+
             snapshot.screen = {
                 lastFrame: state.screen.lastFrame,
-                activeApplication: state.screen.activeApplication,
-                ocrText: state.screen.ocrText
+                activeApplication: state.screen.activeApplication
             };
-        }
-
+            }
         return Object.keys(snapshot).length > 0 ? snapshot : null;
     }
 

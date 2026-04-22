@@ -196,13 +196,17 @@ class DocumentMeaningService {
         try {
             loggerService.info(`DocumentMeaningService: Analyzing image ${hash.substring(0, 8)} via Llama Sidecar`);
             
-            const prompt = contextHint 
-                ? `Analyze this image in the context of: "${contextHint}". Describe how the visual evidence relates to this topic, identify key objects, and explain the setting.`
-                : "Analyze this image. Describe the setting, identify key objects, and explain the relationships.";
+            const prompt = `Classify and describe this image concisely.
+
+1. **TAG**: Choose ONE: [LOGO], [PEOPLE], [SCENE], [DOCUMENT], [MAP].
+2. **CONTEXT**: ${contextHint || "None"}
+3. **FACTS**: List only visible objects and actions. 
+
+CRITICAL: No conversational filler. No hallucinations. If unsure, say "Unclear".`.trim();
 
             const result = await llamaService.completion(prompt, {
                 images: [{ base64: buffer.toString('base64') }],
-                maxTokens: 2048,
+                maxTokens: 512, // Reduced for 0.8B stability
                 priority: LlamaPriority.MEDIUM
             });
 

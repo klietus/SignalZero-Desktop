@@ -272,10 +272,15 @@ FORMAT: Return a JSON object with:
         } catch (e: any) {
             loggerService.catError(LogCategory.SYSTEM, "Flash Round Failed", { error: e.message });
         } finally {
+            // Clear reasoning status once processing is done
+            sceneManager.updateAutonomous({ 
+                isProcessingFlashRound: false,
+                lastSpikeReason: null 
+            });
+
             // Cooldown to prevent flooding
             setTimeout(() => { 
                 this.isProcessingFlashRound = false; 
-                sceneManager.updateAutonomous({ isProcessingFlashRound: false });
             }, 30000);
         }
     }

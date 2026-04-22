@@ -38,7 +38,16 @@ vi.mock('../services/inferenceService.js', () => {
             getGenerativeModel: mockGetGenerativeModel
         }),
         getClient: vi.fn(),
-        extractJson: vi.fn(text => JSON.parse(text))
+        extractJson: vi.fn(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                // If it's already an object (from our mock), just return it
+                if (typeof text === 'object') return text;
+                return {};
+            }
+        }),
+        callFastInference: vi.fn().mockResolvedValue("Mocked delta summary")
     };
 });
 

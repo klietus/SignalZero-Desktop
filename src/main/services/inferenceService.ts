@@ -22,7 +22,7 @@ import { eventBusService, KernelEventType } from './eventBusService.js';
 import { webSearchService } from './webSearchService.js';
 import { workerService } from './workerService.js';
 import { realtimeService } from './realtime/realtimeService.js';
-import { llamaService, LlamaPriority } from './llamaService.js';
+import { llamaService, urgentLlamaService, LlamaPriority } from './llamaService.js';
 
 interface ChatSessionState {
   messages: ChatCompletionMessageParam[];
@@ -115,7 +115,10 @@ export const callFastInference = async (
     }
     prompt += `<|im_start|>assistant\n`;
 
-    const result = await llamaService.completion(prompt, { 
+    // Route to appropriate sidecar based on priority
+    const service = (priority >= LlamaPriority.HIGH) ? urgentLlamaService : llamaService;
+
+    const result = await service.completion(prompt, { 
         maxTokens,
         priority,
         stop: ["<|im_end|>", "<|im_start|>", "assistant:", "user:", "system:"]
@@ -1054,28 +1057,45 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
 }
 
 export const extractJson = async (text: string): Promise<any> => {
+  if (!text || text.trim() === "") return null;
+
   try {
       const result = await workerService.runTask('parseJson', text);
       if (result) return result;
-  } catch (e) {
-      // Fallback to existing manual extraction logic if simple parse fails
-  }
+  } catch (e) { }
+
+  const sanitize = (str: string) => {
+    return str
+      // Fix invalid backslashes (common in LaTeX or math output)
+      .replace(/\\(?![bfnrtu"\/])/g, "\\\\")
+      // Handle literal newlines inside values
+      .replace(/\n/g, "\\n")
+      // Remove common LLM conversational prefixes/suffixes
+      .replace(/^.*?({|\[)/, (m) => m.endsWith('[') ? '[' : '{')
+      .replace(/(}|\])[^}\]]*$/, (m) => m.startsWith(']') ? ']' : '}');
+  };
 
   const tryParse = (str: string) => {
-    if (!str || str.trim() === "") return null;
     try {
       return JSON.parse(str);
     } catch (e) {
-      // Heuristic: common error is unescaped double quotes or literal newlines inside strings.
+      // If it looks like multiple objects { ... }, { ... }, wrap and merge
+      if (str.includes('}, {') || str.includes('},\n{')) {
+          try {
+              const wrapped = JSON.parse(`[${str}]`);
+              if (Array.isArray(wrapped)) {
+                  return wrapped.reduce((acc, obj) => ({ ...acc, ...obj }), {});
+              }
+          } catch (inner) { }
+      }
+
+      // Deep heuristic for unescaped internal quotes
       let fixed = str
         .replace(/":\s*"([\s\S]*?)"(\s*[,}\n])/g, (_match, p1, p2) => {
-           // Replace literal newlines with escaped \n if they exist
-           const withEscapedNewlines = p1.replace(/\n/g, "\\n");
-           // Fix invalid backslashes (common in LaTeX or math output)
-           // This replaces \ with \\ unless it's followed by a valid JSON escape char
-           const fixedBackslashes = withEscapedNewlines.replace(/\\(?![bfnrtu"\/])/g, "\\\\");
-           const escapedQuotes = fixedBackslashes.replace(/(?<!\\)"/g, '\\"');
-           return `": "${escapedQuotes}"${p2}`;
+           const content = p1
+            .replace(/\\"/g, '"') // Normalize existing escapes
+            .replace(/"/g, '\\"'); // Re-escape all
+           return `": "${content}"${p2}`;
         })
         .replace(/,(\s*[}\]])/g, '$1');
       
@@ -1084,7 +1104,6 @@ export const extractJson = async (text: string): Promise<any> => {
       } catch (inner) {
         // Recovery for truncated JSON
         let truncated = fixed.trim();
-        // If it starts like an object or array but doesn't end like one
         if ((truncated.startsWith('{') && !truncated.endsWith('}')) || (truncated.startsWith('[') && !truncated.endsWith(']'))) {
            const stack: string[] = [];
            for (let i = 0; i < truncated.length; i++) {
@@ -1108,34 +1127,30 @@ export const extractJson = async (text: string): Promise<any> => {
 
   const direct = tryParse(text);
   if (direct) return direct;
+  
+  const sanitized = tryParse(sanitize(text));
+  if (sanitized) return sanitized;
 
-  // 1. Try markdown code block (common for LLMs)
-  // We use [\s\S]*? to match across newlines
-  const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (match) {
-    const extracted = tryParse(match[1].trim());
+  // Regex fallback for code blocks
+  const jsonRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+  let match;
+  while ((match = jsonRegex.exec(text)) !== null) {
+    const extracted = tryParse(sanitize(match[1]));
     if (extracted) return extracted;
   }
 
-  // 2. Try finding the first '{' and last '}'
+  // Final fallback: Balanced brace extraction
   const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1) {
-    const extracted = tryParse(text.substring(firstBrace, lastBrace + 1));
-    if (extracted) return extracted;
-  }
-
-  // 3. Try finding the first '[' and last ']'
-  const firstBracket = text.indexOf('[');
-  const lastBracket = text.lastIndexOf(']');
-  if (firstBracket !== -1 && lastBracket !== -1) {
-    const extracted = tryParse(text.substring(firstBracket, lastBracket + 1));
-    if (extracted) return extracted;
-  }
-
-  // 4. Fallback for truncation at the start
-  if (firstBrace !== -1 && lastBrace === -1) {
-      const extracted = tryParse(text.substring(firstBrace));
+  if (firstBrace !== -1) {
+      let balanced = "";
+      let count = 0;
+      for (let i = firstBrace; i < text.length; i++) {
+          if (text[i] === '{') count++;
+          if (text[i] === '}') count--;
+          balanced += text[i];
+          if (count === 0) break;
+      }
+      const extracted = tryParse(sanitize(balanced));
       if (extracted) return extracted;
   }
 
@@ -1149,9 +1164,17 @@ export const summarizeHistory = async (history: ContextMessage[], currentSummary
   const cleanHistory = contextWindowService.stripTools(history);
   const historyText = cleanHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "")}`).join('\n');
   const prompt = `Summarize the following conversation concisely: ${currentSummary ? `Previous Summary: ${currentSummary}\n` : ''} \n\nRecent Conversation History:\n${historyText}\n\nREFINED SUMMARY:`;
-  try {
-    return await callFastInference([{ role: "user", content: prompt }], 8192);
-  } catch (error) { return currentSummary || ""; }
+  
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const summary = await callFastInference([{ role: "user", content: prompt }], 8192);
+      if (summary && summary.trim()) return summary.trim();
+    } catch (error) {
+      if (attempt === 2) return currentSummary || "";
+    }
+    await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+  }
+  return currentSummary || "";
 };
 
 export const synthesizeWebResults = async (
@@ -1167,9 +1190,17 @@ export const synthesizeWebResults = async (
     });
   });
   const prompt = `Synthesize these research results into a dense, high-fidelity Knowledge Brief. Use all the details provided to build a comprehensive view of the topic.\n\nResearch Data:\n${resultsText}\n\nKNOWLEDGE BRIEF:`;
-  try {
-    return await callFastInference([{ role: "user", content: prompt }], 8192);
-  } catch (error) { return ""; }
+  
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const brief = await callFastInference([{ role: "user", content: prompt }], 8192);
+      if (brief && brief.trim()) return brief.trim();
+    } catch (error) {
+      if (attempt === 2) return "";
+    }
+    await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+  }
+  return "";
 };
 
 export const primeSymbolicContext = async (

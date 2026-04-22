@@ -62,6 +62,8 @@ class VisionSidecar:
         self.screen_running = False
         self.camera_thread = None
         self.screen_thread = None
+        self.processing_lock = threading.Lock()
+        self.last_ts_ms = 0
         
         try:
             self.sct = mss.mss()
@@ -195,113 +197,119 @@ class VisionSidecar:
         return neural_emotion
 
     def process_frame(self, frame, timestamp_ms):
-        # Convert BGR to RGBA - MediaPipe GPU delegate on macOS prefers 4-channel alignment
-        rgba_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-        # Ensure the array is C-contiguous for memory mapping
-        rgba_frame = np.ascontiguousarray(rgba_frame)
-        
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGBA, data=rgba_frame)
-        h, w, _ = frame.shape
-        people = []
-        has_people = False
-        
-        landmarker = self.face_landmarker
-        recognizer = self.fer
-        
-        if not landmarker: return [], [], False
+        with self.processing_lock:
+            try:
+                # MediaPipe requires strictly monotonically increasing timestamps
+                if timestamp_ms <= self.last_ts_ms:
+                    timestamp_ms = self.last_ts_ms + 1
+                self.last_ts_ms = timestamp_ms
 
-        try:
-            results = landmarker.detect_for_video( mp_image, int(timestamp_ms))
-            
-            if not results.face_landmarks: 
-                return [], [], False
-
-            has_people = True
-            # Use the RGB version for neural inference (HSEmotion expects 3 channels)
-            rgb_frame = cv2.cvtColor(rgba_frame, cv2.COLOR_RGBA2RGB)
-
-            for i, landmarks in enumerate(results.face_landmarks):
-                # Get Blendshapes
-                blendshape_scores = {}
-                if results.face_blendshapes:
-                    for category in results.face_blendshapes[i]:
-                        blendshape_scores[category.category_name] = category.score
+                # Convert BGR to RGBA - MediaPipe GPU delegate on macOS prefers 4-channel alignment
+                rgba_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+                # Ensure the array is C-contiguous for memory mapping
+                rgba_frame = np.ascontiguousarray(rgba_frame)
                 
-                self.calibration.add_sample(blendshape_scores)
-
-                # Get BBox from landmarks
-                x_coords = [lm.x for lm in landmarks]
-                y_coords = [lm.y for lm in landmarks]
-                xmin, xmax = min(x_coords), max(x_coords)
-                ymin, ymax = min(y_coords), max(y_coords)
-                bw, bh = xmax - xmin, ymax - ymin
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGBA, data=rgba_frame)
+                h, w, _ = frame.shape
+                people = []
+                has_people = False
                 
-                # Inference for Neural Emotion
-                emotion = "neutral"
-                emotion_scores = {}
-                px1, py1 = max(0, int((xmin - bw*0.1)*w)), max(0, int((ymin - bh*0.1)*h))
-                px2, py2 = min(w, int((xmax + bw*0.1)*w)), min(h, int((ymax + bh*0.1)*h))
-                face_img = rgb_frame[py1:py2, px1:px2]
-
-                if recognizer and face_img.size > 0:
-                    try:
-                        # Ensure we don't track gradients (OOM prevention)
-                        with torch.no_grad():
-                            # 1. Raw HSEmotion Prediction
-                            _, raw_scores = recognizer.predict_emotions(face_img, logits=False)
-                        
-                        # 2. Clean and convert to dict with NaN safety
-                        labels = ['anger', 'contempt', 'disgust', 'fear', 'happiness', 'neutral', 'sadness', 'surprise']
-                        current_scores = {}
-                        for j, label in enumerate(labels):
-                            val = float(raw_scores[j])
-                            if np.isnan(val) or np.isinf(val): val = 0.0
-                            current_scores[label] = val
-
-                        # 3. Shave 20% off hostile emotions as requested
-                        current_scores['anger'] *= 0.8
-                        current_scores['contempt'] *= 0.8
-                        
-                        # 4. Re-normalize to ensure sum is 1.0
-                        total = sum(current_scores.values())
-                        if total > 0:
-                            for l in labels:
-                                current_scores[l] /= total
-                        
-                        # 5. Determine rebalanced winner
-                        best_neural_emotion = max(current_scores, key=current_scores.get)
-                        emotion_scores = current_scores
-                        
-                        # 6. Apply physical blendshape override (consensus)
-                        emotion = self.classify_emotion(best_neural_emotion, blendshape_scores)
-                    except Exception as e:
-                        self.log(f"Inference error: {str(e)}")
-                        emotion = "error"
+                landmarker = self.face_landmarker
+                recognizer = self.fer
                 
-                # Smoothing
-                face_id = f"face_{i}"
-                history = self.emotion_history.get(face_id, [])
-                history.append(emotion)
-                if len(history) > self.smoothing_window: history.pop(0)
-                self.emotion_history[face_id] = history
-                final_emotion = max(set(history), key=history.count)
+                if not landmarker: return [], [], False
 
-                people.append({
-                    "id": str(i),
-                    "expression": final_emotion,
-                    "attributes": {
-                        "calibrated": self.calibration.is_calibrated,
-                        "detection_confidence": float(1.0), # tasks API doesn't give direct per-face conf in this structure easily
-                        "emotion_scores": emotion_scores,
-                        "blendshapes": blendshape_scores if i == 0 else {} # Only send for first face to save BW
-                    },
-                    "bbox": [xmin * 100, ymin * 100, bw * 100, bh * 100]
-                })
+                results = landmarker.detect_for_video( mp_image, int(timestamp_ms))
+                
+                if not results.face_landmarks: 
+                    return [], [], False
 
-        except Exception as e:
-            self.log(f"Processing error: {str(e)}")
+                has_people = True
+                # Use the RGB version for neural inference (HSEmotion expects 3 channels)
+                rgb_frame = cv2.cvtColor(rgba_frame, cv2.COLOR_RGBA2RGB)
 
-        return people, [], has_people
+                for i, landmarks in enumerate(results.face_landmarks):
+                    # Get Blendshapes
+                    blendshape_scores = {}
+                    if results.face_blendshapes:
+                        for category in results.face_blendshapes[i]:
+                            blendshape_scores[category.category_name] = category.score
+                    
+                    self.calibration.add_sample(blendshape_scores)
+
+                    # Get BBox from landmarks
+                    x_coords = [lm.x for lm in landmarks]
+                    y_coords = [lm.y for lm in landmarks]
+                    xmin, xmax = min(x_coords), max(x_coords)
+                    ymin, ymax = min(y_coords), max(y_coords)
+                    bw, bh = xmax - xmin, ymax - ymin
+                    
+                    # Inference for Neural Emotion
+                    emotion = "neutral"
+                    emotion_scores = {}
+                    px1, py1 = max(0, int((xmin - bw*0.1)*w)), max(0, int((ymin - bh*0.1)*h))
+                    px2, py2 = min(w, int((xmax + bw*0.1)*w)), min(h, int((ymax + bh*0.1)*h))
+                    face_img = rgb_frame[py1:py2, px1:px2]
+
+                    if recognizer and face_img.size > 0:
+                        try:
+                            # Ensure we don't track gradients (OOM prevention)
+                            with torch.no_grad():
+                                # 1. Raw HSEmotion Prediction
+                                _, raw_scores = recognizer.predict_emotions(face_img, logits=False)
+                            
+                            # 2. Clean and convert to dict with NaN safety
+                            labels = ['anger', 'contempt', 'disgust', 'fear', 'happiness', 'neutral', 'sadness', 'surprise']
+                            current_scores = {}
+                            for j, label in enumerate(labels):
+                                val = float(raw_scores[j])
+                                if np.isnan(val) or np.isinf(val): val = 0.0
+                                current_scores[label] = val
+
+                            # 3. Shave 20% off hostile emotions as requested
+                            current_scores['anger'] *= 0.8
+                            current_scores['contempt'] *= 0.8
+                            
+                            # 4. Re-normalize to ensure sum is 1.0
+                            total = sum(current_scores.values())
+                            if total > 0:
+                                for l in labels:
+                                    current_scores[l] /= total
+                            
+                            # 5. Determine rebalanced winner
+                            best_neural_emotion = max(current_scores, key=current_scores.get)
+                            emotion_scores = current_scores
+                            
+                            # 6. Apply physical blendshape override (consensus)
+                            emotion = self.classify_emotion(best_neural_emotion, blendshape_scores)
+                        except Exception as e:
+                            self.log(f"Inference error: {str(e)}")
+                            emotion = "error"
+                    
+                    # Smoothing
+                    face_id = f"face_{i}"
+                    history = self.emotion_history.get(face_id, [])
+                    history.append(emotion)
+                    if len(history) > self.smoothing_window: history.pop(0)
+                    self.emotion_history[face_id] = history
+                    final_emotion = max(set(history), key=history.count)
+
+                    people.append({
+                        "id": str(i),
+                        "expression": final_emotion,
+                        "attributes": {
+                            "calibrated": self.calibration.is_calibrated,
+                            "detection_confidence": float(1.0), # tasks API doesn't give direct per-face conf in this structure easily
+                            "emotion_scores": emotion_scores,
+                            "blendshapes": blendshape_scores if i == 0 else {} # Only send for first face to save BW
+                        },
+                        "bbox": [xmin * 100, ymin * 100, bw * 100, bh * 100]
+                    })
+
+            except Exception as e:
+                self.log(f"Processing error: {str(e)}")
+
+            return people, [], has_people
 
     def camera_loop(self):
         cap = cv2.VideoCapture(0)
@@ -330,7 +338,6 @@ class VisionSidecar:
 
                 self.emit("camera_update", {
                     "lastFrame": frame_data,
-                    "detectedObjects": [],
                     "people": people,
                     "hasPeople": has_people,
                     "timestamp": time.time()
@@ -396,7 +403,6 @@ class VisionSidecar:
                 self.emit("screen_update", {
                     "lastFrame": frame_data,
                     "activeApplication": active_app,
-                    "ocrText": "OCR Active",
                     "timestamp": time.time()
                 })
 

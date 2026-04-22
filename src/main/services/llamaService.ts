@@ -12,11 +12,18 @@ export enum LlamaPriority {
     URGENT = 20
 }
 
-class LlamaService extends EventEmitter {
+export class LlamaSidecarInstance extends EventEmitter {
     private process: ChildProcess | null = null;
     private isInitializing = false;
-    private port = 8080;
     private queue: any = null;
+
+    constructor(
+        private name: string,
+        private port: number,
+        private concurrency: number = 1
+    ) {
+        super();
+    }
 
     async initialize() {
         if (this.process || this.isInitializing) return;
@@ -25,25 +32,22 @@ class LlamaService extends EventEmitter {
         try {
             if (!this.queue) {
                 const PQueue = (await import('p-queue')).default;
-                this.queue = new PQueue({ concurrency: 4 });
+                this.queue = new PQueue({ concurrency: this.concurrency });
             }
 
             const projectRoot = app.getAppPath();
             const modelPath = path.join(projectRoot, 'models', 'Qwen3.5-0.8B-Q8_0.gguf');
             const mmprojPath = path.join(projectRoot, 'models', 'mmproj-Qwen3.5-0.8B-BF16.gguf');
 
-            // Check if model exists
             if (!fs.existsSync(modelPath)) {
-                loggerService.catError(LogCategory.SYSTEM, `Llama Sidecar: Model NOT FOUND at ${modelPath}. Run sidecars/llama/setup.sh first.`);
+                loggerService.catError(LogCategory.SYSTEM, `Llama [${this.name}]: Model NOT FOUND at ${modelPath}`);
                 this.isInitializing = false;
                 return;
             }
 
-            // llama-server is in /opt/homebrew/bin/llama-server
             const llamaExe = '/opt/homebrew/bin/llama-server';
-
             if (!fs.existsSync(llamaExe)) {
-                loggerService.catError(LogCategory.SYSTEM, `Llama Sidecar: llama-server NOT FOUND at ${llamaExe}. Please install via 'brew install llama.cpp'.`);
+                loggerService.catError(LogCategory.SYSTEM, `Llama [${this.name}]: llama-server NOT FOUND at ${llamaExe}`);
                 this.isInitializing = false;
                 return;
             }
@@ -52,14 +56,16 @@ class LlamaService extends EventEmitter {
                 '-m', modelPath,
                 '--mmproj', mmprojPath,
                 '--port', this.port.toString(),
-                '-ngl', '99',       // Offload all layers to GPU (Metal)
+                '-ngl', '99',       // GPU Offload
                 '-t', '8',         // Threads
-                '-c', '32768',     // 32k Context size
-                '--no-mmap',       // Sometimes faster on Apple Silicon
-                '-fa', 'on'        // Flash Attention
+                '-c', '65536',     // 64k Context size
+                '--cache-type-k', 'q8_0',
+                '--cache-type-v', 'q8_0',
+                '--no-mmap',
+                '-fa', 'on'
             ];
 
-            loggerService.catInfo(LogCategory.SYSTEM, `Launching Llama Sidecar`, { llamaExe, model: modelPath, port: this.port });
+            loggerService.catInfo(LogCategory.SYSTEM, `Launching Llama [${this.name}]`, { port: this.port, concurrency: this.concurrency });
 
             this.process = spawn(llamaExe, args, {
                 stdio: ['pipe', 'pipe', 'pipe'],
@@ -69,60 +75,44 @@ class LlamaService extends EventEmitter {
                 }
             });
 
-            this.process.stdout?.on('data', (data) => {
-                const msg = data.toString().trim();
-                if (msg) loggerService.catDebug(LogCategory.SYSTEM, `Llama Sidecar: ${msg}`);
-            });
-
             this.process.stderr?.on('data', (data) => {
                 const msg = data.toString().trim();
-                if (msg) {
-                    if (msg.includes('error') || msg.includes('FAIL')) {
-                        loggerService.catError(LogCategory.SYSTEM, `Llama Sidecar: ${msg}`);
-                    } else {
-                        loggerService.catInfo(LogCategory.SYSTEM, `Llama Sidecar: ${msg}`);
-                    }
+                if (msg && (msg.includes('error') || msg.includes('FAIL'))) {
+                    loggerService.catError(LogCategory.SYSTEM, `Llama [${this.name}]: ${msg}`);
                 }
             });
 
             this.process.on('exit', (code, signal) => {
                 this.process = null;
                 this.isInitializing = false;
-                loggerService.catError(LogCategory.SYSTEM, `Llama Sidecar exited with code ${code} and signal ${signal}`);
+                loggerService.catError(LogCategory.SYSTEM, `Llama [${this.name}] exited with code ${code}`);
             });
 
-            // Wait for server to be ready
+            // Health Check
             let attempts = 0;
-            const maxAttempts = 30;
-            while (attempts < maxAttempts) {
+            while (attempts < 30) {
                 try {
                     const resp = await fetch(`http://localhost:${this.port}/health`);
                     if (resp.ok) {
-                        loggerService.catInfo(LogCategory.SYSTEM, "Llama Sidecar is ready.");
+                        loggerService.catInfo(LogCategory.SYSTEM, `Llama [${this.name}] is ready.`);
                         break;
                     }
-                } catch (e) {
-                    // Not ready yet
-                }
+                } catch (e) { }
                 await new Promise(r => setTimeout(r, 1000));
                 attempts++;
-            }
-
-            if (attempts === maxAttempts) {
-                loggerService.catError(LogCategory.SYSTEM, "Llama Sidecar failed to start within timeout.");
             }
 
             this.isInitializing = false;
         } catch (err: any) {
             this.isInitializing = false;
-            loggerService.catError(LogCategory.SYSTEM, `Failed to launch Llama Sidecar: ${err.message}`);
+            loggerService.catError(LogCategory.SYSTEM, `Failed to launch Llama [${this.name}]: ${err.message}`);
         }
     }
 
     async completion(prompt: string, options: any = {}) {
         if (!this.queue) {
             const PQueue = (await import('p-queue')).default;
-            this.queue = new PQueue({ concurrency: 4 });
+            this.queue = new PQueue({ concurrency: this.concurrency });
         }
 
         const priority = options.priority !== undefined ? options.priority : LlamaPriority.LOW;
@@ -132,14 +122,13 @@ class LlamaService extends EventEmitter {
                 prompt,
                 n_predict: options.maxTokens || options.n_predict || 2048,
                 stream: false,
+                cache_prompt: false,
                 ...options
             };
 
-            // Clean up body
             delete body.maxTokens;
             delete body.priority;
 
-            // Handle images for multimodal support
             if (options.images && options.images.length > 0) {
                 body.image_data = options.images.map((img: any) => ({
                     data: img.base64,
@@ -155,12 +144,12 @@ class LlamaService extends EventEmitter {
 
             if (!resp.ok) {
                 const errorText = await resp.text();
-                throw new Error(`Llama completion failed: ${resp.statusText} - ${errorText}`);
+                throw new Error(`Llama [${this.name}] failed: ${resp.statusText} - ${errorText}`);
             }
 
             const json = await resp.json();
-            loggerService.catDebug(LogCategory.SYSTEM, "Llama Sidecar Raw Response", { 
-                promptLength: prompt.length, 
+            loggerService.catDebug(LogCategory.SYSTEM, `Llama [${this.name}] Raw Response`, {
+                promptLength: prompt.length,
                 responseLength: json.content?.length || 0,
                 priority
             });
@@ -176,4 +165,6 @@ class LlamaService extends EventEmitter {
     }
 }
 
-export const llamaService = new LlamaService();
+// Export specialized instances
+export const llamaService = new LlamaSidecarInstance('Standard', 8080, 4);
+export const urgentLlamaService = new LlamaSidecarInstance('Urgent', 8081, 1);

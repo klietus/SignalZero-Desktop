@@ -106,8 +106,8 @@ export const domainService = {
     }
 
     if (template.symbols && template.symbols.length > 0) {
-        loggerService.catInfo(LogCategory.DOMAIN, `Syncing ${template.symbols.length} core symbols for domain ${domainId}`);
-        await this.bulkUpsertSymbols(template.symbols, domainId);
+        loggerService.catInfo(LogCategory.DOMAIN, `Checking core symbols for domain ${domainId}...`);
+        await this.bulkUpsertSymbols(template.symbols, domainId, false, true); // skipExisting=true
     }
 
     return this.get(domainId);
@@ -210,7 +210,7 @@ export const domainService = {
   /**
    * Cross-domain relational bulk upsert.
    */
-  async bulkUpsertSymbols(symbols: SymbolDef[], defaultDomainId?: string, skipIndexing: boolean = false): Promise<void> {
+  async bulkUpsertSymbols(symbols: SymbolDef[], defaultDomainId?: string, skipIndexing: boolean = false, skipExisting: boolean = false): Promise<void> {
     if (symbols.length === 0) return;
 
     const now = new Date().toISOString();
@@ -222,8 +222,18 @@ export const domainService = {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
+        const checkStmt = sqliteService.db().prepare(`SELECT 1 FROM symbols WHERE id = ?`);
+
         // First pass: symbols
         for (const symbol of symbols) {
+            if (skipExisting) {
+                const exists = checkStmt.get(symbol.id);
+                if (exists) {
+                    loggerService.catDebug(LogCategory.DOMAIN, `Skipping existing symbol: ${symbol.id}`);
+                    continue;
+                }
+            }
+
             const domainId = symbol.symbol_domain || symbol.domain_id || defaultDomainId;
             if (!domainId) continue;
 
@@ -260,6 +270,11 @@ export const domainService = {
         const insertLink = sqliteService.db().prepare(`INSERT INTO symbol_links (source_id, target_id, link_type) VALUES (?, ?, ?)`);
 
         for (const symbol of symbols) {
+            if (skipExisting) {
+                const exists = checkStmt.get(symbol.id);
+                if (exists) continue;
+            }
+
             // 1. Find links that are about to be removed to handle reciprocals
             const oldLinks = getOldLinks.all(symbol.id) as { target_id: string }[];
             const newTargetIds = new Set((symbol.linked_patterns || []).map(l => typeof l === 'string' ? l : l.id));

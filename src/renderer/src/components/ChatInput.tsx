@@ -388,7 +388,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     isAudioSpeaking 
                         ? 'bg-red-600 text-white shadow-lg shadow-red-500/40 animate-pulse' 
                         : voiceEnabled 
-                            ? 'bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30' 
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40' 
                             : 'bg-gray-800 text-gray-500 hover:text-gray-400'
                 }`}
                 title={isAudioSpeaking ? "Stop AI Speech" : voiceEnabled ? "Disable AI Voice" : "Enable AI Voice"}

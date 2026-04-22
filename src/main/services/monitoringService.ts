@@ -165,6 +165,7 @@ class MonitoringService {
             if (items && items.length > 0) {
                 loggerService.catInfo(LogCategory.MONITORING, `Source ${source.name} returned ${items.length} items. Checking cache...`);
 
+                let skippedCount = 0;
                 for (const item of items) {
                     let articleId = item.id || item.link || item.title;
                     if (!articleId) continue;
@@ -181,7 +182,7 @@ class MonitoringService {
                     );
 
                     if (cached) {
-                        loggerService.catDebug(LogCategory.MONITORING, `Skipping cached article: ${articleId}`);
+                        skippedCount++;
                         continue;
                     }
 
@@ -202,6 +203,9 @@ class MonitoringService {
                         };
                         await this.recordDelta(source.id, 'hour', result.summary, undefined, metadata);
                     }
+                }
+                if (skippedCount > 0) {
+                    loggerService.catDebug(LogCategory.MONITORING, `Skipped ${skippedCount} cached items for ${source.name}`);
                 }
             } else {
                 // Fallback for non-itemized or failed itemization
@@ -308,6 +312,32 @@ class MonitoringService {
         }
     }
 
+    private async withRetries<T>(
+        operation: () => Promise<T>,
+        isValid: (result: T) => boolean,
+        context: string,
+        maxRetries = 2
+    ): Promise<T | null> {
+        let lastResult: T | null = null;
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                lastResult = await operation();
+                if (isValid(lastResult)) {
+                    return lastResult;
+                }
+                loggerService.catWarn(LogCategory.MONITORING, `Attempt ${attempt + 1} for ${context} returned invalid/empty result. Retrying...`);
+            } catch (err) {
+                loggerService.catError(LogCategory.MONITORING, `Attempt ${attempt + 1} for ${context} failed`, { error: err });
+            }
+            if (attempt < maxRetries) {
+                // Short backoff
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            }
+        }
+        loggerService.catError(LogCategory.MONITORING, `All ${maxRetries + 1} attempts for ${context} failed or returned invalid results.`);
+        return lastResult;
+    }
+
     private async summarizeArticle(source: MonitoringSourceConfig, item: any): Promise<{ summary: string, imageUrl?: string, imageDescription?: string } | null> {
         let articleData = item;
         let imageUrl = item.image || item.imageUrl;
@@ -374,18 +404,18 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
 - Incorporate visual details only if they add critical evidence.
 - Focus on "What changed?" and "Why does it matter?".`;
 
-        try {
-            const summary = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.LOW);
-
-            return {
-                summary: (summary || "").trim(),
-                imageUrl,
-                imageDescription
-            };
-        } catch (error) {
-            loggerService.catError(LogCategory.MONITORING, "Article summarization failed", { error });
-            return null;
-        }
+        return this.withRetries(
+            async () => {
+                const summary = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.LOW);
+                return {
+                    summary: (summary || "").trim(),
+                    imageUrl,
+                    imageDescription
+                };
+            },
+            (result) => !!result?.summary,
+            `summarizeArticle (${source.name})`
+        );
     }
 
     private async summarizeRawData(source: MonitoringSourceConfig, rawData: string): Promise<{ hasChanges: boolean, content: string, articleUrl?: string, imageUrl?: string, imageSummary?: string } | null> {
@@ -403,14 +433,15 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
         
         Output valid JSON: { "hasChanges": boolean, "content": "...", "articleUrl": "...", "imageUrl": "...", "imageSummary": "..." }`;
 
-        try {
-            const fastText = await callFastInference([{ role: "user", content: prompt }], 4192, undefined, LlamaPriority.LOW);
-            const response = await extractJson(fastText);
-            return response;
-        } catch (error) {
-            loggerService.catError(LogCategory.MONITORING, "Summarization failed", { error });
-            return null;
-        }
+        return this.withRetries(
+            async () => {
+                const fastText = await callFastInference([{ role: "user", content: prompt }], 4192, undefined, LlamaPriority.LOW);
+                const response = await extractJson(fastText);
+                return response;
+            },
+            (result) => result && (result.hasChanges === false || (result.hasChanges === true && !!result.content)),
+            `summarizeRawData (${source.name})`
+        );
     }
 
     private async recordDelta(sourceId: string, period: MonitoringPeriod, content: any, customTimestamp?: string, metadata?: Record<string, any>) {
@@ -587,50 +618,53 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
           }
         }`;
 
-        try {
-            let response: any = {};
-            if (settings.provider === 'gemini') {
-                const client = await getGeminiClient();
-                const model = client.getGenerativeModel({
-                    model: agentModel,
-                    generationConfig: { maxOutputTokens: 4096 }
-                });
-                const result = await model.generateContent(prompt);
-                response = extractJson(result.response.text());
-            } else {
-                const client = await getClient();
-                const result = await client.chat.completions.create({
-                    model: agentModel,
-                    messages: [{ role: "user", content: prompt }],
-                    max_tokens: 16384
-                });
-                response = extractJson(result.choices[0]?.message?.content || "{}");
-            }
-
-            if (response.content) {
-                const metadata = {
-                    articleUrl: response.featuredEvent?.articleUrl,
-                    imageUrl: response.featuredEvent?.imageUrl,
-                    imageSummary: response.featuredEvent?.imageSummary,
-                    isRollup: true,
-                    constituentCount: deltas.length
-                };
-
-                if (existingId) {
-                    // Update existing
-                    sqliteService.run(
-                        `UPDATE monitoring_deltas SET content = ?, timestamp = ?, metadata = ? WHERE id = ?`,
-                        [response.content, customTimestamp || new Date().toISOString(), JSON.stringify(metadata), existingId]
-                    );
-                    // Re-index in LanceDB
-                    const delta = sqliteService.get(`SELECT * FROM monitoring_deltas WHERE id = ?`, [existingId]);
-                    if (delta) await lancedbService.indexDeltaBatch([delta]);
+        const response = await this.withRetries(
+            async () => {
+                let res: any = {};
+                if (settings.provider === 'gemini') {
+                    const client = await getGeminiClient();
+                    const model = client.getGenerativeModel({
+                        model: agentModel,
+                        generationConfig: { maxOutputTokens: 4096 }
+                    });
+                    const result = await model.generateContent(prompt);
+                    res = extractJson(result.response.text());
                 } else {
-                    await this.recordDelta(sourceId, toPeriod, response.content, customTimestamp, metadata);
+                    const client = await getClient();
+                    const result = await client.chat.completions.create({
+                        model: agentModel,
+                        messages: [{ role: "user", content: prompt }],
+                        max_tokens: 16384
+                    });
+                    res = extractJson(result.choices[0]?.message?.content || "{}");
                 }
+                return res;
+            },
+            (result) => result && !!result.content,
+            `performRollup (${sourceId}, ${toPeriod})`
+        );
+
+        if (response && response.content) {
+            const metadata = {
+                articleUrl: response.featuredEvent?.articleUrl,
+                imageUrl: response.featuredEvent?.imageUrl,
+                imageSummary: response.featuredEvent?.imageSummary,
+                isRollup: true,
+                constituentCount: deltas.length
+            };
+
+            if (existingId) {
+                // Update existing
+                sqliteService.run(
+                    `UPDATE monitoring_deltas SET content = ?, timestamp = ?, metadata = ? WHERE id = ?`,
+                    [response.content, customTimestamp || new Date().toISOString(), JSON.stringify(metadata), existingId]
+                );
+                // Re-index in LanceDB
+                const delta = sqliteService.get(`SELECT * FROM monitoring_deltas WHERE id = ?`, [existingId]);
+                if (delta) await lancedbService.indexDeltaBatch([delta]);
+            } else {
+                await this.recordDelta(sourceId, toPeriod, response.content, customTimestamp, metadata);
             }
-        } catch (error) {
-            loggerService.catError(LogCategory.MONITORING, "Rollup synthesis failed", { error });
         }
     }
 
