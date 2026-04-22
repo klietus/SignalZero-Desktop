@@ -232,7 +232,7 @@ export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) =
                         </div>
                     </div>
 
-                    {/* Promotion Badge (Active during reasoning) */}
+                    {/* Promoted Badge (Active during reasoning) */}
                     <div className={`flex items-center gap-2 transition-all duration-700 ${state.autonomous.isProcessingFlashRound ? 'opacity-100' : 'opacity-20'}`}>
                          <div className={`p-1.5 rounded-full ${state.autonomous.isProcessingFlashRound ? 'bg-amber-500/20 text-amber-500 animate-pulse' : 'bg-gray-800 text-gray-500'}`}>
                             <BrainCircuit size={14} />
