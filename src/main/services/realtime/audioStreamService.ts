@@ -42,16 +42,20 @@ class AudioStreamService {
             const { type, payload } = msg;
             
             if (type === 'stt_result') {
+                loggerService.catDebug(LogCategory.SYSTEM, `AudioStreamService: Processing stt_result: "${payload.text}"`);
                 const state = sceneManager.getState().audio;
                 const newEntryText = payload.text?.trim();
                 const confidence = payload.score || 0;
                 
-                if (!newEntryText) return;
+                if (!newEntryText) {
+                    loggerService.catDebug(LogCategory.SYSTEM, "AudioStreamService: Empty text in stt_result, skipping.");
+                    return;
+                }
 
                 // --- HALLUCINATION FILTER ---
                 // 1. Confidence Threshold (Whisper hallucinations are often very low confidence)
                 if (confidence < 0.25) {
-                    loggerService.catDebug(LogCategory.SYSTEM, `Audio: Suppressing low-confidence STT hallucination (${confidence}): "${newEntryText}"`);
+                    loggerService.catDebug(LogCategory.SYSTEM, `AudioStreamService: Suppressing low-confidence STT hallucination (${confidence}): "${newEntryText}"`);
                     return;
                 }
 
@@ -67,7 +71,7 @@ class AudioStreamService {
                 
                 const lowerEntry = newEntryText.toLowerCase();
                 if (blacklist.some(phrase => lowerEntry.includes(phrase))) {
-                    loggerService.catDebug(LogCategory.SYSTEM, `Audio: Suppressing blacklisted hallucination: "${newEntryText}"`);
+                    loggerService.catDebug(LogCategory.SYSTEM, `AudioStreamService: Suppressing blacklisted hallucination: "${newEntryText}"`);
                     return;
                 }
 
@@ -76,6 +80,8 @@ class AudioStreamService {
 
                 // Append and limit size
                 const updatedTranscript = (state.runningTranscript + "\n" + newEntry).trim().split("\n").slice(-40).join("\n");
+
+                loggerService.catDebug(LogCategory.SYSTEM, `AudioStreamService: Updating transcript. New size: ${updatedTranscript.length} chars. Entry: "${newEntry}"`);
 
                 sceneManager.updateAudio({
                     lastSpeaker: speaker,

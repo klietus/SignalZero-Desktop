@@ -154,6 +154,7 @@ class PythonVoiceManager extends EventEmitter {
         } else if (type === 'profiles_ready') {
             loggerService.catInfo(LogCategory.SYSTEM, `Sidecar initialized ${payload.count} voice profile(s).`);
         } else if (type === 'stt_result') {
+            loggerService.catDebug(LogCategory.SYSTEM, `VoiceProcess: Received STT from sidecar: "${payload.text}" (Speaker: ${payload.speaker}, Score: ${payload.score})`);
             this.authenticatedSpeaker = payload.speaker;
             // 1. Always emit for the perception transcript
             this.emit('message', msg);

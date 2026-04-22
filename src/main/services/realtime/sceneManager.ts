@@ -49,6 +49,10 @@ class SceneManager extends EventEmitter {
 
     updateAudio(update: Partial<AudioStreamState>) {
         this.state.audio = { ...this.state.audio, ...update };
+        if (update.runningTranscript) {
+            const transcriptLines = this.state.audio.runningTranscript.split('\n').length;
+            loggerService.catDebug(LogCategory.SYSTEM, `SceneManager: Audio transcript updated. Total lines: ${transcriptLines}`);
+        }
         this.emit('update', { type: 'audio', state: this.state.audio });
     }
 
