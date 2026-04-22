@@ -345,20 +345,23 @@ export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) =
                                 </thead>
                                 <tbody>
                                     {(() => {
-                                        const lines = state.audio.runningTranscript.split('\n').filter(l => l.trim());
+                                        const lines = state.audio.runningTranscript.split('\n');
                                         const rows: any[] = [];
                                         let currentSpeaker = "UNKNOWN";
                                         
                                         lines.forEach((line, i) => {
-                                            if (line.startsWith('[') && line.includes(']')) {
-                                                currentSpeaker = line.replace(/[\[\]]/g, '');
+                                            const trimmedLine = line.trim();
+                                            if (!trimmedLine) return;
+
+                                            if (trimmedLine.startsWith('[') && trimmedLine.includes(']')) {
+                                                currentSpeaker = trimmedLine.replace(/[\[\]]/g, '');
                                             } else {
                                                 rows.push({
                                                     id: i,
                                                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
                                                     speaker: currentSpeaker,
                                                     prosody: state.audio.vocalEmotion,
-                                                    content: line
+                                                    content: trimmedLine
                                                 });
                                             }
                                         });
