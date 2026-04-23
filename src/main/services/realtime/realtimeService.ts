@@ -10,17 +10,19 @@ import { settingsService } from '../settingsService.js';
 
 class RealtimeService {
     constructor() {
-        voiceService.on('interrupt', () => {
-            loggerService.catInfo(LogCategory.SYSTEM, "Interrupted: Clearing AI speech queue.");
-            this.speechQueue = [];
-        });
     }
 
     async initialize() {
         loggerService.catInfo(LogCategory.SYSTEM, "Initializing Realtime Service...");
         try {
-            // Loading these ensures the listeners in the service constructors are active
-            audioStreamService;
+            voiceService.on('interrupt', () => {
+                loggerService.catInfo(LogCategory.SYSTEM, "Interrupted: Clearing AI speech queue.");
+                this.speechQueue = [];
+            });
+
+            // Explicitly initialize links
+            audioStreamService.initialize();
+            
             cameraStreamService;
             screenStreamService;
             perceptionTriggerService;

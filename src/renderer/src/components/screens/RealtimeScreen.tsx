@@ -2,12 +2,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Monitor, Mic, MicOff, Loader2, Activity, Volume2, ShieldAlert, Cpu, Zap, ZapOff, Clock, User, Mic2, Bell, VolumeX, AudioLines, BrainCircuit, Heart, Smile, Frown, Angry, Annoyed } from 'lucide-react';
 import { Header, HeaderProps } from '../Header';
 
+interface TranscriptEntry {
+    speaker: string;
+    text: string;
+    emotion: string;
+    timestamp: number;
+}
+
 interface AudioStreamState {
     lastSpeaker: string | null;
     recognitionConfidence: number;
     isSpeaking: boolean;
     rmsLevel: number;
     runningTranscript: string;
+    transcript: TranscriptEntry[];
     vocalEmotion: string;
     status: { isActive: boolean; isError: boolean; errorMessage?: string };
 }
@@ -344,40 +352,25 @@ export const RealtimeScreen: React.FC<RealtimeScreenProps> = ({ headerProps }) =
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(() => {
-                                        const lines = state.audio.runningTranscript.split('\n');
-                                        const rows: any[] = [];
-                                        let currentSpeaker = "UNKNOWN";
-                                        
-                                        lines.forEach((line, i) => {
-                                            const trimmedLine = line.trim();
-                                            if (!trimmedLine) return;
-
-                                            if (trimmedLine.startsWith('[') && trimmedLine.includes(']')) {
-                                                currentSpeaker = trimmedLine.replace(/[\[\]]/g, '');
-                                            } else {
-                                                rows.push({
-                                                    id: i,
-                                                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                                                    speaker: currentSpeaker,
-                                                    prosody: state.audio.vocalEmotion,
-                                                    content: trimmedLine
-                                                });
-                                            }
-                                        });
-
-                                        return rows.map(row => (
-                                            <tr key={row.id} className="border-b border-gray-800/40 hover:bg-white/5 transition-colors">
-                                                <td className="px-4 py-2 text-gray-600 tabular-nums">{row.time}</td>
-                                                <td className={`px-4 py-2 font-bold ${row.speaker === 'USER' ? 'text-indigo-400' : 'text-emerald-400'}`}>{row.speaker}</td>
-                                                <td className="px-4 py-2 text-rose-400/80 uppercase text-[9px]">{row.prosody}</td>
-                                                <td className="px-4 py-2 text-gray-300 leading-relaxed">{row.content}</td>
-                                            </tr>
-                                        ));
-                                    })()}
+                                    {state.audio.transcript.map((entry, i) => (
+                                        <tr key={i} className="border-b border-gray-800/40 hover:bg-white/5 transition-colors">
+                                            <td className="px-4 py-2 text-gray-600 tabular-nums">
+                                                {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                            </td>
+                                            <td className={`px-4 py-2 font-bold ${entry.speaker === 'AI' ? 'text-emerald-400' : 'text-indigo-400'}`}>
+                                                {entry.speaker}
+                                            </td>
+                                            <td className="px-4 py-2 text-rose-400/80 uppercase text-[9px]">
+                                                {entry.emotion}
+                                            </td>
+                                            <td className="px-4 py-2 text-gray-300 leading-relaxed">
+                                                {entry.text}
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
-                            {(!state.audio.runningTranscript) && (
+                            {(state.audio.transcript.length === 0) && (
                                 <div className="h-full flex flex-col items-center justify-center opacity-10 py-12 text-center">
                                     <Activity size={32} className="mb-4 mx-auto animate-pulse text-indigo-500" />
                                     <p className="text-[10px] uppercase tracking-[0.3em]">Awaiting_Acoustic_Input...</p>

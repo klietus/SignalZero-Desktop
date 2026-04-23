@@ -9,6 +9,7 @@ const api = {
   listContexts: () => ipcRenderer.invoke('context:list'),
   getContext: (id: string) => ipcRenderer.invoke('context:get', id),
   getHistory: (id: string) => ipcRenderer.invoke('context:history', id),
+  setActiveContext: (id: string | null) => ipcRenderer.invoke('context:set-active', id),
   deleteContext: (id: string) => ipcRenderer.invoke('context:delete', id),
   
   // Inference

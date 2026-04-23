@@ -389,8 +389,13 @@ function App() {
     useEffect(() => {
         if (appState !== 'app' || !activeContextId || currentView === 'monitor') {
             setMessages([]);
+            if (appState === 'app' && !activeContextId) {
+                window.api.setActiveContext(null);
+            }
             return;
         }
+
+        window.api.setActiveContext(activeContextId);
         
         // Don't fetch history if we are currently processing a message, 
         // as it would overwrite the active streaming state.

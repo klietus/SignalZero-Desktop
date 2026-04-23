@@ -24,7 +24,8 @@ export enum KernelEventType {
     SYMBOL_COMPRESSION = 'symbol:compression',
     ORPHAN_DETECTED = 'orphan:detected',
     TENTATIVE_LINK_CREATE = 'tentative:create',
-    TENTATIVE_LINK_DELETE = 'tentative:delete'
+    TENTATIVE_LINK_DELETE = 'tentative:delete',
+    SETTINGS_UPDATED = 'settings:updated'
 }
 
 class EventBusService extends EventEmitter {

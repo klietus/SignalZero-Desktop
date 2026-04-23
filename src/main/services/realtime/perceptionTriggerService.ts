@@ -5,7 +5,7 @@ import { LlamaPriority } from '../llamaService.js';
 import { eventBusService } from '../eventBusService.js';
 import { loggerService, LogCategory } from '../loggerService.js';
 import { settingsService } from '../settingsService.js';
-import { activeSessionId } from '../../index.js';
+import { uiStateService } from '../uiStateService.js';
 import { voiceService } from './voiceProcess.js';
 
 interface SceneSnapshot {
@@ -261,7 +261,7 @@ FORMAT: Return a JSON object with:
                         reason: result.reason,
                         sceneSnapshot: sceneSnapshot,
                         transcriptSlice,
-                        sessionId: activeSessionId
+                        sessionId: uiStateService.activeSessionId
                     });
                 }
  else {

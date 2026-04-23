@@ -1,25 +1,48 @@
 import { sceneManager } from './sceneManager.js';
 import { eventBusService, KernelEventType } from '../eventBusService.js';
 import { voiceService } from './voiceProcess.js';
+import { loggerService, LogCategory } from '../loggerService.js';
+import { transcriptManager } from './transcriptManager.js';
 
 class AudioStreamService {
-    constructor() {
-        this.initialize();
-    }
+    private isInitialized = false;
 
-    private initialize() {
+    constructor() {}
+
+    public initialize() {
+        if (this.isInitialized) return;
+        this.isInitialized = true;
         // Listen to events from the event bus that the voice service might emit
         eventBusService.onKernelEvent(KernelEventType.CONTEXT_UPDATED, (data) => {
             if (data.type === 'voice_wake_word_detected') {
                 const state = sceneManager.getState().audio;
                 const speaker = data.metadata?.voice_authenticated_username || 'USER';
-                const newEntry = `[${speaker.toUpperCase()}]\n${data.text}`;
+                const emotion = data.metadata?.vocal_emotion || 'NEUTRAL';
                 
-                const updatedTranscript = (state.runningTranscript + "\n" + newEntry).trim().split("\n").slice(-40).join("\n");
+                // Check if this text was just added via stt_result to avoid double-posting
+                const lastEntry = state.transcript[state.transcript.length - 1];
+                if (lastEntry && lastEntry.text === data.text && lastEntry.speaker === speaker.toUpperCase()) {
+                    loggerService.catDebug(LogCategory.SYSTEM, "AudioStreamService: Wake word transcript already added via stt_result. Skipping duplicate.");
+                    sceneManager.updateAudio({ isSpeaking: true });
+                    return;
+                }
+
+                const newEntryLine = `[${speaker.toUpperCase()} | ${emotion.toUpperCase()}]\n${data.text}`;
+                const updatedTranscript = (state.runningTranscript + "\n" + newEntryLine).trim().split("\n").slice(-60).join("\n");
+
+                const newEntryObj = {
+                    speaker: speaker.toUpperCase(),
+                    text: data.text,
+                    emotion: emotion.toLowerCase(),
+                    timestamp: Date.now()
+                };
+
+                transcriptManager.addEntry(speaker, data.text, emotion);
 
                 sceneManager.updateAudio({
                     lastSpeaker: speaker,
                     runningTranscript: updatedTranscript,
+                    transcript: [...state.transcript, newEntryObj].slice(-50),
                     isSpeaking: true
                 });
             }
@@ -29,11 +52,21 @@ class AudioStreamService {
         eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (data) => {
             if (!data.fullText) return;
             const state = sceneManager.getState().audio;
-            const newEntry = `[AI]\n${data.fullText}`;
-            const updatedTranscript = (state.runningTranscript + "\n" + newEntry).trim().split("\n").slice(-40).join("\n");
+            const newEntryLine = `[AI | NEUTRAL]\n${data.fullText}`;
+            const updatedTranscript = (state.runningTranscript + "\n" + newEntryLine).trim().split("\n").slice(-60).join("\n");
             
+            const newEntryObj = {
+                speaker: 'AI',
+                text: data.fullText,
+                emotion: 'neutral',
+                timestamp: Date.now()
+            };
+
+            transcriptManager.addEntry('AI', data.fullText, 'neutral');
+
             sceneManager.updateAudio({
-                runningTranscript: updatedTranscript
+                runningTranscript: updatedTranscript,
+                transcript: [...state.transcript, newEntryObj].slice(-50)
             });
         });
 
@@ -53,22 +86,12 @@ class AudioStreamService {
                 }
 
                 // --- HALLUCINATION FILTER ---
-                // 1. Confidence Threshold (Whisper hallucinations are often very low confidence)
                 if (confidence < 0.25) {
                     loggerService.catDebug(LogCategory.SYSTEM, `AudioStreamService: Suppressing low-confidence STT hallucination (${confidence}): "${newEntryText}"`);
                     return;
                 }
 
-                // 2. Common Phrase Blacklist (Classic Whisper debris on silence/noise)
-                const blacklist = [
-                    "thank you for watching", 
-                    "thanks for watching", 
-                    "subtitles by", 
-                    "amara.org", 
-                    "please subscribe",
-                    "watching!"
-                ];
-                
+                const blacklist = ["thank you for watching", "thanks for watching", "subtitles by", "amara.org", "please subscribe", "watching!"];
                 const lowerEntry = newEntryText.toLowerCase();
                 if (blacklist.some(phrase => lowerEntry.includes(phrase))) {
                     loggerService.catDebug(LogCategory.SYSTEM, `AudioStreamService: Suppressing blacklisted hallucination: "${newEntryText}"`);
@@ -76,17 +99,28 @@ class AudioStreamService {
                 }
 
                 const speaker = (payload.speaker || 'USER').toUpperCase();
-                const newEntry = `[${speaker}]\n${newEntryText}`;
+                const emotion = (payload.vocal_emotion || 'neutral').toUpperCase();
+                const newEntryLine = `[${speaker} | ${emotion}]\n${newEntryText}`;
 
                 // Append and limit size
-                const updatedTranscript = (state.runningTranscript + "\n" + newEntry).trim().split("\n").slice(-40).join("\n");
+                const updatedTranscript = (state.runningTranscript + "\n" + newEntryLine).trim().split("\n").slice(-60).join("\n");
 
-                loggerService.catDebug(LogCategory.SYSTEM, `AudioStreamService: Updating transcript. New size: ${updatedTranscript.length} chars. Entry: "${newEntry}"`);
+                const newEntryObj = {
+                    speaker,
+                    text: newEntryText,
+                    emotion: emotion.toLowerCase(),
+                    timestamp: Date.now()
+                };
+
+                transcriptManager.addEntry(speaker, newEntryText, emotion);
+
+                loggerService.catDebug(LogCategory.SYSTEM, `AudioStreamService: Updating transcript. New size: ${updatedTranscript.length} chars. Entry: "${newEntryLine}"`);
 
                 sceneManager.updateAudio({
                     lastSpeaker: speaker,
                     recognitionConfidence: confidence,
                     runningTranscript: updatedTranscript,
+                    transcript: [...state.transcript, newEntryObj].slice(-50),
                     vocalEmotion: payload.vocal_emotion || 'neutral'
                 });
             } else if (type === 'audio_metrics') {

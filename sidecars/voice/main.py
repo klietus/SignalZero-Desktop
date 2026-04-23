@@ -248,7 +248,7 @@ class VoiceSidecar:
                 elif task_type == "stt":
                     result = self.engine.process_segment(audio_np)
                     if result and result.get('text'):
-                        text = result.get('raw_text', '').lower().strip()
+                        text = result.get('text')
                         
                         # WHISPER HALLUCINATION FILTER
                         hallucinations = ["thank you", "thank you.", "watching", "you", "thanks for watching", "thank you very much", "thank you very much."]

@@ -3,7 +3,7 @@ import { loggerService, LogCategory } from '../loggerService.js';
 import { settingsService } from '../settingsService.js';
 import { eventBusService, KernelEventType } from '../eventBusService.js';
 import { contextService } from '../contextService.js';
-import { activeSessionId, broadcast } from '../../index.js';
+import { uiStateService } from '../uiStateService.js';
 import { callFastInference } from '../inferenceService.js';
 import { LlamaPriority } from '../llamaService.js';
 import { ipcMain, app, systemPreferences } from 'electron';
@@ -11,6 +11,7 @@ import path from 'path';
 import fs from 'fs';
 import { Readable, Writable } from 'stream';
 import { EventEmitter } from 'events';
+import { transcriptManager } from './transcriptManager.js';
 
 class PythonVoiceManager extends EventEmitter {
     private process: ChildProcessByStdio<Writable, Readable, Readable> | null = null;
@@ -27,6 +28,14 @@ class PythonVoiceManager extends EventEmitter {
     constructor() {
         super();
         this.setupIpc();
+
+        // Listen for settings changes to update system name/voice ID dynamically
+        eventBusService.onKernelEvent(KernelEventType.SETTINGS_UPDATED, async () => {
+            const settings = await settingsService.getInferenceSettings();
+            this.systemName = settings.systemName || "axiom";
+            this.voiceId = settings.voiceId || "af_sarah";
+            loggerService.catInfo(LogCategory.SYSTEM, `VoiceProcess: Settings updated. System name: ${this.systemName}, Voice: ${this.voiceId}`);
+        });
     }
 
     async initialize() {
@@ -51,6 +60,7 @@ class PythonVoiceManager extends EventEmitter {
         const settings = await settingsService.getInferenceSettings();
         this.systemName = settings.systemName || "axiom";
         this.voiceId = settings.voiceId || "af_sarah";
+        loggerService.catInfo(LogCategory.SYSTEM, `VoiceProcess: Initialized. System name: ${this.systemName}, Voice: ${this.voiceId}`);
 
         const sidecarDir = app.isPackaged
             ? path.join(process.resourcesPath, 'sidecars', 'voice')
@@ -92,7 +102,7 @@ class PythonVoiceManager extends EventEmitter {
                         const msg = JSON.parse(line);
                         this.handleSidecarMessage(msg);
                     } catch (e) {
-                        // Suppress noisy logs for malformed JSON or binary debris leaked to stdout
+                        loggerService.catDebug(LogCategory.SYSTEM, `VoiceProcess: IPC parse error: ${e}. Line: ${line}`);
                     }
                 }
                 boundary = this.stdoutBuffer.indexOf('\n');
@@ -139,9 +149,8 @@ class PythonVoiceManager extends EventEmitter {
         }
     }
 
-    private handleSidecarMessage(msg: any) {
+    private async handleSidecarMessage(msg: any) {
         const { type, payload } = msg;
-        this.emit('message', msg);
 
         if (type === 'alive') {
             // Heartbeat/Alive
@@ -154,22 +163,30 @@ class PythonVoiceManager extends EventEmitter {
         } else if (type === 'profiles_ready') {
             loggerService.catInfo(LogCategory.SYSTEM, `Sidecar initialized ${payload.count} voice profile(s).`);
         } else if (type === 'stt_result') {
-            loggerService.catDebug(LogCategory.SYSTEM, `VoiceProcess: Received STT from sidecar: "${payload.text}" (Speaker: ${payload.speaker}, Score: ${payload.score})`);
+            loggerService.catInfo(LogCategory.SYSTEM, `VoiceProcess: Received STT: "${payload.text}" (Speaker: ${payload.speaker}, Score: ${payload.score}, Emotion: ${payload.vocal_emotion})`);
+            
+            // AI Echo Cancellation (Main Process side)
+            if (this.isSpeaking) {
+                loggerService.catDebug(LogCategory.SYSTEM, "VoiceProcess: Suppressing STT result because AI is currently speaking (echo).");
+                return;
+            }
+
             this.authenticatedSpeaker = payload.speaker;
+            
             // 1. Always emit for the perception transcript
             this.emit('message', msg);
             
-            broadcast('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
-            this.processFinalTranscription(payload.text);
+            uiStateService.broadcast('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
+            await this.processFinalTranscription(payload.text, payload.vocal_emotion);
         } else if (type === 'speaker_interrupt') {
-            broadcast('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
+            uiStateService.broadcast('voice:match-score', { score: payload.score || 0, speaker: payload.speaker });
             if (this.isSpeaking) {
                 loggerService.catInfo(LogCategory.SYSTEM, `Verified user '${payload.speaker}' interrupted AI speech.`);
                 this.interrupt();
             }
         } else if (type === 'tts_chunk') {
             this.isSpeaking = true;
-            broadcast('voice:play-chunk', {
+            uiStateService.broadcast('voice:play-chunk', {
                 audio: payload.audio,
                 index: payload.index,
                 isLast: payload.isLast
@@ -177,15 +194,15 @@ class PythonVoiceManager extends EventEmitter {
         } else if (type === 'tts_complete') {
             loggerService.catInfo(LogCategory.SYSTEM, "Sidecar finished generating all TTS chunks.");
         } else if (type === 'enroll_progress') {
-            broadcast('voice:enroll-progress', {
+            uiStateService.broadcast('voice:enroll-progress', {
                 count: payload.count,
                 verified: payload.verified,
                 text: payload.text
             });
         } else if (type === 'enroll_finalized') {
-            broadcast('voice:enroll-finalized', payload);
+            uiStateService.broadcast('voice:enroll-finalized', payload);
         } else if (type === 'audio_metrics') {
-            // Already emitting via this.emit('message', msg) at top of function
+            this.emit('message', msg);
         } else if (type === 'profile_updated') {
             const { name, profile } = payload;
             loggerService.catInfo(LogCategory.SYSTEM, `Persisting refined voice profile for '${name}'...`);
@@ -203,7 +220,7 @@ class PythonVoiceManager extends EventEmitter {
         this.isSpeaking = false;
         this.lastInterruptTime = Date.now();
         this.sendToSidecar('interrupt_tts', {});
-        broadcast('voice:stop-playback');
+        uiStateService.broadcast('voice:stop-playback');
     }
 
     public interrupt() {
@@ -211,14 +228,17 @@ class PythonVoiceManager extends EventEmitter {
         this.interruptPlayback();
     }
 
-    private async processFinalTranscription(text: string) {
+    private async processFinalTranscription(text: string, emotion?: string) {
         let cleanText = text.trim();
         const lowerText = cleanText.toLowerCase();
         const nameLower = this.systemName.toLowerCase();
 
+        const activeSessionId = uiStateService.activeSessionId;
+        loggerService.catDebug(LogCategory.SYSTEM, `VoiceProcess: Checking for wake word '${nameLower}' in "${lowerText}" (ActiveSession: ${activeSessionId})`);
+
         if (lowerText.includes(nameLower)) {
             if (!activeSessionId) {
-                loggerService.catInfo(LogCategory.SYSTEM, `Wake word detected but no active session found. Ignoring.`);
+                loggerService.catInfo(LogCategory.SYSTEM, `Wake word detected but activeSessionId is null. Routing failed.`);
                 return;
             }
 
@@ -228,22 +248,29 @@ class PythonVoiceManager extends EventEmitter {
                 return;
             }
 
-            loggerService.catInfo(LogCategory.SYSTEM, `Wake word detected! Routing: ${cleanText}`);
+            const speaker = this.authenticatedSpeaker || 'Unknown';
+            const aggregatedText = transcriptManager.getSpeakerContext(speaker);
+            const finalText = aggregatedText || cleanText;
+
+            loggerService.catInfo(LogCategory.SYSTEM, `Wake word detected! Routing to ${activeSessionId}. Text: ${finalText}`);
 
             eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, {
                 type: 'voice_wake_word_detected',
-                text: cleanText,
+                text: finalText,
                 metadata: {
-                    voice_authenticated_username: this.authenticatedSpeaker || 'Unknown'
+                    voice_authenticated_username: speaker,
+                    vocal_emotion: emotion || 'neutral'
                 }
             });
 
-            broadcast('voice:play-ack-beep');
-            broadcast('voice:stt-result', cleanText);
-            broadcast('voice:trigger-submit', {
-                text: cleanText,
-                speaker: this.authenticatedSpeaker || 'Unknown'
+            uiStateService.broadcast('voice:play-ack-beep');
+            uiStateService.broadcast('voice:stt-result', cleanText);
+            uiStateService.broadcast('voice:trigger-submit', {
+                text: finalText,
+                speaker: speaker
             });
+        } else {
+            loggerService.catDebug(LogCategory.SYSTEM, `VoiceProcess: Text did not match wake word '${nameLower}'.`);
         }
     }
 

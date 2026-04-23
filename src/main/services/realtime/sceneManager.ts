@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { SceneState, AudioStreamState, CameraStreamState, ScreenStreamState, StreamStatus, AutonomousState } from './types.js';
+import { loggerService, LogCategory } from '../loggerService.js';
 
 class SceneManager extends EventEmitter {
     private state: SceneState = {
@@ -9,6 +10,7 @@ class SceneManager extends EventEmitter {
             isSpeaking: false,
             rmsLevel: 0,
             runningTranscript: "",
+            transcript: [],
             vocalEmotion: "neutral",
             status: { isActive: false, isError: false }
         },

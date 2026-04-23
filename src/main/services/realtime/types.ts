@@ -1,10 +1,18 @@
 
+export interface TranscriptEntry {
+    speaker: string;
+    text: string;
+    emotion: string;
+    timestamp: number;
+}
+
 export interface AudioStreamState {
     lastSpeaker: string | null;
     recognitionConfidence: number;
     isSpeaking: boolean;
     rmsLevel: number;
     runningTranscript: string;
+    transcript: TranscriptEntry[];
     vocalEmotion: string;
 }
 

@@ -216,14 +216,14 @@ class AudioEngine:
         
         # 4. Format with timestamp and emotion notation
         timestamp = time.strftime("%H:%M:%S")
-        formatted_text = f"[{timestamp}] <{vocal_emotion}> {clean_text}"
+        formatted_text = f"{clean_text}"
 
         if not clean_text:
             return None
 
         return {
             "text": formatted_text,
-            "raw_text": raw_text,
+            "raw_text": clean_text,
 
             "speaker": display_name,
             "score": score,

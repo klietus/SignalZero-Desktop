@@ -29,6 +29,7 @@ import { attachmentService } from './services/attachmentService.js'
 import { agentRunner } from './services/agentRunner.js'
 import { realtimeService } from './services/realtime/realtimeService.js'
 import { llamaService, urgentLlamaService } from './services/llamaService.js'
+import { uiStateService } from './services/uiStateService.js'
 
 // --- IPC Batching Engine ---
 const ipcBatchQueues = new Map<string, any>();
@@ -72,6 +73,11 @@ let activeSystemPrompt = ACTIVATION_PROMPT;
 let mainWindow: BrowserWindow | null = null;
 let monitorWindow: BrowserWindow | null = null;
 export let activeSessionId: string | null = null;
+
+const updateActiveSession = (id: string | null) => {
+  activeSessionId = id;
+  uiStateService.setActiveSessionId(id);
+};
 
 export const broadcast = (channel: string, ...args: any[]) => {
   // --- Safe Serialization Layer ---
@@ -484,6 +490,7 @@ app.whenReady().then(async () => {
   })
 
   createWindow()
+  uiStateService.registerBroadcastHandler(broadcast);
   await performRecovery();
 
   // Initialize background runners
@@ -554,8 +561,14 @@ ipcMain.handle('context:get', async (_, id) => {
 });
 
 ipcMain.handle('context:history', async (_, id) => {
-  activeSessionId = id;
+  updateActiveSession(id);
   return await contextService.getHistory(id);
+});
+
+ipcMain.handle('context:set-active', async (_, id) => {
+  updateActiveSession(id);
+  loggerService.catInfo(LogCategory.SYSTEM, `Active session set to: ${id}`);
+  return { success: true };
 });
 
 ipcMain.handle('context:delete', async (_, id) => {
@@ -571,7 +584,7 @@ ipcMain.handle('trace:list', async (_, sessionId) => {
 });
 
 ipcMain.handle('inference:send', async (_, sessionId, message, systemInstruction, metadata?: Record<string, any>) => {
-  activeSessionId = sessionId;
+  updateActiveSession(sessionId);
 
   // Interrupt ongoing speech if user sends new message
   realtimeService.cancelSpeech();
@@ -668,6 +681,10 @@ ipcMain.handle('settings:update', async (_, settings) => {
   });
   const updated = await settingsService.update(settings);
   await monitoringService.refreshIntervals();
+  
+  // Notify system components of settings changes
+  eventBusService.emitKernelEvent(KernelEventType.SETTINGS_UPDATED, settings);
+  
   return updated;
 });
 
