@@ -37,63 +37,63 @@ const MAX_TOOL_LOOPS = 15;
  * Ensures only one heavy model turn runs at a time, with priority for User Chat.
  */
 class InferenceLockManager {
-    private isLocked = false;
-    private runningProvider: string | null = null;
-    private queue: { priority: number, model: string, provider: string, resolve: () => void }[] = [];
+  private isLocked = false;
+  private runningProvider: string | null = null;
+  private queue: { priority: number, model: string, provider: string, resolve: () => void }[] = [];
 
-    async acquire(priority: number = 0, model: string, provider: string): Promise<void> {
-        // LOCK LOGIC:
-        // We only lock if:
-        // 1. The provider is 'local' (Hardware Bound)
-        // 2. AND something is already running on that local provider.
-        // If it's Gemini or OpenAI, we don't care about the lock (Cloud Scaled).
-        
-        const isConflict = this.isLocked && 
-                          this.runningProvider === 'local' && 
-                          provider === 'local';
+  async acquire(priority: number = 0, model: string, provider: string): Promise<void> {
+    // LOCK LOGIC:
+    // We only lock if:
+    // 1. The provider is 'local' (Hardware Bound)
+    // 2. AND something is already running on that local provider.
+    // If it's Gemini or OpenAI, we don't care about the lock (Cloud Scaled).
 
-        if (!isConflict) {
-            this.isLocked = true;
-            this.runningProvider = provider;
-            return;
-        }
+    const isConflict = this.isLocked &&
+      this.runningProvider === 'local' &&
+      provider === 'local';
 
-        // It's a local hardware conflict, must queue.
-        return new Promise((resolve) => {
-            if (priority > 0) {
-                const lastHighPriorityIdx = this.queue.findLastIndex(item => item.priority > 0);
-                this.queue.splice(lastHighPriorityIdx + 1, 0, { priority, model, provider, resolve });
-            } else {
-                this.queue.push({ priority, model, provider, resolve });
-            }
-        });
+    if (!isConflict) {
+      this.isLocked = true;
+      this.runningProvider = provider;
+      return;
     }
 
-    release(): void {
-        if (this.queue.length > 0) {
-            const next = this.queue.shift();
-            if (next) {
-                this.runningProvider = next.provider;
-                next.resolve();
-                return;
-            }
-        }
-        this.isLocked = false;
-        this.runningProvider = null;
+    // It's a local hardware conflict, must queue.
+    return new Promise((resolve) => {
+      if (priority > 0) {
+        const lastHighPriorityIdx = this.queue.findLastIndex(item => item.priority > 0);
+        this.queue.splice(lastHighPriorityIdx + 1, 0, { priority, model, provider, resolve });
+      } else {
+        this.queue.push({ priority, model, provider, resolve });
+      }
+    });
+  }
+
+  release(): void {
+    if (this.queue.length > 0) {
+      const next = this.queue.shift();
+      if (next) {
+        this.runningProvider = next.provider;
+        next.resolve();
+        return;
+      }
     }
+    this.isLocked = false;
+    this.runningProvider = null;
+  }
 }
 
 export const inferenceLock = new InferenceLockManager();
 
 export const callFastInference = async (
-  messages: { role: string, content: string }[], 
-  maxTokens: number = 4096, 
+  messages: { role: string, content: string }[],
+  maxTokens: number = 4096,
   _attachments?: any[],
   priority: LlamaPriority = LlamaPriority.LOW
 ): Promise<string> => {
   const startTime = performance.now();
   const requestId = randomUUID();
-  
+
   eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_STARTED, { requestId, timestamp: new Date().toISOString() });
 
   try {
@@ -101,36 +101,36 @@ export const callFastInference = async (
     const augmentedMessages = [...messages];
     const systemIdx = augmentedMessages.findIndex(m => m.role === 'system');
     const noThinkingDirective = "CRITICAL: Output ONLY the final result. Do NOT include any reasoning, thinking, or <think> blocks.";
-    
+
     if (systemIdx !== -1) {
-        augmentedMessages[systemIdx].content = `${noThinkingDirective}\n\n${augmentedMessages[systemIdx].content}`;
+      augmentedMessages[systemIdx].content = `${noThinkingDirective}\n\n${augmentedMessages[systemIdx].content}`;
     } else {
-        augmentedMessages.unshift({ role: 'system', content: noThinkingDirective });
+      augmentedMessages.unshift({ role: 'system', content: noThinkingDirective });
     }
 
     // Qwen/ChatML template
     let prompt = "";
     for (const m of augmentedMessages) {
-        prompt += `<|im_start|>${m.role}\n${m.content}<|im_end|>\n`;
+      prompt += `<|im_start|>${m.role}\n${m.content}<|im_end|>\n`;
     }
     prompt += `<|im_start|>assistant\n`;
 
     // Route to appropriate sidecar based on priority
     const service = (priority >= LlamaPriority.HIGH) ? urgentLlamaService : llamaService;
 
-    const result = await service.completion(prompt, { 
-        maxTokens,
-        priority,
-        stop: ["<|im_end|>", "<|im_start|>", "assistant:", "user:", "system:"]
+    const result = await service.completion(prompt, {
+      maxTokens,
+      priority,
+      stop: ["<|im_end|>", "<|im_start|>", "assistant:", "user:", "system:"]
     });
-    
+
     const duration = performance.now() - startTime;
     // Strip thoughts if the model ignored the directive
     const rawResponse = result.content || "";
     const responseText = stripThoughts(rawResponse).trim();
-    
-    eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, { 
-      requestId, 
+
+    eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, {
+      requestId,
       durationMs: duration,
       tokenCount: responseText.length / 4, // Rough approximation
       status: 'success',
@@ -142,14 +142,14 @@ export const callFastInference = async (
     return responseText;
   } catch (error: any) {
     const duration = performance.now() - startTime;
-    eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, { 
-      requestId, 
-      durationMs: duration, 
+    eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, {
+      requestId,
+      durationMs: duration,
       status: 'error',
       error: error.message,
       timestamp: new Date().toISOString()
     });
-    
+
     loggerService.catError(LogCategory.INFERENCE, "Fast inference (llama sidecar) failed", { error: error.message, durationMs: duration });
     throw error;
   }
@@ -527,9 +527,9 @@ const _streamAssistantResponseInternal = async function* (
 
     // Capture Reasoning Content (Thinking)
     if ((delta as any).reasoning_content) {
-        const reasoning = (delta as any).reasoning_content;
-        reasoningAccumulator += reasoning;
-        yield { text: `<seed:think>${reasoning}</seed:think>` };
+      const reasoning = (delta as any).reasoning_content;
+      reasoningAccumulator += reasoning;
+      yield { text: `<seed:think>${reasoning}</seed:think>` };
     }
 
     const textChunk = extractTextDelta(delta);
@@ -551,7 +551,7 @@ const _streamAssistantResponseInternal = async function* (
   };
 
   if (reasoningAccumulator) {
-      (assistantMessage as any).reasoning_content = reasoningAccumulator;
+    (assistantMessage as any).reasoning_content = reasoningAccumulator;
   }
 
   yield { assistantMessage };
@@ -573,11 +573,11 @@ export const resolveAttachments = async (message: string): Promise<{ resolvedCon
       if (ref.id) {
         const attachment = await attachmentService.getAttachment(ref.id);
         if (attachment) {
-            resolvedAttachments.push(attachment);
-            resolvedContentStr += `\n[File: ${attachment.filename} (${attachment.mime_type})]\n${attachment.content}\n`;
-            if (attachment.structured_data?.analysis_model) {
-              resolvedContentStr += `(Analysis by ${attachment.structured_data.analysis_model})\n`;
-            }
+          resolvedAttachments.push(attachment);
+          resolvedContentStr += `\n[File: ${attachment.filename} (${attachment.mime_type})]\n${attachment.content}\n`;
+          if (attachment.structured_data?.analysis_model) {
+            resolvedContentStr += `(Analysis by ${attachment.structured_data.analysis_model})\n`;
+          }
         } else {
           resolvedContentStr += `\n[Attachment ${ref.id} not found or expired]\n`;
         }
@@ -627,9 +627,9 @@ export async function* sendMessageAndHandleTools(
   const { resolvedContent, attachments: userAttachments } = await inferenceService.resolveAttachments(message);
 
   const attachments = [...userAttachments, ...(sceneAttachments || [])];
-  
+
   if (attachments.length > 0) {
-      loggerService.catDebug(LogCategory.INFERENCE, `Preparing multimodal inference with ${attachments.length} image part(s).`);
+    loggerService.catDebug(LogCategory.INFERENCE, `Preparing multimodal inference with ${attachments.length} image part(s).`);
   }
 
   if (systemInstruction && chat.systemInstruction !== systemInstruction) {
@@ -685,7 +685,7 @@ export async function* sendMessageAndHandleTools(
         traceNeeded
       });
       yieldedToolCalls = undefined;
-      
+
       if (contextSessionId) {
         const session = await contextService.getSession(contextSessionId);
         if (!session || session.status === 'closed') {
@@ -723,72 +723,72 @@ export async function* sendMessageAndHandleTools(
         if (contextSessionId) {
           const result = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
           contextMessages = result.messages;
-          
-          if (loops === 0) {
-              const lastUserMsgIdx = contextMessages.findLastIndex(m => m.role === 'user');
-              if (lastUserMsgIdx !== -1) {
-                  const userMsg = contextMessages[lastUserMsgIdx];
-                  
-                  // Priority logic for first turn content:
-                  // 1. If we have an augmented message (scene context prepended), 
-                  //    we need to replace the original part of it with resolvedContent (user files)
-                  let finalUserContentText = message || resolvedContent;
-                  
-                  if (message && message !== resolvedContent) {
-                      // We have scene context prepended to 'message'
-                      // We must ensure the 'user message' part of that is also resolved
-                      const sceneBlockMatch = message.match(/^(\[Realtime Scene Context\][\s\S]*?---\n\n)/);
-                      if (sceneBlockMatch) {
-                          const { resolvedContent: resolvedUserPart } = await inferenceService.resolveAttachments(message.replace(sceneBlockMatch[1], ""));
-                          finalUserContentText = sceneBlockMatch[1] + resolvedUserPart;
-                      } else {
-                          const { resolvedContent: resolvedFull } = await inferenceService.resolveAttachments(message);
-                          finalUserContentText = resolvedFull;
-                      }
-                  }
 
-                  // 2. Inject Multimodal Data (Pixels) if available
-                  if (attachments.length > 0) {
-                      if (settings.provider === 'gemini') {
-                          const contentParts: any[] = [{ text: finalUserContentText }];
-                          for (const att of attachments) {
-                              if (att.image_base64) {
-                                  contentParts.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
-                              }
-                          }
-                          contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
-                      } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-                          const contentParts: any[] = [{ type: 'text', text: finalUserContentText }];
-                          for (const att of attachments) {
-                              if (att.image_base64) {
-                                  contentParts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
-                              }
-                          }
-                          contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
-                          loggerService.catDebug(LogCategory.INFERENCE, `Final user content updated with ${contentParts.length} parts (text + images).`);
-                      }
-                  } else {
-                      userMsg.content = finalUserContentText;
-                      loggerService.catDebug(LogCategory.INFERENCE, "Final user content updated (text only).");
-                  }
+          if (loops === 0) {
+            const lastUserMsgIdx = contextMessages.findLastIndex(m => m.role === 'user');
+            if (lastUserMsgIdx !== -1) {
+              const userMsg = contextMessages[lastUserMsgIdx];
+
+              // Priority logic for first turn content:
+              // 1. If we have an augmented message (scene context prepended), 
+              //    we need to replace the original part of it with resolvedContent (user files)
+              let finalUserContentText = message || resolvedContent;
+
+              if (message && message !== resolvedContent) {
+                // We have scene context prepended to 'message'
+                // We must ensure the 'user message' part of that is also resolved
+                const sceneBlockMatch = message.match(/^(\[Realtime Scene Context\][\s\S]*?---\n\n)/);
+                if (sceneBlockMatch) {
+                  const { resolvedContent: resolvedUserPart } = await inferenceService.resolveAttachments(message.replace(sceneBlockMatch[1], ""));
+                  finalUserContentText = sceneBlockMatch[1] + resolvedUserPart;
+                } else {
+                  const { resolvedContent: resolvedFull } = await inferenceService.resolveAttachments(message);
+                  finalUserContentText = resolvedFull;
+                }
               }
+
+              // 2. Inject Multimodal Data (Pixels) if available
+              if (attachments.length > 0) {
+                if (settings.provider === 'gemini') {
+                  const contentParts: any[] = [{ text: finalUserContentText }];
+                  for (const att of attachments) {
+                    if (att.image_base64) {
+                      contentParts.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
+                    }
+                  }
+                  contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
+                } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
+                  const contentParts: any[] = [{ type: 'text', text: finalUserContentText }];
+                  for (const att of attachments) {
+                    if (att.image_base64) {
+                      contentParts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
+                    }
+                  }
+                  contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
+                  loggerService.catDebug(LogCategory.INFERENCE, `Final user content updated with ${contentParts.length} parts (text + images).`);
+                }
+              } else {
+                userMsg.content = finalUserContentText;
+                loggerService.catDebug(LogCategory.INFERENCE, "Final user content updated (text only).");
+              }
+            }
           }
           eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens: result.totalTokens });
         } else {
           const finalUserContentText = message || resolvedContent;
           let userContent: any = finalUserContentText;
           if (attachments.length > 0) {
-              if (settings.provider === 'gemini') {
-                  userContent = [{ text: finalUserContentText }];
-                  for (const att of attachments) {
-                      if (att.image_base64) userContent.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
-                  }
-              } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-                  userContent = [{ type: 'text', text: finalUserContentText }];
-                  for (const att of attachments) {
-                      if (att.image_base64) userContent.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
-                  }
+            if (settings.provider === 'gemini') {
+              userContent = [{ text: finalUserContentText }];
+              for (const att of attachments) {
+                if (att.image_base64) userContent.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
               }
+            } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
+              userContent = [{ type: 'text', text: finalUserContentText }];
+              for (const att of attachments) {
+                if (att.image_base64) userContent.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
+              }
+            }
           }
           contextMessages = [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: userContent }] as ChatCompletionMessageParam[];
         }
@@ -842,17 +842,17 @@ export async function* sendMessageAndHandleTools(
         textAccumulatedInTurn = stripThoughts(rawTextInTurn);
         if (rawTextInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) {
           if (!textAccumulatedInTurn.trim() && rawTextInTurn.trim()) {
-            loggerService.catDebug(LogCategory.INFERENCE, "Model provided reasoning but empty final content.", { 
-              contextSessionId, 
-              rawLength: rawTextInTurn.length 
+            loggerService.catDebug(LogCategory.INFERENCE, "Model provided reasoning but empty final content.", {
+              contextSessionId,
+              rawLength: rawTextInTurn.length
             });
           }
           break;
         }
         retries++;
-        loggerService.catWarn(LogCategory.INFERENCE, `Empty model response. Retry ${retries}/${MAX_RETRIES}...`, { 
-          contextSessionId, 
-          rawOutputPreview: rawTextInTurn.slice(0, 100) 
+        loggerService.catWarn(LogCategory.INFERENCE, `Empty model response. Retry ${retries}/${MAX_RETRIES}...`, {
+          contextSessionId,
+          rawOutputPreview: rawTextInTurn.slice(0, 100)
         });
       }
 
@@ -931,42 +931,42 @@ export async function* sendMessageAndHandleTools(
       // If the PREVIOUS turn was an audit failure, and THIS turn is trying to end with just a narrative
       // that describes the failure or apologizes for it, we throw it away and go one more loop.
       const lastTurnWasAuditFailure = transientMessages.length > 0 && (transientMessages[transientMessages.length - 1] as any).role === 'user' && (transientMessages[transientMessages.length - 1] as any).content?.includes('[SYSTEM AUDIT]');
-      
+
       if (lastTurnWasAuditFailure && isEndingTurn && hasNarrativeOutput) {
-          const auditCheckPrompt = `Analyze the following assistant response. Is this response primarily an apology, a meta-commentary about a system error, or a statement about failing an audit (e.g., "I forgot to log a trace", "I will now log a trace", "I apologize for the oversight")?
+        const auditCheckPrompt = `Analyze the following assistant response. Is this response primarily an apology, a meta-commentary about a system error, or a statement about failing an audit (e.g., "I forgot to log a trace", "I will now log a trace", "I apologize for the oversight")?
           
 RESPONSE:
 "${textAccumulatedInTurn}"
 
 Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains actual useful content or a valid conclusion.`;
 
-          try {
-              const auditResult = await callFastInference([{ role: 'user', content: auditCheckPrompt }], 20, undefined, LlamaPriority.HIGH);
-              if (auditResult.toUpperCase().includes('YES')) {
-                  loggerService.catInfo(LogCategory.INFERENCE, "Audit Failure Narrative detected. Discarding and forcing retry loop.", { 
-                    contextSessionId, 
-                    narrative: textAccumulatedInTurn.slice(0, 50) + "..." 
-                  });
-                  
-                  // Discard the text from this turn
-                  textAccumulatedInTurn = "";
-                  
-                  // Add this assistant message to transient so the model sees its own mistake
-                  transientMessages.push(nextAssistant!);
-                  if (toolResponses.length > 0) transientMessages.push(...toolResponses);
-                  
-                  // Add a nudge to actually do the work
-                  transientMessages.push({ 
-                    role: "user", 
-                    content: "[SYSTEM RECOVERY] That narrative was an apology for an audit failure. DO NOT apologize. Just execute the required tools and provide the final synthesis now." 
-                  });
-                  
-                  loops++;
-                  continue; 
-              }
-          } catch (e) {
-              loggerService.catError(LogCategory.INFERENCE, "Audit narrative check failed", { error: e });
+        try {
+          const auditResult = await callFastInference([{ role: 'user', content: auditCheckPrompt }], 20, undefined, LlamaPriority.URGENT);
+          if (auditResult.toUpperCase().includes('YES')) {
+            loggerService.catInfo(LogCategory.INFERENCE, "Audit Failure Narrative detected. Discarding and forcing retry loop.", {
+              contextSessionId,
+              narrative: textAccumulatedInTurn.slice(0, 50) + "..."
+            });
+
+            // Discard the text from this turn
+            textAccumulatedInTurn = "";
+
+            // Add this assistant message to transient so the model sees its own mistake
+            transientMessages.push(nextAssistant!);
+            if (toolResponses.length > 0) transientMessages.push(...toolResponses);
+
+            // Add a nudge to actually do the work
+            transientMessages.push({
+              role: "user",
+              content: "[SYSTEM RECOVERY] That narrative was an apology for an audit failure. DO NOT apologize. Just execute the required tools and provide the final synthesis now."
+            });
+
+            loops++;
+            continue;
           }
+        } catch (e) {
+          loggerService.catError(LogCategory.INFERENCE, "Audit narrative check failed", { error: e });
+        }
       }
 
       if (totalTextAccumulatedAcrossLoops.length > 0 && textAccumulatedInTurn.trim().length > 0) {
@@ -981,19 +981,19 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
       if (contextSessionId && nextAssistant) {
         const hasTools = (nextAssistant as any).tool_calls && (nextAssistant as any).tool_calls.length > 0;
         const reasoning = (nextAssistant as any).reasoning_content;
-        
+
         if (hasTools || isEndingTurn) {
-          await contextService.recordMessage(contextSessionId, { 
-            id: randomUUID(), 
-            role: "assistant", 
-            content: isEndingTurn ? stripThoughts(totalTextAccumulatedAcrossLoops) : (nextAssistant.content as string || ""), 
-            timestamp: new Date().toISOString(), 
-            toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ id: call.id, name: call.function?.name, arguments: call.function?.arguments })), 
-            metadata: { 
+          await contextService.recordMessage(contextSessionId, {
+            id: randomUUID(),
+            role: "assistant",
+            content: isEndingTurn ? stripThoughts(totalTextAccumulatedAcrossLoops) : (nextAssistant.content as string || ""),
+            timestamp: new Date().toISOString(),
+            toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ id: call.id, name: call.function?.name, arguments: call.function?.arguments })),
+            metadata: {
               kind: hasTools ? "assistant_tool_call" : "assistant_response",
               ...(reasoning ? { reasoning_content: reasoning } : {})
-            }, 
-            correlationId: correlationId 
+            },
+            correlationId: correlationId
           } as any);
         }
       }
@@ -1008,16 +1008,17 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
             if (session && (!session.name || session.name.startsWith('Context '))) {
               const history = await contextService.getUnfilteredHistory(contextSessionId);
               if (history.length >= 2 && history.length <= 4) {
-                 const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
-                 const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+                const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
+                const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
 
-                 const newName = await callFastInference([{ role: "user", content: namingPrompt }], 1024);
-                 if (newName) {
-                   const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                   await contextService.updateSession({ ...session, name: cleanName });
-                   eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
-                 }
-              }            }
+                const newName = await callFastInference([{ role: "user", content: namingPrompt }], 1024, undefined, LlamaPriority.URGENT);
+                if (newName) {
+                  const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                  await contextService.updateSession({ ...session, name: cleanName });
+                  eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
+                }
+              }
+            }
           } catch (namingError) { }
         }
         break;
@@ -1060,8 +1061,8 @@ export const extractJson = async (text: string): Promise<any> => {
   if (!text || text.trim() === "") return null;
 
   try {
-      const result = await workerService.runTask('parseJson', text);
-      if (result) return result;
+    const result = await workerService.runTask('parseJson', text);
+    if (result) return result;
   } catch (e) { }
 
   const sanitize = (str: string) => {
@@ -1081,44 +1082,44 @@ export const extractJson = async (text: string): Promise<any> => {
     } catch (e) {
       // If it looks like multiple objects { ... }, { ... }, wrap and merge
       if (str.includes('}, {') || str.includes('},\n{')) {
-          try {
-              const wrapped = JSON.parse(`[${str}]`);
-              if (Array.isArray(wrapped)) {
-                  return wrapped.reduce((acc, obj) => ({ ...acc, ...obj }), {});
-              }
-          } catch (inner) { }
+        try {
+          const wrapped = JSON.parse(`[${str}]`);
+          if (Array.isArray(wrapped)) {
+            return wrapped.reduce((acc, obj) => ({ ...acc, ...obj }), {});
+          }
+        } catch (inner) { }
       }
 
       // Deep heuristic for unescaped internal quotes
       let fixed = str
         .replace(/":\s*"([\s\S]*?)"(\s*[,}\n])/g, (_match, p1, p2) => {
-           const content = p1
+          const content = p1
             .replace(/\\"/g, '"') // Normalize existing escapes
             .replace(/"/g, '\\"'); // Re-escape all
-           return `": "${content}"${p2}`;
+          return `": "${content}"${p2}`;
         })
         .replace(/,(\s*[}\]])/g, '$1');
-      
+
       try {
         return JSON.parse(fixed);
       } catch (inner) {
         // Recovery for truncated JSON
         let truncated = fixed.trim();
         if ((truncated.startsWith('{') && !truncated.endsWith('}')) || (truncated.startsWith('[') && !truncated.endsWith(']'))) {
-           const stack: string[] = [];
-           for (let i = 0; i < truncated.length; i++) {
-             if (truncated[i] === '{') stack.push('}');
-             else if (truncated[i] === '[') stack.push(']');
-             else if (truncated[i] === '}' || truncated[i] === ']') stack.pop();
-           }
-           while (stack.length > 0) {
-             truncated += stack.pop();
-           }
-           try {
-             return JSON.parse(truncated);
-           } catch (deepInner) {
-             return null;
-           }
+          const stack: string[] = [];
+          for (let i = 0; i < truncated.length; i++) {
+            if (truncated[i] === '{') stack.push('}');
+            else if (truncated[i] === '[') stack.push(']');
+            else if (truncated[i] === '}' || truncated[i] === ']') stack.pop();
+          }
+          while (stack.length > 0) {
+            truncated += stack.pop();
+          }
+          try {
+            return JSON.parse(truncated);
+          } catch (deepInner) {
+            return null;
+          }
         }
         return null;
       }
@@ -1127,7 +1128,7 @@ export const extractJson = async (text: string): Promise<any> => {
 
   const direct = tryParse(text);
   if (direct) return direct;
-  
+
   const sanitized = tryParse(sanitize(text));
   if (sanitized) return sanitized;
 
@@ -1142,20 +1143,20 @@ export const extractJson = async (text: string): Promise<any> => {
   // Final fallback: Balanced brace extraction
   const firstBrace = text.indexOf('{');
   if (firstBrace !== -1) {
-      let balanced = "";
-      let count = 0;
-      for (let i = firstBrace; i < text.length; i++) {
-          if (text[i] === '{') count++;
-          if (text[i] === '}') count--;
-          balanced += text[i];
-          if (count === 0) break;
-      }
-      const extracted = tryParse(sanitize(balanced));
-      if (extracted) return extracted;
+    let balanced = "";
+    let count = 0;
+    for (let i = firstBrace; i < text.length; i++) {
+      if (text[i] === '{') count++;
+      if (text[i] === '}') count--;
+      balanced += text[i];
+      if (count === 0) break;
+    }
+    const extracted = tryParse(sanitize(balanced));
+    if (extracted) return extracted;
   }
 
-  loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed. FULL LLM OUTPUT BELOW:", { 
-    fullText: text 
+  loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed. FULL LLM OUTPUT BELOW:", {
+    fullText: text
   });
   throw new Error("JSON extraction failed");
 };
@@ -1164,10 +1165,11 @@ export const summarizeHistory = async (history: ContextMessage[], currentSummary
   const cleanHistory = contextWindowService.stripTools(history);
   const historyText = cleanHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "")}`).join('\n');
   const prompt = `Summarize the following conversation concisely: ${currentSummary ? `Previous Summary: ${currentSummary}\n` : ''} \n\nRecent Conversation History:\n${historyText}\n\nREFINED SUMMARY:`;
-  
+
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const summary = await callFastInference([{ role: "user", content: prompt }], 8192);
+      const summary = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.URGENT
+      );
       if (summary && summary.trim()) return summary.trim();
     } catch (error) {
       if (attempt === 2) return currentSummary || "";
@@ -1190,10 +1192,10 @@ export const synthesizeWebResults = async (
     });
   });
   const prompt = `Synthesize these research results into a dense, high-fidelity Knowledge Brief. Use all the details provided to build a comprehensive view of the topic.\n\nResearch Data:\n${resultsText}\n\nKNOWLEDGE BRIEF:`;
-  
+
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const brief = await callFastInference([{ role: "user", content: prompt }], 8192);
+      const brief = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.URGENT);
       if (brief && brief.trim()) return brief.trim();
     } catch (error) {
       if (attempt === 2) return "";
@@ -1283,7 +1285,7 @@ export const primeSymbolicContext = async (
     }`;
 
     let fastResponse: any = {};
-    const fastText = await callFastInference([{ role: "user", content: prompt }], 2048, undefined, LlamaPriority.HIGH);
+    const fastText = await callFastInference([{ role: "user", content: prompt }], 2048, undefined, LlamaPriority.URGENT);
     fastResponse = extractJson(fastText);
 
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
@@ -1379,44 +1381,44 @@ export const processMessageAsync = async (
     const sceneAttachments: any[] = [];
 
     if (sceneSnapshot) {
-        // 1. Extract and remove heavy base64 from the textual snapshot
-        if (sceneSnapshot.camera?.lastFrame) {
-            const raw = sceneSnapshot.camera.lastFrame;
-            const data = raw.includes(',') ? raw.split(',')[1] : raw;
-            sceneAttachments.push({
-                id: 'scene-camera',
-                mime_type: 'image/jpeg',
-                image_base64: data,
-                filename: 'camera_perception.jpg'
-            });
-            loggerService.catInfo(LogCategory.INFERENCE, `Extracted Camera Frame: ${Math.round(data.length / 1024)}KB`);
-            delete sceneSnapshot.camera.lastFrame;
-        }
-        if (sceneSnapshot.screen?.lastFrame) {
-            const raw = sceneSnapshot.screen.lastFrame;
-            const data = raw.includes(',') ? raw.split(',')[1] : raw;
-            sceneAttachments.push({
-                id: 'scene-screen',
-                mime_type: 'image/jpeg',
-                image_base64: data,
-                filename: 'screen_perception.jpg'
-            });
-            loggerService.catInfo(LogCategory.INFERENCE, `Extracted Screen Frame: ${Math.round(data.length / 1024)}KB`);
-            delete sceneSnapshot.screen.lastFrame;
-        }
+      // 1. Extract and remove heavy base64 from the textual snapshot
+      if (sceneSnapshot.camera?.lastFrame) {
+        const raw = sceneSnapshot.camera.lastFrame;
+        const data = raw.includes(',') ? raw.split(',')[1] : raw;
+        sceneAttachments.push({
+          id: 'scene-camera',
+          mime_type: 'image/jpeg',
+          image_base64: data,
+          filename: 'camera_perception.jpg'
+        });
+        loggerService.catInfo(LogCategory.INFERENCE, `Extracted Camera Frame: ${Math.round(data.length / 1024)}KB`);
+        delete sceneSnapshot.camera.lastFrame;
+      }
+      if (sceneSnapshot.screen?.lastFrame) {
+        const raw = sceneSnapshot.screen.lastFrame;
+        const data = raw.includes(',') ? raw.split(',')[1] : raw;
+        sceneAttachments.push({
+          id: 'scene-screen',
+          mime_type: 'image/jpeg',
+          image_base64: data,
+          filename: 'screen_perception.jpg'
+        });
+        loggerService.catInfo(LogCategory.INFERENCE, `Extracted Screen Frame: ${Math.round(data.length / 1024)}KB`);
+        delete sceneSnapshot.screen.lastFrame;
+      }
 
-        // 2. Format the structured metadata (OCR, emotions, etc)
-        const sceneContextBlock = `[Realtime Scene Context]\n${JSON.stringify(sceneSnapshot, null, 2)}\n\n---\n\n`;
-        
-        // 3. Prepend to message (which sendMessageAndHandleTools will later merge with resolvedContent)
-        augmentedMessage = sceneContextBlock + message;
+      // 2. Format the structured metadata (OCR, emotions, etc)
+      const sceneContextBlock = `[Realtime Scene Context]\n${JSON.stringify(sceneSnapshot, null, 2)}\n\n---\n\n`;
+
+      // 3. Prepend to message (which sendMessageAndHandleTools will later merge with resolvedContent)
+      augmentedMessage = sceneContextBlock + message;
     }
 
     const speakerName = metadata?.voice_authenticated_username;
     let finalSystemInstruction = systemInstruction;
-    
+
     if (speakerName && speakerName !== 'Unknown') {
-        finalSystemInstruction = `${finalSystemInstruction}\n\n[Voice Authentication Metadata]\n- Current Speaker: ${speakerName}\n- Verification Status: Authenticated via Voice Fingerprint`;
+      finalSystemInstruction = `${finalSystemInstruction}\n\n[Voice Authentication Metadata]\n- Current Speaker: ${speakerName}\n- Verification Status: Authenticated via Voice Fingerprint`;
     }
 
     const { webResults, webBrief, monitoringDeltas, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
@@ -1436,35 +1438,35 @@ export const processMessageAsync = async (
       });
     }
     const chat = await getChatSession(finalSystemInstruction, contextSessionId);
-    
+
     // Increment turns AFTER load so that newly loaded/refreshed symbols have turnCount 0 (touched)
     // and only then get incremented to 1, avoiding immediate eviction.
     await symbolCacheService.incrementTurns(contextSessionId);
     await tentativeLinkService.incrementTurns();
-    
+
     const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, monitoringDeltas, 1, message, sceneAttachments, metadata);
-    
+
     const isSilent = metadata?.silent === true;
     if (!isSilent) {
-        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
+      eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
     }
-    
+
     let fullText = "";
     for await (const chunk of stream) {
       if (chunk.text) fullText += chunk.text;
       if (!isSilent && (chunk.text || chunk.toolCalls)) {
-          eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId });
+        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId });
       }
       if (chunk.isComplete) {
-          if (!isSilent) {
-              eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, { 
-                  sessionId: contextSessionId, 
-                  messageId, 
-                  fullText,
-                  metadata: { ...metadata } 
-              });
-          }
-          return { fullText, sessionId: contextSessionId };
+        if (!isSilent) {
+          eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, {
+            sessionId: contextSessionId,
+            messageId,
+            fullText,
+            metadata: { ...metadata }
+          });
+        }
+        return { fullText, sessionId: contextSessionId };
       }
     }
     return { success: false, reason: "Inference loop ended without completion flag" };
