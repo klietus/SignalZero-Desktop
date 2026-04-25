@@ -39,29 +39,12 @@ class PythonVoiceManager extends EventEmitter {
         });
     }
 
-    async initialize() {
+    async ensureSidecarRunning() {
         if (this.process) return;
-
-        // On macOS, explicitly ask for microphone access
-        if (process.platform === 'darwin') {
-            try {
-                const access = await systemPreferences.askForMediaAccess('microphone');
-                this.isMicAccessGranted = access;
-                if (!access) {
-                    loggerService.catError(LogCategory.SYSTEM, "Microphone access denied by user.");
-                    return;
-                }
-            } catch (e) {
-                loggerService.catError(LogCategory.SYSTEM, "Failed to request mic access", { error: e });
-            }
-        } else {
-            this.isMicAccessGranted = true;
-        }
 
         const settings = await settingsService.getInferenceSettings();
         this.systemName = settings.systemName || "axiom";
         this.voiceId = settings.voiceId || "af_sarah";
-        loggerService.catInfo(LogCategory.SYSTEM, `VoiceProcess: Initialized. System name: ${this.systemName}, Voice: ${this.voiceId}`);
 
         const sidecarDir = app.isPackaged
             ? path.join(process.resourcesPath, 'sidecars', 'voice')
@@ -136,10 +119,31 @@ class PythonVoiceManager extends EventEmitter {
         const profileCount = settings.voiceProfiles ? Object.keys(settings.voiceProfiles).length : 0;
         loggerService.catInfo(LogCategory.SYSTEM, `Initializing voice system with ${profileCount} profile(s)...`);
 
-        // Pass all user profiles
         if (settings.voiceProfiles && Object.keys(settings.voiceProfiles).length > 0) {
             this.sendToSidecar('set_profiles', { profiles: settings.voiceProfiles });
         }
+    }
+
+    async initialize() {
+        await this.ensureSidecarRunning();
+
+        // On macOS, explicitly ask for microphone access
+        if (process.platform === 'darwin') {
+            try {
+                const access = await systemPreferences.askForMediaAccess('microphone');
+                this.isMicAccessGranted = access;
+                if (!access) {
+                    loggerService.catError(LogCategory.SYSTEM, "Microphone access denied by user.");
+                    return;
+                }
+            } catch (e) {
+                loggerService.catError(LogCategory.SYSTEM, "Failed to request mic access", { error: e });
+            }
+        } else {
+            this.isMicAccessGranted = true;
+        }
+
+        loggerService.catInfo(LogCategory.SYSTEM, `VoiceProcess: Initialized. System name: ${this.systemName}, Voice: ${this.voiceId}`);
     }
 
     private sendToSidecar(action: string, payload: any) {

@@ -32,6 +32,7 @@ declare global {
             getHistory: (id: string) => Promise<any[]>;
             deleteContext: (id: string) => Promise<boolean>;
             sendMessage: (sessionId: string, message: string, systemInstruction?: string, metadata?: any) => Promise<any>;
+            stopInference: () => Promise<any>;
             listDomains: () => Promise<string[]>;
             getDomain: (id: string) => Promise<any>;
             upsertDomain: (id: string, data: any) => Promise<any>;
@@ -490,9 +491,10 @@ function App() {
                 setLastRequestTokens(data.totalTokens || 0);
             }
             if (type === 'context:created') {
+                const session = data.session || data;
                 setContexts(prev => {
-                    if (prev.find(s => s.id === data.id)) return prev;
-                    return [data, ...prev];
+                    if (prev.find(s => s.id === session.id)) return prev;
+                    return [session, ...prev];
                 });
             }
             if (type === 'context:deleted') {
@@ -703,13 +705,37 @@ function App() {
         await (window.api as any).cancelSpeech();
     };
 
-    const handleSendMessage = async (text: string, options?: { attachments?: { id: string, filename: string, type: string }[], metadata?: Record<string, any> }) => {
+    const handleSendMessage = async (textOrMessageId: string, optionsOrText?: string | { attachments?: { id: string, filename: string, type: string }[], metadata?: Record<string, any> }, options?: { attachments?: { id: string, filename: string, type: string }[], metadata?: Record<string, any> }) => {
         if (!activeContextId || isProcessing) return;
+
+        let messageId: string | undefined;
+        let text: string;
+        let finalOptions: { attachments?: { id: string, filename: string, type: string }[], metadata?: Record<string, any> } | undefined;
+
+        if (typeof textOrMessageId === 'string' && optionsOrText && typeof optionsOrText === 'string') {
+            // Called from retry: (messageId, text)
+            messageId = textOrMessageId;
+            text = optionsOrText;
+            finalOptions = options;
+        } else {
+            // Called from chat input: (text, options)
+            text = textOrMessageId;
+            finalOptions = optionsOrText as typeof finalOptions | undefined;
+        }
+
+        if (messageId) {
+            setMessages(prev => {
+                const idx = prev.findIndex(m => m.id === messageId);
+                if (idx === -1) return prev;
+                return [...prev.slice(0, idx + 1)];
+            });
+        }
+
         setIsProcessing(true);
 
         let finalMessage = text;
-        if (options?.attachments && options.attachments.length > 0) {
-            finalMessage += `\n\n<attachments>${JSON.stringify(options.attachments)}</attachments>`;
+        if (finalOptions?.attachments && finalOptions.attachments.length > 0) {
+            finalMessage += `\n\n<attachments>${JSON.stringify(finalOptions.attachments)}</attachments>`;
         }
 
         const userMsg: Message = { 
@@ -718,13 +744,13 @@ function App() {
             content: text, 
             timestamp: new Date(), 
             metadata: { 
-                attachments: options?.attachments,
-                ...options?.metadata
+                attachments: finalOptions?.attachments,
+                ...finalOptions?.metadata
             } 
         };
         setMessages(prev => [...prev, userMsg]);
         try {
-            await window.api.sendMessage(activeContextId, finalMessage, systemPrompt, options?.metadata);
+            await window.api.sendMessage(activeContextId, finalMessage, systemPrompt, finalOptions?.metadata);
         } catch (e) {
             setIsProcessing(false);
             console.error(e);
@@ -741,6 +767,11 @@ function App() {
 
     const handleArchiveContext = async (id: string) => {
         await window.api.deleteContext(id);
+    };
+
+    const handleStopInference = async () => {
+        setIsProcessing(false);
+        await window.api.stopInference();
     };
 
     const getHeaderProps = (title: string, icon?: React.ReactNode): HeaderProps => ({
@@ -921,6 +952,7 @@ function App() {
                             <div className="w-full max-w-full mx-auto">
                                 <ChatInput
                                     onSend={handleSendMessage}
+                                    onStop={handleStopInference}
                                     disabled={isProcessing || !activeContextId}
                                     isProcessing={isProcessing}
                                     activeContextId={activeContextId}

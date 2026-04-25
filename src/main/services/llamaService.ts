@@ -82,7 +82,7 @@ export class LlamaSidecarInstance extends EventEmitter {
                 }
             });
 
-            this.process.on('exit', (code, signal) => {
+            this.process.on('exit', (code, _signal) => {
                 this.process = null;
                 this.isInitializing = false;
                 loggerService.catError(LogCategory.SYSTEM, `Llama [${this.name}] exited with code ${code}`);

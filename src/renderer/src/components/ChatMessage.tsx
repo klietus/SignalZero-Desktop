@@ -23,7 +23,7 @@ interface ChatMessageProps {
   onSymbolClick?: (id: string, data?: any) => void;
   onDomainClick?: (domain: string) => void;
   onTraceClick?: (id?: string) => void;
-  onRetry?: (text: string) => void;
+   onRetry?: (messageId: string, text: string) => void;
   isVisible?: boolean;
 }
 
@@ -441,7 +441,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
                     )}
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => onRetry && onRetry(message.content)}
+                            onClick={() => onRetry && onRetry(message.id, message.content)}
                             className="p-1 rounded text-indigo-200 hover:text-white hover:bg-white/10 transition-colors"
                             title="Retry message"
                         >
@@ -494,7 +494,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
                   {!message.isStreaming && message.content && (
                     <>
                       <button
-                        onClick={() => onRetry && onRetry(message.content)}
+                        onClick={() => onRetry && onRetry(message.id, message.content)}
                         className="p-1 rounded-md text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                         title="Retry message"
                       >

@@ -42,17 +42,20 @@ export class ContextWindowService {
         }
         messages.push({ role: 'system', content: effectiveSystemPrompt });
 
-        // 2. Stable Symbolic Context (Cache Anchor)
-        // Domains and core recursive symbols are mostly static.
-        const stableContext = await this.buildStableContext(contextSessionId);
+        // 2-4.5: Parallelize independent reads (stable context, mature symbols, alerts, history)
+        const [stableContext, { mature }, activeAlerts, rawHistory] = await Promise.all([
+            this.buildStableContext(contextSessionId),
+            symbolCacheService.getPartitionedSymbols(contextSessionId),
+            alertTriggerService.getActive(),
+            contextService.getUnfilteredHistory(contextSessionId),
+        ]);
+
         messages.push({
             role: 'system',
             content: `[KERNEL]\n${stableContext}`
         });
 
         // 3. Mature Symbols (Cache Anchor Expansion)
-        // Symbols that have survived decay (turnCount > 3) are stable.
-        const { mature } = await symbolCacheService.getPartitionedSymbols(contextSessionId);
         if (mature.length > 0) {
             messages.push({
                 role: 'system',
@@ -69,7 +72,6 @@ export class ContextWindowService {
         }
 
         // 4.5 Active Alerts (World-State Updates)
-        const activeAlerts = alertTriggerService.getActive();
         if (activeAlerts.length > 0) {
             const alertBlock = activeAlerts
                 .filter(a => a.severity !== 'low')
@@ -94,7 +96,6 @@ export class ContextWindowService {
         let currentTokens = messages.reduce((sum, m) => sum + this.estimateTokens(JSON.stringify(m)), 0);
 
         // 5. Sliding History Window (Sliding Cache)
-        const rawHistory = await contextService.getUnfilteredHistory(contextSessionId);
 
         // Filter history to only include messages AFTER the last summarized round
         const lastSummarized = session?.metadata?.lastSummarizedRoundCount || 0;

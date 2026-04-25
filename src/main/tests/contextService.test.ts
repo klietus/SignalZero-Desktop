@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { contextService } from '../services/contextService.js';
 import { sqliteService } from '../services/sqliteService.js';
+import { eventBusService } from '../services/eventBusService.js';
+import { KernelEventType } from '../types.js';
 
 describe('ContextService Relational', () => {
     beforeEach(() => {
@@ -15,6 +17,19 @@ describe('ContextService Relational', () => {
 
         const retrieved = await contextService.getSession(session.id);
         expect(retrieved).toEqual(session);
+    });
+
+    it('should emit context:created event with session in payload.session', async () => {
+        const emitSpy = vi.spyOn(eventBusService, 'emitKernelEvent');
+        const session = await contextService.createSession('conversation', {}, 'EventTest');
+        
+        expect(emitSpy).toHaveBeenCalledWith(KernelEventType.CONTEXT_CREATED, { session });
+        
+        // Verify the payload shape matches what the renderer expects
+        const payload = emitSpy.mock.calls[0][1] as any;
+        expect(payload.session).toBeDefined();
+        expect(payload.session.id).toBe(session.id);
+        expect(payload.session.name).toBe('EventTest');
     });
 
     it('should record and retrieve history', async () => {

@@ -15,6 +15,7 @@ const api = {
   // Inference
   sendMessage: (sessionId: string, message: string, systemInstruction?: string, metadata?: Record<string, any>) => 
     ipcRenderer.invoke('inference:send', sessionId, message, systemInstruction, metadata),
+  stopInference: () => ipcRenderer.invoke('inference:stop'),
   
   // Symbol/Domain Management
   listDomains: () => ipcRenderer.invoke('domain:list'),

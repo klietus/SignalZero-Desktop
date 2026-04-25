@@ -197,7 +197,7 @@ class PerceptionTriggerService {
 
         try {
             // 1. Prepare high-fidelity scene context (pixels + metadata)
-            const sceneSnapshot = realtimeService.getSnapshot();
+            const sceneSnapshot = await realtimeService.getSnapshot();
             const sceneAttachments: any[] = [];
             
             if (sceneSnapshot) {

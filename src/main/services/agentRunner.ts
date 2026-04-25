@@ -171,7 +171,7 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
 
             loggerService.catInfo(LogCategory.AGENT, `Dispatching batch to Agent ${agent.id}`, { deltaCount: deltas.length, sessionId: session.id });
 
-            const stream = sendMessageAndHandleTools(chat, message, toolExecutor, false, activeSystemPrompt, session.id, undefined, undefined, undefined, undefined, 1, message, [], { is_autonomous: true });
+            const stream = sendMessageAndHandleTools(chat, message, toolExecutor, false, activeSystemPrompt, session.id, undefined, undefined, undefined, undefined, message, [], { is_autonomous: true });
             
             for await (const _chunk of stream) {
                 // Potential future: log or process assistant response chunks

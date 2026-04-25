@@ -89,7 +89,7 @@ describe('AgentRunner Chunking', () => {
         }));
 
         const chunkSize = 15;
-        const chunks = [];
+        const chunks: MonitoringDelta[][] = [];
         for (let i = 0; i < deltas.length; i += chunkSize) {
             chunks.push(deltas.slice(i, i + chunkSize));
         }

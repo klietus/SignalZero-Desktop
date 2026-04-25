@@ -102,7 +102,7 @@ class VisionSidecar:
                 options = FaceLandmarkerOptions(
                     base_options=BaseOptions(
                         model_asset_path=model_path,
-                        delegate=BaseOptions.Delegate.GPU # Force M4 Max GPU
+                        delegate=BaseOptions.Delegate.CPU
                     ),
                     running_mode=VisionRunningMode.VIDEO,
                     output_face_blendshapes=True,
@@ -308,6 +308,13 @@ class VisionSidecar:
 
             except Exception as e:
                 self.log(f"Processing error: {str(e)}")
+                # Recover from MediaPipe GPU buffer exhaustion
+                if self._face_landmarker is not None:
+                    try:
+                        self._face_landmarker.close()
+                    except: pass
+                    self._face_landmarker = None
+                    self.log("Face landmarker reset — will recreate on next frame.")
 
             return people, [], has_people
 

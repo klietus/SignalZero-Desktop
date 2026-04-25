@@ -15,7 +15,6 @@ import { contextService } from './contextService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
 import { contextWindowService } from './contextWindowService.js';
-import { lancedbService } from './lancedbService.js';
 import { attachmentService, Attachment } from './attachmentService.js';
 import { mcpClientService } from './mcpClientService.js';
 import { eventBusService } from './eventBusService.js';
@@ -85,6 +84,8 @@ class InferenceLockManager {
 }
 
 export const inferenceLock = new InferenceLockManager();
+
+let _isCancelled = false;
 
 export const callFastInference = async (
   messages: { role: string, content: string }[],
@@ -678,6 +679,11 @@ export async function* sendMessageAndHandleTools(
     };
 
     while (loops < MAX_TOOL_LOOPS && auditRetries < MAX_AUDIT_RETRIES + 1) {
+      if (inferenceService.isCancelled) {
+        loggerService.catInfo(LogCategory.INFERENCE, "Inference cancelled by user.");
+        yield { text: "[Stopped]", isComplete: true };
+        break;
+      }
       loggerService.catDebug(LogCategory.INFERENCE, `Starting turn loop ${loops}/${MAX_TOOL_LOOPS}`, {
         contextSessionId,
         previousTurnTextLength: previousTurnText.length,
@@ -1000,12 +1006,13 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
                 const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
                 const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
 
-                const newName = await callFastInference([{ role: "user", content: namingPrompt }], 1024, undefined, LlamaPriority.URGENT);
-                if (newName) {
-                  const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                  await contextService.updateSession({ ...session, name: cleanName });
-                  eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
-                }
+                void callFastInference([{ role: "user", content: namingPrompt }], 1024, undefined, LlamaPriority.URGENT).then(async (newName) => {
+                  if (newName) {
+                    const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                    await contextService.updateSession({ ...session, name: cleanName });
+                    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
+                  }
+                }).catch(() => { });
               }
             }
           } catch (namingError) { }
@@ -1030,17 +1037,23 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
           const startIndex = lastSummarizedCount === 0 ? 0 : userMessageIndices[lastSummarizedCount];
           const endIndex = userMessageIndices[lastSummarizedCount + roundsToSummarizeCount] || history.length;
           const historySegment = history.slice(startIndex, endIndex);
-          const newSummary = await summarizeHistory(historySegment, session.summary);
-          if (newSummary !== session.summary) {
-            session.summary = newSummary;
-            session.metadata = { ...(session.metadata || {}), lastSummarizedRoundCount: lastSummarizedCount + roundsToSummarizeCount };
-            await contextService.updateSession(session);
-          }
+          const sessionSnapshot = { summary: session.summary, metadata: session.metadata };
+          void summarizeHistory(historySegment, sessionSnapshot.summary).then(async (newSummary) => {
+            if (newSummary !== sessionSnapshot.summary) {
+              const updatedSession = await contextService.getSession(contextSessionId);
+              if (updatedSession && updatedSession.summary !== newSummary) {
+                updatedSession.summary = newSummary;
+                updatedSession.metadata = { ...(updatedSession.metadata || {}), lastSummarizedRoundCount: lastSummarizedCount + roundsToSummarizeCount };
+                await contextService.updateSession(updatedSession);
+              }
+            }
+          }).catch(() => { });
         }
       } catch (err) { }
     }
   } finally {
     inferenceLock.release();
+    _isCancelled = false;
   }
 
   yield { isComplete: true };
@@ -1213,17 +1226,19 @@ export const primeSymbolicContext = async (
   try {
     const session = await contextService.getSession(contextSessionId);
     const history = await contextService.getUnfilteredHistory(contextSessionId);
-    const recentHistory = history.slice(-10);
-    // Strip thoughts from history items to keep input prompt focused and save context
-    const historyContext = recentHistory.map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "")}`).join('\n');
+
+    // Build minimal priming context: last 3 user messages + single last AI message
+    const userMsgs = history.filter(m => m.role === 'user');
+    const lastThreeUser = userMsgs.slice(-3).map(m => `USER: ${stripThoughts(m.content || "")}`);
+    const lastAi = [...history].reverse().find(m => m.role === 'assistant' || m.role === 'model');
+    const aiMsg = lastAi ? `\nASSISTANT: ${stripThoughts(lastAi.content || "")}` : '';
+    const historyContext = [...lastThreeUser, aiMsg].filter(Boolean).join('\n');
 
     // Identify previous web searches to avoid duplicates
     const previousSearches = history
       .flatMap(m => {
         const searches: string[] = [];
-        // Handle tool calls in history
         if (m.toolName === 'web_search' && (m as any).toolArgs?.query) searches.push((m as any).toolArgs.query);
-        // Handle recorded metadata
         if (m.metadata?.kind === 'anticipated_web_search' && Array.isArray(m.metadata?.queries)) {
           m.metadata.queries.forEach((q: string) => searches.push(q));
         }
@@ -1232,12 +1247,13 @@ export const primeSymbolicContext = async (
       .filter((q, i, self) => q && self.indexOf(q) === i);
 
     const currentName = session?.name;
-    const userMessageCount = history.filter(m => m.role === 'user').length + 1;
+    const userMessageCount = userMsgs.length + 1;
     const needsNaming = !currentName || currentName.startsWith('Context ') || (userMessageCount % 10 === 0);
 
     loggerService.catInfo(LogCategory.INFERENCE, "Priming symbolic context via Llama Sidecar", {
       contextSessionId,
-      historyCount: recentHistory.length,
+      userMsgsIncluded: lastThreeUser.length,
+      hasAiMsg: !!lastAi,
       needsNaming
     });
 
@@ -1294,19 +1310,19 @@ export const primeSymbolicContext = async (
     if (fastResponse.suggested_name && fastResponse.suggested_name !== currentName) {
       loggerService.catInfo(LogCategory.INFERENCE, `Fast model suggested session name: ${fastResponse.suggested_name}`);
       const cleanName = fastResponse.suggested_name.replace(/^["']|["']$/g, '').slice(0, 50);
-      await contextService.renameSession(contextSessionId, cleanName);
-      eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
+      void contextService.renameSession(contextSessionId, cleanName).then(() => {
+        eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
+      }).catch(() => { });
     }
 
     if (symbolicQueries.length > 0) {
       loggerService.catInfo(LogCategory.INFERENCE, `Executing ${symbolicQueries.length} symbolic search queries.`, { symbolicQueries });
-      for (const query of symbolicQueries) {
-        const res = await domainService.search(query, 5);
-        loggerService.catDebug(LogCategory.INFERENCE, `Search results for "${query}": ${res.length} symbols found.`);
+      const searchResults = await Promise.all(symbolicQueries.map(q => domainService.search(q, 5)));
+      for (const res of searchResults) {
         res.forEach((r: any) => { if (!foundSymbols.find(s => s.id === r.id)) foundSymbols.push(r.metadata as SymbolDef); });
       }
+      loggerService.catInfo(LogCategory.INFERENCE, `Symbolic Store returned ${foundSymbols.length} unique symbols for precache.`);
       if (foundSymbols.length > 0) {
-        loggerService.catInfo(LogCategory.INFERENCE, `Symbolic Store returned ${foundSymbols.length} unique symbols for precache.`);
         const { added, updated } = await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
         loggerService.catInfo(LogCategory.INFERENCE, `Primed cache: ${added} new, ${updated} filtered/updated.`);
         await symbolCacheService.emitCacheLoad(contextSessionId);
@@ -1314,15 +1330,20 @@ export const primeSymbolicContext = async (
     }
 
     if (fastResponse.web_search_needed && webSearchQueries.length > 0) {
-      for (const q of webSearchQueries) {
+      const searchPromises = webSearchQueries.map(async (q) => {
         try {
           const { results, provider } = await webSearchService.search(q);
           if (results.length > 0) {
-            webResults.push({ query: q, results: results.slice(0, 5), provider });
+            return { query: q, results: results.slice(0, 5), provider };
           }
         } catch (e) {
           loggerService.catError(LogCategory.INFERENCE, "Anticipated web search failed", { query: q, error: e });
         }
+        return null;
+      });
+      const webSearchResults = (await Promise.all(searchPromises)).filter(Boolean);
+      for (const wr of webSearchResults as typeof webResults) {
+        webResults.push(wr);
       }
       if (webResults.length > 0) {
         webBrief = await synthesizeWebResults(webResults);
@@ -1347,7 +1368,7 @@ export const processMessageAsync = async (
   eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { contextSessionId } as const);
   let messageTraceNeeded = false;
   try {
-    const sceneSnapshot = realtimeService.getSnapshot();
+    const sceneSnapshot = await realtimeService.getSnapshot();
     let augmentedMessage = message;
     const sceneAttachments: any[] = [];
 
@@ -1457,5 +1478,7 @@ export const inferenceService = {
   extractJson,
   streamAssistantResponse,
   resolveAttachments,
-  callFastInference
+  callFastInference,
+  setIsCancelled(val: boolean) { _isCancelled = val; },
+  get isCancelled() { return _isCancelled; },
 };

@@ -7,6 +7,10 @@ import { voiceService } from './voiceProcess.js';
 import { visionProcess } from './visionProcess.js';
 import { loggerService, LogCategory } from '../loggerService.js';
 import { settingsService } from '../settingsService.js';
+import sharp from 'sharp';
+
+const CAMERA_MAX_DIM = 224;
+const SCREEN_MAX_DIM = 1280;
 
 class RealtimeService {
     constructor() {
@@ -28,6 +32,7 @@ class RealtimeService {
             perceptionTriggerService;
 
             await visionProcess.initialize();
+            await voiceService.ensureSidecarRunning();
             loggerService.catInfo(LogCategory.SYSTEM, "Realtime Service: Optical & Acoustic links initialized.");
         } catch (err: any) {
             loggerService.catError(LogCategory.SYSTEM, `Realtime Service: Initialization failed: ${err.message}`);
@@ -83,7 +88,18 @@ class RealtimeService {
         sceneManager.on('status-change', callback);
     }
 
-    getSnapshot() {
+    private async downscaleFrame(base64Frame: string, maxDim: number): Promise<string> {
+        const data = base64Frame.includes(',') ? base64Frame.split(',')[1] : base64Frame;
+        try {
+            const buffer = Buffer.from(data, 'base64');
+            const resized = await sharp(buffer).resize(maxDim, maxDim, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 70 }).toBuffer();
+            return `data:image/jpeg;base64,${resized.toString('base64')}`;
+        } catch {
+            return base64Frame;
+        }
+    }
+
+    async getSnapshot() {
         const state = sceneManager.getState();
         const snapshot: any = {};
 
@@ -101,8 +117,13 @@ class RealtimeService {
             const frameSize = state.camera.lastFrame ? Math.round(state.camera.lastFrame.length / 1024) : 0;
             loggerService.catDebug(LogCategory.SYSTEM, `Capture: Camera frame availability: ${hasFrame}, size: ${frameSize}KB`);
             
+            let cameraFrame = state.camera.lastFrame;
+            if (cameraFrame) {
+                cameraFrame = await this.downscaleFrame(cameraFrame, CAMERA_MAX_DIM);
+            }
+
             snapshot.camera = {
-                lastFrame: state.camera.lastFrame,
+                lastFrame: cameraFrame,
                 people: state.camera.people.map(p => ({
                     id: p.id,
                     expression: p.expression,
@@ -117,8 +138,13 @@ class RealtimeService {
             const frameSize = state.screen.lastFrame ? Math.round(state.screen.lastFrame.length / 1024) : 0;
             loggerService.catDebug(LogCategory.SYSTEM, `Capture: Screen frame availability: ${hasFrame}, size: ${frameSize}KB`);
 
+            let screenFrame = state.screen.lastFrame;
+            if (screenFrame) {
+                screenFrame = await this.downscaleFrame(screenFrame, SCREEN_MAX_DIM);
+            }
+
             snapshot.screen = {
-                lastFrame: state.screen.lastFrame,
+                lastFrame: screenFrame,
                 activeApplication: state.screen.activeApplication
             };
             }

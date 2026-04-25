@@ -9,7 +9,7 @@ import icon from '../../resources/cognitav.jpg?asset'
 
 // Kernel Services
 import { contextService } from './services/contextService.js'
-import { processMessageAsync } from './services/inferenceService.js'
+import { processMessageAsync, inferenceService } from './services/inferenceService.js'
 import { domainService } from './services/domainService.js'
 import { settingsService } from './services/settingsService.js'
 import { createToolExecutor } from './services/toolsService.js'
@@ -601,6 +601,12 @@ ipcMain.handle('inference:send', async (_, sessionId, message, systemInstruction
 
   // Return immediately to keep UI responsive
   return { success: true };
+});
+
+ipcMain.handle('inference:stop', async () => {
+  (inferenceService as any).setIsCancelled?.(true);
+  realtimeService.cancelSpeech();
+  return { stopped: true };
 });
 
 // Listener for voice output completion (event-driven)
