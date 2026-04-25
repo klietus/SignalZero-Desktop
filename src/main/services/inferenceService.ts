@@ -997,25 +997,17 @@ export async function* sendMessageAndHandleTools(
       const isCallingTraceThisTurn = currentToolNames.has('log_trace');
       const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
       const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
-
-      // Use unified finish reason + pending tool calls to determine turn ending
-      const finishReason = (nextAssistant as any)?.finishReason || FinishReason.STOP;
-      const hasPendingTools = yieldedToolCalls && yieldedToolCalls.length > 0;
-      const hasTextOutput = textAccumulatedInTurn.trim().length > 0;
-      const isEndingTurn = (
-        finishReason === FinishReason.STOP &&
-        !hasPendingTools
-      ) || (
-        finishReason === FinishReason.STOP &&
-        hasPendingTools &&
-        !hasTextOutput
-      ) || (
-          finishReason === FinishReason.MAX_TOKENS
-        ) || (
-          finishReason === FinishReason.SAFETY
-        ) || (
-          finishReason === FinishReason.ERROR
-        );
+      
+      const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
+      const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
+      
+      loggerService.catDebug(LogCategory.INFERENCE, "Turn ending decision", {
+        contextSessionId,
+        toolNames: Array.from(currentToolNames),
+        hasNarrativeOutput,
+        assistantDoesNotNeedToolResponse,
+        isEndingTurn
+      });
 
       if (isEndingTurn && ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
         if (!traceSatisfied) {
