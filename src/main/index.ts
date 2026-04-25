@@ -387,7 +387,6 @@ function createWindow(): void {
           reasoningPreview: chunk.reasoning?.slice(0, 200),
           toolCallCount: chunk.toolCalls?.length || 0
         });
-        broadcastBatched(`inference:chunk:${chunk.sessionId}`, chunk.text, 50);
         broadcastBatched('inference:chunk', raw, 50);
       }
       if (type === KernelEventType.INFERENCE_COMPLETED) {

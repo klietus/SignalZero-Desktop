@@ -452,38 +452,8 @@ function App() {
             setMessages(prev => {
                 const last = prev[prev.length - 1];
                 
-                // Always merge reasoning into an existing model message
-                if (reasoning && last && last.role === Sender.MODEL) {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = { 
-                        ...last, 
-                        reasoningText: (last.reasoningText || '') + reasoning,
-                        content: last.content + text,
-                        toolCalls: mappedToolCalls.length > 0 ? [...(last.toolCalls || []), ...mappedToolCalls] : (last.toolCalls || [])
-                    };
-                    return updated;
-                }
-                
-                // Always merge tool calls into an existing model message to prevent dual response
-                if (mappedToolCalls.length > 0 && last && last.role === Sender.MODEL) {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = { 
-                        ...last, 
-                        content: last.content + text,
-                        toolCalls: [...(last.toolCalls || []), ...mappedToolCalls]
-                    };
-                    return updated;
-                }
-                
-                if (last && last.role === Sender.MODEL && last.isStreaming) {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = { 
-                        ...last, 
-                        content: last.content + text,
-                        toolCalls: mappedToolCalls.length > 0 ? [...(last.toolCalls || []), ...mappedToolCalls] : (last.toolCalls || [])
-                    };
-                    return updated;
-                } else {
+                // Create message for reasoning-only chunks (no prior model message)
+                if (reasoning && (!last || last.role !== Sender.MODEL || !last.isStreaming)) {
                     return [...prev, {
                         id: 'streaming-' + Date.now(),
                         role: Sender.MODEL,
@@ -495,24 +465,27 @@ function App() {
                     }];
                 }
                 
+                // Merge into existing streaming model message
                 if (last && last.role === Sender.MODEL && last.isStreaming) {
                     const updated = [...prev];
                     updated[updated.length - 1] = { 
                         ...last, 
+                        reasoningText: (last.reasoningText || '') + reasoning,
                         content: last.content + text,
                         toolCalls: mappedToolCalls.length > 0 ? [...(last.toolCalls || []), ...mappedToolCalls] : (last.toolCalls || [])
                     };
                     return updated;
-                } else {
-                    return [...prev, {
-                        id: 'streaming-' + Date.now(),
-                        role: Sender.MODEL,
-                        content: text,
-                        timestamp: new Date(),
-                        isStreaming: true,
-                        toolCalls: mappedToolCalls
-                    }];
                 }
+                
+                return [...prev, {
+                    id: 'streaming-' + Date.now(),
+                    role: Sender.MODEL,
+                    content: text,
+                    timestamp: new Date(),
+                    isStreaming: true,
+                    toolCalls: mappedToolCalls,
+                    reasoningText: reasoning
+                }];
             });
         });
 

@@ -24,6 +24,59 @@ import { workerService } from './workerService.js';
 import { realtimeService } from './realtime/realtimeService.js';
 import { llamaService, urgentLlamaService, LlamaPriority } from './llamaService.js';
 
+// --- Unified Finish Reason ---
+
+export enum FinishReason {
+  STOP = "stop",
+  TOOL_CALLS = "tool-calls",
+  MAX_TOKENS = "max-tokens",
+  SAFETY = "safety",
+  ERROR = "error",
+}
+
+/**
+ * Unify provider-specific stop reasons into a single internal enum.
+ * OpenAI: "stop" | "tool_calls" | "length" | "content_filter" | null
+ * Gemini: STOP | MAX_TOKENS | SAFETY | RECITATION | LANGUAGE | OTHER | BLOCKLIST | etc.
+ */
+export const unifyFinishReason = (provider: string, rawReason: string | null | undefined): FinishReason => {
+  if (!rawReason) return FinishReason.STOP;
+
+  if (provider === 'openai' || provider === 'kimi2') {
+    switch (rawReason) {
+      case 'stop': return FinishReason.STOP;
+      case 'tool_calls': return FinishReason.TOOL_CALLS;
+      case 'length':
+      case 'max_output_tokens': return FinishReason.MAX_TOKENS;
+      case 'content_filter': return FinishReason.SAFETY;
+      default: return FinishReason.ERROR;
+    }
+  }
+
+  if (provider === 'gemini') {
+    switch (rawReason) {
+      case 'STOP': return FinishReason.STOP;
+      case 'MAX_TOKENS': return FinishReason.MAX_TOKENS;
+      case 'SAFETY':
+      case 'RECITATION':
+      case 'LANGUAGE':
+      case 'BLOCKLIST':
+      case 'PROHIBITED_CONTENT':
+      case 'SPII':
+      case 'IMAGE_SAFETY':
+      case 'IMAGE_PROHIBITED_CONTENT': return FinishReason.SAFETY;
+      case 'MALFORMED_FUNCTION_CALL':
+      case 'UNEXPECTED_TOOL_CALL':
+      case 'TOO_MANY_TOOL_CALLS':
+      case 'MISSING_THOUGHT_SIGNATURE':
+      case 'MALFORMED_RESPONSE': return FinishReason.ERROR;
+      default: return FinishReason.STOP;
+    }
+  }
+
+  return FinishReason.ERROR;
+};
+
 interface ChatSessionState {
   messages: ChatCompletionMessageParam[];
   systemInstruction: string;
@@ -478,12 +531,36 @@ const _streamAssistantResponseInternal = async function* (
     const result = await chatSession.sendMessageStream(messageToSend.parts);
     let textAccumulator = "";
     const collectedToolCalls: ChatCompletionMessageToolCall[] = [];
+    let finishReason: string | null = null;
 
     for await (const chunk of result.stream) {
       let text = "";
-      try { text = chunk.text(); } catch (e) { }
+      let thinking = "";
+      
+      // Extract thinking and narrative from chunk.candidates (available directly during stream)
+      const candidates = (chunk as any).candidates || [];
+      if (candidates[0]?.content?.parts) {
+        for (const part of candidates[0].content.parts) {
+          if (part?.thought) {
+            thinking += part.text || "";
+          } else if (part?.text) {
+            text += part.text;
+          }
+        }
+      }
+      
+      // Fallback to chunk.text() if no parts structure found
+      if (!text && !thinking) {
+        try { text = chunk.text(); } catch (e) { }
+      }
+      
+      if (thinking) {
+        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: thinking chunk", { length: thinking.length, preview: thinking.slice(0, 100) });
+        yield { reasoning: thinking };
+      }
       if (text) {
         textAccumulator += text;
+        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: narrative chunk", { length: text.length, preview: text.slice(0, 80) });
         yield { text };
       }
       const calls = chunk.functionCalls();
@@ -502,12 +579,20 @@ const _streamAssistantResponseInternal = async function* (
       }
     }
 
+    // Capture finish reason from final response
+    finishReason = (result as any).response?.candidates?.[0]?.finishReason ?? null;
+
     if (collectedToolCalls.length > 0) yield { toolCalls: collectedToolCalls };
     const assistantMessage: ChatCompletionMessageParam = {
       role: "assistant",
       content: textAccumulator,
       ...(collectedToolCalls.length > 0 ? { tool_calls: collectedToolCalls } : {}),
     };
+
+    // Attach unified finish reason for turn-ending logic
+    const geminiSettings = await settingsService.getInferenceSettings();
+    (assistantMessage as any).finishReason = unifyFinishReason(geminiSettings.provider || 'gemini', finishReason);
+
     yield { assistantMessage };
     return;
   }
@@ -524,9 +609,11 @@ const _streamAssistantResponseInternal = async function* (
   let textAccumulator = "";
   let reasoningAccumulator = "";
   const collectedToolCalls = new Map<number, ChatCompletionMessageToolCall>();
+  let finishReason: string | null = null;
 
   for await (const part of stream) {
     const delta = part.choices?.[0]?.delta;
+    finishReason = part.choices?.[0]?.finish_reason ?? null;
     if (!delta) continue;
 
     // Capture Reasoning Content (Thinking)
@@ -559,6 +646,10 @@ const _streamAssistantResponseInternal = async function* (
   if (reasoningAccumulator) {
     (assistantMessage as any).reasoning_content = reasoningAccumulator;
   }
+
+  // Attach unified finish reason for turn-ending logic
+  const openaiSettings = await settingsService.getInferenceSettings();
+  (assistantMessage as any).finishReason = unifyFinishReason(openaiSettings.provider || 'openai', finishReason);
 
   yield { assistantMessage };
 };
@@ -830,17 +921,19 @@ export async function* sendMessageAndHandleTools(
         const assistantMessage = inferenceService.streamAssistantResponse(contextMessages as ChatCompletionMessageParam[], chat.model, activeToolList);
         textAccumulatedInTurn = "";
         let rawTextInTurn = "";
+        let rawReasoningInTurn = "";
         yieldedToolCalls = undefined;
         nextAssistant = null;
 
         for await (const chunk of assistantMessage) {
           if (chunk.text) { rawTextInTurn += chunk.text; textWasStreamed = true; }
+          if (chunk.reasoning) { rawReasoningInTurn += chunk.reasoning; }
           if (chunk.toolCalls) { yieldedToolCalls = chunk.toolCalls; yield { toolCalls: chunk.toolCalls }; }
           if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
         }
 
         textAccumulatedInTurn = stripThoughts(rawTextInTurn);
-        if (rawTextInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) {
+        if (rawTextInTurn.trim() || rawReasoningInTurn.trim() || (yieldedToolCalls && yieldedToolCalls.length > 0)) {
           if (!textAccumulatedInTurn.trim() && rawTextInTurn.trim()) {
             loggerService.catDebug(LogCategory.INFERENCE, "Model provided reasoning but empty final content.", {
               contextSessionId,
@@ -852,7 +945,8 @@ export async function* sendMessageAndHandleTools(
         retries++;
         loggerService.catWarn(LogCategory.INFERENCE, `Empty model response. Retry ${retries}/${MAX_RETRIES}...`, {
           contextSessionId,
-          rawOutputPreview: rawTextInTurn.slice(0, 100)
+          rawOutputPreview: rawTextInTurn.slice(0, 100),
+          rawReasoningLength: rawReasoningInTurn.length
         });
       }
 
@@ -902,9 +996,21 @@ export async function* sendMessageAndHandleTools(
       const currentToolNames = new Set((yieldedToolCalls || []).map(tc => tc.function?.name || ""));
       const isCallingTraceThisTurn = currentToolNames.has('log_trace');
       const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
-      const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
       const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
-      const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
+      
+      // Use unified finish reason + pending tool calls to determine turn ending
+      const finishReason = (nextAssistant as any)?.finishReason || FinishReason.STOP;
+      const hasPendingTools = yieldedToolCalls && yieldedToolCalls.length > 0;
+      const isEndingTurn = (
+        finishReason === FinishReason.STOP &&
+        !hasPendingTools
+      ) || (
+        finishReason === FinishReason.MAX_TOKENS
+      ) || (
+        finishReason === FinishReason.SAFETY
+      ) || (
+        finishReason === FinishReason.ERROR
+      );
 
       if (isEndingTurn && ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
         if (!traceSatisfied) {
