@@ -388,7 +388,13 @@ function createWindow(): void {
           toolCallCount: chunk.toolCalls?.length || 0,
           isComplete: !!chunk.isComplete
         });
-        broadcastBatched('inference:chunk', raw, 50);
+        
+        // Broadcast final content chunks immediately (not batched) to prevent race with completion event
+        if (chunk.isComplete && !chunk.text && !chunk.reasoning) {
+          broadcast('inference:chunk', raw);
+        } else {
+          broadcastBatched('inference:chunk', raw, 50);
+        }
       }
       if (type === KernelEventType.INFERENCE_COMPLETED) {
         const completed = raw as { sessionId: string; fullText?: string };
@@ -396,6 +402,20 @@ function createWindow(): void {
           sessionId: completed.sessionId,
           fullTextLen: completed.fullText?.length || 0
         });
+        
+        // Flush any pending batched chunks before sending completion to prevent race condition
+        const chunkKey = `inference:chunk:${KernelEventType.INFERENCE_CHUNK}`;
+        if (ipcBatchQueues.has(chunkKey)) {
+          broadcast('inference:chunk', ipcBatchQueues.get(chunkKey));
+          ipcBatchQueues.delete(chunkKey);
+        }
+        
+        // Clear the batch timer to prevent duplicate emission after completion
+        if (ipcBatchTimers.has(chunkKey)) {
+          clearInterval(ipcBatchTimers.get(chunkKey)!);
+          ipcBatchTimers.delete(chunkKey);
+        }
+        
         broadcast(`inference:completed:${completed.sessionId}`, raw);
         broadcast('inference:completed', { sessionId: completed.sessionId });
       }
@@ -621,6 +641,12 @@ ipcMain.handle('inference:send', async (_, sessionId, message, systemInstruction
 ipcMain.handle('inference:stop', async () => {
   (inferenceService as any).setIsCancelled?.(true);
   realtimeService.cancelSpeech();
+  
+  // Clear the flag after a brief delay to allow current inference to notice cancellation
+  setTimeout(() => {
+    (inferenceService as any).setIsCancelled?.(false);
+  }, 100);
+  
   return { stopped: true };
 });
 

@@ -431,7 +431,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
               : 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md text-gray-800 dark:text-gray-300 border border-gray-200/50 dark:border-gray-800/50'
             }`}>
             
-            {/* Header / Meta Controls */}
             {isUser && (
                 <div className={`flex items-center gap-2 mb-2 pb-2 border-b border-white/20 w-full ${message.metadata?.attachments && message.metadata.attachments.length > 0 ? 'justify-between' : 'justify-end'}`}>
                     {message.metadata?.attachments && message.metadata.attachments.length > 0 && (
@@ -492,7 +491,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
                     </button>
                   )}
 
-                  {!message.isStreaming && message.content && (
+                  {message.content && (
                     <>
                       <button
                         onClick={() => onRetry && onRetry(message.id, message.content)}
@@ -503,7 +502,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
                       </button>
                       <button
                         onClick={handleCopy}
-                        className={`p-1 rounded-md transition-colors ${copyLabel === 'Copied' ? 'text-emerald-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                        className={`p-1 rounded-md transition-colors ${copyLabel === 'Copied' ? 'text-emerald-500' : 'text-gray-400 hover:text-gray-600 dark:hover:bg-indigo-900/20 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                         title={copyLabel}
                       >
                         <Copy size={14} />
@@ -517,7 +516,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
             {/* Expanded Tool List */}
             {isAssistantResponse && showToolList && message.toolCalls && message.toolCalls.length > 0 && (
                <div className="mb-3 w-full border-b border-gray-100 dark:border-gray-800 pb-2">
-                 <ToolIndicator toolCalls={message.toolCalls} isFinished={!message.isStreaming || message.content.length > 0} />
+                 <ToolIndicator toolCalls={message.toolCalls} isFinished={!!message.content} />
                </div>
             )}
 
@@ -531,19 +530,32 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
               <ThinkingBlock content={message.reasoningText} />
             )}
 
-            {/* Message Content or Pulse */}
-            {isAssistantResponse && message.isStreaming && !message.content ? (
-                <div className="flex items-center gap-2 py-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-75"></span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-150"></span>
-                </div>
-            ) : (
-                <div className={`max-w-full break-words`}>
+            {/* Message Content - smooth streaming reveal */}
+            {isAssistantResponse && (
+                <>
+                    <div className={`max-w-full break-words transition-all duration-300 ease-out ${!message.content ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'}`}>
+                        {formatText(contentWithoutTraces)}
+                        {/* Cursor fades out smoothly as content streams in, then disappears when done */}
+                        {message.isStreaming && message.content && !message.toolCalls?.length && (
+                            <span 
+                                className="inline-block w-2 h-4 ml-1 align-middle bg-emerald-500 animate-pulse transition-opacity duration-300"
+                                style={{ opacity: Math.max(0, 1 - message.content.length / 100) }}
+                            />
+                        )}
+                    </div>
+                    {/* Loading dots - fade out as content appears */}
+                    <div className={`flex items-center gap-2 py-2 transition-opacity duration-300 ${message.content ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-75"></span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse delay-150"></span>
+                    </div>
+                </>
+            )}
+
+            {/* User message content */}
+            {isUser && (
+                <div className={`max-w-full break-words transition-all duration-300 ease-out ${!message.content ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'}`}>
                     {formatText(contentWithoutTraces)}
-                    {message.isStreaming && (
-                        <span className="inline-block w-2 h-4 ml-1 align-middle bg-emerald-500 opacity-75 animate-pulse" />
-                    )}
                 </div>
             )}
           </div>

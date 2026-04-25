@@ -776,7 +776,12 @@ export async function* sendMessageAndHandleTools(
     while (loops < MAX_TOOL_LOOPS && auditRetries < MAX_AUDIT_RETRIES + 1) {
       if (inferenceService.isCancelled) {
         loggerService.catInfo(LogCategory.INFERENCE, "Inference cancelled by user.");
-        yield { text: "[Stopped]", isComplete: true };
+        // Only yield [Stopped] if we have no accumulated text; otherwise just end silently
+        if (!totalTextAccumulatedAcrossLoops.trim()) {
+          yield { isComplete: true };
+        } else {
+          yield { isComplete: true };
+        }
         break;
       }
       loggerService.catDebug(LogCategory.INFERENCE, `Starting turn loop ${loops}/${MAX_TOOL_LOOPS}`, {
@@ -926,8 +931,8 @@ export async function* sendMessageAndHandleTools(
         nextAssistant = null;
 
         for await (const chunk of assistantMessage) {
-          if (chunk.text) { rawTextInTurn += chunk.text; textWasStreamed = true; }
-          if (chunk.reasoning) { rawReasoningInTurn += chunk.reasoning; }
+          if (chunk.text) { rawTextInTurn += chunk.text; textWasStreamed = true; yield { text: chunk.text }; }
+          if (chunk.reasoning) { rawReasoningInTurn += chunk.reasoning; yield { reasoning: chunk.reasoning }; }
           if (chunk.toolCalls) { yieldedToolCalls = chunk.toolCalls; yield { toolCalls: chunk.toolCalls }; }
           if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
         }
@@ -1000,6 +1005,9 @@ export async function* sendMessageAndHandleTools(
       
       const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
       const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
+      
+      // FORCE NARRATIVE: If we've done ≥2 tool-only loops with no narrative, force synthesis
+      const isStuckInToolLoop = loops >= 2 && !hasNarrativeOutput && yieldedToolCalls && yieldedToolCalls.length > 0;
       
       loggerService.catDebug(LogCategory.INFERENCE, "Turn ending decision", {
         contextSessionId,
@@ -1078,7 +1086,29 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
         totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
       }
 
-      if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0 && !textWasStreamed) yield { text: totalTextAccumulatedAcrossLoops.trim() };
+      // Emit any remaining accumulated text on ending turn (for non-streamed responses)
+      if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0 && !textWasStreamed) {
+        yield { text: totalTextAccumulatedAcrossLoops.trim() };
+      }
+
+      // FORCE NARRATIVE: If stuck in tool loop, inject directive to synthesize and end
+      if (isStuckInToolLoop) {
+        loggerService.catInfo(LogCategory.INFERENCE, "Detected tool-only loop. Forcing narrative synthesis.", {
+          contextSessionId,
+          loops,
+          toolNames: Array.from(currentToolNames)
+        });
+
+        transientMessages.push(nextAssistant!);
+        if (toolResponses.length > 0) transientMessages.push(...toolResponses);
+        transientMessages.push({
+          role: "user",
+          content: "[SYSTEM DIRECTIVE] You have executed the necessary tools. Now provide a concise narrative synthesis of your findings and end the turn. DO NOT call any more tools."
+        });
+
+        loops++;
+        continue;
+      }
 
       // Record Assistant message if it contained tool calls OR if it's the final turn
       if (contextSessionId && nextAssistant) {
@@ -1401,8 +1431,13 @@ export const primeSymbolicContext = async (
     }`;
 
     let fastResponse: any = {};
-    const fastText = await callFastInference([{ role: "user", content: prompt }], 512, undefined, LlamaPriority.URGENT);
-    fastResponse = extractJson(fastText);
+    try {
+      const fastText = await callFastInference([{ role: "user", content: prompt }], 512, undefined, LlamaPriority.URGENT);
+      fastResponse = extractJson(fastText) || {};
+    } catch (jsonError: any) {
+      loggerService.catWarn(LogCategory.INFERENCE, "Fast model priming failed, using defaults", { error: jsonError.message });
+      fastResponse = { queries: [], web_search_needed: false, web_search_queries: [], trace_needed: true };
+    }
 
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
 
@@ -1539,6 +1574,9 @@ export const processMessageAsync = async (
 
     const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, 1, message, sceneAttachments, metadata);
 
+    // Clear any stale cancellation flag before starting new inference
+    _isCancelled = false;
+
     const isSilent = metadata?.silent === true;
     if (!isSilent) {
       eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId } as const);
@@ -1559,7 +1597,8 @@ export const processMessageAsync = async (
         eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId } as const);
       }
       if (chunk.isComplete) {
-        if (!isSilent) {
+        // Only emit INFERENCE_COMPLETED if we have actual content; silent cancellation otherwise
+        if (!isSilent && fullText.trim()) {
           eventBusService.emitKernelEvent(KernelEventType.INFERENCE_COMPLETED, {
             sessionId: contextSessionId,
             messageId,

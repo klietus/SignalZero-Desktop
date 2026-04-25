@@ -297,6 +297,7 @@ function App() {
     const [showGraphviz, setShowGraphviz] = useState(true);
 
     const scrollRef = useRef<HTMLDivElement>(null);
+    const prevMessagesLenRef = useRef(0);
 
     const scrollToBottom = useCallback(() => {
         if (scrollRef.current) {
@@ -305,10 +306,9 @@ function App() {
     }, []);
 
     useEffect(() => {
-        if (currentView === 'chat' && messages.length > 0) {
-            scrollToBottom();
-        }
-    }, [messages, currentView, scrollToBottom]);
+        // Track message count for detecting new messages vs streaming updates
+        prevMessagesLenRef.current = messages.length;
+    }, [messages]);
 
     useEffect(() => {
         if (currentView === 'chat' && activeContextId) {
@@ -400,6 +400,8 @@ function App() {
         checkInit();
     }, []);
 
+    const justCompletedRef = useRef(false);
+    
     useEffect(() => {
         if (appState !== 'app' || !activeContextId || currentView === 'monitor') {
             setMessages([]);
@@ -411,9 +413,15 @@ function App() {
 
         window.api.setActiveContext(activeContextId);
         
-        // Don't fetch history if we are currently processing a message, 
+        // Don't fetch history if we are currently processing, 
         // as it would overwrite the active streaming state.
         if (isProcessing) return;
+        
+        // Skip reload immediately after completion - streaming message is already in place
+        if (justCompletedRef.current) {
+            justCompletedRef.current = false;
+            return;
+        }
 
         setIsLoadingHistory(true);
         setMessages([]);
@@ -474,6 +482,14 @@ function App() {
                         content: last.content + text,
                         toolCalls: mappedToolCalls.length > 0 ? [...(last.toolCalls || []), ...mappedToolCalls] : (last.toolCalls || [])
                     };
+                    
+                    // Scroll to bottom smoothly as content streams in
+                    setTimeout(() => {
+                        if (scrollRef.current) {
+                            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                        }
+                    }, 0);
+                    
                     return updated;
                 }
                 
@@ -495,19 +511,8 @@ function App() {
 
             setIsProcessing(false);
             
-            // Immediately clear any streaming messages to prevent double-display 
-            // before the history fetch completes
-            setMessages(prev => prev.filter(m => !m.isStreaming));
-
-            if (activeContextId) {
-                window.api.getHistory(activeContextId).then(history => {
-                    if (history) {
-                        const grouped = groupHistoryByCorrelation(history);
-                        setMessages(grouped);
-                    }
-                });
-            }
-            refreshSystemStats();
+            // Flag to skip history reload - streaming message stays in place
+            justCompletedRef.current = true;
         });
 
         const unbindTrace = window.api.onTraceLogged((trace) => {
@@ -780,6 +785,14 @@ function App() {
             } 
         };
         setMessages(prev => [...prev, userMsg]);
+        
+        // Scroll to bottom when new user message is added
+        setTimeout(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }
+        }, 0);
+        
         try {
             await window.api.sendMessage(activeContextId, finalMessage, systemPrompt, finalOptions?.metadata);
         } catch (e) {
