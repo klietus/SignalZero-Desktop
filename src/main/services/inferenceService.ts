@@ -1111,20 +1111,29 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
         if (contextSessionId) {
           try {
             const session = await contextService.getSession(contextSessionId);
-            if (session && (!session.name || session.name.startsWith('Context '))) {
-              const history = await contextService.getUnfilteredHistory(contextSessionId);
-              if (history.length >= 2 && history.length <= 4) {
-                const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
-                const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+            if (!session) return;
+            const needsName = !session.name || session.name.startsWith('Context ');
+            const history = await contextService.getUnfilteredHistory(contextSessionId);
+            const userRounds = history.filter(m => m.role === 'user').length;
+            loggerService.catDebug(LogCategory.INFERENCE, "Naming check", {
+              contextSessionId,
+              needsName,
+              currentName: session.name,
+              historyLength: history.length,
+              userRounds,
+              willName: needsName && userRounds >= 1 && userRounds <= 10
+            });
+            if (needsName && userRounds >= 1 && userRounds <= 10) {
+              const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
+              const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
 
-                void callFastInference([{ role: "user", content: namingPrompt }], 1024, undefined, LlamaPriority.URGENT).then(async (newName) => {
-                  if (newName) {
-                    const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                    await contextService.updateSession({ ...session, name: cleanName });
-                    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
-                  }
-                }).catch(() => { });
-              }
+              void callFastInference([{ role: "user", content: namingPrompt }], 1024, undefined, LlamaPriority.URGENT).then(async (newName) => {
+                if (newName) {
+                  const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                  await contextService.updateSession({ ...session, name: cleanName });
+                  eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
+                }
+              }).catch(() => { });
             }
           } catch (namingError) { }
         }
