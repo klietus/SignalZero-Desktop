@@ -15,7 +15,8 @@ import { settingsService } from './services/settingsService.js'
 import { createToolExecutor } from './services/toolsService.js'
 import { loggerService, LogCategory } from './services/loggerService.js'
 import { agentService } from './services/agentService.js'
-import { eventBusService, KernelEventType } from './services/eventBusService.js'
+import { eventBusService } from './services/eventBusService.js'
+import { KernelEventType } from './types.js'
 import { systemPromptService } from './services/systemPromptService.js'
 import { ACTIVATION_PROMPT } from './symbolic_system/activation_prompt.js'
 import { projectService } from './services/projectService.js'
@@ -365,28 +366,31 @@ function createWindow(): void {
 
   // Global Event Forwarding
   Object.values(KernelEventType).forEach(type => {
-    eventBusService.onKernelEvent(type, (data) => {
+    eventBusService.onKernelEvent(type, (raw) => {
       // Skip ultra-high frequency events from the main monitor stream
       if (type !== KernelEventType.INFERENCE_CHUNK) {
         if (type === 'monitoring:delta-created' as any) {
-            broadcastBatched('kernel:event', { type, payload: data }, 100);
+            broadcastBatched('kernel:event', { type, payload: raw }, 100);
         } else {
-            broadcast('kernel:event', { type, data });
+            broadcast('kernel:event', { type, data: raw });
         }
       }
 
       // Legacy/Specific forwards
-      if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', data);
+      if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', raw);
       if (type === KernelEventType.INFERENCE_CHUNK) {
-        broadcastBatched(`inference:chunk:${data.sessionId}`, data.text, 50);
-        broadcastBatched('inference:chunk', { sessionId: data.sessionId, text: data.text }, 50);
+        const chunk = raw as { sessionId: string; text: string };
+        broadcastBatched(`inference:chunk:${chunk.sessionId}`, chunk.text, 50);
+        broadcastBatched('inference:chunk', { sessionId: chunk.sessionId, text: chunk.text }, 50);
       }
       if (type === KernelEventType.INFERENCE_COMPLETED) {
-        broadcast(`inference:completed:${data.sessionId}`, data);
-        broadcast('inference:completed', { sessionId: data.sessionId });
+        const completed = raw as { sessionId: string };
+        broadcast(`inference:completed:${completed.sessionId}`, raw);
+        broadcast('inference:completed', { sessionId: completed.sessionId });
       }
       if (type === KernelEventType.INFERENCE_ERROR) {
-        broadcast(`inference:error:${data.sessionId}`, data.error);
+        const error = raw as { error: string; sessionId: string };
+        broadcast(`inference:error:${error.sessionId}`, error.error);
       }
     });
   });
@@ -600,7 +604,8 @@ ipcMain.handle('inference:send', async (_, sessionId, message, systemInstruction
 });
 
 // Listener for voice output completion (event-driven)
-eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (data) => {
+eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (raw) => {
+  const data = raw as { fullText: string };
   realtimeService.speak(data.fullText, null).catch(err => {
     loggerService.catError(LogCategory.SYSTEM, "Event-driven Voice output failed", { error: err.message });
   });
@@ -683,7 +688,7 @@ ipcMain.handle('settings:update', async (_, settings) => {
   await monitoringService.refreshIntervals();
   
   // Notify system components of settings changes
-  eventBusService.emitKernelEvent(KernelEventType.SETTINGS_UPDATED, settings);
+  eventBusService.emitKernelEvent(KernelEventType.SETTINGS_UPDATED, { settings } as const);
   
   return updated;
 });

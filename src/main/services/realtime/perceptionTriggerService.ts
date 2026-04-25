@@ -256,13 +256,13 @@ FORMAT: Return a JSON object with:
                 const result = await inferenceService.extractJson(flashResult);
                 if (result.promote === true) {
                     loggerService.catInfo(LogCategory.SYSTEM, `PROMOTING PERCEPTION EVENT: ${result.synthesis}`);
-                    eventBusService.emitKernelEvent('perception:spike-promoted' as any, {
+                    eventBusService.emitKernelEvent('perception:spike-promoted', {
                         synthesis: result.synthesis,
                         reason: result.reason,
                         sceneSnapshot: sceneSnapshot,
                         transcriptSlice,
                         sessionId: uiStateService.activeSessionId
-                    });
+                    } as const);
                 }
  else {
                     loggerService.catDebug(LogCategory.SYSTEM, `Flash Round Ignored Spike: ${result.reason}`);

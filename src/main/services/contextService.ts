@@ -1,7 +1,8 @@
 import { sqliteService } from './sqliteService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { attachmentService } from './attachmentService.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { ContextMessage, ContextSession } from '../types.js';
 import { randomUUID } from 'crypto';
 
@@ -49,7 +50,7 @@ export const contextService = {
     const session = await this.getSession(id);
     if (!session) throw new Error("Failed to create session");
     
-    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_CREATED, session);
+    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_CREATED, { session } as const);
     
     return session;
   },
@@ -125,7 +126,7 @@ export const contextService = {
         const result = sqliteService.run(`DELETE FROM contexts WHERE id = ?`, [id]);
         
         if (result.changes > 0) {
-            eventBusService.emitKernelEvent(KernelEventType.CONTEXT_DELETED, { id });
+            eventBusService.emitKernelEvent(KernelEventType.CONTEXT_DELETED, { id } as const);
             return true;
         }
         return false;

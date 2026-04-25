@@ -5,7 +5,8 @@ import { loggerService, LogCategory } from './loggerService.js';
 import { settingsService } from './settingsService.js';
 import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
 import { LlamaPriority } from './llamaService.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { SymbolDef, GraphHygieneSettings } from '../types.js';
 import { embedTexts } from './embeddingService.js';
 
@@ -679,7 +680,7 @@ export class TopologyService {
                     eventBusService.emitKernelEvent(KernelEventType.SYMBOL_COMPRESSION, {
                         canonicalId,
                         redundantId: oldId
-                    });
+                    } as const);
                 } catch (error) {
                     loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed to merge ${oldId} into ${canonicalId}`, { error });
                 }
@@ -1323,7 +1324,7 @@ A Lattice is a high-level abstract container providing structural "docking point
                 eventBusService.emitKernelEvent(KernelEventType.ORPHAN_DETECTED, {
                     symbolId: centroid.id,
                     domainId: centroid.symbol_domain
-                });
+                } as const);
             }
 
             // 2. Vector search for docking points in the mainland

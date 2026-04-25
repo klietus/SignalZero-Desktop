@@ -2,7 +2,8 @@ import { SymbolDef, SymbolLink, VectorSearchResult } from '../types.js';
 import { lancedbService } from './lancedbService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { extractJson, callFastInference } from './inferenceService.js';
 import { LlamaPriority } from './llamaService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
@@ -317,7 +318,7 @@ export const domainService = {
         eventBusService.emitKernelEvent(KernelEventType.SYMBOL_UPSERTED, { 
             symbolId: s.id, 
             domainId: s.symbol_domain || s.domain_id || defaultDomainId 
-        });
+        } as const);
     }
   },
 
@@ -533,7 +534,7 @@ export const domainService = {
 
     const result = sqliteService.run(`DELETE FROM symbols WHERE id = ? AND domain_id = ?`, [symbolId, domainId]);
     if (result.changes > 0) {
-        eventBusService.emitKernelEvent(KernelEventType.SYMBOL_DELETED, { symbolId, domainId });
+        eventBusService.emitKernelEvent(KernelEventType.SYMBOL_DELETED, { symbolId, domainId } as const);
         return true;
     }
     return false;

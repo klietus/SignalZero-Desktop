@@ -2,7 +2,8 @@ import { domainService } from './domainService.js';
 import { testService } from './testService.js';
 import { agentService } from './agentService.js';
 import { ProjectMeta, ProjectImportStats, SymbolDef } from '../types.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { lancedbService } from './lancedbService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { systemPromptService } from './systemPromptService.js';
@@ -59,7 +60,7 @@ export const projectService = {
             
             const emitStatus = (status: string, progress: number) => {
                 loggerService.catInfo(LogCategory.SYSTEM, `Import Progress [${progress}%]: ${status}`);
-                eventBusService.emitKernelEvent(KernelEventType.PROJECT_IMPORT_STATUS, { status, progress });
+                eventBusService.emitKernelEvent(KernelEventType.PROJECT_IMPORT_STATUS, { status, progress } as const);
             };
 
             emitStatus("Parsing project metadata...", 5);
@@ -266,7 +267,7 @@ export const projectService = {
                 status: "COMPLETE", 
                 progress: 100,
                 stats
-            });
+            } as const);
 
             return { stats, systemPrompt, mcpPrompt };
         } catch (error: any) {
@@ -275,7 +276,7 @@ export const projectService = {
                 status: "FAILED", 
                 progress: 0,
                 error: error.message 
-            });
+            } as const);
             throw error;
         }
     }

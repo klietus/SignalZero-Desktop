@@ -18,7 +18,8 @@ import { contextWindowService } from './contextWindowService.js';
 import { lancedbService } from './lancedbService.js';
 import { attachmentService, Attachment } from './attachmentService.js';
 import { mcpClientService } from './mcpClientService.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { webSearchService } from './webSearchService.js';
 import { workerService } from './workerService.js';
 import { realtimeService } from './realtime/realtimeService.js';
@@ -94,7 +95,7 @@ export const callFastInference = async (
   const startTime = performance.now();
   const requestId = randomUUID();
 
-  eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_STARTED, { requestId, timestamp: new Date().toISOString() });
+  eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_STARTED, { requestId, timestamp: new Date().toISOString() } as const);
 
   try {
     // Inject "No Thinking" constraint into the first system message if it exists, otherwise add one.
@@ -132,10 +133,10 @@ export const callFastInference = async (
     eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, {
       requestId,
       durationMs: duration,
-      tokenCount: responseText.length / 4, // Rough approximation
+      tokenCount: responseText.length / 4,
       status: 'success',
       timestamp: new Date().toISOString()
-    });
+    } as const);
 
     loggerService.catDebug(LogCategory.INFERENCE, "Fast inference metrics", { durationMs: duration, requestId });
 
@@ -148,7 +149,7 @@ export const callFastInference = async (
       status: 'error',
       error: error.message,
       timestamp: new Date().toISOString()
-    });
+    } as const);
 
     loggerService.catError(LogCategory.INFERENCE, "Fast inference (llama sidecar) failed", { error: error.message, durationMs: duration });
     throw error;
@@ -773,7 +774,7 @@ export async function* sendMessageAndHandleTools(
               }
             }
           }
-          eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens: result.totalTokens });
+          eventBusService.emitKernelEvent(KernelEventType.INFERENCE_TOKENS, { sessionId: contextSessionId, totalTokens: result.totalTokens } as const);
         } else {
           const finalUserContentText = message || resolvedContent;
           let userContent: any = finalUserContentText;
@@ -1015,7 +1016,7 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
                 if (newName) {
                   const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
                   await contextService.updateSession({ ...session, name: cleanName });
-                  eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
+                  eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
                 }
               }
             }
@@ -1308,7 +1309,7 @@ export const primeSymbolicContext = async (
       loggerService.catInfo(LogCategory.INFERENCE, `Fast model suggested session name: ${fastResponse.suggested_name}`);
       const cleanName = fastResponse.suggested_name.replace(/^["']|["']$/g, '').slice(0, 50);
       await contextService.renameSession(contextSessionId, cleanName);
-      eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName });
+      eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
     }
 
     if (symbolicQueries.length > 0) {
@@ -1373,7 +1374,7 @@ export const processMessageAsync = async (
   messageId?: string,
   metadata?: Record<string, any>
 ) => {
-  eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { contextSessionId });
+  eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { contextSessionId } as const);
   let messageTraceNeeded = false;
   try {
     const sceneSnapshot = realtimeService.getSnapshot();
@@ -1448,14 +1449,14 @@ export const processMessageAsync = async (
 
     const isSilent = metadata?.silent === true;
     if (!isSilent) {
-      eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId });
+      eventBusService.emitKernelEvent(KernelEventType.INFERENCE_STARTED, { sessionId: contextSessionId, messageId } as const);
     }
 
     let fullText = "";
     for await (const chunk of stream) {
       if (chunk.text) fullText += chunk.text;
       if (!isSilent && (chunk.text || chunk.toolCalls)) {
-        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId });
+        eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId } as const);
       }
       if (chunk.isComplete) {
         if (!isSilent) {
@@ -1464,7 +1465,7 @@ export const processMessageAsync = async (
             messageId,
             fullText,
             metadata: { ...metadata }
-          });
+          } as const);
         }
         return { fullText, sessionId: contextSessionId };
       }
@@ -1472,7 +1473,7 @@ export const processMessageAsync = async (
     return { success: false, reason: "Inference loop ended without completion flag" };
   } catch (error: any) {
     loggerService.catError(LogCategory.INFERENCE, "Async Message Processing Failed", { contextSessionId, error: error.message });
-    eventBusService.emitKernelEvent(KernelEventType.INFERENCE_ERROR, { sessionId: contextSessionId, messageId, error: error.message });
+    eventBusService.emitKernelEvent(KernelEventType.INFERENCE_ERROR, { sessionId: contextSessionId, messageId, error: error.message } as const);
     return { success: false, error: error.message };
   }
 };

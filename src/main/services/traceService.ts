@@ -1,7 +1,8 @@
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { TraceData } from '../types.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { symbolCacheService } from './symbolCacheService.js';
 
 export const traceService = {
@@ -39,7 +40,7 @@ export const traceService = {
                 }
             }
 
-            eventBusService.emitKernelEvent(KernelEventType.TRACE_LOGGED, trace);
+            eventBusService.emitKernelEvent(KernelEventType.TRACE_LOGGED, { trace } as const);
             if (loggerService) {
                 loggerService.catDebug(LogCategory.SYSTEM, "Trace logged", { traceId: id, sessionId: trace.sessionId });
             }

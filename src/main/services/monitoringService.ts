@@ -469,7 +469,7 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
         // Notify any listeners (e.g. Agents) - ONLY if monitoring is enabled globally
         const settings = await settingsService.getMonitoringSettings();
         if (settings.enabled) {
-            eventBusService.emitKernelEvent('monitoring:delta-created' as any, delta);
+            eventBusService.emitKernelEvent('monitoring:delta-created', { delta });
         }
 
         loggerService.catInfo(LogCategory.MONITORING, `Recorded new ${period} delta for ${sourceId} at ${timestamp}`, { metadata });

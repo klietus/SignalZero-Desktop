@@ -1,6 +1,7 @@
 import { sqliteService } from './sqliteService.js';
 import { domainService } from './domainService.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { loggerService, LogCategory } from './loggerService.js';
 
 export interface TentativeLink {
@@ -56,7 +57,7 @@ class TentativeLinkService {
             } else {
                 loggerService.catDebug(LogCategory.KERNEL, `Reinforced tentative link: ${sourceId} -> ${targetId} (${links[linkKey].count})`);
                 // Re-emit create event to trigger visual flare in frontend
-                eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_CREATE, links[linkKey]);
+                eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_CREATE, { ...links[linkKey] } as const);
             }
         } else {
             // New tentative link
@@ -68,7 +69,7 @@ class TentativeLinkService {
             };
             links[linkKey] = newLink;
             loggerService.catDebug(LogCategory.KERNEL, `New tentative link detected: ${sourceId} -> ${targetId}`);
-            eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_CREATE, newLink);
+            eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_CREATE, { ...newLink } as const);
         }
     }
 
@@ -89,7 +90,7 @@ class TentativeLinkService {
                 await domainService.addSymbol(sourceSym.symbol_domain, sourceSym);
                 
                 // Emit delete for the tentative line
-                eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_DELETE, { sourceId, targetId });
+                eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_DELETE, { sourceId, targetId } as const);
             }
         } catch (e) {
             loggerService.catError(LogCategory.KERNEL, `Failed to finalize link ${sourceId} -> ${targetId}`, { error: e });
@@ -110,7 +111,7 @@ class TentativeLinkService {
                 eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_DELETE, { 
                     sourceId: links[key].sourceId, 
                     targetId: links[key].targetId 
-                });
+                } as const);
                 delete links[key];
                 changed = true;
             } else {

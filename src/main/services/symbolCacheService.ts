@@ -1,5 +1,6 @@
 import { SymbolDef } from '../types.js';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { loggerService, LogCategory } from './loggerService.js';
 
 export interface CacheEntry {
@@ -126,7 +127,7 @@ export class SymbolCacheService {
             sessionId,
             symbolIds: symbols.map(s => s.id),
             symbols: symbols
-        });
+        } as const);
     }
 
     async touchSymbol(sessionId: string, symbolId: string): Promise<void> {
@@ -155,7 +156,7 @@ export class SymbolCacheService {
                     symbolId: id,
                     sessionId,
                     isEviction: true
-                });
+                } as const);
             }
         }
     }

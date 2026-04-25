@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { traceService } from '../services/traceService.js';
 import { sqliteService } from '../services/sqliteService.js';
-import { eventBusService, KernelEventType } from '../services/eventBusService.js';
+import { eventBusService } from '../services/eventBusService.js';
+import { KernelEventType } from '../types.js';
 
 describe('TraceService Relational', () => {
     beforeEach(() => {

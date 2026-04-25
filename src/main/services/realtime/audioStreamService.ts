@@ -1,5 +1,6 @@
 import { sceneManager } from './sceneManager.js';
-import { eventBusService, KernelEventType } from '../eventBusService.js';
+import { eventBusService } from '../eventBusService.js';
+import { KernelEventType } from '../../types.js';
 import { voiceService } from './voiceProcess.js';
 import { loggerService, LogCategory } from '../loggerService.js';
 import { transcriptManager } from './transcriptManager.js';
@@ -13,13 +14,14 @@ class AudioStreamService {
         if (this.isInitialized) return;
         this.isInitialized = true;
         // Listen to events from the event bus that the voice service might emit
-        eventBusService.onKernelEvent(KernelEventType.CONTEXT_UPDATED, (data) => {
+        eventBusService.onKernelEvent(KernelEventType.CONTEXT_UPDATED, (raw) => {
+            const data = raw as { type?: string; text?: string | undefined; metadata?: Record<string, unknown> };
             if (data.type === 'voice_wake_word_detected') {
                 const state = sceneManager.getState().audio;
-                const speaker = data.metadata?.voice_authenticated_username || 'USER';
-                const emotion = data.metadata?.vocal_emotion || 'NEUTRAL';
+                const meta = data.metadata as Record<string, string> | undefined;
+                const speaker = meta?.voice_authenticated_username || 'USER';
+                const emotion = (meta?.vocal_emotion as string) || 'NEUTRAL';
                 
-                // Check if this text was just added via stt_result to avoid double-posting
                 const lastEntry = state.transcript[state.transcript.length - 1];
                 if (lastEntry && lastEntry.text === data.text && lastEntry.speaker === speaker.toUpperCase()) {
                     loggerService.catDebug(LogCategory.SYSTEM, "AudioStreamService: Wake word transcript already added via stt_result. Skipping duplicate.");
@@ -27,17 +29,18 @@ class AudioStreamService {
                     return;
                 }
 
-                const newEntryLine = `[${speaker.toUpperCase()} | ${emotion.toUpperCase()}]\n${data.text}`;
+                const text = data.text || '';
+                const newEntryLine = `[${speaker.toUpperCase()} | ${emotion.toUpperCase()}]\n${text}`;
                 const updatedTranscript = (state.runningTranscript + "\n" + newEntryLine).trim().split("\n").slice(-60).join("\n");
 
                 const newEntryObj = {
                     speaker: speaker.toUpperCase(),
-                    text: data.text,
+                    text: text,
                     emotion: emotion.toLowerCase(),
                     timestamp: Date.now()
                 };
 
-                transcriptManager.addEntry(speaker, data.text, emotion);
+                transcriptManager.addEntry(speaker, text);
 
                 sceneManager.updateAudio({
                     lastSpeaker: speaker,
@@ -49,7 +52,8 @@ class AudioStreamService {
         });
 
         // Listen for AI completion to add to transcript
-        eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (data) => {
+        eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (raw) => {
+            const data = raw as { fullText?: string };
             if (!data.fullText) return;
             const state = sceneManager.getState().audio;
             const newEntryLine = `[AI | NEUTRAL]\n${data.fullText}`;

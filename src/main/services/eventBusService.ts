@@ -1,43 +1,27 @@
 
 import { EventEmitter } from 'events';
-
-export enum KernelEventType {
-    SYMBOL_UPSERTED = 'symbol:upserted',
-    SYMBOL_DELETED = 'symbol:deleted',
-    DOMAIN_CREATED = 'domain:created',
-    CONTEXT_CREATED = 'context:created',
-    CONTEXT_UPDATED = 'context:updated',
-    CONTEXT_CLOSED = 'context:closed',
-    CONTEXT_DELETED = 'context:deleted',
-    TRACE_LOGGED = 'trace:logged',
-    INFERENCE_STARTED = 'inference:started',
-    INFERENCE_CHUNK = 'inference:chunk',
-    INFERENCE_COMPLETED = 'inference:completed',
-    INFERENCE_ERROR = 'inference:error',
-    INFERENCE_TOKENS = 'inference:tokens',
-    FAST_INFERENCE_STARTED = 'fast-inference:started',
-    FAST_INFERENCE_COMPLETED = 'fast-inference:completed',
-    CACHE_LOAD = 'cache:load',
-    AGENT_HEARTBEAT = 'agent:heartbeat',
-    PROJECT_IMPORT_STATUS = 'project:import-status',
-    SYSTEM_LOG = 'system:log',
-    SYMBOL_COMPRESSION = 'symbol:compression',
-    ORPHAN_DETECTED = 'orphan:detected',
-    TENTATIVE_LINK_CREATE = 'tentative:create',
-    TENTATIVE_LINK_DELETE = 'tentative:delete',
-    SETTINGS_UPDATED = 'settings:updated'
-}
+import { KernelEventType, KernelEventPayloadFor } from '../types.js';
 
 class EventBusService extends EventEmitter {
-    emitKernelEvent(type: KernelEventType, payload: any) {
+    emitKernelEvent<T extends KernelEventType | 'monitoring:delta-created' | 'perception:spike-promoted'>(
+        type: T,
+        payload: KernelEventPayloadFor<T>
+    ): void {
         this.emit(type, payload);
-        
-        // In Electron, we might also want to broadcast to the renderer
-        // This will be handled in the IPC bridge later
     }
 
-    onKernelEvent(type: KernelEventType, handler: (payload: any) => void) {
-        this.on(type, handler);
+    onKernelEvent(
+        type: KernelEventType | 'monitoring:delta-created' | 'perception:spike-promoted',
+        handler: (payload: unknown) => void
+    ): this {
+        return this.on(type, handler);
+    }
+
+    offKernelEvent(
+        type: KernelEventType | 'monitoring:delta-created' | 'perception:spike-promoted',
+        handler: (payload: unknown) => void
+    ): this {
+        return this.off(type, handler);
     }
 }
 

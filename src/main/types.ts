@@ -350,6 +350,214 @@ export interface MonitoringDelta {
   metadata?: Record<string, any>;
 }
 
+// --- Kernel Event Types ---
+
+export enum KernelEventType {
+    SYMBOL_UPSERTED = 'symbol:upserted',
+    SYMBOL_DELETED = 'symbol:deleted',
+    DOMAIN_CREATED = 'domain:created',
+    CONTEXT_CREATED = 'context:created',
+    CONTEXT_UPDATED = 'context:updated',
+    CONTEXT_CLOSED = 'context:closed',
+    CONTEXT_DELETED = 'context:deleted',
+    TRACE_LOGGED = 'trace:logged',
+    INFERENCE_STARTED = 'inference:started',
+    INFERENCE_CHUNK = 'inference:chunk',
+    INFERENCE_COMPLETED = 'inference:completed',
+    INFERENCE_ERROR = 'inference:error',
+    INFERENCE_TOKENS = 'inference:tokens',
+    FAST_INFERENCE_STARTED = 'fast-inference:started',
+    FAST_INFERENCE_COMPLETED = 'fast-inference:completed',
+    CACHE_LOAD = 'cache:load',
+    AGENT_HEARTBEAT = 'agent:heartbeat',
+    PROJECT_IMPORT_STATUS = 'project:import-status',
+    SYSTEM_LOG = 'system:log',
+    SYMBOL_COMPRESSION = 'symbol:compression',
+    ORPHAN_DETECTED = 'orphan:detected',
+    TENTATIVE_LINK_CREATE = 'tentative:create',
+    TENTATIVE_LINK_DELETE = 'tentative:delete',
+    SETTINGS_UPDATED = 'settings:updated'
+}
+
+// --- Kernel Event Payload Types ---
+
+export interface FastInferenceStartedPayload {
+    requestId: string;
+    timestamp: string;
+}
+
+export interface FastInferenceCompletedPayload {
+    requestId: string;
+    durationMs: number;
+    tokenCount?: number;
+    status: 'success' | 'error';
+    timestamp?: string;
+    error?: string;
+}
+
+export interface InferenceStartedPayload {
+    sessionId?: string;
+    contextSessionId?: string;
+    messageId?: string;
+}
+
+export interface InferenceChunkPayload {
+    text?: string;
+    toolCalls?: unknown[];
+    isComplete?: boolean;
+    sessionId: string;
+    messageId?: string;
+}
+
+export interface InferenceCompletedPayload {
+    sessionId: string;
+    messageId?: string;
+    fullText: string;
+    metadata?: Record<string, unknown>;
+}
+
+export interface InferenceErrorPayload {
+    sessionId: string;
+    messageId?: string;
+    error: string;
+}
+
+export interface InferenceTokensPayload {
+    sessionId: string;
+    totalTokens: number;
+}
+
+export interface ContextCreatedPayload {
+    session: ContextSession;
+}
+
+export interface ContextUpdatedPayload {
+    sessionId?: string;
+    contextSessionId?: string;
+    name?: string;
+    type?: string;
+    text?: string;
+    metadata?: Record<string, unknown>;
+}
+
+export interface ContextDeletedPayload {
+    id: string;
+}
+
+export interface SymbolUpsertedPayload {
+    symbolId: string;
+    domainId: string;
+}
+
+export interface SymbolDeletedPayload {
+    symbolId: string;
+    domainId?: string;
+    sessionId?: string;
+    isEviction?: boolean;
+}
+
+export interface CacheLoadPayload {
+    sessionId: string;
+    symbolIds: string[];
+    symbols: SymbolDef[];
+}
+
+export interface TraceLoggedPayload {
+    trace: TraceData;
+}
+
+export interface SymbolCompressionPayload {
+    canonicalId: string;
+    redundantId: string;
+}
+
+export interface OrphanDetectedPayload {
+    symbolId: string;
+    domainId: string;
+}
+
+export interface TentativeLinkCreatePayload {
+    sourceId: string;
+    targetId: string;
+    count: number;
+    age: number;
+}
+
+export interface TentativeLinkDeletePayload {
+    sourceId: string;
+    targetId: string;
+}
+
+export interface DeltaCreatedPayload {
+    delta: MonitoringDelta;
+}
+
+export interface SpikePromotedPayload {
+    synthesis: string;
+    reason: string;
+    sceneSnapshot: unknown;
+    transcriptSlice: string;
+    sessionId: string | null;
+}
+
+export interface SettingsUpdatedPayload {
+    settings: unknown;
+}
+
+export interface ProjectImportStatusPayload {
+    status: string;
+    progress: number;
+    stats?: unknown;
+    error?: string;
+}
+
+export interface SystemLogPayload {
+    logEntry: unknown;
+}
+
+export interface AgentHeartbeatPayload {
+    agentId: string;
+    status: string;
+}
+
+export interface DomainCreatedPayload {
+    domainId: string;
+}
+
+export interface ContextClosedPayload {
+    sessionId: string;
+}
+
+export type KernelEventPayload =
+    | { type: KernelEventType.FAST_INFERENCE_STARTED; payload: FastInferenceStartedPayload }
+    | { type: KernelEventType.FAST_INFERENCE_COMPLETED; payload: FastInferenceCompletedPayload }
+    | { type: KernelEventType.INFERENCE_STARTED; payload: InferenceStartedPayload }
+    | { type: KernelEventType.INFERENCE_CHUNK; payload: InferenceChunkPayload }
+    | { type: KernelEventType.INFERENCE_COMPLETED; payload: InferenceCompletedPayload }
+    | { type: KernelEventType.INFERENCE_ERROR; payload: InferenceErrorPayload }
+    | { type: KernelEventType.INFERENCE_TOKENS; payload: InferenceTokensPayload }
+    | { type: KernelEventType.CONTEXT_CREATED; payload: ContextCreatedPayload }
+    | { type: KernelEventType.CONTEXT_UPDATED; payload: ContextUpdatedPayload }
+    | { type: KernelEventType.CONTEXT_DELETED; payload: ContextDeletedPayload }
+    | { type: KernelEventType.SYMBOL_UPSERTED; payload: SymbolUpsertedPayload }
+    | { type: KernelEventType.SYMBOL_DELETED; payload: SymbolDeletedPayload }
+    | { type: KernelEventType.CACHE_LOAD; payload: CacheLoadPayload }
+    | { type: KernelEventType.TRACE_LOGGED; payload: TraceLoggedPayload }
+    | { type: KernelEventType.SYMBOL_COMPRESSION; payload: SymbolCompressionPayload }
+    | { type: KernelEventType.ORPHAN_DETECTED; payload: OrphanDetectedPayload }
+    | { type: KernelEventType.TENTATIVE_LINK_CREATE; payload: TentativeLinkCreatePayload }
+    | { type: KernelEventType.TENTATIVE_LINK_DELETE; payload: TentativeLinkDeletePayload }
+    | { type: 'monitoring:delta-created'; payload: DeltaCreatedPayload }
+    | { type: 'perception:spike-promoted'; payload: SpikePromotedPayload }
+    | { type: KernelEventType.SETTINGS_UPDATED; payload: SettingsUpdatedPayload }
+    | { type: KernelEventType.PROJECT_IMPORT_STATUS; payload: ProjectImportStatusPayload }
+    | { type: KernelEventType.SYSTEM_LOG; payload: SystemLogPayload }
+    | { type: KernelEventType.AGENT_HEARTBEAT; payload: AgentHeartbeatPayload }
+    | { type: KernelEventType.DOMAIN_CREATED; payload: DomainCreatedPayload }
+    | { type: KernelEventType.CONTEXT_CLOSED; payload: ContextClosedPayload };
+
+export type KernelEventPayloadFor<T extends string> = Extract<KernelEventPayload, { type: T }>['payload'];
+
 export interface GraphHygieneSettings {
   positional: {
     autoCompress: boolean;

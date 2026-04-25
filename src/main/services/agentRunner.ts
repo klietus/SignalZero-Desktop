@@ -34,8 +34,8 @@ class AgentRunner {
         setInterval(() => this.runBatchRound(), 5 * 60 * 1000);
 
         // Perception Promotion
-        eventBusService.onKernelEvent('perception:spike-promoted' as any, (data) => {
-            this.handlePromotedPerception(data);
+        eventBusService.onKernelEvent('perception:spike-promoted', (raw) => {
+            this.handlePromotedPerception(raw as { synthesis: string; reason: string; sceneSnapshot: unknown; transcriptSlice: string; sessionId: string | null });
         });
 
         // Initial catch-up and first batch run
@@ -45,7 +45,7 @@ class AgentRunner {
     private lastPromotionTime = 0;
     private readonly PROMOTION_COOLDOWN_MS = 60000; // 1 minute rate limit
 
-    private async handlePromotedPerception(data: any) {
+    private async handlePromotedPerception(data: { synthesis: string; reason: string; sceneSnapshot: unknown; transcriptSlice: string; sessionId: string | null }) {
         const now = Date.now();
         if (now - this.lastPromotionTime < this.PROMOTION_COOLDOWN_MS) {
             loggerService.catDebug(LogCategory.AGENT, `Rate-limiting perception promotion: ${data.synthesis}`);

@@ -3,7 +3,8 @@ import 'winston-daily-rotate-file';
 import path from 'path';
 import fs from 'fs';
 import { app } from 'electron';
-import { eventBusService, KernelEventType } from './eventBusService.js';
+import { eventBusService } from './eventBusService.js';
+import { KernelEventType } from '../types.js';
 import { randomUUID } from 'crypto';
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
@@ -97,7 +98,7 @@ class LoggerService {
     }
     
     // Always emit to bus for the UI log viewer
-    eventBusService.emitKernelEvent(KernelEventType.SYSTEM_LOG, logEntry);
+    eventBusService.emitKernelEvent(KernelEventType.SYSTEM_LOG, { logEntry } as const);
   }
 
   async getRecentLogs(limit: number = 100): Promise<any[]> {
