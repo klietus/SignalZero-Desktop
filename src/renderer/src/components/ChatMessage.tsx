@@ -13,6 +13,7 @@ interface Message {
     timestamp: Date;
     isStreaming?: boolean;
     toolCalls?: any[];
+    reasoningText?: string;
     correlationId?: string;
     toolCallId?: string | null;
     metadata?: Record<string, any>;
@@ -523,6 +524,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSymbolClick
             {/* Trace Visualizer */}
             {showTraceList && (
               <TraceAggregator traces={traces} onTraceClick={(id) => onTraceClick && onTraceClick(id)} defaultExpanded />
+            )}
+
+            {/* Collapsible Reasoning/Thinking Block */}
+            {isAssistantResponse && message.reasoningText && (
+              <ThinkingBlock content={message.reasoningText} />
             )}
 
             {/* Message Content or Pulse */}

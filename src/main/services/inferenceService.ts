@@ -341,6 +341,7 @@ export const streamAssistantResponse = async function* (
   activeTools?: ChatCompletionTool[]
 ): AsyncGenerator<{
   text?: string;
+  reasoning?: string;
   toolCalls?: ChatCompletionMessageToolCall[];
   assistantMessage?: ChatCompletionMessageParam;
 }> {
@@ -365,6 +366,7 @@ const _streamAssistantResponseInternal = async function* (
   activeTools: ChatCompletionTool[]
 ): AsyncGenerator<{
   text?: string;
+  reasoning?: string;
   toolCalls?: ChatCompletionMessageToolCall[];
   assistantMessage?: ChatCompletionMessageParam;
 }> {
@@ -531,7 +533,7 @@ const _streamAssistantResponseInternal = async function* (
     if ((delta as any).reasoning_content) {
       const reasoning = (delta as any).reasoning_content;
       reasoningAccumulator += reasoning;
-      yield { text: `<seed:think>${reasoning}</seed:think>` };
+      yield { reasoning };
     }
 
     const textChunk = extractTextDelta(delta);
@@ -620,7 +622,7 @@ export async function* sendMessageAndHandleTools(
   sceneAttachments?: any[],
   metadata?: Record<string, any>
 ): AsyncGenerator<
-  { text?: string; toolCalls?: any[]; isComplete?: boolean },
+  { text?: string; reasoning?: string; toolCalls?: any[]; isComplete?: boolean },
   void,
   unknown
 > {
@@ -1446,7 +1448,7 @@ export const processMessageAsync = async (
     let fullText = "";
     for await (const chunk of stream) {
       if (chunk.text) fullText += chunk.text;
-      if (!isSilent && (chunk.text || chunk.toolCalls)) {
+      if (!isSilent && (chunk.text || chunk.toolCalls || chunk.reasoning)) {
         eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId } as const);
       }
       if (chunk.isComplete) {

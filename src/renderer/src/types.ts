@@ -22,6 +22,7 @@ export interface Message {
   timestamp: Date;
   isStreaming?: boolean;
   toolCalls?: ToolCallDetails[];
+  reasoningText?: string;
   correlationId?: string;
   toolCallId?: string | null;
   metadata?: Record<string, any>;

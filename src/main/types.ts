@@ -403,6 +403,7 @@ export interface InferenceStartedPayload {
 
 export interface InferenceChunkPayload {
     text?: string;
+    reasoning?: string;
     toolCalls?: unknown[];
     isComplete?: boolean;
     sessionId: string;

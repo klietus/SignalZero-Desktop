@@ -422,11 +422,12 @@ function App() {
             if (activeContextId && sessionId !== activeContextId) return;
 
             const text = typeof chunk === 'string' ? chunk : (chunk.text || '');
+            const reasoning = typeof chunk === 'object' ? (chunk.reasoning || '') : '';
             const rawToolCalls = typeof chunk === 'object' ? (chunk.toolCalls || []) : [];
             
             const mappedToolCalls = rawToolCalls.map((tc: any, tcIdx: number) => {
                 let args = {};
-                try { args = typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments) : (tc.function.arguments || {}); }
+                try { args = typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments) : (rawToolCalls || {}); }
                 catch (e) { args = { parseError: true, raw: tc.function.arguments }; }
                 return { 
                     id: tc.id || `streaming-${Date.now()}-${tcIdx}`, 
@@ -438,6 +439,18 @@ function App() {
             setMessages(prev => {
                 const last = prev[prev.length - 1];
                 
+                // Always merge reasoning into an existing model message
+                if (reasoning && last && last.role === Sender.MODEL) {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = { 
+                        ...last, 
+                        reasoningText: (last.reasoningText || '') + reasoning,
+                        content: last.content + text,
+                        toolCalls: mappedToolCalls.length > 0 ? [...(last.toolCalls || []), ...mappedToolCalls] : (last.toolCalls || [])
+                    };
+                    return updated;
+                }
+                
                 // Always merge tool calls into an existing model message to prevent dual response
                 if (mappedToolCalls.length > 0 && last && last.role === Sender.MODEL) {
                     const updated = [...prev];
@@ -447,6 +460,26 @@ function App() {
                         toolCalls: [...(last.toolCalls || []), ...mappedToolCalls]
                     };
                     return updated;
+                }
+                
+                if (last && last.role === Sender.MODEL && last.isStreaming) {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = { 
+                        ...last, 
+                        content: last.content + text,
+                        toolCalls: mappedToolCalls.length > 0 ? [...(last.toolCalls || []), ...mappedToolCalls] : (last.toolCalls || [])
+                    };
+                    return updated;
+                } else {
+                    return [...prev, {
+                        id: 'streaming-' + Date.now(),
+                        role: Sender.MODEL,
+                        content: text,
+                        timestamp: new Date(),
+                        isStreaming: true,
+                        toolCalls: mappedToolCalls,
+                        reasoningText: reasoning
+                    }];
                 }
                 
                 if (last && last.role === Sender.MODEL && last.isStreaming) {
