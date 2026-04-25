@@ -1001,9 +1001,14 @@ export async function* sendMessageAndHandleTools(
       // Use unified finish reason + pending tool calls to determine turn ending
       const finishReason = (nextAssistant as any)?.finishReason || FinishReason.STOP;
       const hasPendingTools = yieldedToolCalls && yieldedToolCalls.length > 0;
+      const hasTextOutput = textAccumulatedInTurn.trim().length > 0;
       const isEndingTurn = (
         finishReason === FinishReason.STOP &&
         !hasPendingTools
+      ) || (
+        finishReason === FinishReason.STOP &&
+        hasPendingTools &&
+        !hasTextOutput
       ) || (
           finishReason === FinishReason.MAX_TOKENS
         ) || (
