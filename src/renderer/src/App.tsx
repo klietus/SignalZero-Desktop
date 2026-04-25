@@ -143,6 +143,7 @@ const mapSingleMessage = (item: ContextMessage): Message => {
         content: item.content || '',
         timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
         toolCalls: mapToolCalls(item),
+        reasoningText: item.reasoning || '',
         correlationId: item.correlationId,
         toolCallId: item.toolCallId,
         metadata: item.metadata
@@ -190,6 +191,17 @@ const groupHistoryByCorrelation = (history: ContextMessage[]): Message[] => {
             const first = group.assistants[0];
             const allToolCalls = group.assistants.flatMap(m => m.toolCalls || []);
 
+            // Collect reasoning from any assistant message in the group
+            let reasoningText = "";
+            group.assistants.forEach(m => {
+                if (m.reasoningText) {
+                    reasoningText += m.reasoningText;
+                }
+                if (m.metadata?.reasoning_content) {
+                    reasoningText += m.metadata.reasoning_content;
+                }
+            });
+
             // Map tool results back to their calls
             group.assistants.forEach(m => {
                 if (m.toolCallId) {
@@ -208,6 +220,7 @@ const groupHistoryByCorrelation = (history: ContextMessage[]): Message[] => {
                 ...first,
                 content: combinedContent,
                 toolCalls: allToolCalls,
+                reasoningText,
                 isStreaming: group.assistants.some(m => m.isStreaming)
             });
         }

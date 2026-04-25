@@ -181,6 +181,7 @@ export interface ContextMessage {
   }[];
   metadata?: Record<string, any>;
   correlationId?: string;
+  reasoning?: string;
 }
 
 export interface ContextHistoryGroup {
