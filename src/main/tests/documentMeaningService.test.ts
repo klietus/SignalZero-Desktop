@@ -18,6 +18,20 @@ vi.mock('../services/loggerService.js', () => ({
   }
 }));
 
+vi.mock('../services/llamaService.js', () => ({
+  llamaService: {
+    completion: vi.fn().mockResolvedValue({ content: 'Mocked Gemini description of the image.' })
+  },
+  LlamaPriority: { MEDIUM: 1 }
+}));
+
+vi.mock('../services/sqliteService.js', () => ({
+  sqliteService: {
+    get: vi.fn().mockReturnValue(null),
+    run: vi.fn()
+  }
+}));
+
 vi.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
     getGenerativeModel: vi.fn().mockImplementation(() => ({

@@ -611,6 +611,39 @@ eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (raw) => {
   });
 });
 
+// Listener for alert-triggered inference: after any inference completes, check for pending alerts
+eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, async () => {
+  const alertService = await import('./services/alertTriggerService.js').then(m => m.alertTriggerService);
+  const alert = await alertService.onInferenceComplete();
+  
+  if (alert && alert.sessionId) {
+    const metadataStr = Object.entries(alert.metadata)
+      .filter(([k]) => k !== 'sceneMetadata')
+      .map(([k, v]) => `  ${k}: ${typeof v === 'string' ? v : JSON.stringify(v).slice(0, 200)}`)
+      .join('\n');
+    const message = `[PROACTIVE ALERT - ${alert.severity.toUpperCase()}]\nSource: ${alert.source}\n${alert.summary}\n\nContext:\n${metadataStr || '(no additional context)'}\n\nPlease assess and act if warranted.`;
+    
+    const { processMessageAsync } = await import('./services/inferenceService.js');
+    const { createToolExecutor } = await import('./services/toolsService.js');
+    const { systemPromptService } = await import('./services/systemPromptService.js');
+    const { ACTIVATION_PROMPT } = await import('./symbolic_system/activation_prompt.js');
+    
+    const toolExecutor = createToolExecutor(alert.sessionId);
+    const systemPrompt = await systemPromptService.loadPrompt(ACTIVATION_PROMPT);
+    
+    await processMessageAsync(
+      alert.sessionId,
+      message,
+      toolExecutor,
+      systemPrompt,
+      undefined,
+      { is_autonomous: true, is_alert: true }
+    );
+    
+    await alertService.resolveTrigger();
+  }
+});
+
 ipcMain.handle('domain:list', async () => {
   return await domainService.listDomains();
 });

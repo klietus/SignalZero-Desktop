@@ -7,7 +7,6 @@ import {
     sendMessageAndHandleTools, 
     getChatSession, 
     extractJson, 
-    processMessageAsync,
     callFastInference 
 } from './inferenceService.js';
 import { LlamaPriority } from './llamaService.js';
@@ -17,7 +16,6 @@ import { loggerService, LogCategory } from './loggerService.js';
 import { MonitoringDelta, AgentDefinition } from '../types.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
-import { uiStateService } from './uiStateService.js';
 
 class AgentRunner {
     private isProcessingBatch = false;
@@ -33,71 +31,8 @@ class AgentRunner {
         // Background: Trigger the Batch Execution Round every 5 minutes
         setInterval(() => this.runBatchRound(), 5 * 60 * 1000);
 
-        // Perception Promotion
-        eventBusService.onKernelEvent('perception:spike-promoted', (raw) => {
-            this.handlePromotedPerception(raw as { synthesis: string; reason: string; sceneSnapshot: unknown; transcriptSlice: string; sessionId: string | null });
-        });
-
         // Initial catch-up and first batch run
         setTimeout(() => this.catchUpAndRoute(), 10000);
-    }
-
-    private lastPromotionTime = 0;
-    private readonly PROMOTION_COOLDOWN_MS = 60000; // 1 minute rate limit
-
-    private async handlePromotedPerception(data: { synthesis: string; reason: string; sceneSnapshot: unknown; transcriptSlice: string; sessionId: string | null }) {
-        const now = Date.now();
-        if (now - this.lastPromotionTime < this.PROMOTION_COOLDOWN_MS) {
-            loggerService.catDebug(LogCategory.AGENT, `Rate-limiting perception promotion: ${data.synthesis}`);
-            return;
-        }
-        
-        this.lastPromotionTime = now;
-        loggerService.catInfo(LogCategory.AGENT, `Autonomous Reaction Triggered: ${data.synthesis}`);
-        
-        // Route to user's active session when available, falling back to autonomous context
-        let sessionId = '';
-        const activeSessionId = uiStateService.activeSessionId;
-        
-        if (activeSessionId) {
-            const activeSession = await contextService.getSession(activeSessionId);
-            if (activeSession && activeSession.status === 'open') {
-                sessionId = activeSessionId;
-                loggerService.catInfo(LogCategory.AGENT, `Routing perception spike to active user session: ${activeSessionId}`);
-            }
-        }
-
-        if (!sessionId) {
-            const sessions = await contextService.listSessions();
-            let session = sessions.find(s => s.metadata?.kind === 'autonomous_reaction');
-            
-            if (!session) {
-                session = await contextService.createSession('agent', { 
-                    kind: 'autonomous_reaction',
-                    source: 'perception_spike'
-                }, "Autonomous Reasoning Stream");
-            }
-            sessionId = session.id;
-            loggerService.catInfo(LogCategory.AGENT, `Routing perception spike to autonomous session: ${sessionId}`);
-        }
-
-        // Format scene data for pretty display in chat (collapsed markdown)
-        const sceneDataJson = JSON.stringify(data.sceneSnapshot, null, 2);
-        const formattedSceneData = `
-<details>
-<summary>View Perception Telemetry Data</summary>
-
-\`\`\`json
-${sceneDataJson}
-\`\`\`
-</details>
-`;
-
-        const toolExecutor = createToolExecutor(sessionId);
-        const systemPrompt = await systemPromptService.loadPrompt(ACTIVATION_PROMPT);
-        const augmentedMessage = `${data.synthesis}\n\n${formattedSceneData}`;
-
-        processMessageAsync(sessionId, augmentedMessage, toolExecutor, systemPrompt, undefined, { is_autonomous: true });
     }
 
     private async catchUpAndRoute() {

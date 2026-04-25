@@ -2,10 +2,9 @@ import { sceneManager } from './sceneManager.js';
 import { realtimeService } from './realtimeService.js';
 import { inferenceService } from '../inferenceService.js';
 import { LlamaPriority } from '../llamaService.js';
-import { eventBusService } from '../eventBusService.js';
+import { alertTriggerService } from '../alertTriggerService.js';
 import { loggerService, LogCategory } from '../loggerService.js';
 import { settingsService } from '../settingsService.js';
-import { uiStateService } from '../uiStateService.js';
 import { voiceService } from './voiceProcess.js';
 
 interface SceneSnapshot {
@@ -240,10 +239,11 @@ Structured Scene Metadata:
 ${JSON.stringify(sceneSnapshot, null, 2)}
 
 TASK: Determine if the user requires PROACTIVE assistance based on this event.
-CRITERIA: Only promote if there is a concrete problem to solve (bug, confusion, etc) or a critical observation.
+CRITERIA: Only flag if there is a concrete problem to solve (bug, confusion, etc) or a critical observation.
 FORMAT: Return a JSON object with:
 {
-  "promote": boolean,
+  "flag": boolean,
+  "severity": "low" | "medium" | "high" | "critical",
   "synthesis": "Brief 1-sentence observation",
   "reason": "Choice justification"
 }
@@ -254,15 +254,19 @@ FORMAT: Return a JSON object with:
 
             if (flashResult) {
                 const result = await inferenceService.extractJson(flashResult);
-                if (result.promote === true) {
-                    loggerService.catInfo(LogCategory.SYSTEM, `PROMOTING PERCEPTION EVENT: ${result.synthesis}`);
-                    eventBusService.emitKernelEvent('perception:spike-promoted', {
-                        synthesis: result.synthesis,
-                        reason: result.reason,
-                        sceneSnapshot: sceneSnapshot,
-                        transcriptSlice,
-                        sessionId: uiStateService.activeSessionId
-                    } as const);
+                if (result.flag === true) {
+                    const severity = result.severity || 'medium';
+                    loggerService.catInfo(LogCategory.SYSTEM, `PERCEPTION ALERT: ${severity} - ${result.synthesis}`);
+                    await alertTriggerService.logForSession({
+                        source: 'perception',
+                        severity: severity as 'low' | 'medium' | 'high' | 'critical',
+                        summary: result.synthesis,
+                        metadata: {
+                            spikeReason: reason,
+                            transcriptSlice,
+                            sceneMetadata: sceneSnapshot
+                        }
+                    }, null);
                 }
  else {
                     loggerService.catDebug(LogCategory.SYSTEM, `Flash Round Ignored Spike: ${result.reason}`);

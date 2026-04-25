@@ -558,6 +558,22 @@ export type KernelEventPayload =
 
 export type KernelEventPayloadFor<T extends string> = Extract<KernelEventPayload, { type: T }>['payload'];
 
+// --- Unified Alert Types ---
+
+export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type AlertSource = 'agent' | 'perception';
+
+export interface DeltaAlert {
+    id: string;
+    source: AlertSource;
+    severity: AlertSeverity;
+    summary: string;
+    sessionId: string | null;
+    metadata: Record<string, unknown>;
+    timestamp: number;
+    expiresAt: number;
+}
+
 export interface GraphHygieneSettings {
   positional: {
     autoCompress: boolean;

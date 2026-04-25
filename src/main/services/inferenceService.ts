@@ -614,7 +614,6 @@ export async function* sendMessageAndHandleTools(
   userMessageId?: string,
   anticipatedWebResults?: any[],
   anticipatedWebBrief?: string,
-  monitoringDeltas?: any[],
   priority: number = 1, // Default to High (User Chat)
   cleanMessage?: string,
   sceneAttachments?: any[],
@@ -799,19 +798,8 @@ export async function* sendMessageAndHandleTools(
         if (loops === 0) {
           if (anticipatedWebBrief) {
             contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH BRIEF]\n${anticipatedWebBrief}` });
-          } else if (anticipatedWebResults && anticipatedWebResults.length > 0) {
+          } else           if (anticipatedWebResults && anticipatedWebResults.length > 0) {
             contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH RESULTS]\n${JSON.stringify(anticipatedWebResults, null, 2)}` });
-          }
-
-          if (monitoringDeltas && monitoringDeltas.length > 0) {
-            const deltaBrief = monitoringDeltas.map(d => {
-              const meta = d.metadata || {};
-              let part = `Source: ${meta.sourceId} (${meta.period})\nTimestamp: ${meta.timestamp}\nContent: ${d.document}`;
-              if (meta.articleUrl) part += `\nArticle: [View Article](${meta.articleUrl})`;
-              if (meta.imageUrl) part += `\nImage: ![Article Image](${meta.imageUrl})`;
-              return part;
-            }).join('\n\n---\n\n');
-            contextMessages.push({ role: 'system', content: `\n\n[WORLD MONITORING DELTAS]\nThe following recent changes and events have been detected in the world:\n\n${deltaBrief}` });
           }
         }
 
@@ -1213,13 +1201,11 @@ export const primeSymbolicContext = async (
   symbols: SymbolDef[],
   webResults: any[],
   webBrief?: string,
-  monitoringDeltas?: any[],
   traceNeeded: boolean,
   traceReason?: string
 }> => {
   const foundSymbols: SymbolDef[] = [];
   const webResults: any[] = [];
-  const monitoringDeltas: any[] = [];
   let traceNeeded = true;
   let traceReason: string | undefined;
   let webBrief: string | undefined;
@@ -1346,24 +1332,8 @@ export const primeSymbolicContext = async (
         } as any);
       }
     }
-
-    // --- Automated Monitoring Delta Precache ---
-    try {
-      const monSettings = await settingsService.getMonitoringSettings();
-      if (monSettings.enabled) {
-        const deltaResults = await lancedbService.searchDeltas(message, 5);
-        if (deltaResults.length > 0) {
-          loggerService.catInfo(LogCategory.INFERENCE, `Precached ${deltaResults.length} monitoring deltas for grounding.`, {
-            sources: deltaResults.map(d => d.metadata.sourceId)
-          });
-          monitoringDeltas.push(...deltaResults);
-        }
-      }
-    } catch (e) {
-      loggerService.catError(LogCategory.INFERENCE, "Delta precache failed", { error: e });
-    }
   } catch (e) { loggerService.catError(LogCategory.INFERENCE, "Priming failed", { error: e }); }
-  return { symbols: foundSymbols, webResults, webBrief, monitoringDeltas, traceNeeded, traceReason };
+  return { symbols: foundSymbols, webResults, webBrief, traceNeeded, traceReason };
 };
 
 export const processMessageAsync = async (
@@ -1422,7 +1392,7 @@ export const processMessageAsync = async (
       finalSystemInstruction = `${finalSystemInstruction}\n\n[Voice Authentication Metadata]\n- Current Speaker: ${speakerName}\n- Verification Status: Authenticated via Voice Fingerprint`;
     }
 
-    const { webResults, webBrief, monitoringDeltas, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
+    const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
     const session = await contextService.getSession(contextSessionId);
     if (session) {
       if (traceNeeded === undefined) {
@@ -1445,7 +1415,7 @@ export const processMessageAsync = async (
     await symbolCacheService.incrementTurns(contextSessionId);
     await tentativeLinkService.incrementTurns();
 
-    const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, monitoringDeltas, 1, message, sceneAttachments, metadata);
+    const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, 1, message, sceneAttachments, metadata);
 
     const isSilent = metadata?.silent === true;
     if (!isSilent) {

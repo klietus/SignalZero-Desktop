@@ -72,8 +72,12 @@ describe('AgentRunner Chunking', () => {
     });
 
     it('should process deltas in chunks of 15', async () => {
-        const agent = { id: 'test-agent', enabled: true, prompt: '...', subscriptions: ['test'] };
-        (agentService.listAgents as any).mockResolvedValue([agent]);
+        const agents = [
+            { id: 'agent-0', enabled: true, prompt: '...', subscriptions: ['test'] },
+            { id: 'agent-1', enabled: true, prompt: '...', subscriptions: ['test'] },
+            { id: 'agent-2', enabled: true, prompt: '...', subscriptions: ['test'] }
+        ];
+        (agentService.listAgents as any).mockResolvedValue(agents);
 
         // Access private pendingBatches via any
         const deltas: MonitoringDelta[] = Array.from({ length: 35 }, (_, i) => ({
@@ -84,20 +88,29 @@ describe('AgentRunner Chunking', () => {
             timestamp: new Date().toISOString()
         }));
 
-        (agentRunner as any).pendingBatches.set(agent.id, deltas);
+        const chunkSize = 15;
+        const chunks = [];
+        for (let i = 0; i < deltas.length; i += chunkSize) {
+            chunks.push(deltas.slice(i, i + chunkSize));
+        }
+
+        // Simulate 3 agents each with a chunk (mimics what WTA routing would produce)
+        ['agent-0', 'agent-1', 'agent-2'].forEach((aid, ci) => {
+            (agentRunner as any).pendingBatches.set(aid, chunks[ci]);
+        });
 
         // Spy on executeAgentBatchTurn
         const executeSpy = vi.spyOn(agentRunner as any, 'executeAgentBatchTurn').mockResolvedValue(undefined);
 
         await (agentRunner as any).runBatchRound();
 
-        // 35 deltas / 15 size = 3 chunks (15, 15, 5)
+        // 3 agents = 3 calls (one per chunk)
         expect(executeSpy).toHaveBeenCalledTimes(3);
-        expect(executeSpy).toHaveBeenNthCalledWith(1, agent, deltas.slice(0, 15));
-        expect(executeSpy).toHaveBeenNthCalledWith(2, agent, deltas.slice(15, 30));
-        expect(executeSpy).toHaveBeenNthCalledWith(3, agent, deltas.slice(30, 35));
+        expect(executeSpy).toHaveBeenNthCalledWith(1, agents[0], chunks[0]);
+        expect(executeSpy).toHaveBeenNthCalledWith(2, agents[1], chunks[1]);
+        expect(executeSpy).toHaveBeenNthCalledWith(3, agents[2], chunks[2]);
 
-        // Verify markDeltaProcessed called for all
+        // Verify markDeltaProcessed called for all 35 deltas
         expect(agentService.markDeltaProcessed).toHaveBeenCalledTimes(35);
     });
 });

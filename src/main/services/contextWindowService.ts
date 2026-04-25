@@ -2,6 +2,7 @@
 import { contextService } from './contextService.js';
 import { domainService } from './domainService.js';
 import { symbolCacheService } from './symbolCacheService.js';
+import { alertTriggerService } from './alertTriggerService.js';
 import { SymbolDef, ContextMessage, ContextKind } from '../types.js';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { loggerService, LogCategory } from './loggerService.js';
@@ -67,7 +68,29 @@ export class ContextWindowService {
             });
         }
 
-        // Calculate tokens used by static prefix (Sections 1-4)
+        // 4.5 Active Alerts (World-State Updates)
+        const activeAlerts = alertTriggerService.getActive();
+        if (activeAlerts.length > 0) {
+            const alertBlock = activeAlerts
+                .filter(a => a.severity !== 'low')
+                .map(a => {
+                    const metaStr = Object.entries(a.metadata)
+                        .filter(([k]) => k !== 'sceneMetadata')
+                        .map(([k, v]) => `  ${k}: ${typeof v === 'string' ? v : JSON.stringify(v).slice(0, 150)}`)
+                        .join('\n');
+                    return `[${a.severity.toUpperCase()}] ${a.summary}\n${metaStr ? metaStr + '\n' : ''}`;
+                })
+                .join('\n\n');
+            
+            if (alertBlock) {
+                messages.push({
+                    role: 'system',
+                    content: `[WORLD_STATE_UPDATES]\n${alertBlock}`
+                });
+            }
+        }
+
+        // Calculate tokens used by static prefix (Sections 1-4.5)
         let currentTokens = messages.reduce((sum, m) => sum + this.estimateTokens(JSON.stringify(m)), 0);
 
         // 5. Sliding History Window (Sliding Cache)

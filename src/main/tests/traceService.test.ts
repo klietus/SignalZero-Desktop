@@ -1,17 +1,24 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { traceService } from '../services/traceService.js';
 import { sqliteService } from '../services/sqliteService.js';
-import { eventBusService } from '../services/eventBusService.js';
 import { KernelEventType } from '../types.js';
 
+vi.mock('../services/eventBusService.js', () => ({
+    eventBusService: { 
+        emitKernelEvent: vi.fn(), 
+        on: vi.fn(), 
+        onKernelEvent: vi.fn() 
+    }
+}));
+
 describe('TraceService Relational', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         sqliteService.__sqliteTestUtils.reset();
-        vi.clearAllMocks();
+        const { eventBusService } = await import('../services/eventBusService.js');
+        (eventBusService as any).emitKernelEvent.mockClear();
     });
 
     it('should add a trace and persist it to the traces table', async () => {
-        // Must create context first due to foreign key
         sqliteService.run("INSERT INTO contexts (id, name) VALUES (?, ?)", ['sess-1', 'Session 1']);
 
         const trace: any = {
@@ -32,7 +39,10 @@ describe('TraceService Relational', () => {
     });
 
     it('should emit a KernelEvent when a trace is logged', async () => {
-        const emitSpy = vi.spyOn(eventBusService, 'emitKernelEvent');
+        const { eventBusService } = await import('../services/eventBusService.js');
+        const emitSpy = (eventBusService as any).emitKernelEvent;
+        emitSpy.mockClear();
+        
         const trace: any = {
             id: 'tr-456',
             status: 'complete',
@@ -42,8 +52,10 @@ describe('TraceService Relational', () => {
 
         await traceService.addTrace(trace);
         
-        expect(emitSpy).toHaveBeenCalledWith(KernelEventType.TRACE_LOGGED, expect.objectContaining({
-            id: 'tr-456'
-        }));
+        const traceLoggedCalls = emitSpy.mock.calls.filter(
+            call => call[0] === KernelEventType.TRACE_LOGGED
+        );
+        expect(traceLoggedCalls).toHaveLength(1);
+        expect(traceLoggedCalls[0][1].trace.id).toBe('tr-456');
     });
 });

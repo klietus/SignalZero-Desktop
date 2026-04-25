@@ -15,6 +15,7 @@ import { monitoringService } from "./monitoringService.js";
 
 import { webSearchService } from "./webSearchService.js";
 import { webFetchService } from "./webFetchService.js";
+import { alertTriggerService } from "./alertTriggerService.js";
 
 const execAsync = promisify(exec);
 
@@ -321,6 +322,37 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
         required: ['url']
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'log_delta_alert',
+      description: 'Log a delta alert for the unified alert system. Use when a monitoring delta or world-state change is significant and should be surfaced to the main model.',
+      parameters: {
+        type: 'object',
+        properties: {
+          sourceId: { type: 'string', description: 'The monitoring source ID (e.g. "gdelt", "acled").' },
+          deltaId: { type: 'string', description: 'The delta ID from the monitoring stream.' },
+          severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'], description: 'Alert severity.' },
+          summary: { type: 'string', description: 'Brief explanation of why this is significant.' }
+        },
+        required: ['sourceId', 'deltaId', 'severity', 'summary']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'query_alerts',
+      description: 'Query active alerts from the unified alert system. Use to check for pending world-state changes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          includeLow: { type: 'boolean', description: 'Include low severity alerts.' },
+          source: { type: 'string', enum: ['agent', 'perception'], description: 'Filter by alert source.' }
+        }
+      }
+    }
   }
 ];
 
@@ -509,6 +541,23 @@ export const createToolExecutor = (contextSessionId?: string) => {
         } catch (e: any) {
           return { error: e.message };
         }
+      }
+
+      case 'log_delta_alert': {
+        await alertTriggerService.log({
+          source: 'agent',
+          severity: args.severity as 'low' | 'medium' | 'high' | 'critical',
+          summary: args.summary,
+          metadata: { sourceId: args.sourceId, deltaId: args.deltaId }
+        });
+        return { status: 'logged', alertSeverity: args.severity };
+      }
+
+      case 'query_alerts': {
+        const alerts = alertTriggerService.getActive();
+        const filtered = args.includeLow ? alerts : alerts.filter(a => a.severity !== 'low');
+        const bySource = args.source ? filtered.filter(a => a.source === args.source) : filtered;
+        return { alerts: bySource };
       }
 
       default:
