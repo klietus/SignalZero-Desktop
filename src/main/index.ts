@@ -379,9 +379,16 @@ function createWindow(): void {
       // Legacy/Specific forwards
       if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', raw);
       if (type === KernelEventType.INFERENCE_CHUNK) {
-        const chunk = raw as { sessionId: string; text: string };
+        const chunk = raw as { sessionId: string; text?: string; reasoning?: string; toolCalls?: unknown[] };
+        loggerService.catDebug(LogCategory.SYSTEM, "INFERENCE_CHUNK broadcast", {
+          sessionId: chunk.sessionId,
+          hasText: !!chunk.text,
+          hasReasoning: !!chunk.reasoning,
+          reasoningPreview: chunk.reasoning?.slice(0, 200),
+          toolCallCount: chunk.toolCalls?.length || 0
+        });
         broadcastBatched(`inference:chunk:${chunk.sessionId}`, chunk.text, 50);
-        broadcastBatched('inference:chunk', { sessionId: chunk.sessionId, text: chunk.text }, 50);
+        broadcastBatched('inference:chunk', raw, 50);
       }
       if (type === KernelEventType.INFERENCE_COMPLETED) {
         const completed = raw as { sessionId: string };

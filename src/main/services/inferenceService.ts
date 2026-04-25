@@ -533,12 +533,14 @@ const _streamAssistantResponseInternal = async function* (
     if ((delta as any).reasoning_content) {
       const reasoning = (delta as any).reasoning_content;
       reasoningAccumulator += reasoning;
+      loggerService.catDebug(LogCategory.INFERENCE, "OpenAI stream: reasoning delta", { length: reasoning.length, preview: reasoning.slice(0, 200), deltaKeys: Object.keys(delta) });
       yield { reasoning };
     }
 
     const textChunk = extractTextDelta(delta);
     if (textChunk) {
       textAccumulator += textChunk;
+      loggerService.catDebug(LogCategory.INFERENCE, "OpenAI stream: text delta", { length: textChunk.length, preview: textChunk.slice(0, 80), deltaKeys: Object.keys(delta) });
       yield { text: textChunk };
     }
     if (delta.tool_calls && delta.tool_calls.length > 0) {
@@ -723,6 +725,7 @@ export async function* sendMessageAndHandleTools(
       let retries = 0;
       let nextAssistant: ChatCompletionMessageParam | null = null;
       let textAccumulatedInTurn = "";
+      let textWasStreamed = false;
 
       while (retries < MAX_RETRIES) {
         let contextMessages: ChatCompletionMessageParam[] = [];
@@ -831,7 +834,7 @@ export async function* sendMessageAndHandleTools(
         nextAssistant = null;
 
         for await (const chunk of assistantMessage) {
-          if (chunk.text) rawTextInTurn += chunk.text;
+          if (chunk.text) { rawTextInTurn += chunk.text; textWasStreamed = true; }
           if (chunk.toolCalls) { yieldedToolCalls = chunk.toolCalls; yield { toolCalls: chunk.toolCalls }; }
           if (chunk.assistantMessage) nextAssistant = chunk.assistantMessage;
         }
@@ -972,7 +975,7 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
         totalTextAccumulatedAcrossLoops += textAccumulatedInTurn;
       }
 
-      if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0) yield { text: totalTextAccumulatedAcrossLoops.trim() };
+      if (isEndingTurn && totalTextAccumulatedAcrossLoops.trim().length > 0 && !textWasStreamed) yield { text: totalTextAccumulatedAcrossLoops.trim() };
 
       // Record Assistant message if it contained tool calls OR if it's the final turn
       if (contextSessionId && nextAssistant) {
@@ -1449,6 +1452,14 @@ export const processMessageAsync = async (
     for await (const chunk of stream) {
       if (chunk.text) fullText += chunk.text;
       if (!isSilent && (chunk.text || chunk.toolCalls || chunk.reasoning)) {
+        loggerService.catDebug(LogCategory.INFERENCE, "processMessageAsync: emitting chunk", {
+          hasText: !!chunk.text,
+          textPreview: chunk.text?.slice(0, 80),
+          hasReasoning: !!chunk.reasoning,
+          reasoningPreview: chunk.reasoning?.slice(0, 200),
+          toolCallCount: chunk.toolCalls?.length || 0,
+          isComplete: !!chunk.isComplete
+        });
         eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId } as const);
       }
       if (chunk.isComplete) {
