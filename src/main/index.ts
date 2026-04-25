@@ -81,6 +81,22 @@ const updateActiveSession = (id: string | null) => {
 };
 
 export const broadcast = (channel: string, ...args: any[]) => {
+  // IPC tracing
+  if (args[0] !== undefined) {
+    const payload = args[0];
+    if (typeof payload === 'object' && payload !== null) {
+      loggerService.catDebug(LogCategory.SYSTEM, `IPC → ${channel}`, {
+        type: payload.type || payload.isComplete !== undefined ? (payload.isComplete ? 'complete' : 'chunk') : typeof payload,
+        hasText: !!payload.text,
+        hasReasoning: !!payload.reasoning,
+        hasToolCalls: !!payload.toolCalls,
+        toolCallCount: Array.isArray(payload.toolCalls) ? payload.toolCalls.length : 0,
+        sessionId: payload.sessionId,
+        payloadLen: typeof payload === 'string' ? payload.length : JSON.stringify(payload).length
+      });
+    }
+  }
+
   // --- Safe Serialization Layer ---
   const safeArgs = args.map(arg => {
     try {

@@ -1111,29 +1111,40 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
         if (contextSessionId) {
           try {
             const session = await contextService.getSession(contextSessionId);
-            if (!session) return;
-            const needsName = !session.name || session.name.startsWith('Context ');
-            const history = await contextService.getUnfilteredHistory(contextSessionId);
-            const userRounds = history.filter(m => m.role === 'user').length;
-            loggerService.catDebug(LogCategory.INFERENCE, "Naming check", {
-              contextSessionId,
-              needsName,
-              currentName: session.name,
-              historyLength: history.length,
-              userRounds,
-              willName: needsName && userRounds >= 1 && userRounds <= 10
-            });
-            if (needsName && userRounds >= 1 && userRounds <= 10) {
-              const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
-              const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+            if (!session) {
+              loggerService.catDebug(LogCategory.INFERENCE, "Naming skipped: no session", { contextSessionId });
+            } else {
+              const needsName = !session.name || session.name.startsWith('Context ');
+              const history = await contextService.getUnfilteredHistory(contextSessionId);
+              const userRounds = history.filter(m => m.role === 'user').length;
+              const canName = needsName && userRounds >= 1 && userRounds <= 10;
+              
+              loggerService.catInfo(LogCategory.INFERENCE, "Naming decision", {
+                contextSessionId,
+                currentName: session.name || '(none)',
+                needsName,
+                userRounds,
+                historyLength: history.length,
+                willName: canName
+              });
 
-              void callFastInference([{ role: "user", content: namingPrompt }], 1024, undefined, LlamaPriority.URGENT).then(async (newName) => {
-                if (newName) {
-                  const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
-                  await contextService.updateSession({ ...session, name: cleanName });
-                  eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
-                }
-              }).catch(() => { });
+              if (canName) {
+                const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
+                const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
+
+                void callFastInference([{ role: "user", content: namingPrompt }], 1024, undefined, LlamaPriority.URGENT).then(async (newName) => {
+                  if (newName) {
+                    const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
+                    loggerService.catInfo(LogCategory.INFERENCE, "Session renamed", { contextSessionId, oldName: session.name, newName: cleanName });
+                    await contextService.updateSession({ ...session, name: cleanName });
+                    eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
+                  } else {
+                    loggerService.catDebug(LogCategory.INFERENCE, "Naming returned empty", { contextSessionId });
+                  }
+                }).catch((e) => {
+                  loggerService.catError(LogCategory.INFERENCE, "Naming failed", { contextSessionId, error: e.message });
+                });
+              }
             }
           } catch (namingError) { }
         }
