@@ -81,22 +81,6 @@ const updateActiveSession = (id: string | null) => {
 };
 
 export const broadcast = (channel: string, ...args: any[]) => {
-  // IPC tracing
-  if (args[0] !== undefined) {
-    const payload = args[0];
-    if (typeof payload === 'object' && payload !== null) {
-      loggerService.catDebug(LogCategory.SYSTEM, `IPC → ${channel}`, {
-        type: payload.type || payload.isComplete !== undefined ? (payload.isComplete ? 'complete' : 'chunk') : typeof payload,
-        hasText: !!payload.text,
-        hasReasoning: !!payload.reasoning,
-        hasToolCalls: !!payload.toolCalls,
-        toolCallCount: Array.isArray(payload.toolCalls) ? payload.toolCalls.length : 0,
-        sessionId: payload.sessionId,
-        payloadLen: typeof payload === 'string' ? payload.length : JSON.stringify(payload).length
-      });
-    }
-  }
-
   // --- Safe Serialization Layer ---
   const safeArgs = args.map(arg => {
     try {
@@ -395,23 +379,32 @@ function createWindow(): void {
       // Legacy/Specific forwards
       if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', raw);
       if (type === KernelEventType.INFERENCE_CHUNK) {
-        const chunk = raw as { sessionId: string; text?: string; reasoning?: string; toolCalls?: unknown[] };
-        loggerService.catDebug(LogCategory.SYSTEM, "INFERENCE_CHUNK broadcast", {
+        const chunk = raw as { sessionId: string; text?: string; reasoning?: string; toolCalls?: unknown[]; isComplete?: boolean };
+        loggerService.catDebug(LogCategory.SYSTEM, "IPC → inference:chunk", {
           sessionId: chunk.sessionId,
           hasText: !!chunk.text,
           hasReasoning: !!chunk.reasoning,
           reasoningPreview: chunk.reasoning?.slice(0, 200),
-          toolCallCount: chunk.toolCalls?.length || 0
+          toolCallCount: chunk.toolCalls?.length || 0,
+          isComplete: !!chunk.isComplete
         });
         broadcastBatched('inference:chunk', raw, 50);
       }
       if (type === KernelEventType.INFERENCE_COMPLETED) {
-        const completed = raw as { sessionId: string };
+        const completed = raw as { sessionId: string; fullText?: string };
+        loggerService.catDebug(LogCategory.SYSTEM, "IPC → inference:completed", {
+          sessionId: completed.sessionId,
+          fullTextLen: completed.fullText?.length || 0
+        });
         broadcast(`inference:completed:${completed.sessionId}`, raw);
         broadcast('inference:completed', { sessionId: completed.sessionId });
       }
       if (type === KernelEventType.INFERENCE_ERROR) {
         const error = raw as { error: string; sessionId: string };
+        loggerService.catDebug(LogCategory.SYSTEM, "IPC → inference:error", {
+          sessionId: error.sessionId,
+          error: error.error
+        });
         broadcast(`inference:error:${error.sessionId}`, error.error);
       }
     });
