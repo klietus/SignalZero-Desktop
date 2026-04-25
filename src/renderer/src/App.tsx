@@ -437,6 +437,18 @@ function App() {
 
             setMessages(prev => {
                 const last = prev[prev.length - 1];
+                
+                // Always merge tool calls into an existing model message to prevent dual response
+                if (mappedToolCalls.length > 0 && last && last.role === Sender.MODEL) {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = { 
+                        ...last, 
+                        content: last.content + text,
+                        toolCalls: [...(last.toolCalls || []), ...mappedToolCalls]
+                    };
+                    return updated;
+                }
+                
                 if (last && last.role === Sender.MODEL && last.isStreaming) {
                     const updated = [...prev];
                     updated[updated.length - 1] = { 
