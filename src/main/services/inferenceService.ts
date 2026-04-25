@@ -536,7 +536,7 @@ const _streamAssistantResponseInternal = async function* (
     for await (const chunk of result.stream) {
       let text = "";
       let thinking = "";
-      
+
       // Extract thinking and narrative from chunk.candidates (available directly during stream)
       const candidates = (chunk as any).candidates || [];
       if (candidates[0]?.content?.parts) {
@@ -548,12 +548,12 @@ const _streamAssistantResponseInternal = async function* (
           }
         }
       }
-      
+
       // Fallback to chunk.text() if no parts structure found
       if (!text && !thinking) {
         try { text = chunk.text(); } catch (e) { }
       }
-      
+
       if (thinking) {
         loggerService.catDebug(LogCategory.INFERENCE, "Gemini: thinking chunk", { length: thinking.length, preview: thinking.slice(0, 100) });
         yield { reasoning: thinking };
@@ -900,7 +900,7 @@ export async function* sendMessageAndHandleTools(
         if (loops === 0) {
           if (anticipatedWebBrief) {
             contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH BRIEF]\n${anticipatedWebBrief}` });
-          } else           if (anticipatedWebResults && anticipatedWebResults.length > 0) {
+          } else if (anticipatedWebResults && anticipatedWebResults.length > 0) {
             contextMessages.push({ role: 'system', content: `\n\n[ANTICIPATED WEB SEARCH RESULTS]\n${JSON.stringify(anticipatedWebResults, null, 2)}` });
           }
         }
@@ -997,7 +997,7 @@ export async function* sendMessageAndHandleTools(
       const isCallingTraceThisTurn = currentToolNames.has('log_trace');
       const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
       const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
-      
+
       // Use unified finish reason + pending tool calls to determine turn ending
       const finishReason = (nextAssistant as any)?.finishReason || FinishReason.STOP;
       const hasPendingTools = yieldedToolCalls && yieldedToolCalls.length > 0;
@@ -1005,12 +1005,12 @@ export async function* sendMessageAndHandleTools(
         finishReason === FinishReason.STOP &&
         !hasPendingTools
       ) || (
-        finishReason === FinishReason.MAX_TOKENS
-      ) || (
-        finishReason === FinishReason.SAFETY
-      ) || (
-        finishReason === FinishReason.ERROR
-      );
+          finishReason === FinishReason.MAX_TOKENS
+        ) || (
+          finishReason === FinishReason.SAFETY
+        ) || (
+          finishReason === FinishReason.ERROR
+        );
 
       if (isEndingTurn && ENABLE_SYSTEM_AUDIT && auditRetries < MAX_AUDIT_RETRIES) {
         if (!traceSatisfied) {
@@ -1325,17 +1325,14 @@ export const primeSymbolicContext = async (
   symbols: SymbolDef[],
   webResults: any[],
   webBrief?: string,
-  traceNeeded: boolean,
-  traceReason?: string
+  traceNeeded: boolean
 }> => {
   const foundSymbols: SymbolDef[] = [];
   const webResults: any[] = [];
   let traceNeeded = true;
-  let traceReason: string | undefined;
   let webBrief: string | undefined;
 
   try {
-    const session = await contextService.getSession(contextSessionId);
     const history = await contextService.getUnfilteredHistory(contextSessionId);
 
     // Build minimal priming context: last 3 user messages + single last AI message
@@ -1357,15 +1354,10 @@ export const primeSymbolicContext = async (
       })
       .filter((q, i, self) => q && self.indexOf(q) === i);
 
-    const currentName = session?.name;
-    const userMessageCount = userMsgs.length + 1;
-    const needsNaming = !currentName || currentName.startsWith('Context ') || (userMessageCount % 10 === 0);
-
     loggerService.catInfo(LogCategory.INFERENCE, "Priming symbolic context via Llama Sidecar", {
       contextSessionId,
       userMsgsIncluded: lastThreeUser.length,
-      hasAiMsg: !!lastAi,
-      needsNaming
+      hasAiMsg: !!lastAi
     });
 
     const prompt = `You are a high-speed symbolic priming engine. 
@@ -1373,10 +1365,6 @@ export const primeSymbolicContext = async (
     
     Analyze the conversation history and the new user message to identify 3 symbolic search queries and determine if web search grounding is needed. 
     
-    Additionally, generate 2 "orthogonal_queries" that explore the local opposite of your predictions, including antonyms, contradictory logic, or orthogonal concepts to ensure context diversity.
-    
-    ${needsNaming ? 'CRITICAL: Based on the conversation context, suggest a descriptive and concise name for this context session in "suggested_name".' : ''}
-
     CRITICAL: Only set "web_search_needed" to true if the message involves an external entity (person, company, place), a complex technical/scientific topic, or a current event that requires grounding in facts.
 
     Conversation History:
@@ -1390,41 +1378,27 @@ export const primeSymbolicContext = async (
     Output the following valid JSON object IMMEDIATELY without any preamble, explanation, or thinking:
     {
       "queries": ["symbolic query1", "symbolic query2", ...],
-      "orthogonal_queries": ["opposite query1", "orthogonal query2", ...],
       "web_search_needed": boolean,
       "web_search_queries": ["search query1", "search query2", ...],
-      "trace_needed": boolean,
-      "trace_reason": "Brief explanation if trace_needed is true",
-      "suggested_name": string | null
+      "trace_needed": boolean
     }`;
 
     let fastResponse: any = {};
-    const fastText = await callFastInference([{ role: "user", content: prompt }], 2048, undefined, LlamaPriority.URGENT);
+    const fastText = await callFastInference([{ role: "user", content: prompt }], 512, undefined, LlamaPriority.URGENT);
     fastResponse = extractJson(fastText);
 
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
 
     const symbolicQueriesRaw = fastResponse.queries || [];
-    const orthogonalQueriesRaw = fastResponse.orthogonal_queries || [];
     const webSearchQueriesRaw = fastResponse.web_search_queries || [];
 
     // Normalize queries to strings (handling models that return objects with "query" property)
     const normalize = (q: any) => typeof q === 'string' ? q : (q.query || JSON.stringify(q));
 
-    const symbolicQueries = [...symbolicQueriesRaw.map(normalize), ...orthogonalQueriesRaw.map(normalize)];
+    const symbolicQueries = [...symbolicQueriesRaw.map(normalize)];
     const webSearchQueries = webSearchQueriesRaw.map(normalize);
 
     traceNeeded = !!fastResponse.trace_needed;
-    traceReason = fastResponse.trace_reason;
-
-    // Handle session naming if suggested
-    if (fastResponse.suggested_name && fastResponse.suggested_name !== currentName) {
-      loggerService.catInfo(LogCategory.INFERENCE, `Fast model suggested session name: ${fastResponse.suggested_name}`);
-      const cleanName = fastResponse.suggested_name.replace(/^["']|["']$/g, '').slice(0, 50);
-      void contextService.renameSession(contextSessionId, cleanName).then(() => {
-        eventBusService.emitKernelEvent(KernelEventType.CONTEXT_UPDATED, { sessionId: contextSessionId, name: cleanName } as const);
-      }).catch(() => { });
-    }
 
     if (symbolicQueries.length > 0) {
       loggerService.catInfo(LogCategory.INFERENCE, `Executing ${symbolicQueries.length} symbolic search queries.`, { symbolicQueries });
@@ -1465,7 +1439,7 @@ export const primeSymbolicContext = async (
       }
     }
   } catch (e) { loggerService.catError(LogCategory.INFERENCE, "Priming failed", { error: e }); }
-  return { symbols: foundSymbols, webResults, webBrief, traceNeeded, traceReason };
+  return { symbols: foundSymbols, webResults, webBrief, traceNeeded };
 };
 
 export const processMessageAsync = async (
@@ -1524,7 +1498,7 @@ export const processMessageAsync = async (
       finalSystemInstruction = `${finalSystemInstruction}\n\n[Voice Authentication Metadata]\n- Current Speaker: ${speakerName}\n- Verification Status: Authenticated via Voice Fingerprint`;
     }
 
-    const { webResults, webBrief, traceNeeded, traceReason } = await primeSymbolicContext(message, contextSessionId);
+    const { webResults, webBrief, traceNeeded } = await primeSymbolicContext(message, contextSessionId);
     const session = await contextService.getSession(contextSessionId);
     if (session) {
       if (traceNeeded === undefined) {
@@ -1535,7 +1509,6 @@ export const processMessageAsync = async (
         metadata: {
           ...session.metadata,
           trace_needed: traceNeeded,
-          trace_reason: traceReason,
           voice_authenticated_username: speakerName
         }
       });

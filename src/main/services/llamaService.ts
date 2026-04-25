@@ -122,7 +122,7 @@ export class LlamaSidecarInstance extends EventEmitter {
                 prompt,
                 n_predict: options.maxTokens || options.n_predict || 2048,
                 stream: false,
-                cache_prompt: false,
+                cache_prompt: true,
                 ...options
             };
 
