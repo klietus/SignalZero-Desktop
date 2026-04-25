@@ -17,6 +17,7 @@ import { loggerService, LogCategory } from './loggerService.js';
 import { MonitoringDelta, AgentDefinition } from '../types.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { tentativeLinkService } from './tentativeLinkService.js';
+import { uiStateService } from './uiStateService.js';
 
 class AgentRunner {
     private isProcessingBatch = false;
@@ -54,18 +55,31 @@ class AgentRunner {
         this.lastPromotionTime = now;
         loggerService.catInfo(LogCategory.AGENT, `Autonomous Reaction Triggered: ${data.synthesis}`);
         
-        // Find or create a SINGLE persistent autonomous situational context
-        const sessions = await contextService.listSessions();
-        let session = sessions.find(s => s.metadata?.kind === 'autonomous_reaction');
+        // Route to user's active session when available, falling back to autonomous context
+        let sessionId = '';
+        const activeSessionId = uiStateService.activeSessionId;
         
-        if (!session) {
-            session = await contextService.createSession('agent', { 
-                kind: 'autonomous_reaction',
-                source: 'perception_spike'
-            }, "Autonomous Reasoning Stream");
+        if (activeSessionId) {
+            const activeSession = await contextService.getSession(activeSessionId);
+            if (activeSession && activeSession.status === 'open') {
+                sessionId = activeSessionId;
+                loggerService.catInfo(LogCategory.AGENT, `Routing perception spike to active user session: ${activeSessionId}`);
+            }
         }
 
-        const sessionId = session.id;
+        if (!sessionId) {
+            const sessions = await contextService.listSessions();
+            let session = sessions.find(s => s.metadata?.kind === 'autonomous_reaction');
+            
+            if (!session) {
+                session = await contextService.createSession('agent', { 
+                    kind: 'autonomous_reaction',
+                    source: 'perception_spike'
+                }, "Autonomous Reasoning Stream");
+            }
+            sessionId = session.id;
+            loggerService.catInfo(LogCategory.AGENT, `Routing perception spike to autonomous session: ${sessionId}`);
+        }
 
         // Format scene data for pretty display in chat (collapsed markdown)
         const sceneDataJson = JSON.stringify(data.sceneSnapshot, null, 2);
