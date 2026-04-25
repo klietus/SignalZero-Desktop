@@ -586,7 +586,7 @@ export class TopologyService {
             }`;
 
             const fastText = await callFastInference([{ role: 'user', content: prompt }], 1600, undefined, LlamaPriority.MEDIUM);
-            const resultJson = await extractJson(fastText);
+            const resultJson = extractJson(fastText);
 
             return {
                 shouldLink: !!resultJson.shouldLink,
@@ -640,7 +640,7 @@ export class TopologyService {
             Output ONLY the ID of the winner. Valid JSON: { "winnerId": "..." }`;
 
             const fastText = await callFastInference([{ role: "user", content: prompt }], 200, undefined, LlamaPriority.MEDIUM);
-            const response = await extractJson(fastText);
+                        const response = extractJson(fastText);
 
             const winnerId = response.winnerId;
             const cleanWinner = candidates.find(c => c.id === winnerId)?.id;
@@ -869,7 +869,7 @@ export class TopologyService {
                         }`;
 
                         const fastText = await callFastInference([{ role: "user", content: prompt }], 4096, undefined, LlamaPriority.MEDIUM);
-                        const response = await extractJson(fastText);
+            const response = extractJson(fastText);
 
                         if (response.shouldLink && Array.isArray(response.matches) && response.matches.length > 0) {
                             // Strictly only take the FIRST (best) match
@@ -1135,7 +1135,7 @@ A Lattice is a high-level abstract container providing structural "docking point
             }`;
 
             fullResponse = await callFastInference([{ role: "user", content: prompt }], 800, undefined, LlamaPriority.MEDIUM);
-            const resultJson = await extractJson(fullResponse);
+            const resultJson = extractJson(fullResponse);
 
             return !!resultJson.shouldLift;
         } catch (error) {
@@ -1415,7 +1415,15 @@ A Lattice is a high-level abstract container providing structural "docking point
 
                 loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Decomposing saturated lattice ${rootLattice.id} (${memberPatterns.length} patterns)`);
 
+                // Log existing sub-lattices and their current link counts
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Existing sub-lattices`, {
+                    count: existingSubLattices.length,
+                    lattices: existingSubLattices.map(l => ({ id: l.id, linkCount: l.linked_patterns?.length || 0 }))
+                });
+
                 // --- PROMPT 1: DOWNWARD MIGRATION ANALYSIS ---
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Sending migration analysis request`);
+                
                 const migrationPrompt = `### KNOWLEDGE GRAPH ARCHITECT: DOWNWARD MIGRATION MISSION
 
 The root lattice [${rootLattice.id}] is saturated. You must decide which patterns can be pushed down into EXISTING sub-lattices.
@@ -1475,11 +1483,17 @@ For each pattern, determine if it conceptually belongs inside one of the EXISTIN
                             if (target) {
                                 patternsToMigrate.push({ pattern, targetLattice: target });
                             } else {
-                                patternsNeedingSynthesis.push(pattern); // Fallback
+                                patternsNeedingSynthesis.push(pattern);
                             }
                         }
                     }
+
+                    loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Migration analysis complete`, {
+                        toMigrate: patternsToMigrate.length,
+                        needingSynthesis: patternsNeedingSynthesis.length
+                    });
                 } else {
+                    loggerService.catWarn(LogCategory.KERNEL, `TopologyService: Invalid migration response, all patterns need synthesis`);
                     patternsNeedingSynthesis.push(...memberPatterns);
                 }
 
@@ -1580,14 +1594,20 @@ ${patternsNeedingSynthesis.map(p => `- ID: ${p.id} | Name: "${p.name}" | Role: $
                 // --- EXECUTION ---
                 const rootLinksToRemove = new Set<string>();
 
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Executing ${patternsToMigrate.length} migrations`);
+                
                 for (const item of patternsToMigrate) {
                     const { pattern, targetLattice } = item;
+                    
                     rootLinksToRemove.add(pattern.id);
                     targetLattice.linked_patterns = targetLattice.linked_patterns || [];
                     if (!targetLattice.linked_patterns.some(l => l.id === pattern.id)) {
                         targetLattice.linked_patterns.push({ id: pattern.id, link_type: 'contains' });
                     }
-                    pattern.linked_patterns = (pattern.linked_patterns || []).filter(l => l.id !== rootLattice.id);
+                    
+                    // Remove root lattice link from pattern (reflexive)
+                    const hadRootLink = pattern.linked_patterns?.some(l => l.id === rootLattice.id);
+                    pattern.linked_patterns = pattern.linked_patterns.filter(l => l.id !== rootLattice.id);
                     pattern.linked_patterns.push({ id: targetLattice.id, link_type: 'part_of' });
 
                     await domainService.addSymbol(targetLattice.symbol_domain, targetLattice);
@@ -1595,16 +1615,19 @@ ${patternsNeedingSynthesis.map(p => `- ID: ${p.id} | Name: "${p.name}" | Role: $
                 }
 
                 if (synthesizedSubLattices.length > 0) {
+                    loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Synthesizing ${synthesizedSubLattices.length} new sub-lattices`);
+                    
                     await domainService.bulkUpsertSymbols(synthesizedSubLattices);
                     for (const sl of synthesizedSubLattices) {
                         rootLattice.linked_patterns = rootLattice.linked_patterns || [];
                         rootLattice.linked_patterns.push({ id: sl.id, link_type: 'contains' });
+                        
                         const childIds = sl.linked_patterns!.filter(l => l.id !== rootLattice.id).map(l => l.id);
                         for (const mid of childIds) {
                             rootLinksToRemove.add(mid);
                             const pattern = idToSymbol.get(mid);
                             if (pattern) {
-                                pattern.linked_patterns = (pattern.linked_patterns || []).filter(l => l.id !== rootLattice.id);
+                                pattern.linked_patterns = pattern.linked_patterns.filter(l => l.id !== rootLattice.id);
                                 pattern.linked_patterns.push({ id: sl.id, link_type: 'part_of' });
                                 await domainService.addSymbol(pattern.symbol_domain, pattern);
                             }
@@ -1613,12 +1636,24 @@ ${patternsNeedingSynthesis.map(p => `- ID: ${p.id} | Name: "${p.name}" | Role: $
                 }
 
                 if (rootLinksToRemove.size > 0) {
-                    rootLattice.linked_patterns = (rootLattice.linked_patterns || []).filter(l => !rootLinksToRemove.has(l.id));
+                    loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Removing ${rootLinksToRemove.size} links from root lattice`);
+                    
+                    const beforeCount = rootLattice.linked_patterns?.length || 0;
+                    rootLattice.linked_patterns = rootLattice.linked_patterns.filter(l => !rootLinksToRemove.has(l.id));
+                    
                     await domainService.addSymbol(rootLattice.symbol_domain, rootLattice);
+                    
+                    loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Root lattice refactored`, { 
+                        beforeCount,
+                        afterCount: rootLattice.linked_patterns?.length || 0
+                    });
                 }
 
                 decomposedCount++;
-                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Successfully refactored ${rootLattice.id}`);
+                loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Successfully refactored ${rootLattice.id}`, { 
+                    patternsMigrated: patternsToMigrate.length,
+                    latticesSynthesized: synthesizedSubLattices.length
+                });
             } catch (err) {
                 loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed decomposition for ${rootLattice.id}`, { error: err });
             }

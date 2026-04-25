@@ -151,7 +151,7 @@ export const webFetchService = {
 
         try {
             const fastText = await callFastInference([{ role: "user", content: prompt }], 8192);
-            const response = await extractJson(fastText);
+            const response = extractJson(fastText);
             return response;
         } catch (error) {
             loggerService.catError(LogCategory.TOOL, "WebFetchService: Metadata extraction failed", { error });

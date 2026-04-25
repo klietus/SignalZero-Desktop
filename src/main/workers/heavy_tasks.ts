@@ -22,7 +22,13 @@ function stripThoughts(text: string): string {
 }
 
 const tasks: Record<string, (data: any) => any> = {
-    parseJson: (data: string) => JSON.parse(data),
+    parseJson: (data: string) => {
+        try {
+            return JSON.parse(data);
+        } catch (e: any) {
+            return null;
+        }
+    },
     stringifyJson: (data: any) => JSON.stringify(data),
     stripThoughts: (data: string) => stripThoughts(data),
     batchStripThoughts: (messages: any[]) => messages.map(m => ({ ...m, content: stripThoughts(m.content) })),

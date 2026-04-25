@@ -304,7 +304,7 @@ class MonitoringService {
 
         try {
             const fastText = await callFastInference([{ role: "user", content: prompt }], 2048, undefined, LlamaPriority.LOW);
-            const response = await extractJson(fastText);
+                const response = extractJson(fastText);
             return response.items || null;
         } catch (error) {
             loggerService.catError(LogCategory.MONITORING, "Itemization failed", { error });
@@ -436,7 +436,7 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
         return this.withRetries(
             async () => {
                 const fastText = await callFastInference([{ role: "user", content: prompt }], 4192, undefined, LlamaPriority.LOW);
-                const response = await extractJson(fastText);
+            const response = extractJson(fastText);
                 return response;
             },
             (result) => result && (result.hasChanges === false || (result.hasChanges === true && !!result.content)),

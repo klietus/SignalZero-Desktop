@@ -253,7 +253,7 @@ FORMAT: Return a JSON object with:
             const flashResult = await inferenceService.callFastInference([{ role: 'user', content: prompt }], 1024, sceneAttachments, LlamaPriority.HIGH);
 
             if (flashResult) {
-                const result = await inferenceService.extractJson(flashResult);
+                const result = inferenceService.extractJson(flashResult);
                 if (result.flag === true) {
                     const severity = result.severity || 'medium';
                     loggerService.catInfo(LogCategory.SYSTEM, `PERCEPTION ALERT: ${severity} - ${result.synthesis}`);

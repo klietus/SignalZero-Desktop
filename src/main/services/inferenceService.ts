@@ -20,7 +20,6 @@ import { mcpClientService } from './mcpClientService.js';
 import { eventBusService } from './eventBusService.js';
 import { KernelEventType } from '../types.js';
 import { webSearchService } from './webSearchService.js';
-import { workerService } from './workerService.js';
 import { realtimeService } from './realtime/realtimeService.js';
 import { llamaService, urgentLlamaService, LlamaPriority } from './llamaService.js';
 
@@ -1217,30 +1216,21 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
   yield { isComplete: true };
 }
 
-export const extractJson = async (text: string): Promise<any> => {
+export const extractJson = (text: string): any => {
   if (!text || text.trim() === "") return null;
-
-  try {
-    const result = await workerService.runTask('parseJson', text);
-    if (result) return result;
-  } catch (e) { }
 
   const sanitize = (str: string) => {
     return str
-      // Fix invalid backslashes (common in LaTeX or math output)
       .replace(/\\(?![bfnrtu"\/])/g, "\\\\")
-      // Handle literal newlines inside values
       .replace(/\n/g, "\\n")
-      // Remove common LLM conversational prefixes/suffixes
       .replace(/^.*?({|\[)/, (m) => m.endsWith('[') ? '[' : '{')
       .replace(/(}|\])[^}\]]*$/, (m) => m.startsWith(']') ? ']' : '}');
   };
 
-  const tryParse = (str: string) => {
+  const tryParse = (str: string): any => {
     try {
       return JSON.parse(str);
     } catch (e) {
-      // If it looks like multiple objects { ... }, { ... }, wrap and merge
       if (str.includes('}, {') || str.includes('},\n{')) {
         try {
           const wrapped = JSON.parse(`[${str}]`);
@@ -1250,12 +1240,11 @@ export const extractJson = async (text: string): Promise<any> => {
         } catch (inner) { }
       }
 
-      // Deep heuristic for unescaped internal quotes
       let fixed = str
         .replace(/":\s*"([\s\S]*?)"(\s*[,}\n])/g, (_match, p1, p2) => {
           const content = p1
-            .replace(/\\"/g, '"') // Normalize existing escapes
-            .replace(/"/g, '\\"'); // Re-escape all
+            .replace(/\\"/g, '"')
+            .replace(/"/g, '\\"');
           return `": "${content}"${p2}`;
         })
         .replace(/,(\s*[}\]])/g, '$1');
@@ -1263,7 +1252,6 @@ export const extractJson = async (text: string): Promise<any> => {
       try {
         return JSON.parse(fixed);
       } catch (inner) {
-        // Recovery for truncated JSON
         let truncated = fixed.trim();
         if ((truncated.startsWith('{') && !truncated.endsWith('}')) || (truncated.startsWith('[') && !truncated.endsWith(']'))) {
           const stack: string[] = [];
@@ -1286,18 +1274,42 @@ export const extractJson = async (text: string): Promise<any> => {
     }
   };
 
-  const direct = tryParse(text);
-  if (direct) return direct;
+  // Check for fullText wrapper first (LLM error recovery format)
+  let parsed: any = null;
+  try {
+    parsed = JSON.parse(text.trim());
+  } catch (e) { }
 
+  if (parsed && typeof parsed === 'object' && parsed.fullText) {
+    const jsonRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+    let match;
+    while ((match = jsonRegex.exec(parsed.fullText)) !== null) {
+      try {
+        return JSON.parse(match[1]);
+      } catch (e) { }
+    }
+    const rawInner = tryParse(parsed.fullText);
+    if (rawInner) return rawInner;
+    return parsed;
+  }
+
+  // Direct parse attempt
+  if (parsed) return parsed;
+
+  // Sanitize and try again
   const sanitized = tryParse(sanitize(text));
   if (sanitized) return sanitized;
 
-  // Regex fallback for code blocks
+  // Regex fallback for code blocks - extract and parse directly
   const jsonRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
   let match;
   while ((match = jsonRegex.exec(text)) !== null) {
-    const extracted = tryParse(sanitize(match[1]));
-    if (extracted) return extracted;
+    try {
+      return JSON.parse(match[1]);
+    } catch (e) {
+      const extracted = tryParse(sanitize(match[1]));
+      if (extracted) return extracted;
+    }
   }
 
   // Final fallback: Balanced brace extraction
@@ -1316,7 +1328,7 @@ export const extractJson = async (text: string): Promise<any> => {
   }
 
   loggerService.catError(LogCategory.INFERENCE, "All JSON extraction attempts failed. FULL LLM OUTPUT BELOW:", {
-    fullText: text
+    fullText: text.substring(0, 2000)
   });
   throw new Error("JSON extraction failed");
 };

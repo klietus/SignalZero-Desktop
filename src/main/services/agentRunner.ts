@@ -133,7 +133,7 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
 
         try {
             const fastText = await callFastInference([{ role: "user", content: prompt }], 400, undefined, LlamaPriority.LOW);
-            const result = await extractJson(fastText);
+            const result = extractJson(fastText);
             return result.winnerId ? agents.find(a => a.id === result.winnerId) || null : null;
         } catch (e) { return null; }
     }

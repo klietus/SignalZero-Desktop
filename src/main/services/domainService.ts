@@ -400,7 +400,7 @@ export const domainService = {
         }`;
 
         const fastText = await callFastInference([{ role: "user", content: prompt }], 2000, undefined, LlamaPriority.MEDIUM);
-        const response = await extractJson(fastText);
+        const response = extractJson(fastText);
 
         if (response.canMerge === false) {
             loggerService.catWarn(LogCategory.DOMAIN, `Merge rejected by model: ${response.reason || 'Fundamentally different'}`);
