@@ -579,10 +579,9 @@ const _streamAssistantResponseInternal = async function* (
       }
     }
 
-    // Capture finish reason from final response
+    // Capture finish reason from final response before yielding
     finishReason = (result as any).response?.candidates?.[0]?.finishReason ?? null;
 
-    if (collectedToolCalls.length > 0) yield { toolCalls: collectedToolCalls };
     const assistantMessage: ChatCompletionMessageParam = {
       role: "assistant",
       content: textAccumulator,
@@ -593,6 +592,7 @@ const _streamAssistantResponseInternal = async function* (
     const geminiSettings = await settingsService.getInferenceSettings();
     (assistantMessage as any).finishReason = unifyFinishReason(geminiSettings.provider || 'gemini', finishReason);
 
+    if (collectedToolCalls.length > 0) yield { toolCalls: collectedToolCalls };
     yield { assistantMessage };
     return;
   }
