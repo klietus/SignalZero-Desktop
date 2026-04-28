@@ -157,6 +157,9 @@ const initDb = () => {
                 symbol_tag TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                v2_commit TEXT DEFAULT 'volatile',
+                v2_recency_weight REAL DEFAULT 1.0,
+                v2_last_updated INTEGER,
                 FOREIGN KEY (domain_id) REFERENCES domains(id) ON DELETE CASCADE
             );
 

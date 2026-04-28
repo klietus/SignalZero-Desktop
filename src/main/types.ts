@@ -597,3 +597,20 @@ export interface GraphHygieneSettings {
   linkPromotion: boolean;
   latticeDecomposition: boolean
 }
+
+// Forgetting policy defaults
+export const FORGETTING_DEFAULTS = {
+  prune_threshold: 0.3,
+  archive_threshold: 0.01,
+  archive_min_days: 30,
+  forget_if_low_centrality: true,
+  exempt_foundational: true,
+} as const;
+
+// Link promotion defaults
+export const LINK_PROMOTION_DEFAULTS = {
+  access_count_threshold: 50,
+  time_window_hours: 168, // 7 days
+  stability_days: 30,
+  centrality_threshold: 0.3,
+} as const;

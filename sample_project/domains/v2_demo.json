@@ -1,0 +1,162 @@
+{
+  "meta": {
+    "id": "v2_demo",
+    "name": "Symbolic Store v2 Demo",
+    "description": "Demonstrates v2 symbol format with structural, retrieval, and links fields",
+    "invariants": ["symbols must have predicates", "links must track access"],
+    "enabled": true,
+    "readOnly": false,
+    "lastUpdated": "2026-04-27 16:00:00",
+    "symbolCount": 3
+  },
+  "symbols": [
+    {
+      "id": "V2-CORE-SYMBOL",
+      "domain_id": "v2_demo",
+      "symbol_domain": "v2_demo",
+      "symbol_tag": "core, foundational",
+      "name": "Core Symbol v2",
+      "kind": "pattern",
+      "triad": "🏛️🔗📊",
+      "role": "Foundational anchor for v2 symbolic store",
+      "macro": "INPUT -> PROCESS -> OUTPUT",
+      "lattice": { "topology": "invariant", "closure": "loop" },
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "anchor",
+        "topology": "invariant",
+        "commit": "foundational",
+        "temporal": "persistent",
+        "gate": [],
+        "substrate": ["core"],
+        "invariants": ["non-coercion", "reality-alignment"]
+      },
+      "activation_conditions": ["system_init", "domain_load"],
+      "failure_mode": "unavailable if foundational",
+      "created_at": "2026-04-27 16:00:00",
+      "updated_at": "2026-04-27T16:00:00.000Z",
+      "commit": "foundational",
+      "recency_weight": 1.0,
+      "last_updated_epoch": 1745779200000,
+      "predicates": {
+        "function": ["anchor"],
+        "topology": ["invariant"],
+        "temporal": ["persistent"],
+        "kind": ["pattern"],
+        "tags": ["core", "foundational"]
+      },
+      "links": [
+        {
+          "id": "V2-VOLATILE-SAMPLE",
+          "link_type": "relates_to",
+          "access_count": 0,
+          "access_ema": 0.0,
+          "last_accessed": "2026-04-27T16:00:00.000Z",
+          "committed": "volatile",
+          "created_at": "2026-04-27T16:00:00.000Z"
+        }
+      ],
+      "v2": true,
+      "schema_version": 2
+    },
+    {
+      "id": "V2-VOLATILE-SAMPLE",
+      "domain_id": "v2_demo",
+      "symbol_domain": "v2_demo",
+      "symbol_tag": "volatile, sample",
+      "name": "Volatile Sample Symbol",
+      "kind": "pattern",
+      "triad": "🌊🔄💨",
+      "role": "Demonstrates volatile symbol with recency decay",
+      "macro": "INPUT -> PROCESS -> OUTPUT",
+      "lattice": null,
+      "persona": null,
+      "data": null,
+      "facets": {
+        "function": "sample",
+        "topology": "inductive",
+        "commit": "volatile",
+        "temporal": "ephemeral",
+        "gate": [],
+        "substrate": ["demo"],
+        "invariants": []
+      },
+      "activation_conditions": ["demo_trigger"],
+      "failure_mode": "decays over time",
+      "created_at": "2026-04-27 16:00:00",
+      "updated_at": "2026-04-27T16:00:00.000Z",
+      "commit": "volatile",
+      "recency_weight": 1.0,
+      "last_updated_epoch": 1745779200000,
+      "predicates": {
+        "function": ["sample"],
+        "topology": ["inductive"],
+        "temporal": ["ephemeral"],
+        "kind": ["pattern"],
+        "tags": ["volatile", "demo"]
+      },
+      "links": [],
+      "v2": true,
+      "schema_version": 2
+    },
+    {
+      "id": "V2-PREDICATE-DEMO",
+      "domain_id": "v2_demo",
+      "symbol_domain": "v2_demo",
+      "symbol_tag": "predicate, demo",
+      "name": "Predicate Demo Symbol",
+      "kind": "data",
+      "triad": "📊🔍🎯",
+      "role": "Demonstrates predicate-based retrieval",
+      "macro": "QUERY -> FILTER -> RESULT",
+      "lattice": null,
+      "persona": null,
+      "data": {
+        "source": "v2_demo",
+        "verification": "manual",
+        "status": "active",
+        "payload": {
+          "example_field": "example_value",
+          "embeddings": [0.1, 0.2, 0.3]
+        }
+      },
+      "facets": {
+        "function": "retrieval",
+        "topology": "constellation",
+        "commit": "volatile",
+        "temporal": "persistent",
+        "gate": [],
+        "substrate": ["demo"],
+        "invariants": []
+      },
+      "activation_conditions": ["predicate_query"],
+      "failure_mode": "no results if predicates empty",
+      "created_at": "2026-04-27 16:00:00",
+      "updated_at": "2026-04-27T16:00:00.000Z",
+      "commit": "volatile",
+      "recency_weight": 1.0,
+      "last_updated_epoch": 1745779200000,
+      "predicates": {
+        "function": ["retrieval"],
+        "topology": ["constellation"],
+        "temporal": ["persistent"],
+        "kind": ["data"],
+        "tags": ["predicate", "demo"]
+      },
+      "links": [
+        {
+          "id": "V2-CORE-SYMBOL",
+          "link_type": "informs",
+          "access_count": 5,
+          "access_ema": 0.5,
+          "last_accessed": "2026-04-27T16:30:00.000Z",
+          "committed": "volatile",
+          "created_at": "2026-04-27T16:00:00.000Z"
+        }
+      ],
+      "v2": true,
+      "schema_version": 2
+    }
+  ]
+}
