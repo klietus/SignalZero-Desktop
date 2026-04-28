@@ -385,6 +385,30 @@ ${processedText}`;
         }
     }
 
+    private splitTextIntoChunks(text: string): string[] {
+        // Split at sentence boundaries: periods, exclamation marks, question marks followed by space or end
+        const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) || [text];
+        const chunks: string[] = [];
+        let current = '';
+        
+        for (const sentence of sentences) {
+            const candidate = current + sentence;
+            // If chunk exceeds ~200 chars, flush it
+            if (candidate.length > 200 && current.length > 0) {
+                chunks.push(current.trim());
+                current = sentence;
+            } else {
+                current = candidate;
+            }
+        }
+        
+        if (current.trim()) {
+            chunks.push(current.trim());
+        }
+        
+        return chunks.length > 0 ? chunks : [text];
+    }
+
     async speak(text: string, _sender: any) {
         if (!this.process || !this.isReady) {
             return;
@@ -411,6 +435,7 @@ ${processedText}`;
                 this.isSpeaking = false;
                 return;
             }
+            
             this.isSpeaking = true;
             this.sendToSidecar('speak', { text: speechText, voice: this.voiceId });
         } catch (e) {

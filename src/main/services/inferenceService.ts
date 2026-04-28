@@ -1001,13 +1001,13 @@ export async function* sendMessageAndHandleTools(
       const isCallingTraceThisTurn = currentToolNames.has('log_trace');
       const traceSatisfied = !traceNeeded || (hasLoggedTrace || isCallingTraceThisTurn);
       const hasNarrativeOutput = isNarrativeText(textAccumulatedInTurn);
-      
+
       const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
       const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
-      
+
       // FORCE NARRATIVE: If we've done ≥2 tool-only loops with no narrative, force synthesis
       const isStuckInToolLoop = loops >= 2 && !hasNarrativeOutput && yieldedToolCalls && yieldedToolCalls.length > 0;
-      
+
       loggerService.catDebug(LogCategory.INFERENCE, "Turn ending decision", {
         contextSessionId,
         toolNames: Array.from(currentToolNames),
@@ -1144,7 +1144,7 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
               const history = await contextService.getUnfilteredHistory(contextSessionId);
               const userRounds = history.filter(m => m.role === 'user').length;
               const canName = needsName && userRounds >= 1 && userRounds <= 10;
-              
+
               loggerService.catInfo(LogCategory.INFERENCE, "Naming decision", {
                 contextSessionId,
                 currentName: session.name || '(none)',
@@ -1396,7 +1396,7 @@ export const primeSymbolicContext = async (
 
     // Build minimal priming context: last 3 user messages + single last AI message
     const userMsgs = history.filter(m => m.role === 'user');
-    const lastThreeUser = userMsgs.slice(-3).map(m => `USER: ${stripThoughts(m.content || "")}`);
+    const lastThreeUser = userMsgs.slice(-1).map(m => `USER: ${stripThoughts(m.content || "")}`);
     const lastAi = [...history].reverse().find(m => m.role === 'assistant' || m.role === 'model');
     const aiMsg = lastAi ? `\nASSISTANT: ${stripThoughts(lastAi.content || "")}` : '';
     const historyContext = [...lastThreeUser, aiMsg].filter(Boolean).join('\n');
@@ -1422,7 +1422,7 @@ export const primeSymbolicContext = async (
     const prompt = `You are a high-speed symbolic priming engine. 
     CRITICAL: DO NOT use any <think> tags. DO NOT reason out loud. DO NOT output any text other than the JSON object.
     
-    Analyze the conversation history and the new user message to identify 3 symbolic search queries and determine if web search grounding is needed. 
+    Analyze the conversation history and the new user message to identify 2 symbolic search queries and determine if web search grounding is needed. 
     
     CRITICAL: Only set "web_search_needed" to true if the message involves an external entity (person, company, place), a complex technical/scientific topic, or a current event that requires grounding in facts.
 
@@ -1436,9 +1436,8 @@ export const primeSymbolicContext = async (
 
     Output the following valid JSON object IMMEDIATELY without any preamble, explanation, or thinking:
     {
-      "queries": ["symbolic query1", "symbolic query2", ...],
+      "queries": ["symbolic query1", "symbolic query2"],
       "web_search_needed": boolean,
-      "web_search_queries": ["search query1", "search query2", ...],
       "trace_needed": boolean
     }`;
 
@@ -1454,7 +1453,7 @@ export const primeSymbolicContext = async (
     loggerService.catInfo(LogCategory.INFERENCE, "Fast model priming response received", { fastResponse });
 
     const symbolicQueriesRaw = fastResponse.queries || [];
-    const webSearchQueriesRaw = fastResponse.web_search_queries || [];
+    const webSearchQueriesRaw = fastResponse.queries || [];
 
     // Normalize queries to strings (handling models that return objects with "query" property)
     const normalize = (q: any) => typeof q === 'string' ? q : (q.query || JSON.stringify(q));

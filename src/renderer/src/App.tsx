@@ -402,6 +402,7 @@ function App() {
     }, []);
 
     const justCompletedRef = useRef(false);
+    const ttsAccumRef = useRef('');
     
     useEffect(() => {
         if (appState !== 'app' || !activeContextId || currentView === 'monitor') {
@@ -446,6 +447,18 @@ function App() {
             const text = typeof chunk === 'string' ? chunk : (chunk.text || '');
             const reasoning = typeof chunk === 'object' ? (chunk.reasoning || '') : '';
             const rawToolCalls = typeof chunk === 'object' ? (chunk.toolCalls || []) : [];
+            
+            // Accumulate text chunks for streaming TTS (skip reasoning/tool calls)
+            if (text && !reasoning) {
+                ttsAccumRef.current += text;
+                // Flush at sentence boundaries
+                const flushMatch = ttsAccumRef.current.match(/^(.*?[.!?])\s*/);
+                if (flushMatch) {
+                    const flushed = flushMatch[1];
+                    ttsAccumRef.current = ttsAccumRef.current.slice(flushed.length);
+                    window.api.sendTtsChunk(flushed);
+                }
+            }
             
             const mappedToolCalls = rawToolCalls.map((tc: any, tcIdx: number) => {
                 let args = {};
@@ -509,6 +522,12 @@ function App() {
         const unbindCompleted = window.api.onInferenceCompleted((data?: any) => {
             const sessionId = data?.sessionId || activeContextId;
             if (activeContextId && sessionId !== activeContextId) return;
+
+            // Flush any remaining accumulated text
+            if (ttsAccumRef.current.trim()) {
+                window.api.sendTtsChunk(ttsAccumRef.current.trim());
+                ttsAccumRef.current = '';
+            }
 
             setIsProcessing(false);
             

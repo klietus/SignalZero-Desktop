@@ -193,6 +193,7 @@ const api = {
     return () => ipcRenderer.removeListener('realtime:status-change', subscription);
   },
   
+  sendTtsChunk: (text: string) => ipcRenderer.send('renderer:tts-chunk', text),
   removeInferenceListeners: () => {
     ipcRenderer.removeAllListeners('inference:chunk');
     ipcRenderer.removeAllListeners('inference:completed');

@@ -170,9 +170,6 @@ export interface SymbolDefV2 {
   v2: true;
   schema_version: 2;
   
-  // Optional embedding (computed on demand)
-  embedding?: number[];
-  
   // Backward compat — v1 fields preserved during migration
   created_at?: string;
   updated_at?: string;

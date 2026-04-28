@@ -466,10 +466,6 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
                 type: 'integer',
                 description: 'Degrees of graph expansion (0 = no expansion)'
               },
-              include_embedding: {
-                type: 'boolean',
-                description: 'Include full embedding vectors'
-              },
               include_links: {
                 type: 'boolean',
                 description: 'Include full link details'
@@ -772,15 +768,6 @@ export const createToolExecutor = (contextSessionId?: string) => {
         if (args.expand?.depth && args.expand.depth > 0) {
           const expanded = await hybridRetrievalService.getSubgraph(args.ids[0], args.expand.depth);
           found.push(...expanded.filter(s => !found.find(f => f.id === s.id)));
-        }
-        
-        // Include embeddings if requested
-        if (args.expand?.include_embedding) {
-          for (const sym of found) {
-            const text = `${sym.name} ${sym.role} ${sym.macro} ${sym.triad}`;
-            const emb = await embedTexts([text]);
-            (sym as any).embedding = emb[0];
-          }
         }
         
         return { symbols: found };

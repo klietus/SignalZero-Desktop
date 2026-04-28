@@ -124,20 +124,9 @@ export class HybridRetrievalService {
 
     for (let i = 0; i < candidates.length; i++) {
       const symbol = candidates[i];
-      let embedding: number[] | null = null;
-
-      // Try to get from symbol
-      if (symbol.predicates?.kind === ['data'] && symbol.data?.payload?.embeddings) {
-        embedding = symbol.data.payload.embeddings;
-      }
-
-      if (!embedding) {
-        const text = `${symbol.name} ${symbol.role} ${symbol.macro} ${symbol.triad}`;
-        textsToEmbed.push({ index: i, text });
-        symbolEmbeddings[i] = null;
-      } else {
-        symbolEmbeddings[i] = embedding;
-      }
+      const text = `${symbol.name} ${symbol.role} ${symbol.macro} ${symbol.triad}`;
+      textsToEmbed.push({ index: i, text });
+      symbolEmbeddings[i] = null;
     }
 
     // Batch embed all texts at once

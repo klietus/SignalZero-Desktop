@@ -29,6 +29,7 @@ import { mcpClientService } from './services/mcpClientService.js'
 import { attachmentService } from './services/attachmentService.js'
 import { agentRunner } from './services/agentRunner.js'
 import { realtimeService } from './services/realtime/realtimeService.js'
+import { voiceService } from './services/realtime/voiceProcess.js'
 import { llamaService, urgentLlamaService } from './services/llamaService.js'
 import { uiStateService } from './services/uiStateService.js'
 
@@ -675,14 +676,6 @@ ipcMain.handle('inference:stop', async () => {
   return { stopped: true };
 });
 
-// Listener for voice output completion (event-driven)
-eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, (raw) => {
-  const data = raw as { fullText: string };
-  realtimeService.speak(data.fullText, null).catch(err => {
-    loggerService.catError(LogCategory.SYSTEM, "Event-driven Voice output failed", { error: err.message });
-  });
-});
-
 // Listener for alert-triggered inference: after any inference completes, check for pending alerts
 eventBusService.onKernelEvent(KernelEventType.INFERENCE_COMPLETED, async () => {
   const alertService = await import('./services/alertTriggerService.js').then(m => m.alertTriggerService);
@@ -980,4 +973,11 @@ ipcMain.handle('voice:toggle-mode', async (_, enabled: boolean) => {
   } else {
     await realtimeService.stopStream('audio');
   }
+});
+
+ipcMain.on('renderer:tts-chunk', (_, text: string) => {
+  if (!text || !text.trim()) return;
+  voiceService.speak(text, null).catch(err => {
+    loggerService.catError(LogCategory.SYSTEM, "TTS chunk failed", { error: err.message });
+  });
 });
