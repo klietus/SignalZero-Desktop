@@ -1,0 +1,14 @@
+projects:
+  signalzero:
+    project_id: signalzero
+    project_slug: signalzero
+    repo_roots:
+      - /Users/klietus/workspace/LocalNode/SignalZero-Desktop
+      - /Users/klietus/workspace/signalzero
+    vault_root: /Users/klietus/opencode/memory/opencode
+    hub_note: Research/signalzero/00-Hub.md
+    note_language: en
+    status: active
+    auto_sync: true
+    created: 2026-04-26
+    last_sync: 2026-04-26

@@ -127,6 +127,59 @@ export interface SymbolLink {
   bidirectional?: boolean; // @deprecated - Reciprocity is now handled via reflexive links
 }
 
+// --- v2 Types ---
+export type CommitType = 'foundational' | 'volatile';
+
+export interface SymbolLinkV2 {
+  id: string;
+  link_type: string;
+  committed: CommitType;
+  access_count: number;
+  access_ema: number;
+  last_accessed: string;
+  created_at: string;
+}
+
+export interface SymbolDefV2 {
+  id: string;
+  name: string;
+  kind?: SymbolKind;
+  triad: string;
+  role: string;
+  macro: string;
+  lattice?: SymbolLatticeDef;
+  persona?: SymbolPersonaDef;
+  data?: SymbolDataDef;
+  activation_conditions: string[];
+  symbol_domain: string;
+  symbol_tag: string;
+  failure_mode: string;
+  
+  // v2 structural fields
+  commit: CommitType;
+  recency_weight: number;
+  last_updated_epoch: number;
+  
+  // v2 predicates (computed from facets for index lookup)
+  predicates: Record<string, string[]>;
+  
+  // v2 directed links
+  links: SymbolLinkV2[];
+  
+  // schema version
+  v2: true;
+  schema_version: 2;
+  
+  // Optional embedding (computed on demand)
+  embedding?: number[];
+  
+  // Backward compat — v1 fields preserved during migration
+  created_at?: string;
+  updated_at?: string;
+  facets?: SymbolFacet;
+  linked_patterns?: SymbolLink[];
+}
+
 export interface SymbolDef {
   id: string;
   name: string;

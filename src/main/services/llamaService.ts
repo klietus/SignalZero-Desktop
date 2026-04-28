@@ -12,6 +12,36 @@ export enum LlamaPriority {
     URGENT = 20
 }
 
+async function isPortInUse(port: number): Promise<boolean> {
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1000);
+        const resp = await fetch(`http://127.0.0.1:${port}/health`, { signal: controller.signal });
+        clearTimeout(timeout);
+        return resp.ok;
+    } catch {
+        return false;
+    }
+}
+
+async function killLlamaOnPort(port: number): Promise<void> {
+    try {
+        const { execSync } = await import('child_process');
+        const pids = execSync(`lsof -ti :${port} -sTCP:LISTEN 2>/dev/null || true`).toString().trim();
+        if (pids) {
+            for (const pid of pids.split('\n').filter(Boolean)) {
+                const cmdline = execSync(`ps -p ${pid} -o args= 2>/dev/null || true`).toString().trim();
+                if (cmdline.includes('llama-server')) {
+                    execSync(`kill ${pid} 2>/dev/null || true`);
+                    loggerService.catInfo(LogCategory.SYSTEM, `Killed stale llama-server on port ${port} (PID ${pid})`);
+                }
+            }
+        }
+    } catch {
+        // Ignore errors during cleanup
+    }
+}
+
 export class LlamaSidecarInstance extends EventEmitter {
     private process: ChildProcess | null = null;
     private isInitializing = false;
@@ -30,6 +60,29 @@ export class LlamaSidecarInstance extends EventEmitter {
         this.isInitializing = true;
 
         try {
+            // Check if port is already in use by a healthy llama-server
+            const portHealthy = await isPortInUse(this.port);
+            if (portHealthy) {
+                loggerService.catInfo(LogCategory.SYSTEM, `Llama [${this.name}]: Port ${this.port} already in use, reusing existing instance`);
+                this.isInitializing = false;
+                return;
+            }
+
+            // Port is in use but unhealthy — kill stale process
+            await killLlamaOnPort(this.port);
+            await new Promise(r => setTimeout(r, 500));
+
+            // Verify port is clear
+            const stillInUse = await isPortInUse(this.port);
+            if (stillInUse) {
+                loggerService.catError(LogCategory.SYSTEM, `Llama [${this.name}]: Port ${this.port} still in use after cleanup`);
+                this.isInitializing = false;
+                return;
+            }
+
+            // Now actually start the process
+            this.isInitializing = true;
+
             if (!this.queue) {
                 const PQueue = (await import('p-queue')).default;
                 this.queue = new PQueue({ concurrency: this.concurrency });

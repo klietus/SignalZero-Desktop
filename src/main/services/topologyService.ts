@@ -325,8 +325,11 @@ export class TopologyService {
                         if (sim > this.CONFIDENCE_THRESHOLD && sim <= this.REDUNDANCY_THRESHOLD) {
                             // Only proceed if one of them has changed since last run
                             if (wasUpdated(symbols[i]) || wasUpdated(symbols[j])) {
-                                const hasLink = symbols[i].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[j].id) ||
-                                    symbols[j].linked_patterns?.some(l => (typeof l === 'string' ? l : l.id) === symbols[i].id);
+                                // Support both v1 (linked_patterns) and v2 (links)
+                                const s1Links = (symbols[i] as any).linked_patterns || (symbols[i] as any).links || [];
+                                const s2Links = (symbols[j] as any).linked_patterns || (symbols[j] as any).links || [];
+                                const hasLink = s1Links.some((l: any) => (typeof l === 'string' ? l : l.id) === symbols[j].id) ||
+                                    s2Links.some((l: any) => (typeof l === 'string' ? l : l.id) === symbols[i].id);
 
                                 if (!hasLink) {
                                     // NO LINK if already reachable in < 3 hops
@@ -475,10 +478,14 @@ export class TopologyService {
         const canonicalTypes = new Set(Object.keys(RECIPROCAL_MAP));
 
         for (const s of symbols) {
-            if (!s.linked_patterns) continue;
+            // Support both v1 (linked_patterns) and v2 (links) link structures
+            const links = (s as any).linked_patterns || (s as any).links || [];
+            if (!Array.isArray(links) || links.length === 0) continue;
 
             let updated = false;
-            for (const link of s.linked_patterns) {
+            for (const link of links) {
+                if (!link || !link.id || !link.link_type) continue;
+                
                 if (link.link_type === 'relates_to') {
                     const target = idToSymbol.get(link.id);
                     if (target) {
@@ -497,7 +504,16 @@ export class TopologyService {
                         if (validation.shouldLink && validation.linkType && validation.linkType !== 'relates_to') {
                             if (canonicalTypes.has(validation.linkType)) {
                                 loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting link ${s.id} -> ${target.id} to ${validation.linkType}`);
-                                link.link_type = validation.linkType;
+                                // Update the correct link structure based on which one exists
+                                if ((s as any).linked_patterns) {
+                                    (s as any).linked_patterns = (s as any).linked_patterns.map((l: any) => 
+                                        l.id === link.id ? { ...l, link_type: validation.linkType } : l
+                                    );
+                                } else if ((s as any).links) {
+                                    (s as any).links = (s as any).links.map((l: any) => 
+                                        l.id === link.id ? { ...l, link_type: validation.linkType } : l
+                                    );
+                                }
                                 updated = true;
                             } else {
                                 loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Link promotion rejected non-canonical type: ${validation.linkType}`);
@@ -593,7 +609,18 @@ export class TopologyService {
                 linkType: resultJson.linkType || 'relates_to'
             };
         } catch (error) {
-            loggerService.catError(LogCategory.KERNEL, "TopologyService: Link validation failed", { error });
+            // Better error capture: serialize non-Error objects, extract properties from Error objects
+            let errDetail: any;
+            if (error instanceof Error) {
+                errDetail = { message: error.message, name: error.name };
+            } else if (typeof error === 'object' && error !== null) {
+                errDetail = { ...error };
+            } else {
+                errDetail = { type: typeof error, value: error };
+            }
+            loggerService.catDebug(LogCategory.KERNEL, "TopologyService: Link validation skipped", { 
+                s1: s1.id, s2: s2.id, reason: errDetail.message || errDetail || String(errDetail) 
+            });
             return { shouldLink: false };
         }
     }
@@ -646,7 +673,10 @@ export class TopologyService {
             const cleanWinner = candidates.find(c => c.id === winnerId)?.id;
             return cleanWinner || candidates[0].id;
         } catch (err) {
-            loggerService.catError(LogCategory.KERNEL, "TopologyService: Failed to select canonical ID via model", { error: err });
+                        const errDetail = err instanceof Error 
+                            ? { message: err.message, name: err.name }
+                            : { type: typeof err, value: err };
+                        loggerService.catDebug(LogCategory.KERNEL, "TopologyService: Failed to select canonical ID via model", errDetail);
             return candidates[0].id;
         }
     }
@@ -893,7 +923,10 @@ export class TopologyService {
                             }
                         }
                     } catch (err) {
-                        loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed domain refactor for pattern ${pattern.id}`, { error: err });
+                        const errDetail = err instanceof Error 
+                            ? { message: err.message, name: err.name }
+                            : { type: typeof err, value: err };
+                        loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Domain refactor skipped for pattern ${pattern.id}`, errDetail);
                     }
                 }
             }
@@ -1047,7 +1080,10 @@ A Lattice is a high-level abstract container providing structural "docking point
                     }
                 }
             } catch (err) {
-                loggerService.catError(LogCategory.KERNEL, `TopologyService: Lattice synthesis failed for domain ${domainId}`, { error: err });
+                const errDetail = err instanceof Error 
+                    ? { message: err.message, name: err.name }
+                    : { type: typeof err, value: err };
+                loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Lattice synthesis failed for domain ${domainId}`, errDetail);
             }
         }
 
@@ -1379,7 +1415,10 @@ A Lattice is a high-level abstract container providing structural "docking point
                     }
                 }
             } catch (err) {
-                loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed to bridge island ${centroidId}`, { error: err });
+                const errDetail = err instanceof Error 
+                    ? { message: err.message, name: err.name }
+                    : { type: typeof err, value: err };
+                loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Failed to bridge island ${centroidId}`, errDetail);
             }
         }
 
@@ -1655,7 +1694,10 @@ ${patternsNeedingSynthesis.map(p => `- ID: ${p.id} | Name: "${p.name}" | Role: $
                     latticesSynthesized: synthesizedSubLattices.length
                 });
             } catch (err) {
-                loggerService.catError(LogCategory.KERNEL, `TopologyService: Failed decomposition for ${rootLattice.id}`, { error: err });
+                const errDetail = err instanceof Error 
+                    ? { message: err.message, name: err.name }
+                    : { type: typeof err, value: err };
+                loggerService.catDebug(LogCategory.KERNEL, `TopologyService: Failed decomposition for ${rootLattice.id}`, errDetail);
             }
         }
         return decomposedCount;

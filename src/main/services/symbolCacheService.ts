@@ -89,6 +89,8 @@ export class SymbolCacheService {
         let updated = 0;
 
         for (const symbol of symbols) {
+            if (!symbol || !symbol.id) continue;
+
             const existing = cache.get(symbol.id);
             if (existing) {
                 cache.set(symbol.id, {

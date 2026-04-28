@@ -298,6 +298,34 @@ export interface SymbolLink {
   bidirectional?: boolean; // @deprecated - Reciprocity is now handled via reflexive links
 }
 
+export interface SymbolDefV2 {
+  id: string;
+  name: string;
+  kind?: SymbolKind;
+  triad: string;
+  role: string;
+  macro: string;
+  lattice?: SymbolLatticeDef;
+  persona?: SymbolPersonaDef;
+  data?: SymbolDataDef;
+  activation_conditions?: string[];
+  symbol_domain: string;
+  symbol_tag: string;
+  facets: SymbolFacet;
+  failure_mode: string;
+  linked_patterns: SymbolLink[];
+  created_at?: string;
+  updated_at?: string;
+  commit?: 'foundational' | 'volatile';
+  recency_weight?: number;
+  last_updated_epoch?: number;
+  predicates?: Record<string, any>;
+  links?: any[];
+  v2?: boolean;
+  schema_version?: number;
+  [key: string]: any;
+}
+
 export interface SymbolDef {
   id: string;
   name: string;

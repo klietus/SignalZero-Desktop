@@ -1,4 +1,3 @@
-import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { domainService } from './domainService.js';
 import { embedTexts } from './embeddingService.js';
@@ -51,7 +50,7 @@ export class PredicateValueIndex {
   /**
    * Snap a natural language value to the closest indexed value for a field.
    */
-  snap(field: string, text: string, queryEmbedding: number[], threshold?: number): PredicateIndexEntry | null {
+  snap(field: string, queryEmbedding: number[], threshold?: number): PredicateIndexEntry | null {
     const fieldIndex = this.getFieldIndex(field);
     if (fieldIndex.size === 0) return null;
     if (!queryEmbedding || queryEmbedding.length === 0) return null;
@@ -118,7 +117,7 @@ export class PredicateValueIndex {
       const seen = new Set<string>();
 
       for (const field of fields) {
-        const [domId, fieldName] = field.split(':');
+        const [, fieldName] = field.split(':');
         for (const symbol of allSymbols) {
           let values: string[] = [];
 

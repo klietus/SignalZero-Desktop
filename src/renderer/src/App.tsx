@@ -383,7 +383,8 @@ function App() {
                     setContexts(active);
                     if (active.length > 0 && !activeContextId) setActiveContextId(active[0].id);
 
-                    if (settings?.inference?.systemPrompt) setSystemPrompt(settings.inference.systemPrompt);
+                    const sysPrompt = await window.api.getSystemPrompt();
+                    if (sysPrompt) setSystemPrompt(sysPrompt);
                     if (settings?.inference?.mcpPrompt) setMcpPrompt(settings.inference.mcpPrompt);
                     if (settings?.inference?.model) setModelName(settings.inference.model);
 
@@ -763,7 +764,9 @@ function App() {
             setMessages(prev => {
                 const idx = prev.findIndex(m => m.id === messageId);
                 if (idx === -1) return prev;
-                return [...prev.slice(0, idx + 1)];
+                // Remove retried message and everything after it
+                // Streaming response will rebuild from preceding user message
+                return [...prev.slice(0, idx)];
             });
         }
 
@@ -774,17 +777,21 @@ function App() {
             finalMessage += `\n\n<attachments>${JSON.stringify(finalOptions.attachments)}</attachments>`;
         }
 
-        const userMsg: Message = { 
-            id: 'temp-' + Date.now(), 
-            role: Sender.USER, 
-            content: text, 
-            timestamp: new Date(), 
-            metadata: { 
-                attachments: finalOptions?.attachments,
-                ...finalOptions?.metadata
-            } 
-        };
-        setMessages(prev => [...prev, userMsg]);
+        // On retry, the user message is already in the sliced array (at idx - 1)
+        // Only add a fresh user message for new sends
+        if (!messageId) {
+            const userMsg: Message = { 
+                id: 'temp-' + Date.now(), 
+                role: Sender.USER, 
+                content: text, 
+                timestamp: new Date(), 
+                metadata: { 
+                    attachments: finalOptions?.attachments,
+                    ...finalOptions?.metadata
+                } 
+            };
+            setMessages(prev => [...prev, userMsg]);
+        }
         
         // Scroll to bottom when new user message is added
         setTimeout(() => {
@@ -843,8 +850,8 @@ function App() {
                     <ProjectScreen
                         headerProps={getHeaderProps('Project')}
                         projectMeta={projectMeta} setProjectMeta={setProjectMeta}
-                        systemPrompt={systemPrompt} onSystemPromptChange={setSystemPrompt}
-                        mcpPrompt={mcpPrompt} onMcpPromptChange={setMcpPrompt}
+                        systemPrompt={systemPrompt} onSystemPromptChange={async (p) => { setSystemPrompt(p); await window.api.setSystemPrompt(p); }}
+                        mcpPrompt={mcpPrompt} onMcpPromptChange={async (p) => { setMcpPrompt(p); await window.api.setMcpPrompt(p); }}
                         onNewProject={async () => {
                             const list = await window.api.listContexts();
                             setContexts(Array.isArray(list) ? list.filter(c => c.status === 'open') : []);

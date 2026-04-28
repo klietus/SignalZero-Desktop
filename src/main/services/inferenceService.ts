@@ -248,7 +248,10 @@ const cleanGeminiSchema = (schema: any): any => {
   const cleaned: any = {};
   for (const [key, value] of Object.entries(schema)) {
     if (key === 'additionalProperties') continue;
-    if (key === 'oneOf' || key === 'anyOf' || key === 'allOf') {
+    if (key === 'enum') {
+      // Gemini requires enum values to be strings
+      cleaned[key] = (value as any[]).map(v => String(v));
+    } else if (key === 'oneOf' || key === 'anyOf' || key === 'allOf') {
       cleaned[key] = (value as any[]).map(cleanGeminiSchema);
     } else if (typeof value === 'object') {
       cleaned[key] = cleanGeminiSchema(value);
@@ -290,9 +293,6 @@ const extractTextDelta = (delta: any) => {
         .join("");
     }
   }
-  // Support for providers that send reasoning in separate fields (e.g. DeepSeek, Groq, OpenRouter)
-  if (delta?.reasoning_content) text += delta.reasoning_content;
-  if (delta?.thought_content) text += delta.thought_content;
   return text;
 };
 
@@ -1468,7 +1468,7 @@ export const primeSymbolicContext = async (
       loggerService.catInfo(LogCategory.INFERENCE, `Executing ${symbolicQueries.length} symbolic search queries.`, { symbolicQueries });
       const searchResults = await Promise.all(symbolicQueries.map(q => domainService.search(q, 5)));
       for (const res of searchResults) {
-        res.forEach((r: any) => { if (!foundSymbols.find(s => s.id === r.id)) foundSymbols.push(r.metadata as SymbolDef); });
+        res.forEach((r: any) => { if (r?.metadata && !foundSymbols.find(s => s.id === r.metadata.id)) foundSymbols.push(r.metadata as SymbolDef); });
       }
       loggerService.catInfo(LogCategory.INFERENCE, `Symbolic Store returned ${foundSymbols.length} unique symbols for precache.`);
       if (foundSymbols.length > 0) {

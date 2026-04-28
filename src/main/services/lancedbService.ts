@@ -119,7 +119,20 @@ export const lancedbService = {
             for (let i = 0; i < symbols.length; i += EMBED_CHUNK_SIZE) {
                 const chunk = symbols.slice(i, i + EMBED_CHUNK_SIZE);
                 const contents = chunk.map(symbolToContent);
-                const vectors = await workerService.embedTexts(contents);
+                let vectors: number[][] = [];
+                
+                try {
+                    vectors = await workerService.embedTexts(contents);
+                } catch (embedErr: any) {
+                    // onnxruntime-node can crash with V8 HandleScope errors in certain async contexts
+                    // Gracefully skip embedding — symbols still persist to SQLite, vector index will catch up
+                    loggerService.catWarn(LogCategory.KERNEL, `Embedding failed for chunk, skipping vector index update`, {
+                        error: embedErr.message || String(embedErr),
+                        symbolCount: chunk.length
+                    });
+                    // Fill with empty vectors so the record structure stays consistent
+                    vectors = Array(chunk.length).fill(null as any);
+                }
                 
                 for (let j = 0; j < chunk.length; j++) {
                     const symbol = chunk[j];
@@ -136,6 +149,12 @@ export const lancedbService = {
                         macro: symbol.macro,
                         kind: symbol.kind || 'pattern',
                         updated_at: symbol.updated_at || new Date().toISOString()
+                    });
+                }
+                
+                if (vectors.some(v => v === null)) {
+                    loggerService.catWarn(LogCategory.KERNEL, `Some embeddings in batch were null — symbols stored without vectors`, {
+                        nullCount: vectors.filter(v => v === null).length
                     });
                 }
                 
@@ -243,6 +262,43 @@ export const lancedbService = {
             }));
         } catch (e) {
             console.error("[LanceDB] Search failed", e);
+            return [];
+        }
+    },
+
+    /**
+     * Vector search with domain filter — returns raw LanceDB results for hybrid scoring.
+     */
+    async searchWithDomain(query: string, domain: string, nResults: number = 50): Promise<any[]> {
+        try {
+            const table = await getTable();
+            if (!table) return [];
+
+            let queryVector: number[];
+            try {
+                // onnxruntime-node can crash with V8 HandleScope errors — wrap in timeout
+                const embedPromise = workerService.embedTexts([query]);
+                const timeoutPromise = new Promise<never>((_, reject) => {
+                    setTimeout(() => reject(new Error('Embedding timed out after 5s')), 5000);
+                });
+                [queryVector] = await Promise.race([embedPromise, timeoutPromise]);
+            } catch (embedErr: any) {
+                loggerService.catWarn(LogCategory.KERNEL, `LanceDB domain search: embedding failed, skipping vector search`, {
+                    error: embedErr.message || String(embedErr),
+                    domain
+                });
+                return [];
+            }
+
+            const results = await table
+                .search(queryVector)
+                .where(`symbol_domain = '${domain}'`)
+                .limit(nResults)
+                .toArray();
+
+            return results;
+        } catch (e) {
+            console.error("[LanceDB] Domain search failed", e);
             return [];
         }
     },

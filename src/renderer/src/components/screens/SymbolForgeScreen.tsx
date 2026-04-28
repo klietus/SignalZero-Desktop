@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Check, AlertTriangle, GitMerge, Box, X, User, Database, RefreshCcw, Layout, Trash2 } from 'lucide-react';
-import { SymbolDef, SymbolFacet } from '../../types';
+import { SymbolDef, SymbolFacet, SymbolDefV2 } from '../../types';
 import { Header, HeaderProps } from '../Header';
 
 interface SymbolForgeScreenProps {
@@ -10,7 +10,7 @@ interface SymbolForgeScreenProps {
     headerProps: Omit<HeaderProps, 'children'>;
 }
 
-const DEFAULT_PATTERN: SymbolDef = {
+const DEFAULT_PATTERN: Partial<SymbolDefV2> = {
     id: 'NEW-PATTERN',
     name: 'New Pattern',
     kind: 'pattern',
@@ -20,11 +20,18 @@ const DEFAULT_PATTERN: SymbolDef = {
     activation_conditions: [],
     symbol_domain: 'root',
     symbol_tag: 'draft',
+    commit: 'volatile',
+    recency_weight: 1.0,
+    last_updated_epoch: Date.now(),
+    predicates: {},
+    links: [],
+    v2: true,
+    schema_version: 2,
     facets: {
         function: 'diagnose',
         topology: 'linear',
-        commit: 'ledger',
         temporal: 'instant',
+        commit: 'volatile',
         gate: [],
         substrate: ['symbolic'],
         invariants: []
@@ -35,7 +42,7 @@ const DEFAULT_PATTERN: SymbolDef = {
     updated_at: new Date().toISOString()
 };
 
-const DEFAULT_LATTICE: SymbolDef = {
+const DEFAULT_LATTICE: Partial<SymbolDefV2> = {
     id: 'NEW-LATTICE',
     name: 'New Lattice',
     kind: 'lattice',
@@ -49,11 +56,18 @@ const DEFAULT_LATTICE: SymbolDef = {
     activation_conditions: [],
     symbol_domain: 'root',
     symbol_tag: 'draft',
+    commit: 'volatile',
+    recency_weight: 1.0,
+    last_updated_epoch: Date.now(),
+    predicates: {},
+    links: [],
+    v2: true,
+    schema_version: 2,
     facets: { 
         function: 'orchestrate',
         topology: 'lattice',
-        commit: 'recursive',
         temporal: 'flow',
+        commit: 'volatile',
         gate: [],
         substrate: ['symbolic'],
         invariants: []
@@ -64,7 +78,7 @@ const DEFAULT_LATTICE: SymbolDef = {
     updated_at: new Date().toISOString()
 };
 
-const DEFAULT_PERSONA: SymbolDef = {
+const DEFAULT_PERSONA: Partial<SymbolDefV2> = {
     id: 'NEW-PERSONA',
     name: 'New Persona',
     kind: 'persona',
@@ -74,11 +88,18 @@ const DEFAULT_PERSONA: SymbolDef = {
     activation_conditions: [],
     symbol_domain: 'root',
     symbol_tag: 'persona',
+    commit: 'volatile',
+    recency_weight: 1.0,
+    last_updated_epoch: Date.now(),
+    predicates: {},
+    links: [],
+    v2: true,
+    schema_version: 2,
     facets: {
         function: 'interact',
         topology: 'recursive',
-        commit: 'memory',
         temporal: 'narrative',
+        commit: 'volatile',
         gate: [],
         substrate: ['persona'],
         invariants: []
@@ -95,7 +116,7 @@ const DEFAULT_PERSONA: SymbolDef = {
     updated_at: new Date().toISOString()
 };
 
-const DEFAULT_DATA: SymbolDef = {
+const DEFAULT_DATA: Partial<SymbolDefV2> = {
     id: 'NEW-DATA',
     name: 'New Data',
     kind: 'data',
@@ -105,11 +126,18 @@ const DEFAULT_DATA: SymbolDef = {
     activation_conditions: [],
     symbol_domain: 'root',
     symbol_tag: 'data',
+    commit: 'volatile',
+    recency_weight: 1.0,
+    last_updated_epoch: Date.now(),
+    predicates: {},
+    links: [],
+    v2: true,
+    schema_version: 2,
     facets: {
         function: 'store',
         topology: 'static',
-        commit: 'persistent',
         temporal: 'state',
+        commit: 'volatile',
         gate: [],
         substrate: ['data'],
         invariants: []
@@ -166,8 +194,25 @@ const safeJoin = (arr: any, sep: string) => {
     return '';
 };
 
-const sanitizeForEditor = (raw: any): SymbolDef => {
+const sanitizeForEditor = (raw: any): Partial<SymbolDefV2> => {
     const copy = JSON.parse(JSON.stringify(raw));
+    
+    // Detect v2 format
+    const isV2 = copy.v2 === true || copy.commit !== undefined || copy.schema_version === 2;
+    
+    // Preserve v2 fields
+    if (!isV2) {
+      copy.v2 = true;
+      copy.schema_version = 2;
+      copy.commit = 'volatile';
+      copy.recency_weight = 1.0;
+      copy.last_updated_epoch = copy.updated_at ? new Date(copy.updated_at).getTime() : Date.now();
+    }
+    
+    // Ensure commit is valid v2 value
+    if (copy.commit && !['foundational', 'volatile'].includes(copy.commit)) {
+      copy.commit = 'volatile';
+    }
     
     const mergedActivationConditions = [
         ...(Array.isArray(copy.activation_conditions) ? copy.activation_conditions : []),
@@ -543,10 +588,34 @@ export const SymbolForgeScreen: React.FC<SymbolForgeScreenProps> = ({ initialDom
     const handleSave = async () => {
         try {
             let targetDomain = currentSymbol.symbol_domain || selectedDomain || 'root';
+            
+            // Build the save payload with v2 fields
+            const payload: any = {
+                ...currentSymbol,
+                v2: true,
+                schema_version: 2,
+                last_updated_epoch: Date.now(),
+                updated_at: new Date().toISOString(),
+            };
+            
+            // Convert commit type for storage
+            if (payload.facets?.commit && !['foundational', 'volatile'].includes(payload.facets.commit)) {
+                // Map legacy commit values to v2
+                const legacyMap: Record<string, 'foundational' | 'volatile'> = {
+                    'ledger': 'volatile',
+                    'recursive': 'foundational',
+                    'memory': 'volatile',
+                    'persistent': 'volatile',
+                };
+                payload.commit = legacyMap[payload.facets.commit] || 'volatile';
+            } else {
+                payload.commit = payload.commit || 'volatile';
+            }
+            
             if (originalId && originalId !== currentSymbol.id) {
                 await (window.api as any).deleteSymbol(targetDomain, originalId);
             }
-            await window.api.upsertSymbol(targetDomain, currentSymbol);
+            await window.api.upsertSymbol(targetDomain, payload);
             const updatedList = await (window.api as any).getSymbolsByDomain(targetDomain);
             setSymbolList(updatedList);
             setOriginalId(currentSymbol.id);
@@ -967,12 +1036,14 @@ export const SymbolForgeScreen: React.FC<SymbolForgeScreenProps> = ({ initialDom
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Commit_Type</Label>
-                                        <input
-                                            type="text"
-                                            value={currentSymbol.facets?.commit || ''}
-                                            onChange={e => handleFacetChange('commit', e.target.value)}
+                                        <select
+                                            value={currentSymbol.commit || 'volatile'}
+                                            onChange={e => handleChange('commit', e.target.value)}
                                             className={INPUT_STYLE}
-                                        />
+                                        >
+                                            <option value="foundational">Foundational (never decays)</option>
+                                            <option value="volatile">Volatile (decays by recency)</option>
+                                        </select>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Temporal_Axis</Label>

@@ -37,13 +37,26 @@ const ipcBatchQueues = new Map<string, any>();
 const ipcBatchTimers = new Map<string, NodeJS.Timeout>();
 
 function broadcastBatched(channel: string, data: any, intervalMs: number = 100) {
-  const batchKey = data?.type ? `${channel}:${data.type}` : channel;
+  // Build a unique batch key that includes sessionId for inference chunks
+  // to prevent cross-session collision and ensure per-session chunk ordering
+  const batchKey = data?.sessionId
+    ? `${channel}:${data.sessionId}`
+    : data?.type
+      ? `${channel}:${data.type}`
+      : channel;
 
   // Use array accumulation for monitoring deltas to prevent data loss
   if (channel === 'kernel-event' && data?.type === 'monitoring:delta-created') {
     const existing = ipcBatchQueues.get(batchKey) || [];
     if (Array.isArray(existing)) {
         existing.push(data.payload);
+        ipcBatchQueues.set(batchKey, existing);
+    }
+  } else if (channel === 'inference:chunk' && data?.sessionId) {
+    // Accumulate inference chunks per session to preserve streaming order
+    const existing = ipcBatchQueues.get(batchKey) || [];
+    if (Array.isArray(existing)) {
+        existing.push(data);
         ipcBatchQueues.set(batchKey, existing);
     }
   } else {
@@ -58,6 +71,11 @@ function broadcastBatched(channel: string, data: any, intervalMs: number = 100) 
         if (Array.isArray(batchedData) && channel === 'kernel:event') {
             // Send as a special batched event type
             broadcast(channel, { type: 'monitoring:deltas-batched', data: batchedData });
+        } else if (Array.isArray(batchedData) && channel === 'inference:chunk') {
+            // Send each accumulated chunk individually to preserve order
+            for (const chunk of batchedData) {
+              broadcast(channel, chunk);
+            }
         } else {
             broadcast(channel, batchedData);
         }
@@ -404,9 +422,16 @@ function createWindow(): void {
         });
         
         // Flush any pending batched chunks before sending completion to prevent race condition
-        const chunkKey = `inference:chunk:${KernelEventType.INFERENCE_CHUNK}`;
+        const chunkKey = `inference:chunk:${completed.sessionId}`;
         if (ipcBatchQueues.has(chunkKey)) {
-          broadcast('inference:chunk', ipcBatchQueues.get(chunkKey));
+          const pending = ipcBatchQueues.get(chunkKey);
+          if (Array.isArray(pending)) {
+            for (const chunk of pending) {
+              broadcast('inference:chunk', chunk);
+            }
+          } else {
+            broadcast('inference:chunk', pending);
+          }
           ipcBatchQueues.delete(chunkKey);
         }
         

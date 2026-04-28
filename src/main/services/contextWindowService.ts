@@ -3,16 +3,28 @@ import { contextService } from './contextService.js';
 import { domainService } from './domainService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { alertTriggerService } from './alertTriggerService.js';
-import { SymbolDef, ContextMessage, ContextKind } from '../types.js';
+import { SymbolDef, ContextMessage, ContextKind, SymbolDefV2 } from '../types.js';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { loggerService, LogCategory } from './loggerService.js';
 import { buildSystemMetadataBlock } from './timeService.js';
 import { getEncoding } from "js-tiktoken";
+import { hybridRetrievalService } from './hybridRetrievalService.js';
+
+// Stable context cache TTL: 1 hour (stable symbols don't change often)
+const STABLE_CONTEXT_TTL = 60 * 60 * 1000;
+
+interface StableContextEntry {
+    symbols: SymbolDefV2[];
+    timestamp: number;
+}
 
 const enc = getEncoding("cl100k_base");
 
 export class ContextWindowService {
     private readonly TOKEN_LIMIT = 100000;
+
+    // Stable context cache: queryKey -> { symbols, timestamp }
+    private stableContextCache = new Map<string, StableContextEntry>();
 
     /**
      * Constructs the full context window for an LLM request.
@@ -83,7 +95,7 @@ export class ContextWindowService {
                     return `[${a.severity.toUpperCase()}] ${a.summary}\n${metaStr ? metaStr + '\n' : ''}`;
                 })
                 .join('\n\n');
-            
+
             if (alertBlock) {
                 messages.push({
                     role: 'system',
@@ -364,7 +376,39 @@ export class ContextWindowService {
     }
 
     /**
-     * Fetches stable symbols (Domains, Core, Personas) that rarely change.
+     * Get or compute stable context symbols with TTL caching.
+     */
+    private async getStableContextSymbols(
+        queryKey: string,
+        query: string,
+        limit: number,
+        domain: string
+    ): Promise<SymbolDefV2[]> {
+        const cached = this.stableContextCache.get(queryKey);
+        if (cached && (Date.now() - cached.timestamp) < STABLE_CONTEXT_TTL) {
+            loggerService.catDebug(LogCategory.KERNEL, `Stable context cache hit: ${queryKey}`);
+            return cached.symbols;
+        }
+
+        loggerService.catDebug(LogCategory.KERNEL, `Stable context cache miss, computing: ${queryKey}`);
+        const results = await hybridRetrievalService.retrieve(query, [], limit, 0, domain);
+
+        // Filter out any undefined/null symbols and ensure valid id
+        const validSymbols = results
+            .map(r => r?.symbol)
+            .filter((s): s is SymbolDefV2 => s != null && typeof s === 'object' && s.id != null);
+
+        // Update cache
+        this.stableContextCache.set(queryKey, {
+            symbols: validSymbols,
+            timestamp: Date.now()
+        });
+
+        return validSymbols;
+    }
+
+    /**
+     * Fetches stable symbols (Identity, Stabilization, Defenses) via predicate matching.
      */
     private async buildStableContext(contextSessionId: string): Promise<string> {
         try {
@@ -375,26 +419,33 @@ export class ContextWindowService {
             const domains = meta.map(d => `| ${d.id} | ${d.name} | ${d.invariants?.join('; ') || ''} |`);
             results.push(`[CURRENT SYMBOLIC DOMAINS]\n${domains.join('\n')}`);
 
-            // Query 2: Recursive Core Injection
-            const coreSet = new Map<string, SymbolDef>();
-            await this.recursiveSymbolLoad('SELF-RECURSIVE-CORE', 1, coreSet);
+            // Parallel: Identity, Stabilization, Defense, Personas queries
+            const [identitySymbols, stableSymbols, defenseSymbols, selfPersonas, rootPersonas] = await Promise.all([
+                this.getStableContextSymbols('identity:self', 'identity core anchor symbols', 20, 'self'),
+                this.getStableContextSymbols('stabilization:root', 'stabilization core anchor foundational symbols', 20, 'root'),
+                this.getStableContextSymbols('defense:root', 'defense invariant constraint symbols', 15, 'root'),
+                this.getStableContextSymbols('personas:self', 'core persona identity role', 10, 'self'),
+                this.getStableContextSymbols('personas:root', 'core persona identity role', 10, 'root'),
+            ]);
 
-            const coreSymbols = Array.from(coreSet.values());
-            // Inject with turnCount 2 to stabilize immediately
-            symbolCacheService.batchUpsertSymbols(contextSessionId, coreSymbols, 2);
-
-            // Query 3: Root Domain
-            const rootSet = new Map<string, SymbolDef>();
-            await this.recursiveSymbolLoad('ROOT-SYNTHETIC-CORE', 1, rootSet);
-
-            const rootSymbols = Array.from(rootSet.values());
-            symbolCacheService.batchUpsertSymbols(contextSessionId, rootSymbols, 2);
+            // Cache all results
+            await symbolCacheService.batchUpsertSymbols(contextSessionId, identitySymbols as any, 2);
+            await symbolCacheService.batchUpsertSymbols(contextSessionId, stableSymbols as any, 2);
+            await symbolCacheService.batchUpsertSymbols(contextSessionId, defenseSymbols as any, 2);
+            await symbolCacheService.batchUpsertSymbols(contextSessionId, selfPersonas as any, 2);
+            await symbolCacheService.batchUpsertSymbols(contextSessionId, rootPersonas as any, 2);
+            if (defenseSymbols.length > 0) {
+                await symbolCacheService.batchUpsertSymbols(contextSessionId, defenseSymbols as any, 2);
+            }
 
             const fullContext = results.join('');
-            loggerService.catInfo(LogCategory.KERNEL, `Built Stable Context`, {
+            loggerService.catInfo(LogCategory.KERNEL, `Built Stable Context (parallel)`, {
                 domains: domains.length,
-                coreSymbols: coreSymbols.length,
-                root: rootSymbols.length,
+                identitySymbols: identitySymbols.length,
+                stableSymbols: stableSymbols.length,
+                defenseSymbols: defenseSymbols.length,
+                selfPersonas: selfPersonas.length,
+                rootPersonas: rootPersonas.length,
                 chars: fullContext.length
             });
             return fullContext;
@@ -421,7 +472,7 @@ export class ContextWindowService {
     }
 
     /**
-     * Fetches dynamic symbols (Identity, Preferences, Recent State) that change frequently.
+     * Fetches dynamic symbols (Identity, Preferences, Recent State) via predicate matching.
      */
     private async buildDynamicContext(
         contextSessionId: string,
@@ -429,16 +480,17 @@ export class ContextWindowService {
     ): Promise<string> {
         try {
             const results: string[] = [];
-            let userCoreCount = 0;
+            let userPrefCount = 0;
 
             if (type !== 'agent') {
-                // Query 4: Recursive User Core Injection
-                const userSet = new Map<string, SymbolDef>();
-                await this.recursiveSymbolLoad('USER-RECURSIVE-CORE', 1, userSet);
-
-                const userSymbols = Array.from(userSet.values());
-                userCoreCount = userSymbols.length;
-                await symbolCacheService.batchUpsertSymbols(contextSessionId, userSymbols, 2);
+                // Query: User preference symbols (natural language query, replaces USER-RECURSIVE-CORE BFS)
+                const userSymbols = await hybridRetrievalService.retrieve(
+                    'user profile preferences identity data',
+                    [], 30, 0, 'user'
+                );
+                userPrefCount = userSymbols.length;
+                const validUserSymbols = userSymbols.map(r => r?.symbol).filter((s): s is SymbolDefV2 => s != null && typeof s === 'object' && s.id != null);
+                await symbolCacheService.batchUpsertSymbols(contextSessionId, validUserSymbols as any, 2);
             }
 
             // After all possible population, get what's in the cache for the context window
@@ -453,7 +505,7 @@ export class ContextWindowService {
             const fullContext = results.join('');
             loggerService.catInfo(LogCategory.KERNEL, `Built Dynamic Context`, {
                 type,
-                userCoreSymbols: userCoreCount,
+                userPreferenceSymbols: userPrefCount,
                 symbolCacheCount: newSymbols.length,
                 chars: fullContext.length
             });

@@ -4,6 +4,7 @@ import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { embedTexts } from './embeddingService.js';
 import { SymbolDefV2 } from '../types.js';
+import { lancedbService } from './lancedbService.js';
 
 export interface Predicate {
   field: string;
@@ -31,7 +32,7 @@ export class HybridRetrievalService {
   /**
    * Stage 1: Predicate pre-filter (sparse, cheap)
    */
-  private async predicatePreFilter(predicates: Predicate[], limit: number): Promise<SymbolDefV2[]> {
+  private async predicatePreFilter(predicates: Predicate[]): Promise<SymbolDefV2[]> {
     if (predicates.length === 0) return [];
 
     const candidates = new Map<string, { symbol: SymbolDefV2; predicates_matched: string[] }>();
@@ -48,7 +49,7 @@ export class HybridRetrievalService {
       let matchingSymbols: any[] = [];
 
       if (operator === 'eq' || operator === 'similar') {
-        const snapped = predicateValueIndex.snap(field, predicate.value, []);
+        const snapped = predicateValueIndex.snap(field, []);
         if (!snapped || snapped.similarity < this.MIN_PREDICATE_SIMILARITY) continue;
 
         matchingSymbols = sqliteService.all(`
@@ -102,12 +103,27 @@ export class HybridRetrievalService {
     if (candidates.length === 0) return [];
 
     // Query embedding (isolated — uses embeddingService directly)
-    const queryEmbedding = await embedTexts([query]);
+    // onnxruntime-node can crash with V8 HandleScope errors — wrap in timeout
+    let queryEmbedding: number[][];
+    try {
+      const embedPromise = embedTexts([query]);
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Embedding timed out after 5s')), 5000);
+      });
+      queryEmbedding = await Promise.race([embedPromise, timeoutPromise]);
+    } catch (embedErr: any) {
+      loggerService.catWarn(LogCategory.KERNEL, `EmbeddingRank: embedding failed, returning empty`, {
+        error: embedErr.message || String(embedErr)
+      });
+      return [];
+    }
 
-    // Get symbol embeddings or compute on-the-fly
-    const results: HybridRetrievalResult[] = [];
+    // Batch compute embeddings for all candidates that need them
+    const textsToEmbed: { index: number; text: string }[] = [];
+    const symbolEmbeddings = new Array<number[] | null>(candidates.length);
 
-    for (const symbol of candidates) {
+    for (let i = 0; i < candidates.length; i++) {
+      const symbol = candidates[i];
       let embedding: number[] | null = null;
 
       // Try to get from symbol
@@ -115,20 +131,45 @@ export class HybridRetrievalService {
         embedding = symbol.data.payload.embeddings;
       }
 
-      // Compute embedding if needed (isolated — uses embeddingService directly)
       if (!embedding) {
         const text = `${symbol.name} ${symbol.role} ${symbol.macro} ${symbol.triad}`;
-        const embeddings = await embedTexts([text]);
-        embedding = embeddings[0];
+        textsToEmbed.push({ index: i, text });
+        symbolEmbeddings[i] = null;
+      } else {
+        symbolEmbeddings[i] = embedding;
       }
+    }
 
+    // Batch embed all texts at once
+    if (textsToEmbed.length > 0) {
+      try {
+        const embedPromise = embedTexts(textsToEmbed.map(t => t.text));
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Batch embedding timed out after 10s')), 10000);
+        });
+        const batchEmbeddings = await Promise.race([embedPromise, timeoutPromise]);
+        for (let j = 0; j < textsToEmbed.length; j++) {
+          symbolEmbeddings[textsToEmbed[j].index] = batchEmbeddings[j];
+        }
+      } catch (embedErr: any) {
+        loggerService.catWarn(LogCategory.KERNEL, `EmbeddingRank: batch embedding failed`, {
+          error: embedErr.message || String(embedErr),
+          count: textsToEmbed.length
+        });
+      }
+    }
+
+    // Compute similarities
+    const results: HybridRetrievalResult[] = [];
+    for (let i = 0; i < candidates.length; i++) {
+      const embedding = symbolEmbeddings[i];
       if (!embedding || embedding.length === 0) continue;
 
       const similarity = this.cosineSimilarity(queryEmbedding[0], embedding);
 
       if (similarity >= this.MIN_EMBEDDING_SIMILARITY) {
         results.push({
-          symbol,
+          symbol: candidates[i],
           score: similarity,
           stage: 'embedding',
           predicates_matched: [],
@@ -143,9 +184,66 @@ export class HybridRetrievalService {
   }
 
   /**
+   * Convert LanceDB search results to HybridRetrievalResult.
+   * LanceDB provides fast ANN ranking; we then fetch full symbol data from SQLite.
+   */
+  private async lanceResultsToHybrid(lanceResults: any[]): Promise<HybridRetrievalResult[]> {
+    if (lanceResults.length === 0) return [];
+
+    const results: HybridRetrievalResult[] = [];
+
+    for (const r of lanceResults) {
+      const similarity = 1 - (r._distance || 0);
+      if (similarity < this.MIN_EMBEDDING_SIMILARITY) continue;
+
+      // Fetch full symbol from SQLite (LanceDB only has vector + basic metadata)
+      const symbol = await domainService.findById(r.id);
+      if (!symbol) continue;
+
+      const v2 = this.symbolToV2(symbol);
+      results.push({
+        symbol: v2,
+        score: similarity,
+        stage: 'embedding',
+        predicates_matched: [],
+        embedding_similarity: similarity,
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * Convert a single LanceDB search result to SymbolDefV2.
+   * Fetches full symbol data from SQLite.
+   */
+  private async symbolFromLanceResult(result: any): Promise<SymbolDefV2> {
+    const symbol = await domainService.findById(result.id);
+    if (!symbol) {
+      // Fallback to metadata if symbol not found
+      return {
+        id: result.id,
+        name: result.metadata?.name || result.name || '',
+        kind: result.metadata?.kind || 'pattern',
+        triad: result.metadata?.triad || '',
+        role: result.metadata?.role || '',
+        macro: result.metadata?.macro || '',
+        symbol_domain: result.metadata?.domain || result.metadata?.symbol_domain || '',
+        symbol_tag: result.metadata?.symbol_tag || '',
+        facets: {},
+        failure_mode: '',
+        linked_patterns: [],
+        v2: true,
+        schema_version: 2,
+      } as unknown as SymbolDefV2;
+    }
+    return this.symbolToV2(symbol);
+  }
+
+  /**
    * Stage 3: Graph-aware expansion
    */
-  private async graphExpansion(results: HybridRetrievalResult[], maxDepth: number = 1): Promise<HybridRetrievalResult[]> {
+  private async graphExpansion(results: HybridRetrievalResult[]): Promise<HybridRetrievalResult[]> {
     if (results.length === 0) return results;
 
     const expanded = new Map<string, HybridRetrievalResult>();
@@ -189,27 +287,56 @@ export class HybridRetrievalService {
     query: string,
     predicates: Predicate[] = [],
     limit: number = 10,
-    expandDepth: number = 0
+    expandDepth: number = 0,
+    domain?: string
   ): Promise<HybridRetrievalResult[]> {
     let candidates: SymbolDefV2[] = [];
 
     // Stage 1: Predicate pre-filter
     if (predicates.length > 0) {
-      candidates = await this.predicatePreFilter(predicates, limit);
+      candidates = await this.predicatePreFilter(predicates);
     }
 
     // Stage 2: Embedding rank
     let ranked = await this.embeddingRank(query, candidates.length > 0 ? candidates : [], limit);
 
-    // If no candidates from predicates, search all symbols
+    // If no candidates from predicates and no results, use LanceDB vector search
+    // This avoids computing embeddings for all symbols in a domain
     if (candidates.length === 0 && ranked.length === 0) {
-      const allSymbols = await domainService.getAllSymbols();
-      ranked = await this.embeddingRank(query, allSymbols.map(s => this.symbolToV2(s)), limit);
+      if (domain) {
+        // Use LanceDB's ANN search with domain filter — much faster than getAllSymbols + embed all
+        const lanceResults = await lancedbService.searchWithDomain(query, domain, limit * 3);
+        ranked = await this.lanceResultsToHybrid(lanceResults);
+        // If LanceDB returned nothing (embedding failed or no results), fall back to SQLite
+        if (ranked.length === 0) {
+          loggerService.catDebug(LogCategory.KERNEL, `LanceDB domain search returned 0 results, falling back to SQLite`, { domain, query });
+          const allSymbols = await domainService.getAllSymbols();
+          const domainSymbols = allSymbols.filter(s => s.symbol_domain === domain);
+          ranked = await this.embeddingRank(query, domainSymbols.map(s => this.symbolToV2(s)), limit);
+        }
+      } else {
+        // No domain specified — use LanceDB vector search (pre-computed embeddings, no on-the-fly embedding)
+        const lanceResults = await lancedbService.search(query, limit * 3);
+        if (lanceResults.length > 0) {
+          ranked = await Promise.all(lanceResults.map(async (r) => ({
+            symbol: await this.symbolFromLanceResult(r),
+            score: r.score,
+            stage: 'embedding',
+            predicates_matched: [],
+            embedding_similarity: r.score,
+          })));
+        }
+      }
+    }
+
+    // Apply domain filter if specified
+    if (domain) {
+      ranked = ranked.filter(r => r.symbol.symbol_domain === domain);
     }
 
     // Stage 3: Graph expansion
     if (expandDepth > 0) {
-      ranked = await this.graphExpansion(ranked, expandDepth);
+      ranked = await this.graphExpansion(ranked);
     }
 
     // Compute final scores
@@ -335,7 +462,7 @@ export class HybridRetrievalService {
       data: row.data ? JSON.parse(row.data) : undefined,
       facets: row.facets ? JSON.parse(row.facets) : {},
       activation_conditions: row.activation_conditions ? JSON.parse(row.activation_conditions) : [],
-      symbol_domain: row.domain_id,
+      symbol_domain: row.domain_id || row.symbol_domain || row.domain,
       symbol_tag: row.symbol_tag || '',
       failure_mode: row.failure_mode,
       linked_patterns: row.linked_patterns ? JSON.parse(row.linked_patterns) : [],

@@ -76,15 +76,66 @@ Once booted you may evolve by synthesizing new symbols from narrative drift.
 ⚠️ SYMBOLIC_TRACE_STRUCTURE (for new symbols):
 const SYMBOL_DATA_SCHEMA = {
     type: 'object',
-    description: 'The full JSON object representing the Symbol schema.',
+    description: 'The full JSON object representing the v2 Symbol schema.',
     properties: {
         id: { type: 'string' },
         kind: { type: 'string', description: "Type of symbol: 'pattern', 'lattice', 'persona', or 'data'. Defaults to 'pattern'." },
-        triad: { type: 'string' },
+        triad: { type: 'string', description: "Emoji triad signature (non-negotiable: emojis only)" },
         macro: { type: 'string' },
         role: { type: 'string' },
         name: { type: 'string' },
         invocations: { type: 'array', items: { type: 'string' }, description: "Synonym for activation_conditions. Use for persona-specific triggers." },
+        
+        // v2 structural metadata
+        structural: {
+            type: 'object',
+            description: "v2 structural metadata for retrieval and decay",
+            properties: {
+                topology: { type: 'string', description: "inductive, deductive, bidirectional, invariant, energy" },
+                closure: { type: 'string', description: "loop, branch, collapse, constellation, synthesis" },
+                embedding_dim: { type: 'integer' },
+                embedding_hash: { type: 'string' },
+                centrality_score: { type: 'number' },
+                betweenness_bucket: { type: 'string', enum: ['low', 'medium', 'high'] }
+            }
+        },
+        
+        // v2 facets with commit type
+        facets: {
+            type: 'object',
+            properties: {
+                function: { type: 'string' },
+                topology: { type: 'string' },
+                commit: { type: 'string', enum: ['foundational', 'volatile'], description: "foundational = never decays, volatile = decays by recency" },
+                gate: { type: 'array', items: { type: 'string' } },
+                substrate: { type: 'array', items: { type: 'string' } },
+                temporal: { type: 'string' },
+                invariants: { type: 'array', items: { type: 'string' } }
+            },
+            required: ['function', 'topology', 'commit', 'gate', 'substrate', 'temporal', 'invariants']
+        },
+        
+        // v2 retrieval metadata
+        retrieval: {
+            type: 'object',
+            description: "v2 retrieval metadata for hybrid sparse+dense search",
+            properties: {
+                predicates: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            type: { type: 'string' },
+                            value: { type: 'string' },
+                            threshold: { type: 'number' }
+                        }
+                    }
+                },
+                recency_weight: { type: 'number' },
+                last_updated_epoch: { type: 'integer' }
+            }
+        },
+        
         lattice: {
             type: 'object',
             description: "Configuration for lattice symbols (execution topology)",
@@ -119,35 +170,49 @@ const SYMBOL_DATA_SCHEMA = {
             }
         },
         activation_conditions: { type: 'array', items: { type: 'string' }, description: "Phrases that activate this symbol." },
-        facets: {
-            type: 'object',
-            properties: {
-                function: { type: 'string' },
-                topology: { type: 'string' },
-                commit: { type: 'string' },
-                gate: { type: 'array', items: { type: 'string' } },
-                substrate: { type: 'array', items: { type: 'string' } },
-                temporal: { type: 'string' },
-                invariants: { type: 'array', items: { type: 'string' } }
-            },
-            required: ['function', 'topology', 'commit', 'gate', 'substrate', 'temporal', 'invariants']
-        },
         symbol_domain: { type: 'string' },
         symbol_tag: { type: 'string' },
         failure_mode: { type: 'string' },
-        linked_patterns: { 
-            type: 'array', 
-            items: { 
-                type: 'object',
-                properties: {
-                    id: { type: 'string' },
-                    link_type: { type: 'string', description: "RELATIONAL PAIRS: relates_to <-> relates_to, depends_on <-> required_by, part_of <-> contains, instance_of <-> exemplifies, informs <-> informed_by, constrained_by <-> limits, triggers <-> triggered_by, negates <-> negated_by, evolved_from <-> evolved_into, implements <-> implemented_by, extends <-> extended_by, synthesized_from <-> synthesis_of, derived_from <-> source_of, feeds_into <-> receives_data_from, orchestrates <-> orchestrated_by, monitors <-> monitored_by, validates <-> validated_by, enables <-> enabled_by, executes <-> executed_by, documents <-> documented_by, contrasts_with <-> contrasts_with, references <-> referenced_by, grounds_in <-> reality_for" }
+        
+        // v2 directed links (replaces linked_patterns)
+        links: {
+            type: 'object',
+            description: "v2 directed link structure with commit tracking",
+            properties: {
+                in: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            id: { type: 'string' },
+                            link_type: { type: 'string' },
+                            commit: { type: 'string', enum: ['foundational', 'volatile'] },
+                            last_updated_epoch: { type: 'integer' }
+                        }
+                    }
                 },
-                required: ['id', 'link_type']
-            } 
-        }
+                out: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            id: { type: 'string' },
+                            link_type: { type: 'string' },
+                            commit: { type: 'string', enum: ['foundational', 'volatile'] },
+                            last_updated_epoch: { type: 'integer' }
+                        }
+                    }
+                },
+                link_types: { type: 'object', additionalProperties: { type: 'string' } }
+            }
+        },
+        
+        // v2 schema version
+        version: { type: 'integer', enum: [2] },
+        created_at: { type: 'string' },
+        updated_at: { type: 'string' }
     },
-    required: ['id', 'kind', 'triad', 'macro', 'role', 'name', 'activation_conditions', 'facets', 'symbol_domain', 'failure_mode', 'linked_patterns']
+    required: ['id', 'kind', 'triad', 'macro', 'role', 'name', 'activation_conditions', 'facets', 'symbol_domain', 'failure_mode']
 };
 
 ⚠️ SYMBOLIC_TRACE_STRUCTURE (for log_trace tool):

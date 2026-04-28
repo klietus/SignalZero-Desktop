@@ -1,4 +1,4 @@
-import { SymbolDef, SymbolLink, VectorSearchResult } from '../types.js';
+import { SymbolDef, SymbolLink, VectorSearchResult, SymbolDefV2, SymbolLinkV2, CommitType } from '../types.js';
 import { lancedbService } from './lancedbService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
@@ -7,6 +7,7 @@ import { KernelEventType } from '../types.js';
 import { extractJson, callFastInference } from './inferenceService.js';
 import { LlamaPriority } from './llamaService.js';
 import { USER_DOMAIN_TEMPLATE, STATE_DOMAIN_TEMPLATE } from '../symbolic_system/domain_templates.js';
+import { migrateToV2, migrateFromV2, computeRecencyWeight } from './symbolV2Migration.js';
 
 const mapRowToDomain = (row: any): any => ({
     id: row.id,
@@ -650,5 +651,153 @@ export const domainService = {
 
   ensureWritableDomain(domain: any) {
     if (domain.readOnly) throw new Error(`Domain is read-only.`);
+  },
+
+  // --- v2 Methods ---
+
+  /**
+   * Check if a domain has been migrated to v2 format.
+   */
+  async isDomainV2(domainId: string): Promise<boolean> {
+    const row = sqliteService.get(`SELECT value FROM domain_metadata WHERE domain_id = ? AND key = 'schema_version'`, [domainId]) as { value: string } | undefined;
+    return row?.value === '2';
+  },
+
+  /**
+   * Migrate a domain from v1 to v2 format.
+   */
+  async migrateDomainToV2(domainId: string): Promise<{ migrated: number; linksMigrated: number }> {
+    loggerService.catInfo(LogCategory.DOMAIN, `Migrating domain ${domainId} to v2...`);
+    
+    const allSymbols = await this.getSymbols(domainId);
+    let migrated = 0;
+    let linksMigrated = 0;
+
+    for (const symbol of allSymbols) {
+      if ((symbol as any).v2 === true) continue;
+      
+      // Get existing links for this symbol
+      const links = sqliteService.all(`
+        SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?
+      `, [symbol.id]) as any[];
+      
+      const v2Links: SymbolLinkV2[] = links.map(l => ({
+        id: l.id,
+        link_type: l.link_type,
+        committed: 'volatile' as CommitType,
+        access_count: 0,
+        access_ema: 0.0,
+        last_accessed: symbol.updated_at || new Date().toISOString(),
+        created_at: symbol.created_at || new Date().toISOString(),
+      }));
+      linksMigrated += v2Links.length;
+      
+      const v2 = migrateToV2(symbol, v2Links);
+      
+      // Update the symbol with v2 columns
+      sqliteService.run(`
+        UPDATE symbols SET 
+          v2_commit = ?,
+          v2_recency_weight = ?,
+          v2_last_updated = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `, [v2.commit, v2.recency_weight, v2.last_updated_epoch, symbol.id]);
+      
+      migrated++;
+    }
+
+    // Mark domain as v2
+    sqliteService.run(`
+      INSERT OR REPLACE INTO domain_metadata (domain_id, key, value)
+      VALUES (?, 'schema_version', '2')
+    `, [domainId]);
+
+    loggerService.catInfo(LogCategory.DOMAIN, `Domain ${domainId} migrated: ${migrated} symbols, ${linksMigrated} links`);
+    return { migrated, linksMigrated };
+  },
+
+  /**
+   * Find a symbol and return it as v2 format.
+   */
+  async findByIdV2(id: string): Promise<SymbolDefV2 | null> {
+    const row = sqliteService.get(`SELECT * FROM symbols WHERE id = ?`, [id]) as any;
+    if (!row) return null;
+
+    const links = sqliteService.all(`
+      SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?
+    `, [id]) as any[];
+
+    // Check if already v2
+    if (row.v2_commit) {
+      const v2Links: SymbolLinkV2[] = links.map(l => ({
+        id: l.id,
+        link_type: l.link_type,
+        committed: 'volatile' as CommitType,
+        access_count: 0,
+        access_ema: 0.0,
+        last_accessed: row.updated_at || new Date().toISOString(),
+        created_at: row.created_at || new Date().toISOString(),
+      }));
+
+      return {
+        id: row.id,
+        name: row.name,
+        kind: row.kind as any,
+        triad: row.triad,
+        role: row.role,
+        macro: row.macro,
+        lattice: row.lattice ? JSON.parse(row.lattice) : undefined,
+        persona: row.persona ? JSON.parse(row.persona) : undefined,
+        data: row.data ? JSON.parse(row.data) : undefined,
+        activation_conditions: row.activation_conditions ? JSON.parse(row.activation_conditions) : [],
+        symbol_domain: row.domain_id,
+        symbol_tag: row.symbol_tag || '',
+        failure_mode: row.failure_mode,
+        commit: row.v2_commit as CommitType,
+        recency_weight: row.v2_recency_weight || computeRecencyWeight(row.v2_last_updated || Date.now(), row.v2_commit as CommitType),
+        last_updated_epoch: row.v2_last_updated || Date.now(),
+        predicates: {},
+        links: v2Links,
+        v2: true,
+        schema_version: 2,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        facets: row.facets ? JSON.parse(row.facets) : {},
+        linked_patterns: links,
+      };
+    }
+
+    // Migrate from v1 on-the-fly
+    const v1 = mapRowToSymbol(row, links);
+    const v2 = migrateToV2(v1);
+    return v2;
+  },
+
+  /**
+   * Add or update a symbol in v2 format.
+   */
+  async addSymbolV2(domainId: string, symbol: SymbolDefV2): Promise<SymbolDefV2> {
+    // Convert to v1-compatible for storage (v1 schema stores v2 metadata in extended columns)
+    const v1 = migrateFromV2(symbol);
+    await this.addSymbol(domainId, v1);
+    
+    // Update v2 columns
+    sqliteService.run(`
+      UPDATE symbols SET 
+        v2_commit = ?,
+        v2_recency_weight = ?,
+        v2_last_updated = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [symbol.commit, symbol.recency_weight, symbol.last_updated_epoch, symbol.id]);
+
+    // Emit kernel event
+    eventBusService.emitKernelEvent(KernelEventType.SYMBOL_UPSERTED, { 
+      symbolId: symbol.id, 
+      domainId 
+    } as const);
+
+    return symbol;
   }
 };
