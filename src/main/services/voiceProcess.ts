@@ -305,13 +305,14 @@ class PythonVoiceManager extends EventEmitter {
 
             if (!processedText) return "";
 
-            const prompt = `Convert the following text into a clean, natural sounding speech report. 
+            const prompt = `Convert the following text into a clean, natural sounding TTS transcript. 
 STRIP ALL titles, ALL markdown formatting, and technical symbols. Convert ALL headers to natural sounding transitions.
 KEEP AND PRONOUNCE ALL PRODUCT NAMES, project names, and proper nouns (e.g., "SignalZero", "Tavily", "Electron").
 EXPAND ALL ACRONYMS AND ABBREVIATIONS into their full spoken forms (e.g., "AI" to "Artificial Intelligence", "TTS" to "Text to Speech").
 Do not say "Header", "Section", or read out structural markers. Do NOT repeat the same word twice in a row.
 Just provide the core narrative content in a way that is easy to listen to.
-Keep it professional and concise. Use punctuation to create natural pauses.
+Keep it professional and concise. Use punctuation to create natural pauses.  Do not include an explanation of what you did or speaker notes.  This is
+being sent directly to a TTS system for conversion to speech.
 
 TEXT TO CONVERT:
 ${processedText}`;

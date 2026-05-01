@@ -24,7 +24,8 @@ class AgentRunner {
 
     constructor() {
         // Listen for new world-monitoring deltas
-        eventBusService.on('monitoring:delta-created' as any, (delta: MonitoringDelta) => {
+        eventBusService.on('monitoring:delta-created' as any, (payload: any) => {
+            const delta = payload?.delta ?? payload;
             this.handleIncomingDelta(delta);
         });
 
@@ -75,13 +76,15 @@ class AgentRunner {
                 batch.push(delta);
                 this.pendingBatches.set(winner.id, batch);
             } else {
+                loggerService.catDebug(LogCategory.AGENT, `Routing: Delta ${delta.id} — no agent matched, marking as processed`);
                 // If no one wants it, mark it as processed so we don't try again
                 for (const agent of activeAgents) {
                     await agentService.markDeltaProcessed(agent.id, delta.id);
                 }
             }
-        } catch (error) {
-            loggerService.catError(LogCategory.AGENT, "WTA Routing failed", { error });
+        } catch (error: unknown) {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            loggerService.catError(LogCategory.AGENT, "WTA Routing failed", { error: errMsg, deltaId: delta.id });
         }
     }
 
@@ -119,12 +122,18 @@ class AgentRunner {
     }
 
     private async routeDeltaToBestAgent(agents: AgentDefinition[], delta: MonitoringDelta): Promise<AgentDefinition | null> {
+        if (!delta?.content) {
+            loggerService.catDebug(LogCategory.AGENT, `WTA: Delta ${delta?.id} has no content, skipping`);
+            return null;
+        }
+
+        const agentIds = agents.map(a => a.id);
         const agentMetadata = agents.map(a => ({ id: a.id, subscriptions: a.subscriptions }));
         const prompt = `### AUTONOMOUS DELTA ROUTER (WTA)
 Route this "World Delta" to the SINGLE most appropriate agent.
 
 WORLD DELTA:
-${delta.content.slice(0, 2000)}
+${String(delta.content).slice(0, 2000)}
 
 AVAILABLE AGENTS:
 ${JSON.stringify(agentMetadata, null, 2)}
@@ -134,8 +143,24 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
         try {
             const fastText = await callFastInference([{ role: "user", content: prompt }], 400, undefined, LlamaPriority.LOW);
             const result = extractJson(fastText);
-            return result.winnerId ? agents.find(a => a.id === result.winnerId) || null : null;
-        } catch (e) { return null; }
+            
+            if (!result?.winnerId) {
+                loggerService.catDebug(LogCategory.AGENT, `WTA: No winnerId in response — content: ${String(fastText).slice(0, 200)}`);
+                return null;
+            }
+
+            if (!agentIds.includes(result.winnerId)) {
+                loggerService.catDebug(LogCategory.AGENT, `WTA: Invalid winnerId "${result.winnerId}" — valid IDs: ${agentIds.join(", ")}`);
+                return null;
+            }
+
+            loggerService.catDebug(LogCategory.AGENT, `WTA: Selected agent ${result.winnerId} — ${result.reason || "no reason provided"}`);
+            return agents.find(a => a.id === result.winnerId) || null;
+        } catch (e: unknown) {
+            const errMsg = e instanceof Error ? e.message : String(e);
+            loggerService.catDebug(LogCategory.AGENT, `WTA: Inference failed — ${errMsg}`);
+            return null;
+        }
     }
 
     private async executeAgentBatchTurn(agent: AgentDefinition, deltas: MonitoringDelta[]) {
