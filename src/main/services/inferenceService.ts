@@ -88,55 +88,6 @@ const MAX_TOOL_LOOPS = 15;
  * Global Inference Lock to prevent GPU starvation on local hardware.
  * Ensures only one heavy model turn runs at a time, with priority for User Chat.
  */
-class InferenceLockManager {
-  private isLocked = false;
-  private runningProvider: string | null = null;
-  private queue: { priority: number, model: string, provider: string, resolve: () => void }[] = [];
-
-  async acquire(priority: number = 0, model: string, provider: string): Promise<void> {
-    // LOCK LOGIC:
-    // We only lock if:
-    // 1. The provider is 'local' (Hardware Bound)
-    // 2. AND something is already running on that local provider.
-    // If it's Gemini or OpenAI, we don't care about the lock (Cloud Scaled).
-
-    const isConflict = this.isLocked &&
-      this.runningProvider === 'local' &&
-      provider === 'local';
-
-    if (!isConflict) {
-      this.isLocked = true;
-      this.runningProvider = provider;
-      return;
-    }
-
-    // It's a local hardware conflict, must queue.
-    return new Promise((resolve) => {
-      if (priority > 0) {
-        const lastHighPriorityIdx = this.queue.findLastIndex(item => item.priority > 0);
-        this.queue.splice(lastHighPriorityIdx + 1, 0, { priority, model, provider, resolve });
-      } else {
-        this.queue.push({ priority, model, provider, resolve });
-      }
-    });
-  }
-
-  release(): void {
-    if (this.queue.length > 0) {
-      const next = this.queue.shift();
-      if (next) {
-        this.runningProvider = next.provider;
-        next.resolve();
-        return;
-      }
-    }
-    this.isLocked = false;
-    this.runningProvider = null;
-  }
-}
-
-export const inferenceLock = new InferenceLockManager();
-
 let _isCancelled = false;
 
 export const callFastInference = async (
@@ -747,7 +698,6 @@ export async function* sendMessageAndHandleTools(
   }
 
   const settings = await settingsService.getInferenceSettings();
-  await inferenceLock.acquire(priority, chat.model, settings.provider || 'local');
 
   try {
     let loops = 0;
@@ -1209,7 +1159,6 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
       } catch (err) { }
     }
   } finally {
-    inferenceLock.release();
     _isCancelled = false;
   }
 

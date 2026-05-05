@@ -31,11 +31,12 @@ except ImportError:
     HSEmotionRecognizer = None
 
 class CalibrationEngine:
-    def __init__(self):
+    def __init__(self, log_fn=None):
         self.samples = []
         self.baseline = {}
         self.is_calibrated = False
         self.max_samples = 30 # ~10 seconds for a rock-solid baseline
+        self.log_fn = log_fn
 
     def add_sample(self, blendshapes):
         if self.is_calibrated: return
@@ -46,7 +47,8 @@ class CalibrationEngine:
                 self.baseline[name] = sum(s[name] for s in self.samples) / len(self.samples)
             self.is_calibrated = True
             self.samples = [] # Free memory after baseline is set
-            self.log("Baseline calibration complete. Samples cleared.")
+            if self.log_fn:
+                self.log_fn("Baseline calibration complete. Samples cleared.")
 
     def get_delta(self, name, value):
         if not self.is_calibrated: return value
@@ -76,7 +78,7 @@ class VisionSidecar:
         self._face_landmarker = None
         self._fer = None 
 
-        self.calibration = CalibrationEngine()
+        self.calibration = CalibrationEngine(log_fn=self.log)
         self.emotion_history = {} 
         self.smoothing_window = 10
 

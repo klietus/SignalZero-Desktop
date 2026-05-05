@@ -61,14 +61,23 @@ class AgentRunner {
                 return;
             }
 
-            this.routedDeltas.add(delta.id);
             const agents = await agentService.listAgents();
             const activeAgents = agents.filter(a => a.enabled && a.subscriptions && a.subscriptions.length > 0);
 
             if (activeAgents.length === 0) return;
 
-            // WINNER TAKES ALL ROUTING
-            const winner = await this.routeDeltaToBestAgent(activeAgents, delta);
+            // Try routing with retries — WTA can fail transiently (model timeout, bad parse)
+            const maxRetries = 3;
+            let winner: AgentDefinition | null = null;
+
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                winner = await this.routeDeltaToBestAgent(activeAgents, delta);
+                if (winner) {
+                    break;
+                }
+                loggerService.catDebug(LogCategory.AGENT, `Routing: Delta ${delta.id} — no winner (attempt ${attempt + 1}/${maxRetries}), retrying...`);
+                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            }
 
             if (winner) {
                 loggerService.catDebug(LogCategory.AGENT, `Routing: Delta ${delta.id} assigned to agent ${winner.id}`);
@@ -76,8 +85,7 @@ class AgentRunner {
                 batch.push(delta);
                 this.pendingBatches.set(winner.id, batch);
             } else {
-                loggerService.catDebug(LogCategory.AGENT, `Routing: Delta ${delta.id} — no agent matched, marking as processed`);
-                // If no one wants it, mark it as processed so we don't try again
+                loggerService.catDebug(LogCategory.AGENT, `Routing: Delta ${delta.id} — no winner after ${maxRetries} attempts, marking as processed`);
                 for (const agent of activeAgents) {
                     await agentService.markDeltaProcessed(agent.id, delta.id);
                 }
