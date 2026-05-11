@@ -120,19 +120,63 @@ export const callFastInference = async (
     }
     prompt += `<|im_start|>assistant\n`;
 
-    // Route to appropriate sidecar based on priority
-    const service = (priority >= LlamaPriority.HIGH) ? urgentLlamaService : llamaService;
+    let responseText = "";
+    const settings = await settingsService.getInferenceSettings();
+    const isApiConfigured = settings.apiKey && settings.provider !== 'local';
 
-    const result = await service.completion(prompt, {
-      maxTokens,
-      priority,
-      stop: ["<|im_end|>", "<|im_start|>", "assistant:", "user:", "system:"]
-    });
+    if (priority >= LlamaPriority.HIGH && isApiConfigured) {
+      try {
+        if (settings.provider === 'gemini') {
+          const client = await getGeminiClient();
+          const sysMsg = augmentedMessages.find(m => m.role === 'system');
+          const contents = augmentedMessages.filter(m => m.role !== 'system').map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }]
+          }));
+          const model = client.getGenerativeModel({ 
+            model: settings.agentModel,
+            systemInstruction: sysMsg ? { role: 'system', parts: [{ text: sysMsg.content }] } : undefined
+          });
+          const geminiResult = await model.generateContent({
+            contents,
+            generationConfig: { maxOutputTokens: maxTokens }
+          });
+          responseText = stripThoughts(geminiResult.response.text()).trim();
+        } else {
+          const client = await getClient();
+          const response = await client.chat.completions.create({
+            model: settings.agentModel,
+            messages: augmentedMessages as any,
+            max_tokens: maxTokens,
+            stream: false
+          });
+          responseText = stripThoughts(response.choices[0].message.content || "").trim();
+        }
+        
+        if (responseText) {
+          loggerService.catInfo(LogCategory.INFERENCE, "Fast inference completed via API", { provider: settings.provider, model: settings.agentModel, requestId });
+        }
+      } catch (apiError: any) {
+        loggerService.catError(LogCategory.INFERENCE, "Fast inference API failed, falling back to llama sidecar", { error: apiError.message, requestId });
+      }
+    }
+
+    if (!responseText) {
+      // Route to appropriate sidecar based on priority
+      const service = (priority >= LlamaPriority.HIGH) ? urgentLlamaService : llamaService;
+
+      const result = await service.completion(prompt, {
+        maxTokens,
+        priority,
+        stop: ["<|im_end|>", "<|im_start|>", "assistant:", "user:", "system:"]
+      });
+
+      // Strip thoughts if the model ignored the directive
+      const rawResponse = result.content || "";
+      responseText = stripThoughts(rawResponse).trim();
+    }
 
     const duration = performance.now() - startTime;
-    // Strip thoughts if the model ignored the directive
-    const rawResponse = result.content || "";
-    const responseText = stripThoughts(rawResponse).trim();
 
     eventBusService.emitKernelEvent(KernelEventType.FAST_INFERENCE_COMPLETED, {
       requestId,
@@ -1180,6 +1224,11 @@ export const extractJson = (text: string): any => {
     try {
       return JSON.parse(str);
     } catch (e) {
+      // Fix trailing comma before closing brace/bracket
+      let fixed = str.replace(/,(\s*[\]}])/g, '$1');
+      try {
+        return JSON.parse(fixed);
+      } catch (e2) { }
       if (str.includes('}, {') || str.includes('},\n{')) {
         try {
           const wrapped = JSON.parse(`[${str}]`);
@@ -1189,7 +1238,7 @@ export const extractJson = (text: string): any => {
         } catch (inner) { }
       }
 
-      let fixed = str
+      let cleaned = str
         .replace(/":\s*"([\s\S]*?)"(\s*[,}\n])/g, (_match, p1, p2) => {
           const content = p1
             .replace(/\\"/g, '"')
@@ -1199,9 +1248,9 @@ export const extractJson = (text: string): any => {
         .replace(/,(\s*[}\]])/g, '$1');
 
       try {
-        return JSON.parse(fixed);
+        return JSON.parse(cleaned);
       } catch (inner) {
-        let truncated = fixed.trim();
+        let truncated = cleaned.trim();
         if ((truncated.startsWith('{') && !truncated.endsWith('}')) || (truncated.startsWith('[') && !truncated.endsWith(']'))) {
           const stack: string[] = [];
           for (let i = 0; i < truncated.length; i++) {

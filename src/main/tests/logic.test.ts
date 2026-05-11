@@ -74,6 +74,41 @@ describe('Inference Logic Parity', () => {
         const result = extractJson(wrapped);
         expect(result).toEqual({ mappings: [{ pattern_id: 'BIO-TEST', target_id: 'ROOT' }] });
     });
+
+    it('should extract JSON from fullText wrapper with escaped JSON string', () => {
+        const escaped = '{"fullText":"{\\n \\"flag\\": true,\\n \\"severity\\": \\"high\\",\\n \\"synthesis\\": \\"The user mood has shifted\\",\\n \\"reason\\": \\"The user expressed sadness\\"}"}';
+        const result = extractJson(escaped);
+        expect(result).toEqual({
+            flag: true,
+            severity: 'high',
+            synthesis: 'The user mood has shifted',
+            reason: 'The user expressed sadness'
+        });
+    });
+
+    it('should extract JSON from fullText wrapper with trailing comma', () => {
+        const withTrailing = '{"fullText":"{\\n \\"flag\\": false,\\n \\"severity\\": \\"low\\",\\n \\"synthesis\\": \\"No problem\\",\\n \\"reason\\": \\"Conversational\\"\\n}"}';
+        const result = extractJson(withTrailing);
+        expect(result).toEqual({
+            flag: false,
+            severity: 'low',
+            synthesis: 'No problem',
+            reason: 'Conversational'
+        });
+    });
+
+    it('should extract JSON from fullText wrapper with trailing comma in inner JSON', () => {
+        // This matches the actual failure: LLM output with trailing comma before }
+        const llmOutput = "{\n  \"flag\": false,\n  \"severity\": \"low\",\n  \"synthesis\": \"The webpage appears to be a system message\",\n  \"reason\": \"No actionable problem found\",\n}";
+        const input = JSON.stringify({ fullText: llmOutput });
+        const result = extractJson(input);
+        expect(result).toEqual({
+            flag: false,
+            severity: 'low',
+            synthesis: 'The webpage appears to be a system message',
+            reason: 'No actionable problem found'
+        });
+    });
 });
 
 describe('Project Service Parity', () => {
