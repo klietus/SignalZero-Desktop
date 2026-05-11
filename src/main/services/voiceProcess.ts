@@ -312,7 +312,7 @@ EXPAND ALL ACRONYMS AND ABBREVIATIONS into their full spoken forms (e.g., "AI" t
 Do not say "Header", "Section", or read out structural markers. Do NOT repeat the same word twice in a row.
 Just provide the core narrative content in a way that is easy to listen to.
 Keep it professional and concise. Use punctuation to create natural pauses.  Do not include an explanation of what you did or speaker notes.  This is
-being sent directly to a TTS system for conversion to speech.
+being sent directly to a TTS system for conversion to speech.  Do not elaborate or add anything that isn't in the original text beyond the transitions.
 
 TEXT TO CONVERT:
 ${processedText}`;

@@ -346,55 +346,58 @@ class VoiceSidecar:
         threading.Thread(target=self.tts_worker, daemon=True).start()
         self.send_to_electron("alive", {})
 
-        for line in sys.stdin:
-            try:
-                cmd = json.loads(line)
-                action = cmd.get('action')
-                payload = cmd.get('payload', {})
+        try:
+            for line in sys.stdin:
+                try:
+                    cmd = json.loads(line)
+                    action = cmd.get('action')
+                    payload = cmd.get('payload', {})
 
-                if action == 'init':
-                    self.initialize_engine()
-                elif action == 'mic_on':
-                    self.mic_enabled = True
-                    self.mic_suppressed = False
-                elif action == 'mic_off':
-                    self.mic_enabled = False
-                elif action == 'enroll_start':
-                    self.enroll_mode = True
-                    self.current_enroll_phrase = payload.get('phrase')
-                    if self.engine:
-                        self.engine.enrollment_embeddings = []
-                elif action == 'enroll_next':
-                    self.current_enroll_phrase = payload.get('phrase')
-                elif action == 'enroll_stop':
-                    self.enroll_mode = False
-                    self.current_enroll_phrase = None
-                    if self.engine:
-                        name = payload.get('name', 'Primary_User')
-                        profile = self.engine.finalize_enrollment(name)
-                        self.send_to_electron("enroll_finalized", {"profile": profile, "name": name})
-                elif action == 'set_profiles':
-                    if self.engine:
-                        profiles = payload.get('profiles', {})
-                        self.engine.set_profiles(profiles)
+                    if action == 'init':
+                        self.initialize_engine()
+                    elif action == 'mic_on':
+                        self.mic_enabled = True
+                        self.mic_suppressed = False
+                    elif action == 'mic_off':
+                        self.mic_enabled = False
+                    elif action == 'enroll_start':
+                        self.enroll_mode = True
+                        self.current_enroll_phrase = payload.get('phrase')
+                        if self.engine:
+                            self.engine.enrollment_embeddings = []
+                    elif action == 'enroll_next':
+                        self.current_enroll_phrase = payload.get('phrase')
+                    elif action == 'enroll_stop':
+                        self.enroll_mode = False
+                        self.current_enroll_phrase = None
+                        if self.engine:
+                            name = payload.get('name', 'Primary_User')
+                            profile = self.engine.finalize_enrollment(name)
+                            self.send_to_electron("enroll_finalized", {"profile": profile, "name": name})
+                    elif action == 'set_profiles':
+                        if self.engine:
+                            profiles = payload.get('profiles', {})
+                            self.engine.set_profiles(profiles)
                         self.send_to_electron("profiles_ready", {"count": len(profiles)})
-                elif action == 'suppress_mic' or action == 'mic_suppress_on':
-                    self.mic_suppressed = True
-                elif action == 'resume_mic' or action == 'mic_suppress_off':
-                    self.mic_suppressed = False
-                elif action == 'speak':
-                    self.tts_queue.put(payload)
-                elif action == 'interrupt_tts':
-                    self.interrupt_tts = True
-                    # Clear queue
-                    while not self.tts_queue.empty():
-                        try: self.tts_queue.get_nowait()
-                        except: break
-                elif action == 'quit':
-                    self.is_running = False
-                    break
-            except Exception as e:
-                logger.error(f"Command error: {e}")
+                    elif action == 'suppress_mic' or action == 'mic_suppress_on':
+                        self.mic_suppressed = True
+                    elif action == 'resume_mic' or action == 'mic_suppress_off':
+                        self.mic_suppressed = False
+                    elif action == 'speak':
+                        self.tts_queue.put(payload)
+                    elif action == 'interrupt_tts':
+                        self.interrupt_tts = True
+                        # Clear queue
+                        while not self.tts_queue.empty():
+                            try: self.tts_queue.get_nowait()
+                            except: break
+                    elif action == 'quit':
+                        self.is_running = False
+                        break
+                except Exception as e:
+                    logger.error(f"Command error: {e}")
+        except KeyboardInterrupt:
+            pass
 
 if __name__ == "__main__":
     sidecar = VoiceSidecar()

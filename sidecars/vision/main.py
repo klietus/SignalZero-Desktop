@@ -122,6 +122,7 @@ class VisionSidecar:
     def fer(self):
         if self._fer is None:
             if HSEmotionRecognizer is None:
+                self.log("HSEmotionRecognizer import failed — FER disabled")
                 return None
             try:
                 device = 'cpu'
@@ -135,6 +136,7 @@ class VisionSidecar:
                 self.log(f"HSEmotion initialized on {device}.")
             except Exception as e:
                 self.log(f"FER INIT ERROR: {str(e)}")
+                self._fer = None
         return self._fer
 
     def log(self, msg):
@@ -219,11 +221,14 @@ class VisionSidecar:
                 landmarker = self.face_landmarker
                 recognizer = self.fer
                 
-                if not landmarker: return [], [], False
+                if not landmarker: 
+                    self.log(f"No face_landmarker available — emotion tracking disabled")
+                    return [], [], False
 
                 results = landmarker.detect_for_video( mp_image, int(timestamp_ms))
                 
                 if not results.face_landmarks: 
+                    self.log(f"No face landmarks detected (frame {timestamp_ms})")
                     return [], [], False
 
                 has_people = True
@@ -287,6 +292,11 @@ class VisionSidecar:
                         except Exception as e:
                             self.log(f"Inference error: {str(e)}")
                             emotion = "error"
+                    else:
+                        if not recognizer:
+                            self.log(f"FER not available — HSEmotionRecognizer is None")
+                        elif face_img.size == 0:
+                            self.log(f"Face ROI empty — skipping FER (bbox: [{px1},{py1},{px2},{py2}])")
                     
                     # Smoothing
                     face_id = f"face_{i}"
@@ -434,25 +444,34 @@ class VisionSidecar:
         if not self.camera_running:
             self.camera_running = True
             threading.Thread(target=self.camera_loop, daemon=True).start()
+            self.log("Camera started — emotion tracking active")
 
-    def stop_camera(self): self.camera_running = False
+    def stop_camera(self): 
+        self.camera_running = False
+        self.log("Camera stopped")
 
     def start_screen(self):
         if not self.screen_running:
             self.screen_running = True
             threading.Thread(target=self.screen_loop, daemon=True).start()
+            self.log("Screen capture started (no emotion tracking — use start_camera for emotion)")
 
-    def stop_screen(self): self.screen_running = False
+    def stop_screen(self): 
+        self.screen_running = False
+        self.log("Screen capture stopped")
 
 if __name__ == "__main__":
     sidecar = VisionSidecar()
-    for line in sys.stdin:
-        try:
-            cmd = json.loads(line)
-            action = cmd.get("action")
-            if action == "start_camera": sidecar.start_camera()
-            elif action == "stop_camera": sidecar.stop_camera()
-            elif action == "start_screen": sidecar.start_screen()
-            elif action == "stop_screen": sidecar.stop_screen()
-            elif action == "quit": break
-        except: pass
+    try:
+        for line in sys.stdin:
+            try:
+                cmd = json.loads(line)
+                action = cmd.get("action")
+                if action == "start_camera": sidecar.start_camera()
+                elif action == "stop_camera": sidecar.stop_camera()
+                elif action == "start_screen": sidecar.start_screen()
+                elif action == "stop_screen": sidecar.stop_screen()
+                elif action == "quit": break
+            except: pass
+    except KeyboardInterrupt:
+        pass
