@@ -1497,6 +1497,27 @@ export const primeSymbolicContext = async (
           id: randomUUID(), role: "system", content: `[System] Executed ${webResults.length} anticipated web searches for grounding.`,
           timestamp: new Date().toISOString(), metadata: { kind: "anticipated_web_search", queries: webSearchQueries, resultsCount: webResults.length }
         } as any);
+
+        // Prime symbolic cache from anticipated search results
+        const searchTerms = webResults.flatMap(wr =>
+          (wr?.results || []).flatMap(r => [r.title, r.snippet?.slice(0, 100)]).filter(t => t && t.length > 5)
+        );
+        if (searchTerms.length > 0) {
+          const primedSymbols: SymbolDef[] = [];
+          for (const term of searchTerms.slice(0, 8)) {
+            const res = await domainService.search(term, 2);
+            res.forEach((r: any) => {
+              if (r?.metadata && !primedSymbols.find(s => s.id === r.metadata.id)) {
+                primedSymbols.push(r.metadata as SymbolDef);
+              }
+            });
+          }
+          if (primedSymbols.length > 0) {
+            const { added } = await symbolCacheService.batchUpsertSymbols(contextSessionId, primedSymbols);
+            loggerService.catInfo(LogCategory.INFERENCE, `Anticipated web search: Injected ${added} new symbols into cache from priming.`);
+            await symbolCacheService.emitCacheLoad(contextSessionId);
+          }
+        }
       }
     }
   } catch (e) { loggerService.catError(LogCategory.INFERENCE, "Priming failed", { error: e }); }
