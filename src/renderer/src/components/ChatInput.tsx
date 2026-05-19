@@ -319,7 +319,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <div className="flex flex-wrap gap-3 mb-3 px-1">
                 {attachments.map(att => (
                     <div key={att.id} className="relative group animate-in zoom-in-95 duration-200">
-                        {att.thumbnail || att.type.startsWith('image/') ? (
+                        {att.thumbnail || (att.type && att.type.startsWith('image/')) ? (
                             <div className="w-16 h-16 rounded-xl border border-gray-800 bg-gray-900 overflow-hidden shadow-lg group-hover:border-indigo-500/50 transition-all">
                                 <img src={att.thumbnail || (att as any).url} alt={att.filename} className="w-full h-full object-cover" />
                             </div>

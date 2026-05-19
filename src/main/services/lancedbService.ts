@@ -3,6 +3,7 @@ import { join } from 'path';
 import { app } from 'electron';
 import fs from 'fs';
 import { workerService } from './workerService.js';
+import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 
 // Types (Mirrored from LocalNode/types.ts)
@@ -458,10 +459,29 @@ export const lancedbService = {
         }
     },
 
-    async searchDeltas(query: string, nResults: number = 5, filter?: { sourceId?: string, period?: string, startDate?: string, endDate?: string }): Promise<VectorSearchResult[]> {
+    async searchDeltas(query: string | undefined, nResults: number = 5, filter?: { sourceId?: string, period?: string, startDate?: string, endDate?: string }): Promise<VectorSearchResult[]> {
         try {
             const table = await getDeltasTable();
             if (!table) return [];
+
+            if (!query || query.trim() === '') {
+                const rows = sqliteService.all(
+                    `SELECT id, source_id as sourceId, period, content as text, timestamp, metadata FROM monitoring_deltas ORDER BY timestamp DESC`,
+                ) as any[];
+                let filtered = rows;
+                if (filter) {
+                    if (filter.sourceId) filtered = filtered.filter((r: any) => r.sourceId === filter.sourceId);
+                    if (filter.period) filtered = filtered.filter((r: any) => r.period === filter.period);
+                    if (filter.startDate) filtered = filtered.filter((r: any) => r.timestamp >= filter.startDate);
+                    if (filter.endDate) filtered = filtered.filter((r: any) => r.timestamp <= filter.endDate);
+                }
+                return filtered.slice(0, nResults).map((r: any) => ({
+                    id: r.id,
+                    score: 1,
+                    metadata: { id: r.id, sourceId: r.sourceId, period: r.period, timestamp: r.timestamp, metadata: r.metadata ? JSON.parse(r.metadata) : {} },
+                    document: r.text
+                }));
+            }
 
             const [queryVector] = await workerService.embedTexts([query]);
             // We search by vector and sort by timestamp descending (most recent first)

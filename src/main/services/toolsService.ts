@@ -417,28 +417,122 @@ export const SECONDARY_TOOLS_MAP: Record<string, ChatCompletionTool> = {
 };
 
 export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
-  // --- v2: Natural language → predicate query ---
+  // --- DISABLED: replaced by adaptive_search ---
+  // {
+  //   type: 'function',
+  //   function: {
+  //     name: 'find_symbols_v2',
+  //     description: 'Find symbols using natural language queries. The backend parses the query into structured predicates via the predicate embedding index. Supports: kind (pattern/lattice/persona/data), temporal (continuous/event_driven/static/episodic/transient), commit (foundational/volatile), topology (inductive/deductive/bidirectional/invariant/energy), centrality bucket (high/medium/low), substrate, gate, function, role, macro. Returns ranked results with hybrid sparse+dense scoring.',
+  //     parameters: {
+  //       type: 'object',
+  //       properties: {
+  //         query: {
+  //           type: 'string',
+  //           description: 'Natural language description. Examples: "find patterns with continuous temporal substrate", "symbols semantically similar to neuro-symbolic reasoning", "high-centrality lattices in root domain"'
+  //         },
+  //         limit: {
+  //           type: 'integer',
+  //           description: 'Maximum number of results to return',
+  //           default: 10
+  //         },
+  //         expand_depth: {
+  //           type: 'integer',
+  //           description: 'Degrees of graph expansion from top results (0 = no expansion)',
+  //           default: 0
+  //         }
+  //       },
+  //       required: ['query']
+  //     }
+  //   }
+  // },
+  // --- v2: Adaptive search with feedback-aware results ---
   {
     type: 'function',
     function: {
-      name: 'find_symbols_v2',
-      description: 'Find symbols using natural language queries. The backend parses the query into structured predicates via the predicate embedding index. Supports: kind (pattern/lattice/persona/data), temporal (continuous/event_driven/static/episodic/transient), commit (foundational/volatile), topology (inductive/deductive/bidirectional/invariant/energy), centrality bucket (high/medium/low), substrate, gate, function, role, macro. Returns ranked results with hybrid sparse+dense scoring.',
+      name: 'adaptive_search',
+      description: 'Search symbols with LLM-driven adaptive tuning. Returns structured results with confidence scores, score breakdowns, and expansion hints. Use for complex queries where you need to iteratively refine search based on result quality. The summary includes a recommendation on whether to expand, narrow, or accept results.',
       parameters: {
         type: 'object',
         properties: {
           query: {
             type: 'string',
-            description: 'Natural language description. Examples: "find patterns with continuous temporal substrate", "symbols semantically similar to neuro-symbolic reasoning", "high-centrality lattices in root domain"'
+            description: 'Natural language query to search for'
           },
-          limit: {
-            type: 'integer',
-            description: 'Maximum number of results to return',
-            default: 10
+          complexity: {
+            type: 'string',
+            enum: ['simple', 'moderate', 'complex'],
+            description: 'Estimated query complexity. simple = direct lookup, moderate = needs predicates, complex = needs multi-stage retrieval'
           },
-          expand_depth: {
+          initial_limit: {
             type: 'integer',
-            description: 'Degrees of graph expansion from top results (0 = no expansion)',
-            default: 0
+            default: 30,
+            description: 'Initial candidate count before scoring (controls search breadth)'
+          },
+          final_limit: {
+            type: 'integer',
+            default: 10,
+            description: 'Maximum results after scoring and filtering'
+          },
+          predicates: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                field: { type: 'string' },
+                operator: { type: 'string', enum: ['eq', 'contains', 'in', 'similar'] },
+                value: { type: 'string' }
+              }
+            },
+            description: 'Optional predicate filters. If omitted, query is parsed automatically.'
+          },
+          expand: {
+            type: 'object',
+            properties: {
+              enabled: {
+                type: 'boolean',
+                default: false,
+                description: 'Whether to expand from top results'
+              },
+              strategy: {
+                type: 'string',
+                enum: ['none', 'centrality', 'reciprocal', 'bidirectional'],
+                description: 'How to expand nodes'
+              },
+              max_depth: {
+                type: 'integer',
+                default: 1,
+                description: 'Expansion depth'
+              },
+              max_expand_candidates: {
+                type: 'integer',
+                default: 20,
+                description: 'Max nodes to consider for expansion'
+              }
+            }
+          },
+          scoring: {
+            type: 'object',
+            properties: {
+              min_relevance: {
+                type: 'number',
+                default: 0.3,
+                description: 'Minimum score to include (0.0-1.0)'
+              },
+              weight_embedding: { type: 'number', description: 'Weight for embedding similarity' },
+              weight_recency: { type: 'number', description: 'Weight for recency' },
+              weight_links: { type: 'number', description: 'Weight for link centrality' },
+              weight_predicates: { type: 'number', description: 'Weight for predicate matches' }
+            }
+          },
+          domains: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Limit search to specific domains. Empty = all enabled domains.'
+          },
+          include_scores: {
+            type: 'boolean',
+            default: true,
+            description: 'Include per-result relevance scores and breakdown'
           }
         },
         required: ['query']
@@ -646,7 +740,7 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
           endDate: { type: 'string', description: 'Optional end date ISO string.' },
           limit: { type: 'integer', default: 5 }
         },
-        required: ['query']
+        required: []
       }
     }
   },
@@ -720,28 +814,55 @@ export const createToolExecutor = (contextSessionId?: string) => {
         return { domains };
       }
 
-      // --- v2: find_symbols_v2 ---
-      case 'find_symbols_v2': {
-        const predicates = await parseQueryToPredicates(args.query);
-        loggerService.catInfo(LogCategory.TOOL, `find_symbols_v2: parsed ${predicates.length} predicates from query`, { query: args.query, predicates });
-        
-        const results = await hybridRetrievalService.retrieve(
-          args.query,
-          predicates,
-          args.limit || 10,
-          args.expand_depth || 0
-        );
-        
-        if (contextSessionId && results.length > 0) {
-          const validSymbols = results.map(r => r?.symbol).filter((s): s is SymbolDefV2 => s != null && typeof s === 'object' && s.id != null);
-          const { added, updated } = await symbolCacheService.batchUpsertSymbols(
-            contextSessionId,
-            validSymbols as any
-          );
+      // --- DISABLED: replaced by adaptive_search ---
+      // case 'find_symbols_v2': {
+      //   const predicates = await parseQueryToPredicates(args.query);
+      //   loggerService.catInfo(LogCategory.TOOL, `find_symbols_v2: parsed ${predicates.length} predicates from query`, { query: args.query, predicates });
+      
+      //   const results = await hybridRetrievalService.retrieve(
+      //     args.query,
+      //   predicates,
+      //   args.limit || 10,
+      //   args.expand_depth || 0
+      //   );
+      
+      //   if (contextSessionId && results.length > 0) {
+      //     const validSymbols = results.map(r => r?.symbol).filter((s): s is SymbolDefV2 => s != null && typeof s === 'object' && s.id != null);
+      //     const { added, updated } = await symbolCacheService.batchUpsertSymbols(
+      //       contextSessionId,
+      //       validSymbols as any
+      //     );
+      //     await symbolCacheService.emitCacheLoad(contextSessionId);
+      //     return { symbols: results.map(r => r.symbol), cache_stats: { added, updated }, predicates_matched: results[0]?.predicates_matched || [] };
+      //   }
+      //   return { symbols: results.map(r => r.symbol) };
+      // }
+
+      // --- v2: adaptive_search ---
+      case 'adaptive_search': {
+        const result = await hybridRetrievalService.adaptiveSearch(args.query, {
+          complexity: args.complexity,
+          initialLimit: args.initial_limit,
+          finalLimit: args.final_limit,
+          predicates: args.predicates,
+          expand: args.expand,
+          scoring: args.scoring,
+          domains: args.domains,
+        });
+
+        if (contextSessionId && result.results.length > 0) {
+          const validSymbols = result.results.map(r => r.symbol).filter((s): s is SymbolDefV2 => s != null && typeof s === 'object' && s.id != null);
+          await symbolCacheService.batchUpsertSymbols(contextSessionId, validSymbols as any);
           await symbolCacheService.emitCacheLoad(contextSessionId);
-          return { symbols: results.map(r => r.symbol), cache_stats: { added, updated }, predicates_matched: results[0]?.predicates_matched || [] };
         }
-        return { symbols: results.map(r => r.symbol) };
+
+        return {
+          query: result.query,
+          complexity: result.complexity,
+          candidates_found: result.candidates_found,
+          results: args.include_scores !== false ? result.results : result.results.map(r => ({ symbol: r.symbol })),
+          summary: result.summary,
+        };
       }
 
       // --- v2: load_symbols with expand ---

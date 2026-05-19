@@ -18,6 +18,51 @@ export interface HybridRetrievalResult {
   stage: 'predicate' | 'embedding' | 'expansion';
   predicates_matched: string[];
   embedding_similarity: number;
+  score_breakdown: {
+    embedding: number;
+    recency: number;
+    links: number;
+    predicates: number;
+  };
+  expansion_reason?: string;
+}
+
+export interface AdaptiveSearchRecommendation {
+  action: 'sufficient' | 'expand' | 'broaden' | 'narrow' | 'iterate';
+  reason: string;
+  suggested_limit?: number;
+  suggested_min_relevance?: number;
+}
+
+export interface AdaptiveSearchResult {
+  query: string;
+  complexity: 'simple' | 'moderate' | 'complex';
+  candidates_found: number;
+  results: Array<{
+    symbol: SymbolDefV2;
+    score: number;
+    score_breakdown: {
+      embedding: number;
+      recency: number;
+      links: number;
+      predicates: number;
+    };
+    stage: 'predicate' | 'embedding' | 'expansion';
+    predicates_matched: string[];
+    expansion_reason?: string;
+  }>;
+  summary: {
+    total_candidates: number;
+    after_filtering: number;
+    top_score: number;
+    bottom_score: number;
+    avg_score: number;
+    score_gap: number;
+    predicate_coverage: number;
+    expansion_count: number;
+    confidence: 'low' | 'medium' | 'high';
+    recommendation: AdaptiveSearchRecommendation;
+  };
 }
 
 export class HybridRetrievalService {
@@ -157,12 +202,22 @@ export class HybridRetrievalService {
       const similarity = this.cosineSimilarity(queryEmbedding[0], embedding);
 
       if (similarity >= this.MIN_EMBEDDING_SIMILARITY) {
+        const recency = (candidates[i] as any).recency_weight || 1.0;
+        const linkCount = (candidates[i] as any).links?.length || (candidates[i] as any).linked_patterns?.length || 0;
+        const linkScore = Math.min(1, linkCount / this.LINK_CENTRALITY_MAX);
+
         results.push({
           symbol: candidates[i],
           score: similarity,
           stage: 'embedding',
           predicates_matched: [],
           embedding_similarity: similarity,
+          score_breakdown: {
+            embedding: similarity,
+            recency: recency,
+            links: linkScore,
+            predicates: 0,
+          },
         });
       }
     }
@@ -190,12 +245,22 @@ export class HybridRetrievalService {
       if (!symbol) continue;
 
       const v2 = this.symbolToV2(symbol);
+      const linkCount = (v2 as any).links?.length || 0;
+      const linkScore = Math.min(1, linkCount / this.LINK_CENTRALITY_MAX);
+      const recency = (v2 as any).recency_weight || 1.0;
+
       results.push({
         symbol: v2,
         score: similarity,
         stage: 'embedding',
         predicates_matched: [],
         embedding_similarity: similarity,
+        score_breakdown: {
+          embedding: similarity,
+          recency: recency,
+          links: linkScore,
+          predicates: 0,
+        },
       });
     }
 
@@ -255,12 +320,23 @@ export class HybridRetrievalService {
         if (!symbol) continue;
 
         const v2 = this.symbolToV2(symbol);
+        const linkCount = (v2 as any).links?.length || 0;
+        const linkScore = Math.min(1, linkCount / this.LINK_CENTRALITY_MAX);
+        const recency = (v2 as any).recency_weight || 1.0;
+
         expanded.set(link.id, {
           symbol: v2,
           score: result.score * 0.7, // Decay score for expansion
           stage: 'expansion',
           predicates_matched: [],
           embedding_similarity: 0,
+          score_breakdown: {
+            embedding: 0,
+            recency: recency,
+            links: linkScore,
+            predicates: 0,
+          },
+          expansion_reason: `Expanded from ${result.symbol.id} via ${link.link_type}`,
         });
       }
     }
@@ -307,13 +383,25 @@ export class HybridRetrievalService {
         // No domain specified — use LanceDB vector search (pre-computed embeddings, no on-the-fly embedding)
         const lanceResults = await lancedbService.search(query, limit * 3);
         if (lanceResults.length > 0) {
-          ranked = await Promise.all(lanceResults.map(async (r) => ({
-            symbol: await this.symbolFromLanceResult(r),
-            score: r.score,
-            stage: 'embedding',
-            predicates_matched: [],
-            embedding_similarity: r.score,
-          })));
+          ranked = await Promise.all(lanceResults.map(async (r) => {
+            const symbol = await this.symbolFromLanceResult(r);
+            const linkCount = (symbol as any).links?.length || 0;
+            const linkScore = Math.min(1, linkCount / this.LINK_CENTRALITY_MAX);
+            const recency = (symbol as any).recency_weight || 1.0;
+            return {
+              symbol,
+              score: r.score,
+              stage: 'embedding' as const,
+              predicates_matched: [],
+              embedding_similarity: r.score,
+              score_breakdown: {
+                embedding: r.score,
+                recency,
+                links: linkScore,
+                predicates: 0,
+              },
+            };
+          }));
         }
       }
     }
@@ -339,7 +427,7 @@ export class HybridRetrievalService {
   }
 
   /**
-   * Compute final hybrid score.
+   * Compute final hybrid score and return breakdown.
    */
   private computeFinalScore(result: HybridRetrievalResult): number {
     let score = 0;
@@ -360,7 +448,181 @@ export class HybridRetrievalService {
     const predicateScore = Math.min(1, result.predicates_matched.length / 2);
     score += predicateScore * this.PREDICATE_WEIGHT;
 
+    result.score_breakdown = {
+      embedding: result.embedding_similarity * this.EMBEDDING_WEIGHT,
+      recency: recency * this.RECENCY_WEIGHT,
+      links: linkScore * this.LINK_WEIGHT,
+      predicates: predicateScore * this.PREDICATE_WEIGHT,
+    };
+
     return score;
+  }
+
+  /**
+   * Generate adaptive search recommendation based on results.
+   */
+  private generateRecommendation(
+    results: HybridRetrievalResult[],
+    candidatesFound: number,
+    complexity: 'simple' | 'moderate' | 'complex'
+  ): AdaptiveSearchRecommendation {
+    if (results.length === 0) {
+      return {
+        action: 'broaden',
+        reason: 'No results returned. Lower min_relevance or remove predicate filters.',
+        suggested_min_relevance: 0.1,
+      };
+    }
+
+    const scores = results.map(r => r.score);
+    const topScore = scores[0];
+    const bottomScore = scores[scores.length - 1];
+    const scoreGap = topScore - bottomScore;
+    const predicateCoverage = results.filter(r => r.predicates_matched.length > 0).length / results.length;
+    const expansionCount = results.filter(r => r.stage === 'expansion').length;
+
+    // High confidence: large score gap + high predicate coverage + few expansions
+    const hasHighConfidence = scoreGap > 0.15 && predicateCoverage > 0.3 && expansionCount === 0;
+
+    // If top result is much better than rest, we can narrow
+    if (scoreGap > 0.2 && topScore > 0.7) {
+      return {
+        action: 'narrow',
+        reason: `Top result (${topScore.toFixed(2)}) significantly outscores rest (gap: ${scoreGap.toFixed(2)}). Consider raising min_relevance to ${(topScore - 0.1).toFixed(2)}.`,
+        suggested_min_relevance: Math.max(0.3, topScore - 0.15),
+      };
+    }
+
+    // If scores are tight, we need more candidates
+    if (scoreGap < 0.05 && candidatesFound > results.length * 2) {
+      return {
+        action: 'expand',
+        reason: `Scores are tightly clustered (gap: ${scoreGap.toFixed(2)}). More candidates needed to find clear winner. Increase initial_limit.`,
+        suggested_limit: Math.min(candidatesFound, results.length * 3),
+      };
+    }
+
+    // If expansion contributed many results, the original search was too narrow
+    if (expansionCount > results.length * 0.4) {
+      return {
+        action: 'broaden',
+        reason: `${Math.round(expansionCount / results.length * 100)}% of results came from expansion. Original search was too narrow. Remove expand or increase initial_limit.`,
+      };
+    }
+
+    // If predicate coverage is low, predicates may be too restrictive
+    if (predicateCoverage < 0.2 && complexity !== 'simple') {
+      return {
+        action: 'iterate',
+        reason: `Only ${Math.round(predicateCoverage * 100)}% of results matched predicates. Predicates may be too restrictive or query needs better predicate extraction.`,
+      };
+    }
+
+    // If we got exactly the limit, we might be cutting off good results
+    if (results.length >= 10 && bottomScore > 0.5) {
+      return {
+        action: 'sufficient',
+        reason: `Got ${results.length} results with bottom score ${bottomScore.toFixed(2)}. Adequate for simple queries. For complex queries, consider expanding.`,
+      };
+    }
+
+    // Default: medium confidence
+    return {
+      action: hasHighConfidence ? 'sufficient' : 'iterate',
+      reason: hasHighConfidence
+        ? `Results look solid (gap: ${scoreGap.toFixed(2)}, predicate coverage: ${Math.round(predicateCoverage * 100)}%).`
+        : `Moderate confidence (gap: ${scoreGap.toFixed(2)}). Consider iterating with adjusted parameters.`,
+    };
+  }
+
+  /**
+   * Adaptive search with feedback-aware results.
+   */
+  async adaptiveSearch(
+    query: string,
+    options: {
+      complexity?: 'simple' | 'moderate' | 'complex';
+      initialLimit?: number;
+      finalLimit?: number;
+      predicates?: Predicate[];
+      expand?: { enabled: boolean; strategy: 'none' | 'centrality' | 'reciprocal' | 'bidirectional'; maxDepth?: number; maxExpandCandidates?: number };
+      scoring?: { minRelevance?: number; weightEmbedding?: number; weightRecency?: number; weightLinks?: number; weightPredicates?: number };
+      domains?: string[];
+    } = {}
+  ): Promise<AdaptiveSearchResult> {
+    const complexity = options.complexity || 'moderate';
+    const initialLimit = options.initialLimit || 30;
+    const finalLimit = options.finalLimit || 10;
+    const predicates = options.predicates || [];
+    const expandConfig = options.expand || { enabled: false, strategy: 'none' };
+    const scoringConfig = options.scoring || {};
+    const domains = options.domains || [];
+
+    // Run standard retrieval with adjusted params
+    const minRelevance = scoringConfig.minRelevance ?? 0.3;
+    const results = await this.retrieve(
+      query,
+      predicates,
+      initialLimit,
+      expandConfig.enabled ? (expandConfig.maxDepth || 1) : 0,
+      domains.length > 0 ? domains[0] : undefined
+    );
+
+    // Apply min relevance filter
+    const filtered = results.filter(r => r.score >= minRelevance);
+
+    // Sort by score descending
+    filtered.sort((a, b) => b.score - a.score);
+
+    // Take final limit
+    const ranked = filtered.slice(0, finalLimit);
+
+    // Generate recommendation
+    const recommendation = this.generateRecommendation(ranked, initialLimit, complexity);
+
+    const scores = ranked.map(r => r.score);
+    const topScore = scores.length > 0 ? scores[0] : 0;
+    const bottomScore = scores.length > 0 ? scores[scores.length - 1] : 0;
+    const scoreGap = topScore - bottomScore;
+    const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    const predicateCoverage = ranked.length > 0
+      ? ranked.filter(r => r.predicates_matched.length > 0).length / ranked.length
+      : 0;
+    const expansionCount = ranked.filter(r => r.stage === 'expansion').length;
+
+    // Determine confidence
+    let confidence: 'low' | 'medium' | 'high' = 'medium';
+    if (scoreGap > 0.15 && predicateCoverage > 0.3 && expansionCount === 0) {
+      confidence = 'high';
+    } else if (scoreGap < 0.03 || ranked.length === 0) {
+      confidence = 'low';
+    }
+
+    return {
+      query,
+      complexity,
+      candidates_found: initialLimit,
+      results: ranked.map(r => ({
+        symbol: r.symbol,
+        score: r.score,
+        score_breakdown: r.score_breakdown || { embedding: 0, recency: 0, links: 0, predicates: 0 },
+        stage: r.stage,
+        predicates_matched: r.predicates_matched,
+        expansion_reason: (r as any).expansion_reason,
+      })),
+      summary: {
+        total_candidates: initialLimit,
+        after_filtering: filtered.length,
+        top_score: topScore,
+        bottom_score: bottomScore,
+        avg_score: avgScore,
+        score_gap: scoreGap,
+        predicate_coverage: predicateCoverage,
+        expansion_count: expansionCount,
+        confidence,
+        recommendation,
+      },
+    };
   }
 
   /**
