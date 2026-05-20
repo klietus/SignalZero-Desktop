@@ -110,6 +110,12 @@ export const linkDecayService = {
       sqliteService.run(`
         DELETE FROM symbol_links_v2 WHERE source_id = ? AND target_id = ?
       `, [link.source_id, link.target_id]);
+      
+      eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_DELETE, {
+        sourceId: link.source_id,
+        targetId: link.target_id
+      } as const);
+      
       pruned.push(`${link.source_id} -> ${link.target_id}`);
     }
 

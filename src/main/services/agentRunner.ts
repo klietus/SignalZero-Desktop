@@ -15,7 +15,7 @@ import { settingsService } from './settingsService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { MonitoringDelta, AgentDefinition } from '../types.js';
 import { symbolCacheService } from './symbolCacheService.js';
-import { tentativeLinkService } from './tentativeLinkService.js';
+import { linkDecayService } from './linkDecayService.js';
 
 class AgentRunner {
     private isProcessingBatch = false;
@@ -188,7 +188,7 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
             
             // Increment turns AFTER load (consistent with processMessageAsync)
             await symbolCacheService.incrementTurns(session.id);
-            await tentativeLinkService.incrementTurns();
+            linkDecayService.runDecayCycle();
 
             const toolExecutor = createToolExecutor(session.id);
 

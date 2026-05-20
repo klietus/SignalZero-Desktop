@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach, afterAll } from 'vitest';
 import { sqliteService } from '../services/sqliteService.js';
 import { linkDecayService, setLastDecayTime } from '../services/linkDecayService.js';
 import { eventBusService } from '../services/eventBusService.js';
@@ -12,6 +12,18 @@ vi.mock('../services/eventBusService.js', () => ({
         TENTATIVE_LINK_CREATE: 'tentative:create',
     }
 }));
+
+afterAll(() => {
+    // Prevent segfault by ensuring DB is closed after all tests
+    try {
+        const db = (sqliteService as any).db;
+        if (db && typeof db.close === 'function') {
+            db.close();
+        }
+    } catch (e) {
+        // Ignore cleanup errors
+    }
+});
 
 const resetDb = () => {
     sqliteService.__sqliteTestUtils.reset();
@@ -148,5 +160,177 @@ describe('linkDecayService — runDecayCycle', () => {
         expect(result.promoted).toContain('S1 -> T1');
         expect(result.pruned).toBeGreaterThanOrEqual(0);
         expect(result.archived).toBeGreaterThanOrEqual(0);
+    });
+});
+
+describe('linkDecayService — EMA decay accuracy', () => {
+    beforeEach(resetDb);
+
+    it('should decay by 10% per hour (factor 0.9)', () => {
+        insertLink('S1', 'T1', { access_count: 10, access_ema: 1.0, committed: 'volatile' });
+        
+        // Set lastDecayTime to exactly 1 hour ago
+        setLastDecayTime(Date.now() - 3600000);
+
+        const updated = linkDecayService.decayEMAs();
+        
+        expect(updated).toBe(1);
+        const link = sqliteService.get(`SELECT access_ema FROM symbol_links_v2 WHERE source_id = 'S1'`) as any;
+        // After 1 hour: EMA = 1.0 * 0.9^1 = 0.9
+        expect(link.access_ema).toBeCloseTo(0.9, 3);
+    });
+
+    it('should decay exponentially over multiple hours', () => {
+        insertLink('S1', 'T1', { access_count: 10, access_ema: 1.0, committed: 'volatile' });
+        
+        // Set lastDecayTime to 3 hours ago
+        setLastDecayTime(Date.now() - 3 * 3600000);
+
+        linkDecayService.decayEMAs();
+        
+        const link = sqliteService.get(`SELECT access_ema FROM symbol_links_v2 WHERE source_id = 'S1'`) as any;
+        // After 3 hours: EMA = 1.0 * 0.9^3 = 0.729
+        expect(link.access_ema).toBeCloseTo(0.729, 3);
+    });
+
+    it('should not decay if less than 1 hour has passed', () => {
+        insertLink('S1', 'T1', { access_count: 10, access_ema: 1.0, committed: 'volatile' });
+        
+        // Set lastDecayTime to 30 minutes ago
+        setLastDecayTime(Date.now() - 1800000);
+
+        const updated = linkDecayService.decayEMAs();
+        
+        expect(updated).toBe(0);
+        const link = sqliteService.get(`SELECT access_ema FROM symbol_links_v2 WHERE source_id = 'S1'`) as any;
+        expect(link.access_ema).toBe(1.0);
+    });
+
+    it('should handle long dormancy (24+ hours)', () => {
+        insertLink('S1', 'T1', { access_count: 10, access_ema: 1.0, committed: 'volatile' });
+        
+        // Set lastDecayTime to 24 hours ago
+        setLastDecayTime(Date.now() - 24 * 3600000);
+
+        linkDecayService.decayEMAs();
+        
+        const link = sqliteService.get(`SELECT access_ema FROM symbol_links_v2 WHERE source_id = 'S1'`) as any;
+        // After 24 hours: EMA = 1.0 * 0.9^24 ≈ 0.08
+        expect(link.access_ema).toBeCloseTo(0.08, 2);
+    });
+
+    it('should skip foundational links during decay', () => {
+        insertLink('S1', 'T1', { access_count: 10, access_ema: 1.0, committed: 'foundational' });
+        
+        setLastDecayTime(Date.now() - 3600000);
+
+        linkDecayService.decayEMAs();
+        
+        const link = sqliteService.get(`SELECT access_ema FROM symbol_links_v2 WHERE source_id = 'S1'`) as any;
+        expect(link.access_ema).toBe(1.0);
+    });
+});
+
+describe('linkDecayService — promotion thresholds', () => {
+    beforeEach(resetDb);
+
+    it('should promote via fast-track: ≥50 accesses in 7 days + EMA > 0.3', () => {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        insertLink('S1', 'T1', { access_count: 50, access_ema: 0.35, committed: 'volatile' });
+        sqliteService.run(`UPDATE symbol_links_v2 SET created_at = ? WHERE source_id = 'S1'`, [sevenDaysAgo]);
+
+        const promoted = linkDecayService.checkPromotion();
+        
+        expect(promoted).toContain('S1 -> T1');
+    });
+
+    it('should not promote if access count is below threshold', () => {
+        insertLink('S1', 'T1', { access_count: 49, access_ema: 0.5, committed: 'volatile' });
+
+        const promoted = linkDecayService.checkPromotion();
+        
+        expect(promoted).not.toContain('S1 -> T1');
+    });
+
+    it('should not promote if EMA is below threshold', () => {
+        insertLink('S1', 'T1', { access_count: 60, access_ema: 0.29, committed: 'volatile' });
+
+        const promoted = linkDecayService.checkPromotion();
+        
+        expect(promoted).not.toContain('S1 -> T1');
+    });
+
+    it('should promote via stability: ≥30 days old + EMA > 0.001', () => {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        insertLink('S1', 'T1', { access_count: 5, access_ema: 0.002, committed: 'volatile' });
+        sqliteService.run(`UPDATE symbol_links_v2 SET created_at = ? WHERE source_id = 'S1'`, [thirtyDaysAgo]);
+
+        const promoted = linkDecayService.checkPromotion();
+        
+        expect(promoted).toContain('S1 -> T1');
+    });
+
+    it('should not promote if age is below 30 days for stability path', () => {
+        const twentyNineDaysAgo = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString();
+        insertLink('S1', 'T1', { access_count: 5, access_ema: 0.5, committed: 'volatile' });
+        sqliteService.run(`UPDATE symbol_links_v2 SET created_at = ? WHERE source_id = 'S1'`, [twentyNineDaysAgo]);
+
+        const promoted = linkDecayService.checkPromotion();
+        
+        expect(promoted).not.toContain('S1 -> T1');
+    });
+});
+
+describe('linkDecayService — integration: access patterns over time', () => {
+    beforeEach(resetDb);
+
+    it('should promote a link through sustained access pattern', () => {
+        // Create a new volatile link
+        insertLink('S1', 'T1', { access_count: 0, access_ema: 0.0, committed: 'volatile' });
+        
+        // Simulate rapid accesses over time
+        setLastDecayTime(Date.now() - 2 * 3600000); // 2 hours ago
+        
+        // First burst of 30 accesses
+        for (let i = 0; i < 30; i++) {
+            linkDecayService.recordAccess('S1', 'T1');
+        }
+
+        let link = sqliteService.get(`SELECT * FROM symbol_links_v2 WHERE source_id = 'S1'`) as any;
+        expect(link.access_count).toBe(30);
+        
+        // Decay for 1 hour
+        setLastDecayTime(Date.now() - 3600000);
+        linkDecayService.decayEMAs();
+        
+        // Second burst of 25 accesses (total ≥50)
+        for (let i = 0; i < 25; i++) {
+            linkDecayService.recordAccess('S1', 'T1');
+        }
+
+        link = sqliteService.get(`SELECT * FROM symbol_links_v2 WHERE source_id = 'S1'`) as any;
+        expect(link.access_count).toBe(55);
+        
+        // Check promotion - should now meet fast-track criteria
+        const promoted = linkDecayService.checkPromotion();
+        expect(promoted).toContain('S1 -> T1');
+    });
+
+    it('should decay and not promote if access is sporadic', () => {
+        insertLink('S1', 'T1', { access_count: 0, access_ema: 0.0, committed: 'volatile' });
+        
+        // Single access
+        linkDecayService.recordAccess('S1', 'T1');
+        
+        // Decay for 24 hours (EMA drops significantly)
+        setLastDecayTime(Date.now() - 24 * 3600000);
+        linkDecayService.decayEMAs();
+        
+        let link = sqliteService.get(`SELECT access_ema FROM symbol_links_v2 WHERE source_id = 'S1'`) as any;
+        expect(link.access_ema).toBeLessThan(0.1);
+        
+        // Not enough accesses for fast-track, not old enough for stability
+        const promoted = linkDecayService.checkPromotion();
+        expect(promoted).not.toContain('S1 -> T1');
     });
 });

@@ -13,7 +13,7 @@ import { settingsService } from "./settingsService.js";
 import { loggerService, LogCategory } from './loggerService.js';
 import { contextService } from './contextService.js';
 import { symbolCacheService } from './symbolCacheService.js';
-import { tentativeLinkService } from './tentativeLinkService.js';
+import { linkDecayService } from './linkDecayService.js';
 import { contextWindowService } from './contextWindowService.js';
 import { attachmentService, Attachment } from './attachmentService.js';
 import { mcpClientService } from './mcpClientService.js';
@@ -1767,7 +1767,7 @@ export const processMessageAsync = async (
     // Increment turns AFTER load so that newly loaded/refreshed symbols have turnCount 0 (touched)
     // and only then get incremented to 1, avoiding immediate eviction.
     await symbolCacheService.incrementTurns(contextSessionId);
-    await tentativeLinkService.incrementTurns();
+    linkDecayService.runDecayCycle();
 
     const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, 1, message, sceneAttachments, metadata);
 

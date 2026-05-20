@@ -1,5 +1,5 @@
 import { domainService, RECIPROCAL_MAP } from './domainService.js';
-import { tentativeLinkService } from './tentativeLinkService.js';
+import { linkDecayService } from './linkDecayService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { settingsService } from './settingsService.js';
@@ -635,13 +635,10 @@ export class TopologyService {
     }
 
     private async promoteToTentative(links: { sourceId: string, targetId: string, linkType: string, confidence: number }[]) {
-        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting ${links.length} predicted links to tentative store`);
+        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting ${links.length} predicted links via Hebbian learning`);
         for (const link of links) {
-            const tracePath = [
-                { symbol_id: link.sourceId },
-                { symbol_id: link.targetId, link_type: link.linkType, reason: 'Topology-based automated link prediction' }
-            ];
-            await tentativeLinkService.processTrace(tracePath);
+            // Record access to trigger Hebbian link creation/update
+            linkDecayService.recordAccess(link.sourceId, link.targetId);
         }
     }
 
