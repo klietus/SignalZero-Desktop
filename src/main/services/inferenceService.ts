@@ -487,9 +487,10 @@ const _streamAssistantResponseInternal = async function* (
               loggerService.catDebug(LogCategory.INFERENCE, "Mapping tool call for Gemini history", { 
                 idx, 
                 name: tc.function.name, 
+                tcKeys: Object.keys(tc),
                 hasSignature: !!(tc as any).thought_signature,
                 usingCarriedSignature: !!(!(tc as any).thought_signature && lastSeenSignature),
-                signaturePreview: signature ? signature.slice(0, 10) + "..." : "none"
+                signature: signature || "none"
               });
               
               parts.push({
@@ -504,6 +505,13 @@ const _streamAssistantResponseInternal = async function* (
             }
           });
         }
+
+        loggerService.catDebug(LogCategory.INFERENCE, "Reconstructed assistant message parts", { 
+          partCount: parts.length,
+          types: parts.map(p => Object.keys(p)[0]),
+          hasThought: parts.some(p => (p as any).thought),
+          signatures: parts.map(p => (p.functionCall as any)?.thought_signature ? "present" : "missing").filter((_, i) => parts[i].functionCall)
+        });
 
         if (parts.length === 0) parts.push({ text: ' ' });
 
@@ -630,9 +638,10 @@ const _streamAssistantResponseInternal = async function* (
           loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: functionCall part", {
             idx,
             name: call.name,
+            callKeys: Object.keys(call),
             hasSignature: !!call.thought_signature,
             usingCarriedSignature: !!(!call.thought_signature && lastThoughtSignature),
-            signaturePreview: signature ? signature.slice(0, 10) + "..." : "none"
+            signature: signature || "none"
           });
           
           collectedToolCalls.push({
@@ -645,7 +654,15 @@ const _streamAssistantResponseInternal = async function* (
             thought_signature: signature
           } as any);
         } else if ((part as any).thought) {
-          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { idx, length: (part as any).text?.length });
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { 
+            idx, 
+            length: (part as any).thought?.length || (part as any).text?.length 
+          });
+        } else {
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: unknown part type", { 
+            idx, 
+            keys: Object.keys(part) 
+          });
         }
       }
     }
