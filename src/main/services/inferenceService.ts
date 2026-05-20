@@ -426,7 +426,7 @@ const _streamAssistantResponseInternal = async function* (
 
     const systemMessage = messages.find(m => m.role === 'system');
     const history: any[] = [];
-    let lastRole = '';
+    let lastRole: string | null = '';
 
     for (const m of messages) {
       if (m.role === 'system') continue;
@@ -533,26 +533,91 @@ const _streamAssistantResponseInternal = async function* (
           if (tc) toolName = tc.function.name;
         }
         const part = { functionResponse: { name: toolName, response: { result: m.content } } };
-        if (lastRole === 'function') {
+        
+        // Gemini: functionResponse MUST follow a model turn.
+        // If the last role was NOT model, we might have a disconnected tool response.
+        if (lastRole === 'function' || lastRole === 'model') {
           const lastMsg = history[history.length - 1];
-          lastMsg.parts.push(part);
+          // If the last turn was model, we MUST start a new turn with role 'user' (for function responses in some versions)
+          // or role 'function' (in others). The current SDK uses role 'user' for function responses often, 
+          // but the 'function' role is also supported in startChat.
+          if (lastRole === 'model') {
+            history.push({ role: 'function', parts: [part] });
+          } else {
+            lastMsg.parts.push(part);
+          }
+          lastRole = 'function';
         } else {
+          // If we have a tool response without a preceding model turn, it's an orphan.
+          // We'll prepend an empty model turn to keep the sequence valid if needed, 
+          // but usually we just start a function turn.
           history.push({ role: 'function', parts: [part] });
           lastRole = 'function';
         }
       }
     }
 
-    if (history.length === 0) history.push({ role: 'user', parts: [{ text: 'Hello' }] });
-    let messageToSend = history.pop();
+    // --- GEMINI ROLE ALTERNATION VALIDATION ---
+    // Gemini requires: user, model, user (with functionResponse), model, ...
+    // Our 'function' role in history is mapped to 'user' with functionResponse parts by the SDK or handled internally.
+    // We must ensure we don't have consecutive same roles.
+    const validatedHistory: any[] = [];
+    lastRole = null;
+    
+    for (const turn of history) {
+      // Normalize role for alternation check: 'function' acts as 'user'
+      const normalizedRole = turn.role === 'function' ? 'user' : turn.role;
+      const normalizedLastRole = lastRole === 'function' ? 'user' : lastRole;
+
+      if (normalizedRole === normalizedLastRole) {
+        // Inject bridge turn
+        if (normalizedRole === 'user') {
+          validatedHistory.push({ role: 'model', parts: [{ text: ' ' }] });
+        } else {
+          validatedHistory.push({ role: 'user', parts: [{ text: ' ' }] });
+        }
+      }
+      
+      validatedHistory.push(turn);
+      lastRole = turn.role;
+    }
+    
+    // The last turn in validatedHistory is the one we want to send, 
+    // BUT we must remove it from history first.
+    if (validatedHistory.length === 0) {
+      validatedHistory.push({ role: 'user', parts: [{ text: 'Hello' }] });
+    }
+    
+    let messageToSend = validatedHistory.pop();
+    
+    // Ensure messageToSend is 'user' (Gemini requires the active message to be from the user/function)
     if (messageToSend?.role === 'model') {
-      history.push(messageToSend);
+      validatedHistory.push(messageToSend);
       messageToSend = { role: 'user', parts: [{ text: 'Continue' }] };
     }
 
+    loggerService.catDebug(LogCategory.INFERENCE, "Starting Gemini Chat Session", { 
+      historyTurns: validatedHistory.length,
+      historyTypes: validatedHistory.map(h => h.role),
+      historyPartCounts: validatedHistory.map(h => h.parts.length),
+      historyParts: validatedHistory.map(h => h.parts.map(p => ({
+        type: Object.keys(p)[0],
+        signature: (p.functionCall as any)?.thought_signature ? "present" : (p.functionCall ? "missing" : "n/a")
+      })))
+    });
+
     const chatSession = geminiModel.startChat({
-      history: history,
+      history: validatedHistory,
       systemInstruction: systemMessage?.content ? { role: 'system', parts: [{ text: systemMessage.content as string }] } : undefined
+    });
+
+    loggerService.catDebug(LogCategory.INFERENCE, "Gemini sending message", { 
+      role: messageToSend.role,
+      partCount: messageToSend.parts.length,
+      parts: messageToSend.parts.map(p => ({
+        type: Object.keys(p)[0],
+        signature: (p.functionCall as any)?.thought_signature ? "present" : (p.functionCall ? "missing" : "n/a")
+      }))
     });
 
     const result = await chatSession.sendMessageStream(messageToSend.parts);
