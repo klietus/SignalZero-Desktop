@@ -709,14 +709,6 @@ const _streamAssistantResponseInternal = async function* (
           // Try direct field first (non-streaming path), then stream-captured signatures
           const signature = (part as any).thoughtSignature || lastThoughtSignature || getStreamSig();
           
-          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: functionCall part", {
-            idx,
-            name: call.name,
-            hasSignature: !!(part as any).thoughtSignature,
-            usingCarriedSignature: !!(!(part as any).thoughtSignature && lastThoughtSignature),
-            signature: signature || "none"
-          });
-          
           collectedToolCalls.push({
             id: 'gemini-' + randomUUID(),
             type: 'function',
