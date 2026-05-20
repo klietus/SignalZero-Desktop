@@ -12,7 +12,7 @@ import { AgentScreen } from './components/screens/AgentScreen';
 import { SymbolForgeScreen } from './components/screens/SymbolForgeScreen';
 import { CinematicView } from './components/screens/CinematicView';
 import { LogsScreen } from './components/screens/LogsScreen';
-import { HebbianDashboardScreen } from './components/screens/HebbianDashboardScreen';
+import HebbianDashboardScreen from './components/screens/HebbianDashboardScreen';
 import { Header, HeaderProps } from './components/Header';
 import { ContextListPanel } from './components/panels/ContextListPanel';
 import { WorldMonitoringPanel } from './components/panels/WorldMonitoringPanel';

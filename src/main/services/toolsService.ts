@@ -24,6 +24,7 @@ import { topologyService } from "./topologyService.js";
 import { webSearchService } from "./webSearchService.js";
 import { webFetchService } from "./webFetchService.js";
 import { alertTriggerService } from "./alertTriggerService.js";
+import { linkDecayService } from "./linkDecayService.js";
 
 const execAsync = promisify(exec);
 
@@ -885,6 +886,15 @@ export const createToolExecutor = (contextSessionId?: string) => {
               predicates: (s as any).predicates || {},
               links: (s as any).links || [],
             };
+            
+            // Record access for Hebbian learning - track which symbols are being loaded
+            const links = (s as any).links || [];
+            for (const link of links) {
+              if (link.target_id) {
+                linkDecayService.recordAccess(id, link.target_id);
+              }
+            }
+            
             found.push(v2);
           }
         }

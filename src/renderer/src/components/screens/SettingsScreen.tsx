@@ -147,6 +147,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
+  const handleValidateMcp = async () => {
+    if (!newMcpEndpoint) return;
+    setIsValidatingMcp(true);
+    try {
+      const result = await window.api.validateMcp(newMcpEndpoint, newMcpToken || '');
+      setValidationResult(result);
+    } catch (err: any) {
+      setValidationResult({ success: false, error: err.message });
+    } finally {
+      setIsValidatingMcp(false);
+    }
+  };
+
   const handleAddMcp = () => {
       const id = newMcpName.toLowerCase().replace(/[^a-z0-9]/g, '-');
       const newConfig: McpConfiguration = {
@@ -385,18 +398,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         setError('Failed to save settings.');
     } finally {
         setIsSaving(false);
-    }
-  };
-
-  const handleRunHygiene = async (strategy: string) => {
-    setIsRunningHygiene(strategy);
-    try {
-        const stats = await window.api.runHygiene(strategy);
-        alert(`Hygiene run complete: ${JSON.stringify(stats)}`);
-    } catch (err: any) {
-        alert(`Error running hygiene: ${err.message}`);
-    } finally {
-        setIsRunningHygiene(null);
     }
   };
 
