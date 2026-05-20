@@ -470,10 +470,11 @@ export const lancedbService = {
                 ) as any[];
                 let filtered = rows;
                 if (filter) {
-                    if (filter.sourceId) filtered = filtered.filter((r: any) => r.sourceId === filter.sourceId);
-                    if (filter.period) filtered = filtered.filter((r: any) => r.period === filter.period);
-                    if (filter.startDate) filtered = filtered.filter((r: any) => r.timestamp >= filter.startDate);
-                    if (filter.endDate) filtered = filtered.filter((r: any) => r.timestamp <= filter.endDate);
+                    const { sourceId, period, startDate, endDate } = filter;
+                    if (sourceId) filtered = filtered.filter((r: any) => r.sourceId === sourceId);
+                    if (period) filtered = filtered.filter((r: any) => r.period === period);
+                    if (startDate) filtered = filtered.filter((r: any) => r.timestamp >= startDate);
+                    if (endDate) filtered = filtered.filter((r: any) => r.timestamp <= endDate);
                 }
                 return filtered.slice(0, nResults).map((r: any) => ({
                     id: r.id,

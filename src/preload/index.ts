@@ -180,7 +180,7 @@ const api = {
   startRealtimeStream: (type: 'camera' | 'screen' | 'audio') => ipcRenderer.invoke('realtime:start-stream', type),
   stopRealtimeStream: (type: 'camera' | 'screen' | 'audio') => ipcRenderer.invoke('realtime:stop-stream', type),
   toggleRealtimeStream: (type: 'camera' | 'screen' | 'audio') => ipcRenderer.invoke('realtime:toggle-stream', type),
-  setVoiceEnabled: (enabled: boolean) => ipcRenderer.invoke('realtime:set-voice-enabled', enabled),
+  toggleVoiceEnabled: (enabled: boolean) => ipcRenderer.invoke('realtime:set-voice-enabled', enabled),
   cancelSpeech: () => ipcRenderer.invoke('realtime:cancel-speech'),
   onRealtimeUpdate: (callback: (update: { type: string, state: any }) => void) => {
     const subscription = (_event, update) => callback(update);

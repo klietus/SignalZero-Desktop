@@ -2,7 +2,7 @@ import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService } from './eventBusService.js';
 import { KernelEventType, SymbolDefV2, FORGETTING_DEFAULTS } from '../types.js';
-import { computeRecencyWeight, checkForgetting } from './symbolV2Migration.js';
+import { computeRecencyWeight } from './symbolV2Migration.js';
 
 export const forgettingService = {
   policy: { ...FORGETTING_DEFAULTS },
@@ -84,7 +84,7 @@ export const forgettingService = {
       return 0;
     }
 
-    const now = Date.now();
+    const _now = Date.now();
     let updated = 0;
 
     sqliteService.transaction(() => {

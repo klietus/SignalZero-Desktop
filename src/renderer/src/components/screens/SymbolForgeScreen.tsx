@@ -427,7 +427,7 @@ export const SymbolForgeScreen: React.FC<SymbolForgeScreenProps> = ({ initialDom
     const [domains, setDomains] = useState<string[]>([]);
     const [selectedDomain, setSelectedDomain] = useState<string>('');
     const [symbolList, setSymbolList] = useState<any[]>([]);
-    const [currentSymbol, setCurrentSymbol] = useState<SymbolDef>(DEFAULT_PATTERN);
+    const [currentSymbol, setCurrentSymbol] = useState<any>(DEFAULT_PATTERN);
     const [originalId, setOriginalId] = useState<string | null>(null);
     const [isDirty, setIsDirty] = useState(false);
     const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -658,7 +658,7 @@ export const SymbolForgeScreen: React.FC<SymbolForgeScreenProps> = ({ initialDom
         }
     };
 
-    const handleNew = (template: SymbolDef) => {
+    const handleNew = (template: any) => {
         if (isDirty) {
             if (!window.confirm("Unsaved changes detected. Abandon Forge state?")) return;
         }

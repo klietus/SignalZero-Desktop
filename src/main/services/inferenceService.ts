@@ -616,15 +616,15 @@ const _streamAssistantResponseInternal = async function* (
     if (response.candidates?.[0]?.content?.parts) {
       // First pass: find the signature if it exists anywhere
       for (const part of response.candidates[0].content.parts) {
-        if (part.functionCall?.thought_signature) {
-          lastThoughtSignature = part.functionCall.thought_signature;
+        if ((part.functionCall as any)?.thought_signature) {
+          lastThoughtSignature = (part.functionCall as any).thought_signature;
           break;
         }
       }
 
       for (const [idx, part] of response.candidates[0].content.parts.entries()) {
         if (part.functionCall) {
-          const call = part.functionCall;
+          const call = part.functionCall as any;
           const signature = call.thought_signature || lastThoughtSignature;
           
           loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: functionCall part", {
@@ -644,8 +644,8 @@ const _streamAssistantResponseInternal = async function* (
             },
             thought_signature: signature
           } as any);
-        } else if (part.thought) {
-          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { idx, length: part.text?.length });
+        } else if ((part as any).thought) {
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { idx, length: (part as any).text?.length });
         }
       }
     }
@@ -782,7 +782,7 @@ export async function* sendMessageAndHandleTools(
   userMessageId?: string,
   anticipatedWebResults?: any[],
   anticipatedWebBrief?: string,
-  priority: number = 1, // Default to High (User Chat)
+  _priority: number = 1, // Default to High (User Chat)
   cleanMessage?: string,
   sceneAttachments?: any[],
   metadata?: Record<string, any>
@@ -819,7 +819,7 @@ export async function* sendMessageAndHandleTools(
     } as any);
   }
 
-  const settings = await settingsService.getInferenceSettings();
+  const _settings = await settingsService.getInferenceSettings();
 
   try {
     let loops = 0;

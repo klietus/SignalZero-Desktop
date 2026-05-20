@@ -30,6 +30,7 @@ declare global {
             listContexts: () => Promise<any[]>;
             getContext: (id: string) => Promise<any>;
             getHistory: (id: string) => Promise<any[]>;
+            setActiveContext: (id: string | null) => Promise<void>;
             deleteContext: (id: string) => Promise<boolean>;
             sendMessage: (sessionId: string, message: string, systemInstruction?: string, metadata?: any) => Promise<any>;
             stopInference: () => Promise<any>;
@@ -98,8 +99,12 @@ declare global {
             getRealtimeState: () => Promise<any>;
             startRealtimeStream: (type: 'camera' | 'screen' | 'audio') => void;
             stopRealtimeStream: (type: 'camera' | 'screen' | 'audio') => void;
+            toggleRealtimeStream: (type: 'camera' | 'screen' | 'audio') => void;
+            toggleVoiceEnabled: (enabled: boolean) => Promise<void>;
+            cancelSpeech: () => void;
             onRealtimeUpdate: (callback: (update: { type: string, state: any }) => void) => () => void;
             onRealtimeStatusUpdate: (callback: (update: { type: string, status: any }) => void) => () => void;
+            sendTtsChunk: (text: string) => void;
             removeInferenceListeners: () => void;
 
             platform: string;
@@ -242,7 +247,7 @@ function App() {
 
     const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor' | 'agents' | 'realtime'>('chat');
     const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
-    const [selectedSymbol, setSelectedSymbol] = useState<SymbolDef | null>(null);
+    const [selectedSymbol, setSelectedSymbol] = useState<any>(null);
     const [isGraphView, setIsGraphView] = useState(false);
 
     const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);

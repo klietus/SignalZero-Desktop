@@ -655,7 +655,7 @@ export const FORGETTING_DEFAULTS = {
   archive_min_days: 30,
   forget_if_low_centrality: true,
   exempt_foundational: true,
-} as const;
+};
 
 // Link promotion defaults
 export const LINK_PROMOTION_DEFAULTS = {
@@ -663,4 +663,4 @@ export const LINK_PROMOTION_DEFAULTS = {
   time_window_hours: 168, // 7 days
   stability_days: 30,
   centrality_threshold: 0.3,
-} as const;
+};

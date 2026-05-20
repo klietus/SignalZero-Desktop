@@ -2,7 +2,7 @@ import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService } from './eventBusService.js';
 import { KernelEventType } from '../types.js';
-import { checkLinkPromotion, recordLinkAccess, isLinkStale } from './symbolV2Migration.js';
+import { checkLinkPromotion, recordLinkAccess } from './symbolV2Migration.js';
 
 const DECAY_INTERVAL_MS = 3600000; // 1 hour
 const DECAY_FACTOR = 0.9; // 10% decay per interval
