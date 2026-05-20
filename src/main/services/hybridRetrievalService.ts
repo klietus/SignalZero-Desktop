@@ -311,7 +311,7 @@ export class HybridRetrievalService {
     // Expand by one hop
     for (const result of results) {
       const links = sqliteService.all(`
-        SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?
+        SELECT target_id as id, link_type FROM symbol_links_v2 WHERE source_id = ?
       `, [result.symbol.id]) as any[];
 
       for (const link of links) {
@@ -648,7 +648,7 @@ export class HybridRetrievalService {
 
       if (depth < maxDepth) {
         const links = sqliteService.all(`
-          SELECT target_id as id FROM symbol_links WHERE source_id = ?
+          SELECT target_id as id FROM symbol_links_v2 WHERE source_id = ?
         `, [id]) as any[];
 
         for (const link of links) {

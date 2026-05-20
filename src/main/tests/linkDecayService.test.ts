@@ -45,11 +45,11 @@ const resetDb = () => {
     sqliteService.run(`DELETE FROM symbol_links_v2`);
 };
 
-const insertLink = (sourceId: string, targetId: string, options: { access_count?: number; access_ema?: number; committed?: string } = {}) => {
+const insertLink = (sourceId: string, targetId: string, options: { access_count?: number; access_ema?: number; committed?: string; created_at?: string } = {}) => {
     sqliteService.run(`
-        INSERT OR REPLACE INTO symbol_links_v2 (source_id, target_id, link_type, access_count, access_ema, committed)
-        VALUES (?, ?, 'relates_to', ?, ?, ?)
-    `, [sourceId, targetId, options.access_count || 0, options.access_ema || 0, options.committed || 'volatile']);
+        INSERT OR REPLACE INTO symbol_links_v2 (source_id, target_id, link_type, access_count, access_ema, committed, created_at)
+        VALUES (?, ?, 'relates_to', ?, ?, ?, ?)
+    `, [sourceId, targetId, options.access_count || 0, options.access_ema || 0, options.committed || 'volatile', options.created_at || new Date().toISOString()]);
 };
 
 describe('linkDecayService — recordAccess', () => {

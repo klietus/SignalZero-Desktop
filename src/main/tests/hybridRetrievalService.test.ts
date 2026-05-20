@@ -83,11 +83,15 @@ const resetDb = () => {
         );
     `);
     sqliteService.run(`
-        CREATE TABLE IF NOT EXISTS symbol_links (
+        CREATE TABLE IF NOT EXISTS symbol_links_v2 (
             source_id TEXT NOT NULL,
             target_id TEXT NOT NULL,
             link_type TEXT DEFAULT 'relates_to',
-            bidirectional INTEGER DEFAULT 0,
+            access_count INTEGER DEFAULT 0,
+            access_ema REAL DEFAULT 0,
+            last_accessed TEXT,
+            committed TEXT DEFAULT 'volatile',
+            created_at TEXT,
             PRIMARY KEY (source_id, target_id, link_type)
         );
     `);
@@ -127,8 +131,8 @@ const insertSymbol = (id: string, options: {
 
 const insertLink = (sourceId: string, targetId: string, linkType: string = 'relates_to') => {
     sqliteService.run(`
-        INSERT OR REPLACE INTO symbol_links (source_id, target_id, link_type)
-        VALUES (?, ?, ?)
+        INSERT OR REPLACE INTO symbol_links_v2 (source_id, target_id, link_type, access_count, access_ema, last_accessed, committed)
+        VALUES (?, ?, ?, 0, 0, NULL, 'volatile')
     `, [sourceId, targetId, linkType]);
 };
 
