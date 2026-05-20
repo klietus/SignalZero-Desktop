@@ -9,6 +9,7 @@ import { eventBusService } from './eventBusService.js';
 import { KernelEventType } from '../types.js';
 import { SymbolDef, GraphHygieneSettings } from '../types.js';
 import { embedTexts } from './embeddingService.js';
+import { linkDecayService } from './linkDecayService.js';
 
 export interface TopologyStats {
     symbolCount: number;
@@ -187,6 +188,14 @@ export class TopologyService {
                 crossDomainBridgesLifted,
                 latticesDecomposed
             };
+
+            // Run link decay cycle (decay EMAs, promote links, prune stale)
+            try {
+                const decayResult = linkDecayService.runDecayCycle();
+                loggerService.catInfo(LogCategory.TOPOLOGY, "Link decay cycle complete", decayResult);
+            } catch (decayErr: any) {
+                loggerService.catError(LogCategory.TOPOLOGY, "Link decay cycle failed", { error: decayErr.message });
+            }
 
             this.lastRunTimestamp = currentRunTimestamp;
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Analysis complete", stats);

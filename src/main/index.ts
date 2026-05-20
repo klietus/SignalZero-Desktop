@@ -833,6 +833,10 @@ ipcMain.handle('system:run-hygiene', async (_, strategy) => {
   return await topologyService.analyze(strategy);
 });
 
+ipcMain.handle('system:run-link-decay', async () => {
+  return linkDecayService.runDecayCycle();
+});
+
 ipcMain.handle('system:is-initialized', () => {
   return settingsService.isInitialized();
 });

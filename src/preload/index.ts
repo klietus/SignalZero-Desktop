@@ -50,6 +50,7 @@ const api = {
   updateSettings: (settings: any) => ipcRenderer.invoke('settings:update', settings),
   validateMcp: (endpoint: string, token?: string) => ipcRenderer.invoke('system:validate-mcp', endpoint, token),
   runHygiene: (strategy?: string) => ipcRenderer.invoke('system:run-hygiene', strategy),
+  runLinkDecay: () => ipcRenderer.invoke('system:run-link-decay'),
   isInitialized: () => ipcRenderer.invoke('system:is-initialized'),
   pollSource: (sourceId: string) => ipcRenderer.invoke('monitoring:poll-source', sourceId),
   listDeltas: (filter?: any) => ipcRenderer.invoke('monitoring:list-deltas', filter),

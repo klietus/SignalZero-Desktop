@@ -223,8 +223,8 @@ export const domainService = {
     // Pass 1 & 2: Single heavy transaction for relational integrity
     sqliteService.transaction(() => {
         const stmt = sqliteService.db().prepare(`
-            INSERT OR REPLACE INTO symbols (id, domain_id, name, kind, triad, role, macro, lattice, persona, data, facets, activation_conditions, failure_mode, symbol_tag, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO symbols (id, domain_id, name, kind, triad, role, macro, lattice, persona, data, facets, activation_conditions, failure_mode, symbol_tag, updated_at, v2_commit, v2_recency_weight, v2_last_updated) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         const checkStmt = sqliteService.db().prepare(`SELECT 1 FROM symbols WHERE id = ?`);
@@ -249,6 +249,10 @@ export const domainService = {
                 ...(symbol.persona?.activation_conditions || [])
             ]);
 
+            // Determine V2 commit type: only 'foundational' if explicitly set, otherwise 'volatile'
+            const v2Commit = symbol.facets?.commit === 'foundational' ? 'foundational' : 'volatile';
+            const nowEpoch = Date.now();
+            
             stmt.run(
                 symbol.id,
                 domainId,
@@ -264,7 +268,10 @@ export const domainService = {
                 JSON.stringify(Array.from(conditions)),
                 symbol.failure_mode,
                 symbol.symbol_tag || '',
-                now
+                now,
+                v2Commit,
+                1.0,
+                nowEpoch
             );
         }
 

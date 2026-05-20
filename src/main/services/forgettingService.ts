@@ -84,15 +84,18 @@ export const forgettingService = {
       return 0;
     }
 
-    const _now = Date.now();
+    const now = Date.now();
     let updated = 0;
 
     sqliteService.transaction(() => {
       for (const row of rows) {
-        const weight = computeRecencyWeight(row.v2_last_updated, row.v2_commit as 'volatile');
+        const epoch = row.v2_last_updated || now;
+        const hoursElapsed = (now - epoch) / (1000 * 60 * 60);
+        const weight = Math.max(0, Math.exp(-hoursElapsed / 168));
+        
         sqliteService.run(`
-          UPDATE symbols SET v2_recency_weight = ? WHERE id = ?
-        `, [weight, row.id]);
+          UPDATE symbols SET v2_recency_weight = ?, v2_last_updated = ? WHERE id = ?
+        `, [weight, epoch, row.id]);
         updated++;
       }
     })();
