@@ -631,7 +631,14 @@ const _streamAssistantResponseInternal = async function* (
     let fullTextSoFar = "";
     let fullThinkingSoFar = "";
 
+    // The Gemini SDK strips thoughtSignature from the final .response object.
+    // Capture it from stream chunks where it's still present.
+    const streamThoughtSignatures: string[] = [];
+
+    let chunkIdx = 0;
+    let maxTextLen = 0;
     for await (const chunk of result.stream) {
+      chunkIdx++;
       let chunkText = "";
       let chunkThinking = "";
       let hasParts = false;
@@ -647,8 +654,25 @@ const _streamAssistantResponseInternal = async function* (
           } else if (part?.text) {
             chunkText += part.text;
           }
+          // Capture thoughtSignature from stream chunks (SDK strips it from .response)
+          if ((part as any).thoughtSignature && part.functionCall) {
+            streamThoughtSignatures.push((part as any).thoughtSignature);
+          }
         }
       }
+
+      // Debug: log raw chunk data
+      loggerService.catDebug(LogCategory.INFERENCE, "Gemini stream chunk", {
+        idx: chunkIdx,
+        hasParts,
+        chunkTextLen: chunkText.length,
+        chunkThinkingLen: chunkThinking.length,
+        maxTextLen,
+        willEmitText: chunkText.length > maxTextLen,
+        chunkTextPreview: chunkText.slice(0, 120) || '(empty)',
+        partTypes: candidates[0]?.content?.parts?.map((p: any) => Object.keys(p)),
+        chunkTextKeys: Object.keys(chunk)
+      });
 
       // Handle Thinking/Reasoning Delta
       if (chunkThinking.length > fullThinkingSoFar.length) {
@@ -659,13 +683,11 @@ const _streamAssistantResponseInternal = async function* (
         yield { reasoning: thinkingDelta };
       }
 
-      // Handle Narrative Delta
-      if (chunkText.length > fullTextSoFar.length) {
-        const textDelta = chunkText.slice(fullTextSoFar.length);
-        fullTextSoFar = chunkText;
-        textAccumulator = fullTextSoFar;
-        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: narrative delta", { length: textDelta.length });
-        yield { text: textDelta };
+      // Emit full text from every chunk
+      if (chunkText.length > 0) {
+        textAccumulator = chunkText;
+        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: narrative chunk", { length: chunkText.length });
+        yield { text: chunkText };
       }
 
       // Fallback to chunk.text() if no parts structure found OR if we didn't get any text from parts
@@ -698,11 +720,15 @@ const _streamAssistantResponseInternal = async function* (
         }
       }
 
+      // SDK strips thoughtSignature from .response in streaming mode. Use stream-captured signatures as fallback.
+      let sigIdx = 0;
+      const getStreamSig = () => sigIdx < streamThoughtSignatures.length ? streamThoughtSignatures[sigIdx++] : undefined;
+
       for (const [idx, part] of response.candidates[0].content.parts.entries()) {
         if (part.functionCall) {
           const call = part.functionCall as any;
-          // Check sibling thoughtSignature first, then fall back to carried signature
-          const signature = (part as any).thoughtSignature || lastThoughtSignature;
+          // Try direct field first (non-streaming path), then stream-captured signatures
+          const signature = (part as any).thoughtSignature || lastThoughtSignature || getStreamSig();
           
           loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: functionCall part", {
             idx,
@@ -722,15 +748,9 @@ const _streamAssistantResponseInternal = async function* (
             thought_signature: signature
           } as any);
         } else if ((part as any).thought) {
-          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { 
-            idx, 
-            length: (part as any).thought?.length || (part as any).text?.length 
-          });
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { idx, length: (part as any).thought?.length || (part as any).text?.length });
         } else {
-          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: unknown part type", { 
-            idx, 
-            keys: Object.keys(part) 
-          });
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: unknown part type", { idx, keys: Object.keys(part) });
         }
       }
     }
