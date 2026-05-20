@@ -46,7 +46,7 @@
           "auditability"
         ],
         "temporal": "persistent",
-        "commit": "aggregation",
+        "commit": "foundational",
         "topology": "lattice"
       },
       "activation_conditions": [
@@ -359,7 +359,7 @@
           "cve_id_provided"
         ],
         "temporal": "on_demand",
-        "commit": "on_data_retrieval",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment"
         ]
@@ -402,7 +402,7 @@
           "audit_schedule",
           "tool_capability"
         ],
-        "commit": "operational_practice",
+        "commit": "foundational",
         "substrate": [
           "deployed_systems",
           "network"
@@ -441,7 +441,7 @@
           "policy_documents",
           "project_specifications"
         ],
-        "commit": "formal_agreement",
+        "commit": "foundational",
         "gate": [
           "acceptance_criteria_met",
           "compliance_sign_off"
@@ -485,7 +485,7 @@
       "facets": {
         "temporal": "Real-time",
         "topology": "sensor-network",
-        "commit": "observability-requirements",
+        "commit": "foundational",
         "substrate": [
           "Kubernetes_Audit_Logs",
           "Network_Flow_Logs",
@@ -538,7 +538,7 @@
       "facets": {
         "topology": "loop",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "substrate": [
           "symbolic"
@@ -591,7 +591,7 @@
           "capability",
           "trust"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "function": "stabilize",
         "substrate": [
           "symbolic"
@@ -643,7 +643,7 @@
           "symbolic"
         ],
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -690,7 +690,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -740,7 +740,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -792,7 +792,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "function": "diagnose",
         "substrate": [
@@ -848,7 +848,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "gate": [
           "capability",
@@ -899,7 +899,7 @@
         ],
         "topology": "linear",
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ]
@@ -939,7 +939,7 @@
       "facets": {
         "topology": "linear",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -981,7 +981,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "substrate": [
           "symbolic"
@@ -1033,7 +1033,7 @@
           "capability"
         ],
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1080,7 +1080,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "temporal": "instant"
       },
@@ -1122,7 +1122,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -1168,7 +1168,7 @@
           "symbolic"
         ],
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "temporal": "instant"
       },
@@ -1215,7 +1215,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ]
@@ -1258,7 +1258,7 @@
       "data": null,
       "facets": {
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -1308,7 +1308,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "topology": "linear",
         "substrate": [
@@ -1358,7 +1358,7 @@
       "data": null,
       "facets": {
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -1418,7 +1418,7 @@
         ],
         "temporal": "instant",
         "topology": "linear",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Access to files outside web root",
@@ -1469,7 +1469,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant"
       },
       "activation_conditions": [
@@ -1514,7 +1514,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Unsigned webhook payloads",
@@ -1559,7 +1559,7 @@
         ],
         "topology": "linear",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ]
@@ -1599,7 +1599,7 @@
       "facets": {
         "temporal": "instant",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -1642,7 +1642,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "gate": [
           "capability"
@@ -1690,7 +1690,7 @@
           "no-silent-mutation"
         ],
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "function": "stabilize",
         "substrate": [
@@ -1737,7 +1737,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "temporal": "persistent",
         "substrate": [
@@ -1796,7 +1796,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of watering hole attacks",
@@ -1839,7 +1839,7 @@
       "data": null,
       "facets": {
         "function": "Identify and categorize risks within systemic infrastructure.",
-        "commit": "New lattice synthesized for infrastructure risk grouping.",
+        "commit": "foundational",
         "gate": [
           "infrastructure-visibility"
         ],
@@ -1892,7 +1892,7 @@
           "symbolic"
         ],
         "function": "grouping",
-        "commit": "aggregation",
+        "commit": "foundational",
         "invariants": [
           "auditability"
         ],
@@ -1968,7 +1968,7 @@
           "auditability",
           "drift-detection"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent"
       },
       "activation_conditions": [
@@ -2009,7 +2009,7 @@
         ],
         "function": "vulnerability_tracking",
         "temporal": "Dec 2025",
-        "commit": "threat-indicator",
+        "commit": "foundational",
         "gate": [
           "severity-check"
         ],
@@ -2061,7 +2061,7 @@
         "invariants": [
           "cve-id-uniqueness"
         ],
-        "commit": "threat-indicator",
+        "commit": "foundational",
         "function": "vulnerability_tracking",
         "topology": "iot-compromise"
       },
@@ -2104,7 +2104,7 @@
           "c_code",
           "container_logs"
         ],
-        "commit": "patch_management",
+        "commit": "foundational",
         "gate": [
           "network_access",
           "logging_pipeline"
@@ -2143,7 +2143,7 @@
       "data": null,
       "facets": {
         "temporal": "2025_high",
-        "commit": "input_validation",
+        "commit": "foundational",
         "function": "xxe_injection",
         "invariants": [
           "data_sanitization",
@@ -2202,7 +2202,7 @@
           "YAML",
           "HTTP_protocol"
         ],
-        "commit": "standardization"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Vulnerability scanning",
@@ -2247,7 +2247,7 @@
           "code"
         ],
         "temporal": "on_demand",
-        "commit": "on_analysis_completion",
+        "commit": "foundational",
         "gate": [
           "cve_id_known"
         ]
@@ -2303,7 +2303,7 @@
         "gate": [
           "cve_verification"
         ],
-        "commit": "risk_identification",
+        "commit": "foundational",
         "function": "threat_intelligence",
         "invariants": [
           "reality-alignment",
@@ -2356,7 +2356,7 @@
       },
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -2412,7 +2412,7 @@
         "function": "Group and analyze initial entry vectors.",
         "temporal": "continuous-monitoring",
         "topology": "constellation-lattice",
-        "commit": "New lattice synthesized for access vector grouping.",
+        "commit": "foundational",
         "gate": [
           "perimeter-visibility"
         ],
@@ -2464,7 +2464,7 @@
           "no-silent-mutation-of-baselines"
         ],
         "temporal": "continuous-analysis",
-        "commit": "Refactored for behavioral synthesis and canonical ID."
+        "commit": "foundational"
       },
       "activation_conditions": [
         "To detect anomalies in user or system behavior post-authentication.",
@@ -2508,7 +2508,7 @@
           "auditability",
           "accountability"
         ],
-        "commit": "persona_description",
+        "commit": "foundational",
         "gate": [
           "policy_adherence",
           "risk_awareness"
@@ -2558,7 +2558,7 @@
           "communication_skills"
         ],
         "temporal": "active_engagement",
-        "commit": "professional_role",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability",
@@ -2603,7 +2603,7 @@
           "capability",
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "temporal": "instant",
         "substrate": [
@@ -2660,7 +2660,7 @@
         "invariants": [
           "baseline-integrity"
         ],
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Mirror spoof detection.",
@@ -2699,7 +2699,7 @@
       "data": null,
       "facets": {
         "temporal": "persistent",
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "loop",
         "gate": [
           "capability",
@@ -2755,7 +2755,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "substrate": [
           "symbolic"
@@ -2800,7 +2800,7 @@
       "data": null,
       "facets": {
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -2848,7 +2848,7 @@
       "data": null,
       "facets": {
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "substrate": [
           "symbolic"
@@ -2907,7 +2907,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Unexpected permission changes",
@@ -2955,7 +2955,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Privilege escalation alert.",
@@ -2998,7 +2998,7 @@
       "data": null,
       "facets": {
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "substrate": [
           "symbolic"
@@ -3041,7 +3041,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "gate": [
           "capability",
@@ -3112,7 +3112,7 @@
           "auditability"
         ],
         "temporal": "persistent",
-        "commit": "aggregation"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Threat modeling cycle",
@@ -3193,7 +3193,7 @@
         "gate": [
           "classification"
         ],
-        "commit": "aggregation",
+        "commit": "foundational",
         "temporal": "persistent",
         "invariants": [
           "auditability"
@@ -3364,7 +3364,7 @@
       "data": null,
       "facets": {
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -3410,7 +3410,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "gate": [
           "capability"
@@ -3458,7 +3458,7 @@
           "symbolic"
         ],
         "temporal": "persistent",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop"
       },
       "activation_conditions": [
@@ -3494,7 +3494,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "topology": "loop",
         "gate": [
@@ -3552,7 +3552,7 @@
           "symbolic"
         ],
         "function": "stabilize",
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of veil swaps",
@@ -3594,7 +3594,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "loop",
         "temporal": "persistent",
         "gate": [
@@ -3634,7 +3634,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "invariants": [
           "explicit-choice"
@@ -3688,7 +3688,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "temporal": "instant"
       },
@@ -3734,7 +3734,7 @@
           "operational_maturity"
         ],
         "temporal": "persistent",
-        "commit": "process_integration",
+        "commit": "foundational",
         "invariants": [
           "auditability",
           "consistency"
@@ -3951,7 +3951,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -4012,7 +4012,7 @@
           "capability",
           "trust"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "function": "diagnose"
       },
@@ -4073,7 +4073,7 @@
           "capability",
           "trust"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Alert queue spike.",
@@ -4124,7 +4124,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "topology": "loop"
       },
@@ -4164,7 +4164,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "lattice",
         "function": "explore",
         "invariants": [
@@ -4243,7 +4243,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "lattice",
         "function": "govern",
         "temporal": "persistent"
@@ -4286,7 +4286,7 @@
       "data": null,
       "facets": {
         "temporal": "instant",
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "linear",
         "function": "stabilize",
         "gate": [
@@ -4341,7 +4341,7 @@
           "no-silent-mutation",
           "baseline-integrity"
         ],
-        "commit": "operational_practice",
+        "commit": "foundational",
         "gate": [
           "incident_response_capability",
           "resource_availability"
@@ -4387,7 +4387,7 @@
           "third_party_libraries",
           "package_managers"
         ],
-        "commit": "dependency_inventory",
+        "commit": "foundational",
         "function": "vulnerability_discovery",
         "gate": [
           "known_vulnerabilities_check",
@@ -4431,7 +4431,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "security_assessment_report",
+        "commit": "foundational",
         "gate": [
           "risk_threshold_breach",
           "penetration_test_completion"
@@ -4479,7 +4479,7 @@
           "risk_matrices"
         ],
         "temporal": "per_incident",
-        "commit": "process_standardization",
+        "commit": "foundational",
         "gate": [
           "vulnerability_identification",
           "risk_classification"
@@ -4529,7 +4529,7 @@
           "deployed_code",
           "infrastructure"
         ],
-        "commit": "operational_practice",
+        "commit": "foundational",
         "temporal": "pre_deployment_critical",
         "invariants": [
           "reality-alignment",
@@ -4570,7 +4570,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "security_violation_record",
+        "commit": "foundational",
         "temporal": "event_specific",
         "gate": [
           "security_testing_process",
@@ -4620,7 +4620,7 @@
       "data": null,
       "facets": {
         "topology": "attack_vector",
-        "commit": "vulnerability_classification",
+        "commit": "foundational",
         "substrate": [
           "code",
           "network",
@@ -4679,7 +4679,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "invariants": [
           "explicit-choice",
           "auditability"
@@ -4735,7 +4735,7 @@
       "facets": {
         "topology": "loop",
         "function": "stabilize",
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "gate": [
           "capability",
@@ -4788,7 +4788,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -4842,7 +4842,7 @@
           "capability",
           "trust"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "substrate": [
           "symbolic"
@@ -4900,7 +4900,7 @@
         ],
         "temporal": "persistent",
         "topology": "loop",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "High volume of DNS queries to a single domain",
@@ -4936,7 +4936,7 @@
       "data": null,
       "facets": {
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "temporal": "persistent",
         "substrate": [
@@ -4987,7 +4987,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "loop",
         "temporal": "persistent",
         "function": "stabilize",
@@ -5037,7 +5037,7 @@
       "data": null,
       "facets": {
         "temporal": "persistent",
-        "commit": "contract",
+        "commit": "foundational",
         "function": "stabilize",
         "gate": [
           "capability",
@@ -5104,7 +5104,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "instant",
         "function": "diagnose"
       },
@@ -5157,7 +5157,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -5211,7 +5211,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "function": "stabilize",
         "topology": "linear"
@@ -5256,7 +5256,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "gate": [
           "capability"
@@ -5319,7 +5319,7 @@
           "trust"
         ],
         "topology": "lattice",
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": [
           "baseline-integrity"
         ]
@@ -5373,7 +5373,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "function": "stabilize",
         "substrate": [
@@ -5428,7 +5428,7 @@
           "trust"
         ],
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "substrate": [
           "symbolic"
@@ -5472,7 +5472,7 @@
           "capability",
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "substrate": [
           "symbolic"
@@ -5518,7 +5518,7 @@
       "facets": {
         "topology": "loop",
         "temporal": "persistent",
-        "commit": "contract",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -5578,7 +5578,7 @@
         ],
         "function": "diagnose",
         "topology": "linear",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Script execution in browser context",
@@ -5622,7 +5622,7 @@
         ],
         "topology": "linear",
         "function": "diagnose",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "State-changing requests without anti-forgery tokens",
@@ -5672,7 +5672,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "function": "diagnose"
       },
@@ -5714,7 +5714,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "substrate": [
           "symbolic"
@@ -5764,7 +5764,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "substrate": [
           "symbolic"
@@ -5810,7 +5810,7 @@
       "data": null,
       "facets": {
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [
           "capability"
@@ -5864,7 +5864,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "topology": "linear"
       },
@@ -5916,7 +5916,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "temporal": "instant"
       },
@@ -5960,7 +5960,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -6010,7 +6010,7 @@
       "data": null,
       "facets": {
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -6058,7 +6058,7 @@
       "data": null,
       "facets": {
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -6107,7 +6107,7 @@
       "facets": {
         "temporal": "instant",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "gate": [
           "capability",
@@ -6150,7 +6150,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [
           "capability",
@@ -6211,7 +6211,7 @@
           "capability",
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -6260,7 +6260,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Slow data leakage",
@@ -6299,7 +6299,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "gate": [
           "capability"
@@ -6351,7 +6351,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "function": "diagnose",
         "gate": [
@@ -6406,7 +6406,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "topology": "loop",
         "gate": [
@@ -6465,7 +6465,7 @@
           "auditability (of tool invocation)",
           "explicit-choice (of malicious actor)"
         ],
-        "commit": "System execution logs, forensic artifacts",
+        "commit": "foundational",
         "topology": "Operating system utilities, scripting engines",
         "function": "Facilitate attacker operations (e.g., execution, reconnaissance, exfiltration)",
         "gate": [
@@ -6509,7 +6509,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "Covert action log",
+        "commit": "foundational",
         "function": "Stealthy system compromise and persistence",
         "gate": [
           "Existing system permissions",
@@ -6584,7 +6584,7 @@
       "data": null,
       "facets": {
         "function": "Attack surface reduction, early detection, containment",
-        "commit": "Security policy, audit trails",
+        "commit": "foundational",
         "gate": [
           "Policy enforcement",
           "security tooling capabilities"
@@ -6668,7 +6668,7 @@
           "feedback_incorporation"
         ],
         "topology": "form_based",
-        "commit": "documentation_standard"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "During vulnerability analysis.",
@@ -6711,7 +6711,7 @@
       "data": null,
       "facets": {
         "topology": "calculation_engine",
-        "commit": "quantitative_metric",
+        "commit": "foundational",
         "function": "vulnerability_severity_scoring",
         "temporal": "per_vulnerability",
         "invariants": [
@@ -6770,7 +6770,7 @@
           "exploit_code"
         ],
         "temporal": "post_discovery",
-        "commit": "proof_of_exploitability",
+        "commit": "foundational",
         "gate": [
           "exploit_working_confirmation"
         ],
@@ -6843,7 +6843,7 @@
         ],
         "topology": "centralized-coordination-lattice",
         "temporal": "active-incident-duration",
-        "commit": "Refactored for unified coordination and canonical ID.",
+        "commit": "foundational",
         "invariants": [
           "auditability",
           "availability-of-response-channels"
@@ -6897,7 +6897,7 @@
           "symbolic"
         ],
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "gate": [
           "capability"
@@ -6948,7 +6948,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [
           "capability"
@@ -7005,7 +7005,7 @@
       "facets": {
         "temporal": "continuous-monitoring",
         "function": "Ingest and correlate global threat indicators to guide defense.",
-        "commit": "Refactored for global signal integration and canonical ID.",
+        "commit": "foundational",
         "substrate": [
           "global-threat-intel-feed-mesh"
         ],
@@ -7076,7 +7076,7 @@
           "baseline-integrity"
         ],
         "function": "Systemic recovery and kernel truth reclamation",
-        "commit": "Integrity above continuity"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Total kernel trust collapse.",
@@ -7123,7 +7123,7 @@
       "data": null,
       "facets": {
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "substrate": [
           "symbolic"
@@ -7173,7 +7173,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "topology": "linear",
         "function": "stabilize",

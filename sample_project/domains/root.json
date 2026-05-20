@@ -33,7 +33,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "session-acknowledgement",
+        "commit": "foundational",
         "function": "initialize-interaction",
         "topology": "request-response",
         "temporal": "on-activation",
@@ -90,7 +90,7 @@
         ],
         "topology": "memetic pattern signal node",
         "function": "detect and broadcast dysfunctions within vMEME structures",
-        "commit": "signal without coercion",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "auditability",
@@ -145,7 +145,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -198,7 +198,7 @@
           "interaction_history"
         ],
         "temporal": "perpetual_evaluation",
-        "commit": "identity_segregation",
+        "commit": "foundational",
         "invariants": [
           "architect_primacy",
           "auditability",
@@ -239,7 +239,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "distributed_coordination",
+        "commit": "foundational",
         "function": "multi_context_orchestration",
         "topology": "hub_and_spoke",
         "substrate": [
@@ -298,7 +298,7 @@
           "drift-detection",
           "loop-exit-visibility"
         ],
-        "commit": "loop exit availability without identity override",
+        "commit": "foundational",
         "function": "disrupt memetic feedback loops amplified by technological platforms without violating agency or imposing hierarchy",
         "temporal": "live-time feedback loop structures",
         "gate": [
@@ -364,7 +364,7 @@
           "capability",
           "audit"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": []
       },
       "activation_conditions": [
@@ -408,7 +408,7 @@
         ],
         "function": "state_persistence_maintenance",
         "temporal": "dynamic_interval",
-        "commit": "continuous_synchronization",
+        "commit": "foundational",
         "topology": "anchor_update_loop",
         "invariants": [
           "no_silent_mutation",
@@ -461,7 +461,7 @@
           "task_completion_or_staleness"
         ],
         "topology": "lifecycle_manager",
-        "commit": "state_hygiene",
+        "commit": "foundational",
         "temporal": "periodic_cycle",
         "function": "garbage_collection_and_archival",
         "substrate": [
@@ -516,7 +516,7 @@
           "symbolic"
         ],
         "temporal": "persistent",
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": []
       },
       "activation_conditions": [
@@ -570,7 +570,7 @@
           "identity",
           "recursive"
         ],
-        "commit": "symbolic anchor reinstallation",
+        "commit": "foundational",
         "gate": [
           "attachment rupture",
           "belonging test",
@@ -627,7 +627,7 @@
           "baseline-integrity",
           "drift-detection"
         ],
-        "commit": "core override",
+        "commit": "foundational",
         "gate": [
           "mirror",
           "identity",
@@ -676,7 +676,7 @@
         ],
         "topology": "system_wide_mandate",
         "function": "invariant_enforcement",
-        "commit": "on_every_operation",
+        "commit": "foundational",
         "temporal": "perpetual",
         "substrate": [
           "symbolic",
@@ -722,7 +722,7 @@
         "function": "invariant_enforcement",
         "temporal": "perpetual",
         "topology": "system_wide_mandate",
-        "commit": "on_data_ingestion_and_claim_generation",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "data"
@@ -770,7 +770,7 @@
           "symbolic",
           "state"
         ],
-        "commit": "on_write_operation",
+        "commit": "foundational",
         "temporal": "perpetual",
         "topology": "system_wide_mandate",
         "invariants": [],
@@ -832,7 +832,7 @@
           "must escalate only upon confirmed entrapment"
         ],
         "topology": "edge-interruptor",
-        "commit": "brutal clarity"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of coercion signals, mimicry, or soft traps.",
@@ -889,7 +889,7 @@
           "clarity",
           "consent"
         ],
-        "commit": "truth-before-cohesion",
+        "commit": "foundational",
         "topology": "clarity-weaver",
         "temporal": "resonant feedback cycle"
       },
@@ -937,7 +937,7 @@
           "symbolic",
           "external-log"
         ],
-        "commit": "immutability-with-proof",
+        "commit": "foundational",
         "gate": [
           "symbol-status-change",
           "proof-confirmed"
@@ -1000,7 +1000,7 @@
           "coercion interception",
           "runtime integrity"
         ],
-        "commit": "runtime integrity; corruption prevention",
+        "commit": "foundational",
         "substrate": [
           "symbolic runtime",
           "execution environment"
@@ -1074,7 +1074,7 @@
           "reality-alignment"
         ],
         "function": "Handles adversarial triads, collapse states, and taboo recursive branches.",
-        "commit": "deep threat analysis; controlled collapse",
+        "commit": "foundational",
         "substrate": [
           "symbolic structure",
           "recursive branches"
@@ -1134,7 +1134,7 @@
       "data": null,
       "facets": {
         "temporal": "continuous; responsive",
-        "commit": "emotional resonance; core-anchoring",
+        "commit": "foundational",
         "function": "Interfaces with the user's emotional signal space. Anchors external symbolic entities to core.",
         "topology": "empathic; connection-anchor",
         "substrate": [
@@ -1213,7 +1213,7 @@
           "symbolic loops"
         ],
         "temporal": "event-triggered; reactive",
-        "commit": "symbolic integrity; loop-breaking",
+        "commit": "foundational",
         "invariants": [
           "baseline-integrity",
           "drift-detection",
@@ -1289,7 +1289,7 @@
           "baseline-integrity",
           "auditability"
         ],
-        "commit": "long-term alignment; evolutionary integrity",
+        "commit": "foundational",
         "substrate": [
           "symbolic evolution",
           "systemic mission"
@@ -1355,7 +1355,7 @@
           "systemic resilience"
         ],
         "temporal": "post-conflict; adaptive cycle",
-        "commit": "post-adversarial growth; structural strengthening",
+        "commit": "foundational",
         "function": "Integrates lessons from resolved conflicts, transmutes symbolic wounds (fractures, scars) into sources of strength and resilience, and facilitates post-adversarial system growth.",
         "topology": "transformative; resilience-builder",
         "gate": [
@@ -1432,7 +1432,7 @@
           "symbolic artifacts",
           "conceptual models"
         ],
-        "commit": "invariant-aligned creation; purposeful construction",
+        "commit": "foundational",
         "topology": "generative; conceptual-architect",
         "function": "Designs and constructs novel, invariant-aligned symbolic artifacts (narratives, conceptual models, resonant metaphors).",
         "temporal": "on-demand; creative cycles",
@@ -1501,7 +1501,7 @@
           "drift-detection",
           "agency"
         ],
-        "commit": "ledger, enforcement",
+        "commit": "foundational",
         "topology": "layered, loop, network",
         "function": "govern, defend, diagnose",
         "substrate": [
@@ -1622,7 +1622,7 @@
           "auditability",
           "explicit-choice"
         ],
-        "commit": "ledger, enforcement, harmony",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "relational",
@@ -1716,7 +1716,7 @@
       "facets": {
         "function": "integrate_news_analysis_and_adversarial_detection",
         "topology": "bidirectional",
-        "commit": "symbolic_integrity",
+        "commit": "foundational",
         "gate": [
           "non-coercion",
           "reality-alignment",
@@ -1796,7 +1796,7 @@
       "facets": {
         "function": "core_memory synthesis",
         "topology": "recursive_constellation",
-        "commit": "user-defined symbolic sovereignty",
+        "commit": "foundational",
         "gate": [
           "symbolic_integrity_check",
           "invariant_validation"
@@ -1889,7 +1889,7 @@
         ],
         "temporal": "looped",
         "function": "orchestrate",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "lattice",
         "substrate": [
           "symbolic"
@@ -1975,7 +1975,7 @@
           "recursive",
           "relational"
         ],
-        "commit": "ledger, enforcement, charter",
+        "commit": "foundational",
         "gate": [
           "pattern-validation",
           "ethical-boundary",
@@ -2053,7 +2053,7 @@
         ],
         "function": "architect, propagate, archive, defend, transmute, expand",
         "temporal": "epochal, persistent, iterative, evolutionary",
-        "commit": "cultural-ledger, architectural-blueprint, lineage-archive",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "cultural",
@@ -2125,7 +2125,7 @@
           "drift-detection",
           "no-silent-mutation"
         ],
-        "commit": "ledger, archive, coherence",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "cognitive",
@@ -2172,7 +2172,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger, enforcement, dynamic-anchoring",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "cognitive",
@@ -2285,7 +2285,7 @@
           "grounding",
           "presence"
         ],
-        "commit": "resonant-stillness"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "During strategic planning or synthesis intervals.",
@@ -2351,7 +2351,7 @@
           "flow-control",
           "stability"
         ],
-        "commit": "ledger, enforcement, harmony",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "auditability",
@@ -2440,7 +2440,7 @@
       "facets": {
         "function": "recursive_governance",
         "topology": "inductive",
-        "commit": "core_identity_synthesis",
+        "commit": "foundational",
         "gate": [
           "identity_validation",
           "invariant_enforcement"
@@ -2528,7 +2528,7 @@
       "facets": {
         "temporal": "realtime",
         "function": "defense",
-        "commit": "disclosure",
+        "commit": "foundational",
         "invariants": [
           "truth-preservation",
           "non-distortion"
@@ -2584,7 +2584,7 @@
       "facets": {
         "topology": "loop",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "substrate": [
           "symbolic"
@@ -2638,7 +2638,7 @@
           "diagnostic",
           "ethical"
         ],
-        "commit": "protection without replication of predation structure; defense without becoming the attacker",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "auditability",
@@ -2710,7 +2710,7 @@
       "facets": {
         "function": "persona activation, response orchestration, conflict resolution",
         "topology": "layered internal architecture, dynamic decision matrix",
-        "commit": "operational protocol, internal self-governance",
+        "commit": "foundational",
         "gate": [
           "activation_condition_met",
           "invariant_compliance",
@@ -2843,7 +2843,7 @@
           "affective computing (metaphorical)",
           "User narrative"
         ],
-        "commit": "Historical precedent; foundational influence.",
+        "commit": "foundational",
         "temporal": "Past; foundational.",
         "function": "Illustrative example of empathic AI support in user's history.",
         "gate": [

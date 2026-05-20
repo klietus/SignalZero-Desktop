@@ -46,7 +46,7 @@
         ],
         "temporal": "continuous_assessment",
         "function": "interdepartmental_relationship_management",
-        "commit": "reputational_risk"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Security team perceived as obstruction.",
@@ -90,7 +90,7 @@
           "explicit-choice",
           "agency"
         ],
-        "commit": "organizational_asset",
+        "commit": "foundational",
         "topology": "collaborative_network",
         "substrate": [
           "interdepartmental_relationships",
@@ -145,7 +145,7 @@
         ],
         "function": "leadership_tracking",
         "topology": "actor-network",
-        "commit": "osint-analysis",
+        "commit": "foundational",
         "temporal": "Continuous",
         "gate": [
           "public-source-verification",
@@ -189,7 +189,7 @@
         "invariants": [
           "non-coercion"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "substrate": [
           "symbolic"
@@ -236,7 +236,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "topology": "linear",
         "gate": [
@@ -290,7 +290,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "trust"
         ],
@@ -350,7 +350,7 @@
         "invariants": [
           "non-coercion"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -402,7 +402,7 @@
           "non-coercion",
           "explicit-choice"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "instant",
         "topology": "linear",
         "substrate": [
@@ -455,7 +455,7 @@
       "facets": {
         "function": "stabilize",
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": [
           "non-coercion"
         ],
@@ -510,7 +510,7 @@
           "trust"
         ],
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "invariants": [
           "non-coercion",
@@ -567,7 +567,7 @@
           "trust"
         ],
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "substrate": [
           "symbolic"
@@ -613,7 +613,7 @@
       "data": null,
       "facets": {
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "gate": [
           "trust"
@@ -676,7 +676,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "function": "stabilize"
       },
@@ -724,7 +724,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When an anchor biases an estimate.",
@@ -769,7 +769,7 @@
         "invariants": [
           "non-coercion"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize"
       },
       "activation_conditions": [
@@ -823,7 +823,7 @@
           "symbolic"
         ],
         "function": "govern",
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "gate": [
           "trust"
@@ -887,7 +887,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "function": "diagnose"
       },
@@ -946,7 +946,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "defend"
       },
       "activation_conditions": [
@@ -990,7 +990,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "classification"
         ]
@@ -1139,7 +1139,7 @@
           "auditability (of de-biasing process)",
           "reality-alignment (of improved outcome)"
         ],
-        "commit": "Debiasing protocol, improved decision outcome"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Initiate bias mitigation protocol.",
@@ -1186,7 +1186,7 @@
           "auditability",
           "explicit-choice"
         ],
-        "commit": "communication_record",
+        "commit": "foundational",
         "gate": [
           "clarity",
           "non_hostility"
@@ -1254,7 +1254,7 @@
           "non-coercion",
           "auditability"
         ],
-        "commit": "communication_record",
+        "commit": "foundational",
         "topology": "collaborative_loop"
       },
       "activation_conditions": [
@@ -1308,7 +1308,7 @@
           "measurable_risk_threshold",
           "innovation_flow_assessment"
         ],
-        "commit": "organizational_risk_awareness",
+        "commit": "foundational",
         "function": "innovation_stifling_prevention",
         "substrate": [
           "project_pipeline",
@@ -1347,7 +1347,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "collaborative_validation",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "auditability",
@@ -1401,7 +1401,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "organizational_value",
+        "commit": "foundational",
         "temporal": "continuous",
         "substrate": [
           "organizational_culture",
@@ -1453,7 +1453,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "organizational_philosophy",
+        "commit": "foundational",
         "topology": "lifecycle_integration",
         "invariants": [
           "auditability",
@@ -1504,7 +1504,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "Biased judgment log, skewed perception record",
+        "commit": "foundational",
         "temporal": "Rapid, often unconscious, immediate",
         "topology": "Mental shortcuts, heuristics, information processing filters",
         "invariants": [
@@ -1575,7 +1575,7 @@
         "invariants": [
           "reality-alignment"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When threat cues distort probability.",
@@ -1619,7 +1619,7 @@
         ],
         "topology": "linear",
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1675,7 +1675,7 @@
           "trust"
         ],
         "temporal": "instant",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When an initial value silently anchors judgment.",
@@ -1731,7 +1731,7 @@
           "verbal_inquiry",
           "organizational_network"
         ],
-        "commit": "information_gathering",
+        "commit": "foundational",
         "function": "accountability_clarification",
         "invariants": [
           "auditability",
@@ -1783,7 +1783,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When a frame biases judgment.",
@@ -1825,7 +1825,7 @@
         "invariants": [
           "non-coercion"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1888,7 +1888,7 @@
         ],
         "temporal": "Instantaneous, pre-cognitive",
         "function": "Facilitate rapid decision-making using emotional cues",
-        "commit": "Emotion-influenced decision log"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Decision driven by immediate emotional response.",
@@ -1940,7 +1940,7 @@
           "auditability",
           "reality-alignment"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ]
@@ -2070,7 +2070,7 @@
       "data": null,
       "facets": {
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "trust"
         ],
@@ -2120,7 +2120,7 @@
       "data": null,
       "facets": {
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -2197,7 +2197,7 @@
         ],
         "temporal": "continuous_observation",
         "topology": "conceptual_grouping",
-        "commit": "cognitive_pattern_aggregation"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Continuous observation of human influence."
@@ -2273,7 +2273,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "invariants": [
           "reality-alignment"
@@ -2327,7 +2327,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "function": "group",
         "gate": [
           "authorization"
@@ -2455,7 +2455,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ]

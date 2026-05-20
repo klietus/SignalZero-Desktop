@@ -13,7 +13,7 @@ import { settingsService } from "./settingsService.js";
 import { loggerService, LogCategory } from './loggerService.js';
 import { contextService } from './contextService.js';
 import { symbolCacheService } from './symbolCacheService.js';
-import { tentativeLinkService } from './tentativeLinkService.js';
+import { linkDecayService } from './linkDecayService.js';
 import { contextWindowService } from './contextWindowService.js';
 import { attachmentService, Attachment } from './attachmentService.js';
 import { mcpClientService } from './mcpClientService.js';
@@ -135,7 +135,10 @@ export const callFastInference = async (
           }));
           const model = client.getGenerativeModel({ 
             model: settings.agentModel,
-            systemInstruction: sysMsg ? { role: 'system', parts: [{ text: sysMsg.content }] } : undefined
+            systemInstruction: sysMsg ? { role: 'system', parts: [{ text: sysMsg.content }] } : undefined,
+            ...(settings.model === 'gemini-3.5-flash' && {
+              thinkingConfig: { thinkingLevel: 'high', includeThoughts: true }
+            })
           });
           const geminiResult = await model.generateContent({
             contents,
@@ -422,11 +425,17 @@ const _streamAssistantResponseInternal = async function* (
   if (settings.provider === 'gemini') {
     const client = await getGeminiClient();
     const geminiTools = toGeminiTools(activeTools);
-    const geminiModel = client.getGenerativeModel({ model: model, tools: geminiTools });
+    const geminiModel = client.getGenerativeModel({
+      model,
+      tools: geminiTools,
+      ...(model === 'gemini-3.5-flash' && {
+        thinkingConfig: { thinkingLevel: 'high', includeThoughts: true }
+      })
+    });
 
     const systemMessage = messages.find(m => m.role === 'system');
     const history: any[] = [];
-    let lastRole = '';
+    let lastRole: string | null = '';
 
     for (const m of messages) {
       if (m.role === 'system') continue;
@@ -464,16 +473,38 @@ const _streamAssistantResponseInternal = async function* (
         }
       } else if (m.role === 'assistant') {
         const parts: any[] = [];
+        // Add thought part if reasoning_content is present
+        const reasoning = (m as any).reasoning_content;
+        if (reasoning) {
+          parts.push({ thought: reasoning });
+        }
+        
         if (m.content) parts.push({ text: m.content });
         if (m.tool_calls) {
-          m.tool_calls.forEach(tc => {
+          let lastSeenSignature: string | undefined = undefined;
+          // First pass: find the signature if it exists anywhere in this message's tool calls
+          for (const tc of m.tool_calls) {
+            if ((tc as any).thought_signature) {
+              lastSeenSignature = (tc as any).thought_signature;
+              break;
+            }
+          }
+
+          m.tool_calls.forEach((tc, idx) => {
             try {
-              parts.push({
+              const signature = (tc as any).thought_signature || lastSeenSignature;
+    
+              
+              const part: any = {
                 functionCall: {
                   name: tc.function.name,
                   args: JSON.parse(tc.function.arguments)
                 }
-              });
+              };
+              if (signature) {
+                part.thoughtSignature = signature;
+              }
+              parts.push(part);
             } catch (e) {
               loggerService.catWarn(LogCategory.INFERENCE, "Failed to parse tool arguments for Gemini history", { tool: tc.function.name });
             }
@@ -500,87 +531,218 @@ const _streamAssistantResponseInternal = async function* (
           if (tc) toolName = tc.function.name;
         }
         const part = { functionResponse: { name: toolName, response: { result: m.content } } };
-        if (lastRole === 'function') {
+        
+        // Gemini: functionResponse MUST follow a model turn.
+        // If the last role was NOT model, we might have a disconnected tool response.
+        if (lastRole === 'function' || lastRole === 'model') {
           const lastMsg = history[history.length - 1];
-          lastMsg.parts.push(part);
+          // If the last turn was model, we MUST start a new turn with role 'user' (for function responses in some versions)
+          // or role 'function' (in others). The current SDK uses role 'user' for function responses often, 
+          // but the 'function' role is also supported in startChat.
+          if (lastRole === 'model') {
+            history.push({ role: 'function', parts: [part] });
+          } else {
+            lastMsg.parts.push(part);
+          }
+          lastRole = 'function';
         } else {
+          // If we have a tool response without a preceding model turn, it's an orphan.
+          // We'll prepend an empty model turn to keep the sequence valid if needed, 
+          // but usually we just start a function turn.
           history.push({ role: 'function', parts: [part] });
           lastRole = 'function';
         }
       }
     }
 
-    if (history.length === 0) history.push({ role: 'user', parts: [{ text: 'Hello' }] });
-    let messageToSend = history.pop();
+    // --- GEMINI ROLE ALTERNATION VALIDATION ---
+    // Gemini requires: user, model, user (with functionResponse), model, ...
+    // Our 'function' role in history is mapped to 'user' with functionResponse parts by the SDK or handled internally.
+    // We must ensure we don't have consecutive same roles.
+    const validatedHistory: any[] = [];
+    lastRole = null;
+    
+    for (const turn of history) {
+      // Normalize role for alternation check: 'function' acts as 'user'
+      const normalizedRole = turn.role === 'function' ? 'user' : turn.role;
+      const normalizedLastRole = lastRole === 'function' ? 'user' : lastRole;
+
+      if (normalizedRole === normalizedLastRole) {
+        // Inject bridge turn
+        if (normalizedRole === 'user') {
+          validatedHistory.push({ role: 'model', parts: [{ text: ' ' }] });
+        } else {
+          validatedHistory.push({ role: 'user', parts: [{ text: ' ' }] });
+        }
+      }
+      
+      validatedHistory.push(turn);
+      lastRole = turn.role;
+    }
+    
+    // The last turn in validatedHistory is the one we want to send, 
+    // BUT we must remove it from history first.
+    if (validatedHistory.length === 0) {
+      validatedHistory.push({ role: 'user', parts: [{ text: 'Hello' }] });
+    }
+    
+    let messageToSend = validatedHistory.pop();
+    
+    // Ensure messageToSend is 'user' (Gemini requires the active message to be from the user/function)
     if (messageToSend?.role === 'model') {
-      history.push(messageToSend);
+      validatedHistory.push(messageToSend);
       messageToSend = { role: 'user', parts: [{ text: 'Continue' }] };
     }
 
+    loggerService.catDebug(LogCategory.INFERENCE, "Starting Gemini Chat Session", { 
+      historyTurns: validatedHistory.length,
+      historyTypes: validatedHistory.map(h => h.role),
+      historyPartCounts: validatedHistory.map(h => h.parts.length),
+      historyParts: validatedHistory.map(h => h.parts.map(p => ({
+        type: Object.keys(p)[0],
+        signature: (p as any).thoughtSignature ? "present" : (p.functionCall ? "missing" : "n/a")
+      })))
+    });
+
     const chatSession = geminiModel.startChat({
-      history: history,
+      history: validatedHistory,
       systemInstruction: systemMessage?.content ? { role: 'system', parts: [{ text: systemMessage.content as string }] } : undefined
+    });
+
+    loggerService.catDebug(LogCategory.INFERENCE, "Gemini sending message", { 
+      role: messageToSend.role,
+      partCount: messageToSend.parts.length,
+      parts: messageToSend.parts.map(p => ({
+        type: Object.keys(p)[0],
+        signature: (p.functionCall as any)?.thought_signature ? "present" : (p.functionCall ? "missing" : "n/a")
+      }))
     });
 
     const result = await chatSession.sendMessageStream(messageToSend.parts);
     let textAccumulator = "";
-    const collectedToolCalls: ChatCompletionMessageToolCall[] = [];
+    let thinkingAccumulator = "";
     let finishReason: string | null = null;
 
+    let fullTextSoFar = "";
+    let fullThinkingSoFar = "";
+
+    // The Gemini SDK strips thoughtSignature from the final .response object.
+    // Capture it from stream chunks where it's still present.
+    const streamThoughtSignatures: string[] = [];
+
+    let chunkIdx = 0;
+    let maxTextLen = 0;
     for await (const chunk of result.stream) {
-      let text = "";
-      let thinking = "";
+      chunkIdx++;
+      let chunkText = "";
+      let chunkThinking = "";
+      let hasParts = false;
 
       // Extract thinking and narrative from chunk.candidates (available directly during stream)
       const candidates = (chunk as any).candidates || [];
       if (candidates[0]?.content?.parts) {
+        hasParts = true;
         for (const part of candidates[0].content.parts) {
           if (part?.thought) {
-            thinking += part.text || "";
+            // Handle both possible structures: {thought: string} or {thought: true, text: string}
+            chunkThinking += typeof part.thought === 'string' ? part.thought : (part.text || "");
           } else if (part?.text) {
-            text += part.text;
+            chunkText += part.text;
+          }
+          // Capture thoughtSignature from stream chunks (SDK strips it from .response)
+          if ((part as any).thoughtSignature && part.functionCall) {
+            streamThoughtSignatures.push((part as any).thoughtSignature);
           }
         }
       }
 
-      // Fallback to chunk.text() if no parts structure found
-      if (!text && !thinking) {
-        try { text = chunk.text(); } catch (e) { }
+      // Handle Thinking/Reasoning Delta
+      if (chunkThinking.length > fullThinkingSoFar.length) {
+        const thinkingDelta = chunkThinking.slice(fullThinkingSoFar.length);
+        fullThinkingSoFar = chunkThinking;
+        thinkingAccumulator = fullThinkingSoFar;
+        yield { reasoning: thinkingDelta };
       }
 
-      if (thinking) {
-        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: thinking chunk", { length: thinking.length, preview: thinking.slice(0, 100) });
-        yield { reasoning: thinking };
+      // Emit full text from every chunk
+      if (chunkText.length > 0) {
+        textAccumulator = chunkText;
+        yield { text: chunkText };
       }
-      if (text) {
-        textAccumulator += text;
-        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: narrative chunk", { length: text.length, preview: text.slice(0, 80) });
-        yield { text };
+
+      // Fallback to chunk.text() if no parts structure found OR if we didn't get any text from parts
+      if (!hasParts || (chunkText.length === 0 && !chunkThinking)) {
+        try { 
+          const textDelta = chunk.text(); 
+          if (textDelta) {
+            textAccumulator += textDelta;
+            fullTextSoFar = textAccumulator;
+            yield { text: textDelta };
+          }
+        } catch (e) { }
       }
-      const calls = chunk.functionCalls();
-      if (calls && calls.length > 0) {
-        calls.forEach((call: any) => {
-          const toolCallObj: any = {
+    }
+
+    // Capture final response after stream is exhausted
+    const response = await result.response;
+    finishReason = response.candidates?.[0]?.finishReason ?? null;
+
+    const collectedToolCalls: ChatCompletionMessageToolCall[] = [];
+    let lastThoughtSignature: string | undefined = undefined;
+    
+    if (response.candidates?.[0]?.content?.parts) {
+      // First pass: find the signature from sibling thoughtSignature fields (Gemini wire format)
+      for (const part of response.candidates[0].content.parts) {
+        if ((part as any).thoughtSignature) {
+          lastThoughtSignature = (part as any).thoughtSignature;
+          break;
+        }
+      }
+
+      // SDK strips thoughtSignature from .response in streaming mode. Use stream-captured signatures as fallback.
+      let sigIdx = 0;
+      const getStreamSig = () => sigIdx < streamThoughtSignatures.length ? streamThoughtSignatures[sigIdx++] : undefined;
+
+      for (const [idx, part] of response.candidates[0].content.parts.entries()) {
+        if (part.functionCall) {
+          const call = part.functionCall as any;
+          // Try direct field first (non-streaming path), then stream-captured signatures
+          const signature = (part as any).thoughtSignature || lastThoughtSignature || getStreamSig();
+          
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: functionCall part", {
+            idx,
+            name: call.name,
+            hasSignature: !!(part as any).thoughtSignature,
+            usingCarriedSignature: !!(!(part as any).thoughtSignature && lastThoughtSignature),
+            signature: signature || "none"
+          });
+          
+          collectedToolCalls.push({
             id: 'gemini-' + randomUUID(),
             type: 'function',
             function: {
               name: call.name,
               arguments: JSON.stringify(call.args)
-            }
-          };
-          collectedToolCalls.push(toolCallObj);
-        });
+            },
+            thought_signature: signature
+          } as any);
+        } else if ((part as any).thought) {
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { idx, length: (part as any).thought?.length || (part as any).text?.length });
+        } else {
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: unknown part type", { idx, keys: Object.keys(part) });
+        }
       }
     }
-
-    // Capture finish reason from final response before yielding
-    finishReason = (result as any).response?.candidates?.[0]?.finishReason ?? null;
 
     const assistantMessage: ChatCompletionMessageParam = {
       role: "assistant",
       content: textAccumulator,
       ...(collectedToolCalls.length > 0 ? { tool_calls: collectedToolCalls } : {}),
     };
+
+    if (thinkingAccumulator) {
+      (assistantMessage as any).reasoning_content = thinkingAccumulator;
+    }
 
     // Attach unified finish reason for turn-ending logic
     const geminiSettings = await settingsService.getInferenceSettings();
@@ -704,7 +866,7 @@ export async function* sendMessageAndHandleTools(
   userMessageId?: string,
   anticipatedWebResults?: any[],
   anticipatedWebBrief?: string,
-  priority: number = 1, // Default to High (User Chat)
+  _priority: number = 1, // Default to High (User Chat)
   cleanMessage?: string,
   sceneAttachments?: any[],
   metadata?: Record<string, any>
@@ -741,7 +903,7 @@ export async function* sendMessageAndHandleTools(
     } as any);
   }
 
-  const settings = await settingsService.getInferenceSettings();
+  const _settings = await settingsService.getInferenceSettings();
 
   try {
     let loops = 0;
@@ -1114,7 +1276,12 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
             role: "assistant",
             content: isEndingTurn ? stripThoughts(totalTextAccumulatedAcrossLoops) : (nextAssistant.content as string || ""),
             timestamp: new Date().toISOString(),
-            toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ id: call.id, name: call.function?.name, arguments: call.function?.arguments })),
+            toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ 
+              id: call.id, 
+              name: call.function?.name, 
+              arguments: call.function?.arguments,
+              thought_signature: call.thought_signature 
+            })),
             metadata: {
               kind: hasTools ? "assistant_tool_call" : "assistant_response",
               ...(reasoning ? { reasoning_content: reasoning } : {})
@@ -1600,7 +1767,7 @@ export const processMessageAsync = async (
     // Increment turns AFTER load so that newly loaded/refreshed symbols have turnCount 0 (touched)
     // and only then get incremented to 1, avoiding immediate eviction.
     await symbolCacheService.incrementTurns(contextSessionId);
-    await tentativeLinkService.incrementTurns();
+    linkDecayService.runDecayCycle();
 
     const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, 1, message, sceneAttachments, metadata);
 
@@ -1616,14 +1783,6 @@ export const processMessageAsync = async (
     for await (const chunk of stream) {
       if (chunk.text) fullText += chunk.text;
       if (!isSilent && (chunk.text || chunk.toolCalls || chunk.reasoning)) {
-        loggerService.catDebug(LogCategory.INFERENCE, "processMessageAsync: emitting chunk", {
-          hasText: !!chunk.text,
-          textPreview: chunk.text?.slice(0, 80),
-          hasReasoning: !!chunk.reasoning,
-          reasoningPreview: chunk.reasoning?.slice(0, 200),
-          toolCallCount: chunk.toolCalls?.length || 0,
-          isComplete: !!chunk.isComplete
-        });
         eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId } as const);
       }
       if (chunk.isComplete) {

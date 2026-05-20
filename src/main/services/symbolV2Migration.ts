@@ -1,4 +1,4 @@
-import { SymbolDef, SymbolDefV2, CommitType, SymbolLinkV2, LINK_PROMOTION_DEFAULTS, FORGETTING_DEFAULTS } from '../types';
+import { SymbolDef, SymbolDefV2, CommitType, SymbolLinkV2, LINK_PROMOTION_DEFAULTS, FORGETTING_DEFAULTS, SymbolFacet } from '../types';
 
 export function migrateToV2(symbol: SymbolDef, existingLinks?: SymbolLinkV2[]): SymbolDefV2 {
   // If symbol is already V2, return as-is
@@ -54,7 +54,6 @@ export function migrateToV2(symbol: SymbolDef, existingLinks?: SymbolLinkV2[]): 
     recency_weight: 1.0,
     last_updated_epoch: symbol.updated_at ? new Date(symbol.updated_at).getTime() : Date.now(),
     predicates,
-    embedding: undefined,
     links,
     v2: true,
     schema_version: 2,
@@ -70,10 +69,16 @@ export function migrateFromV2(v2: SymbolDefV2): SymbolDef {
     bidirectional: false,
   }));
 
-  const facets = { ...(v2.facets || {}) };
-  if (v2.commit && !facets.commit) {
-    facets.commit = v2.commit;
-  }
+  const facets = { 
+    function: '',
+    topology: '',
+    commit: v2.commit || 'volatile',
+    temporal: '',
+    gate: [],
+    substrate: [],
+    invariants: [],
+    ...(v2.facets || {}) 
+  };
 
   return {
     id: v2.id,
@@ -89,10 +94,10 @@ export function migrateFromV2(v2: SymbolDefV2): SymbolDef {
     symbol_domain: v2.symbol_domain,
     symbol_tag: v2.symbol_tag,
     failure_mode: v2.failure_mode,
-    created_at: v2.created_at,
-    updated_at: v2.updated_at,
+    created_at: v2.created_at || new Date().toISOString(),
+    updated_at: v2.updated_at || new Date().toISOString(),
     linked_patterns,
-    facets,
+    facets: facets as SymbolFacet,
   };
 }
 

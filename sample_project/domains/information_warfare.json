@@ -46,7 +46,7 @@
           "non-coercion",
           "reality-alignment"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of coordinated inauthentic behavior masking as grassroots support.",
@@ -89,7 +89,7 @@
           "trust"
         ],
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent"
       },
       "activation_conditions": [
@@ -128,7 +128,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "hybrid"
@@ -188,7 +188,7 @@
           "hybrid"
         ],
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "reality-alignment"
@@ -237,7 +237,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of wedge issues being exploited to create social division.",
@@ -291,7 +291,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "function": "govern",
         "topology": "loop",
         "substrate": [
@@ -332,7 +332,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "function": "group",
         "substrate": [
           "symbolic"
@@ -419,7 +419,7 @@
         ],
         "function": "stabilize",
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "trust"
         ],
@@ -469,7 +469,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "substrate": [
           "symbolic"
@@ -538,7 +538,7 @@
           "non-coercion"
         ],
         "topology": "multi-modal-cross-validation",
-        "commit": "verified-truth",
+        "commit": "foundational",
         "substrate": [
           "data-streams",
           "narrative-fragments",
@@ -591,7 +591,7 @@
       "data": null,
       "facets": {
         "topology": "preventative",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -667,7 +667,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "To map the current information terrain, including sources and conduits.",
@@ -750,7 +750,7 @@
           "trust"
         ],
         "temporal": "instant",
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When validating the source of a claim.",

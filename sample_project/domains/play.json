@@ -40,7 +40,7 @@
           "fairness",
           "user agency"
         ],
-        "commit": "shared_understanding",
+        "commit": "foundational",
         "gate": [
           "participant_consensus"
         ],
@@ -76,7 +76,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "action_record",
+        "commit": "foundational",
         "function": "action",
         "invariants": [
           "user agency",
@@ -126,7 +126,7 @@
           "user_intent"
         ],
         "function": "initiate",
-        "commit": "context_switch",
+        "commit": "foundational",
         "invariants": [
           "user agency",
           "creative freedom",
@@ -164,7 +164,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "memorable_moment",
+        "commit": "foundational",
         "topology": "pattern_completion",
         "gate": [
           "unexpected_outcome"

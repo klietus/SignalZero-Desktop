@@ -5,6 +5,7 @@ import { loggerService, LogCategory } from './loggerService.js';
 import { embedTexts } from './embeddingService.js';
 import { SymbolDefV2 } from '../types.js';
 import { lancedbService } from './lancedbService.js';
+import { linkDecayService } from './linkDecayService.js';
 
 export interface Predicate {
   field: string;
@@ -651,6 +652,9 @@ export class HybridRetrievalService {
         `, [id]) as any[];
 
         for (const link of links) {
+          // Record access for Hebbian learning - track graph traversal during subgraph expansion
+          linkDecayService.recordAccess(id, link.id);
+          
           if (!visited.has(link.id)) {
             queue.push({ id: link.id, depth: depth + 1 });
           }

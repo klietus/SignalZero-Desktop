@@ -101,6 +101,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [showGraphviz, setShowGraphviz] = useState(true);
 
   const [isRunningHygiene, setIsRunningHygiene] = useState<string | null>(null);
+  const [isRunningLinkDecay, setIsRunningLinkDecay] = useState(false);
 
   // MCP State
   const [mcpConfigs, setMcpConfigs] = useState<McpConfiguration[]>([]);
@@ -122,18 +123,41 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [isValidatingMcp, setIsValidatingMcp] = useState(false);
   const [validationResult, setValidationResult] = useState<{ success?: boolean, toolCount?: number, error?: string } | null>(null);
 
+  const handleRunHygiene = async (strategy: string) => {
+    setIsRunningHygiene(strategy);
+    try {
+        const stats = await window.api.runHygiene(strategy);
+        alert(`Hygiene run complete: ${JSON.stringify(stats)}`);
+    } catch (err: any) {
+        alert(`Error running hygiene: ${err.message}`);
+    } finally {
+        setIsRunningHygiene(null);
+    }
+  };
+
+  const handleRunLinkDecay = async () => {
+    setIsRunningLinkDecay(true);
+    try {
+        const result = await window.api.runLinkDecay();
+        alert(`Link decay cycle complete: ${JSON.stringify(result)}`);
+    } catch (err: any) {
+        alert(`Error running link decay: ${err.message}`);
+    } finally {
+        setIsRunningLinkDecay(false);
+    }
+  };
+
   const handleValidateMcp = async () => {
-      if (!newMcpEndpoint) return;
-      setIsValidatingMcp(true);
-      setValidationResult(null);
-      try {
-          const res = await window.api.validateMcp(newMcpEndpoint, newMcpToken);
-          setValidationResult(res);
-      } catch (err: any) {
-          setValidationResult({ success: false, error: err.message });
-      } finally {
-          setIsValidatingMcp(false);
-      }
+    if (!newMcpEndpoint) return;
+    setIsValidatingMcp(true);
+    try {
+      const result = await window.api.validateMcp(newMcpEndpoint, newMcpToken || '');
+      setValidationResult(result);
+    } catch (err: any) {
+      setValidationResult({ success: false, error: err.message });
+    } finally {
+      setIsValidatingMcp(false);
+    }
   };
 
   const handleAddMcp = () => {
@@ -377,18 +401,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
-  const handleRunHygiene = async (strategy: string) => {
-    setIsRunningHygiene(strategy);
-    try {
-        const stats = await window.api.runHygiene(strategy);
-        alert(`Hygiene run complete: ${JSON.stringify(stats)}`);
-    } catch (err: any) {
-        alert(`Error running hygiene: ${err.message}`);
-    } finally {
-        setIsRunningHygiene(null);
-    }
-  };
-
   const handlePollSource = async (sourceId: string) => {
     try {
         await window.api.pollSource(sourceId);
@@ -462,9 +474,33 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                       <div className="space-y-2">
                                           <label className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">Agent Model</label>
                                           <input type="text" value={inferenceAgentModel} onChange={(e) => setInferenceAgentModel(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2 text-sm font-mono" />
-                                      </div>
-                                  </div>
-                                      </div>
+                                   </div>
+                               </div>
+
+                               {/* Link Decay */}
+                               <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-800">
+                                   <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Link Decay & Promotion</div>
+                                   <div className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-lg border border-orange-100/50 dark:border-orange-900/20 flex items-center justify-between">
+                                       <div className="flex-1">
+                                           <div className="flex items-center gap-3">
+                                               <div className="w-9 h-5 flex items-center justify-center opacity-30"><Activity size={14} /></div>
+                                               <div>
+                                                   <div className="font-bold text-sm text-gray-900 dark:text-gray-100">Link Decay Cycle</div>
+                                                   <div className="text-xs text-gray-500">Decay access EMAs, promote volatile links to foundational, prune stale links.</div>
+                                               </div>
+                                           </div>
+                                       </div>
+                                       <button
+                                           onClick={handleRunLinkDecay}
+                                           disabled={isRunningLinkDecay || isRunningHygiene !== null}
+                                           className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-md text-xs font-bold transition-colors ml-4"
+                                       >
+                                           {isRunningLinkDecay ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} fill="currentColor" />}
+                                           Run Now
+                                       </button>
+                                   </div>
+                               </div>
+                           </div>
 
                                       <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                                       <div className="flex items-center justify-between">

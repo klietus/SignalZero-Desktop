@@ -1,5 +1,5 @@
 import { domainService, RECIPROCAL_MAP } from './domainService.js';
-import { tentativeLinkService } from './tentativeLinkService.js';
+import { linkDecayService } from './linkDecayService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { settingsService } from './settingsService.js';
@@ -187,6 +187,14 @@ export class TopologyService {
                 crossDomainBridgesLifted,
                 latticesDecomposed
             };
+
+            // Run link decay cycle (decay EMAs, promote links, prune stale)
+            try {
+                const decayResult = linkDecayService.runDecayCycle();
+                loggerService.catInfo(LogCategory.TOPOLOGY, "Link decay cycle complete", decayResult);
+            } catch (decayErr: any) {
+                loggerService.catError(LogCategory.TOPOLOGY, "Link decay cycle failed", { error: decayErr.message });
+            }
 
             this.lastRunTimestamp = currentRunTimestamp;
             loggerService.catInfo(LogCategory.KERNEL, "TopologyService: Analysis complete", stats);
@@ -626,13 +634,10 @@ export class TopologyService {
     }
 
     private async promoteToTentative(links: { sourceId: string, targetId: string, linkType: string, confidence: number }[]) {
-        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting ${links.length} predicted links to tentative store`);
+        loggerService.catInfo(LogCategory.KERNEL, `TopologyService: Promoting ${links.length} predicted links via Hebbian learning`);
         for (const link of links) {
-            const tracePath = [
-                { symbol_id: link.sourceId },
-                { symbol_id: link.targetId, link_type: link.linkType, reason: 'Topology-based automated link prediction' }
-            ];
-            await tentativeLinkService.processTrace(tracePath);
+            // Record access to trigger Hebbian link creation/update
+            linkDecayService.recordAccess(link.sourceId, link.targetId);
         }
     }
 

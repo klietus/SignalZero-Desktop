@@ -2,7 +2,7 @@ import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { eventBusService } from './eventBusService.js';
 import { KernelEventType } from '../types.js';
-import { checkLinkPromotion, recordLinkAccess, isLinkStale } from './symbolV2Migration.js';
+import { checkLinkPromotion, recordLinkAccess } from './symbolV2Migration.js';
 
 const DECAY_INTERVAL_MS = 3600000; // 1 hour
 const DECAY_FACTOR = 0.9; // 10% decay per interval
@@ -110,6 +110,12 @@ export const linkDecayService = {
       sqliteService.run(`
         DELETE FROM symbol_links_v2 WHERE source_id = ? AND target_id = ?
       `, [link.source_id, link.target_id]);
+      
+      eventBusService.emitKernelEvent(KernelEventType.TENTATIVE_LINK_DELETE, {
+        sourceId: link.source_id,
+        targetId: link.target_id
+      } as const);
+      
       pruned.push(`${link.source_id} -> ${link.target_id}`);
     }
 

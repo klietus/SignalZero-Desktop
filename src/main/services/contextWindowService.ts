@@ -269,7 +269,8 @@ export class ContextWindowService {
                 function: {
                     name: tc.name,
                     arguments: typeof tc.arguments === 'string' ? tc.arguments : JSON.stringify(tc.arguments)
-                }
+                },
+                thought_signature: tc.thought_signature
             }));
         }
 

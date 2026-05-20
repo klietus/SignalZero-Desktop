@@ -4,6 +4,17 @@ At the core of SignalZero is a recursive symbolic language. Knowledge is not sto
 
 ## 1. Symbol Structure (`SymbolDef`)
 
+### Why This Format Works: Structural Alignment
+
+The compressed symbolic format is not just about token efficiency—it's a **structural alignment** mechanism that enforces safety and precision through input constraints. See [StructuralAlignment](https://github.com/klietus/StructuralAlignment) for empirical evidence on how structured input formats can guarantee constraint enforcement (100% refusal rate on harmful requests with full symbol catalog + invariants).
+
+**Key Principles:**
+- **Classification engine**: Descriptive IDs and typed facets create a precise symbol catalog that identifies patterns unambiguously
+- **Constraint backstop**: The rigid schema (ID, Role, Kind, Domain, Triad, Facets, Links) acts as invariant boundaries for reasoning
+- **Dual-control interaction**: The format's structure creates emergent properties where the LLM cannot "escape" the defined constraints
+
+For a detailed analysis, see the [Structural Alignment paper](https://github.com/klietus/StructuralAlignment/blob/main/paper/Structural_Alignment.pdf).
+
 Every symbol in the kernel follows a strict schema to ensure machine-readability and deterministic graph traversals.
 
 | Property | Description |

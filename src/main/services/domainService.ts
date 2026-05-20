@@ -38,7 +38,10 @@ const mapRowToSymbol = (row: any, links: SymbolLink[] = []): SymbolDef => ({
     failure_mode: row.failure_mode,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    linked_patterns: links
+    linked_patterns: (links || []).map(l => ({
+        id: l.id,
+        link_type: l.link_type || 'relates_to'
+    }))
 });
 
 export const RECIPROCAL_MAP: Record<string, string> = {
@@ -220,8 +223,8 @@ export const domainService = {
     // Pass 1 & 2: Single heavy transaction for relational integrity
     sqliteService.transaction(() => {
         const stmt = sqliteService.db().prepare(`
-            INSERT OR REPLACE INTO symbols (id, domain_id, name, kind, triad, role, macro, lattice, persona, data, facets, activation_conditions, failure_mode, symbol_tag, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO symbols (id, domain_id, name, kind, triad, role, macro, lattice, persona, data, facets, activation_conditions, failure_mode, symbol_tag, updated_at, v2_commit, v2_recency_weight, v2_last_updated) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         const checkStmt = sqliteService.db().prepare(`SELECT 1 FROM symbols WHERE id = ?`);
@@ -246,6 +249,10 @@ export const domainService = {
                 ...(symbol.persona?.activation_conditions || [])
             ]);
 
+            // Determine V2 commit type: only 'foundational' if explicitly set, otherwise 'volatile'
+            const v2Commit = symbol.facets?.commit === 'foundational' ? 'foundational' : 'volatile';
+            const nowEpoch = Date.now();
+            
             stmt.run(
                 symbol.id,
                 domainId,
@@ -261,7 +268,10 @@ export const domainService = {
                 JSON.stringify(Array.from(conditions)),
                 symbol.failure_mode,
                 symbol.symbol_tag || '',
-                now
+                now,
+                v2Commit,
+                1.0,
+                nowEpoch
             );
         }
 
@@ -775,22 +785,47 @@ export const domainService = {
   },
 
   /**
-   * Add or update a symbol in v2 format.
-   */
-  async addSymbolV2(domainId: string, symbol: SymbolDefV2): Promise<SymbolDefV2> {
-    // Convert to v1-compatible for storage (v1 schema stores v2 metadata in extended columns)
-    const v1 = migrateFromV2(symbol);
-    await this.addSymbol(domainId, v1);
-    
-    // Update v2 columns
-    sqliteService.run(`
-      UPDATE symbols SET 
-        v2_commit = ?,
-        v2_recency_weight = ?,
-        v2_last_updated = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `, [symbol.commit, symbol.recency_weight, symbol.last_updated_epoch, symbol.id]);
+    * Sync symbol_links_v2 table from a symbol's linked_patterns.
+    */
+   async syncV2Links(symbolId: string, linkedPatterns: any[]): Promise<void> {
+     // Clear existing v2 links for this symbol
+     sqliteService.run(`DELETE FROM symbol_links_v2 WHERE source_id = ?`, [symbolId]);
+     
+     if (!linkedPatterns || linkedPatterns.length === 0) return;
+     
+     const insertV2Link = sqliteService.db().prepare(`
+       INSERT INTO symbol_links_v2 (source_id, target_id, link_type, committed, access_count, access_ema, last_accessed, created_at)
+       VALUES (?, ?, ?, ?, 0, 0.0, ?, ?)
+     `);
+     
+     const now = new Date().toISOString();
+     for (const lp of linkedPatterns) {
+       const targetId = typeof lp === 'string' ? lp : lp.id;
+       const linkType = typeof lp === 'string' ? 'relates_to' : (lp.link_type || 'relates_to');
+       insertV2Link.run(symbolId, targetId, linkType, 'volatile', now, now);
+     }
+   },
+
+   /**
+    * Add or update a symbol in v2 format.
+    */
+   async addSymbolV2(domainId: string, symbol: SymbolDefV2): Promise<SymbolDefV2> {
+     // Convert to v1-compatible for storage (v1 schema stores v2 metadata in extended columns)
+     const v1 = migrateFromV2(symbol);
+     await this.addSymbol(domainId, v1);
+     
+     // Update v2 columns
+     sqliteService.run(`
+       UPDATE symbols SET 
+         v2_commit = ?,
+         v2_recency_weight = ?,
+         v2_last_updated = ?,
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?
+     `, [symbol.commit, symbol.recency_weight, symbol.last_updated_epoch, symbol.id]);
+
+     // Sync v2 links table from linked_patterns
+     await this.syncV2Links(symbol.id, symbol.linked_patterns || []);
 
     // Emit kernel event
     eventBusService.emitKernelEvent(KernelEventType.SYMBOL_UPSERTED, { 

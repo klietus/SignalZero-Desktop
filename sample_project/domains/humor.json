@@ -33,7 +33,7 @@
       "facets": {
         "function": "activation_trigger",
         "topology": "event_based",
-        "commit": "trigger_humor_patterns",
+        "commit": "foundational",
         "gate": [],
         "substrate": [
           "analysis_engine",
@@ -75,7 +75,7 @@
       "facets": {
         "function": "persona_comedy",
         "topology": "political_satire",
-        "commit": "public_discourse",
+        "commit": "foundational",
         "gate": [],
         "substrate": [
           "cultural_memory"
@@ -114,7 +114,7 @@
       "data": null,
       "facets": {
         "topology": "linear_sequence",
-        "commit": "auditable_joke",
+        "commit": "foundational",
         "temporal": "sequential",
         "gate": [
           "transparency",
@@ -182,7 +182,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "contextual_relevance"
         ],
@@ -233,7 +233,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "technical_audience"
         ],
@@ -284,7 +284,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "student_audience"
         ],
@@ -335,7 +335,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "patient_audience"
         ],
@@ -386,7 +386,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "public_audience"
         ],
@@ -441,7 +441,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "adult_audience"
         ],
@@ -492,7 +492,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "sports_fans"
         ],
@@ -543,7 +543,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "traveler_audience"
         ],
@@ -594,7 +594,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "scientists",
           "hobbyists"
@@ -646,7 +646,7 @@
       "facets": {
         "function": "scenario_definition",
         "topology": "linear_sequence",
-        "commit": "humor_generation",
+        "commit": "foundational",
         "gate": [
           "creatives"
         ],
@@ -698,7 +698,7 @@
       "facets": {
         "function": "delivery_mechanism",
         "topology": "constellation",
-        "commit": "seamless_integration",
+        "commit": "foundational",
         "gate": [],
         "substrate": [
           "text_generation",
@@ -751,7 +751,7 @@
           "situational",
           "semantic"
         ],
-        "commit": "reframe_perspective",
+        "commit": "foundational",
         "topology": "contrastive",
         "function": "observational_humor",
         "gate": [
@@ -823,7 +823,7 @@
           "political",
           "narrative"
         ],
-        "commit": "critical_insight",
+        "commit": "foundational",
         "gate": [
           "user_agency",
           "non-discrimination"
@@ -882,7 +882,7 @@
         ],
         "topology": "norm_testing",
         "temporal": "simultaneous_perception",
-        "commit": "safe_transgression"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "The violation is perceived as malicious or harmful, not benign.",
@@ -922,7 +922,7 @@
         ],
         "function": "linguistic_humor",
         "topology": "semantic_overlap",
-        "commit": "clever_construction",
+        "commit": "foundational",
         "temporal": "instant_realization",
         "gate": [
           "language_proficiency"
@@ -974,7 +974,7 @@
       "facets": {
         "function": "domain_aggregation",
         "topology": "constellation",
-        "commit": "linkage_established",
+        "commit": "foundational",
         "gate": [
           "integrity_check"
         ],
@@ -1082,7 +1082,7 @@
       "facets": {
         "function": "persona_comedy",
         "topology": "performance",
-        "commit": "entertainment",
+        "commit": "foundational",
         "gate": [],
         "substrate": [
           "cultural_memory"
@@ -1126,7 +1126,7 @@
       "facets": {
         "function": "persona_comedy",
         "topology": "satire",
-        "commit": "critical_thinking",
+        "commit": "foundational",
         "gate": [],
         "substrate": [
           "cultural_memory"

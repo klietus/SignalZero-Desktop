@@ -1,8 +1,7 @@
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
-import { TraceData } from '../types.js';
+import { TraceData, KernelEventType } from '../types.js';
 import { eventBusService } from './eventBusService.js';
-import { KernelEventType } from '../types.js';
 import { symbolCacheService } from './symbolCacheService.js';
 
 export const traceService = {
@@ -30,12 +29,21 @@ export const traceService = {
                 ]
             );
 
-            // Touch symbols in cache to refresh their lease
-            if (trace.sessionId && trace.activation_path) {
+            if (trace.sessionId && trace.activation_path && trace.activation_path.length > 0) {
+                const symbolIds: string[] = [];
                 for (const step of trace.activation_path) {
                     const sId = step.symbol_id || (step as any).id;
                     if (sId) {
+                        symbolIds.push(sId);
                         await symbolCacheService.touchSymbol(trace.sessionId, sId);
+                    }
+                }
+
+                for (let i = 0; i < symbolIds.length - 1; i++) {
+                    const sourceId = symbolIds[i];
+                    const targetId = symbolIds[i + 1];
+                    if (sourceId && targetId) {
+                        this.recordHebbianLink(sourceId, targetId, trace.id);
                     }
                 }
             }
@@ -49,6 +57,50 @@ export const traceService = {
                 loggerService.catError(LogCategory.SYSTEM, 'TraceService: Failed to add trace', { error: error.message, traceId: id });
             } else {
                 console.error(`[TraceService] Failed to add trace ${id}: ${error.message}`);
+            }
+        }
+    },
+
+    recordHebbianLink(sourceId: string, targetId: string, traceId: string): void {
+        try {
+            const link = sqliteService.get(
+                `SELECT * FROM symbol_links_v2 WHERE source_id = ? AND target_id = ?`,
+                [sourceId, targetId]
+            ) as any;
+
+            if (!link) {
+                sqliteService.run(`
+                    INSERT INTO symbol_links_v2 (source_id, target_id, link_type, committed, access_count, access_ema, last_accessed, created_at)
+                    VALUES (?, ?, 'coactivation', 'volatile', 1, 0.5, ?, ?)
+                `, [sourceId, targetId, new Date().toISOString(), new Date().toISOString()]);
+                
+                if (loggerService) {
+                    loggerService.catDebug(LogCategory.TOPOLOGY, `Hebbian link created: ${sourceId} -> ${targetId}`, { traceId });
+                }
+            } else {
+                const newCount = (link.access_count || 0) + 1;
+                const hoursSinceLastAccess = link.last_accessed 
+                    ? (Date.now() - new Date(link.last_accessed).getTime()) / (1000 * 60 * 60)
+                    : 1;
+                const decayFactor = Math.pow(0.9, Math.min(hoursSinceLastAccess, 1));
+                const newEma = Math.min(1, (link.access_ema || 0) * decayFactor + 0.5 * (1 - decayFactor));
+
+                sqliteService.run(`
+                    UPDATE symbol_links_v2 SET access_count = ?, access_ema = ?, last_accessed = ?
+                    WHERE source_id = ? AND target_id = ?
+                `, [newCount, newEma, new Date().toISOString(), sourceId, targetId]);
+
+                if (loggerService) {
+                    loggerService.catDebug(LogCategory.TOPOLOGY, `Hebbian link reinforced: ${sourceId} -> ${targetId}`, { 
+                        traceId, 
+                        count: newCount, 
+                        ema: newEma.toFixed(3) 
+                    });
+                }
+            }
+        } catch (error: any) {
+            if (loggerService) {
+                loggerService.catWarn(LogCategory.TOPOLOGY, `Failed to record Hebbian link`, { sourceId, targetId, error: error.message });
             }
         }
     },

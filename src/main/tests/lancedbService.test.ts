@@ -4,7 +4,8 @@ import * as embeddingService from '../services/embeddingService.js';
 import * as lancedb from '@lancedb/lancedb';
 
 vi.mock('../services/embeddingService.js', () => ({
-    embedTexts: vi.fn()
+    embedTexts: vi.fn(),
+    embedTextsWithModelPath: vi.fn()
 }));
 
 vi.mock('@lancedb/lancedb', () => ({
@@ -36,6 +37,7 @@ describe('lancedbService Search Filters', () => {
 
         (lancedb.connect as any).mockResolvedValue(mockConn);
         (embeddingService.embedTexts as any).mockResolvedValue([[0.1, 0.2, 0.3]]);
+        (embeddingService.embedTextsWithModelPath as any).mockResolvedValue([[0.1, 0.2, 0.3]]);
     });
 
     it('should correctly handle nested metadata_filter', async () => {

@@ -12,6 +12,7 @@ import { AgentScreen } from './components/screens/AgentScreen';
 import { SymbolForgeScreen } from './components/screens/SymbolForgeScreen';
 import { CinematicView } from './components/screens/CinematicView';
 import { LogsScreen } from './components/screens/LogsScreen';
+import HebbianDashboardScreen from './components/screens/HebbianDashboardScreen';
 import { Header, HeaderProps } from './components/Header';
 import { ContextListPanel } from './components/panels/ContextListPanel';
 import { WorldMonitoringPanel } from './components/panels/WorldMonitoringPanel';
@@ -30,6 +31,7 @@ declare global {
             listContexts: () => Promise<any[]>;
             getContext: (id: string) => Promise<any>;
             getHistory: (id: string) => Promise<any[]>;
+            setActiveContext: (id: string | null) => Promise<void>;
             deleteContext: (id: string) => Promise<boolean>;
             sendMessage: (sessionId: string, message: string, systemInstruction?: string, metadata?: any) => Promise<any>;
             stopInference: () => Promise<any>;
@@ -51,6 +53,10 @@ declare global {
             updateSettings: (settings: any) => Promise<void>;
             validateMcp: (endpoint: string, token?: string) => Promise<any>;
             runHygiene: (strategy?: string) => Promise<any>;
+            runLinkDecay: () => Promise<any>;
+            hebbianGetStats: () => Promise<any>;
+            hebbianGetLinkHistory: (linkId: string) => Promise<any>;
+            hebbianForceDecay: () => Promise<any>;
             isInitialized: () => Promise<boolean>;
             pollSource: (sourceId: string) => Promise<any>;
             listDeltas: (filter?: any) => Promise<any[]>;
@@ -98,8 +104,12 @@ declare global {
             getRealtimeState: () => Promise<any>;
             startRealtimeStream: (type: 'camera' | 'screen' | 'audio') => void;
             stopRealtimeStream: (type: 'camera' | 'screen' | 'audio') => void;
+            toggleRealtimeStream: (type: 'camera' | 'screen' | 'audio') => void;
+            toggleVoiceEnabled: (enabled: boolean) => Promise<void>;
+            cancelSpeech: () => void;
             onRealtimeUpdate: (callback: (update: { type: string, state: any }) => void) => () => void;
             onRealtimeStatusUpdate: (callback: (update: { type: string, status: any }) => void) => () => void;
+            sendTtsChunk: (text: string) => void;
             removeInferenceListeners: () => void;
 
             platform: string;
@@ -240,9 +250,9 @@ function App() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-    const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor' | 'agents' | 'realtime'>('chat');
+    const [currentView, setCurrentView] = useState<'chat' | 'dev' | 'store' | 'project' | 'logs' | 'settings' | 'monitor' | 'world-monitor' | 'agents' | 'realtime' | 'hebbian'>('chat');
     const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
-    const [selectedSymbol, setSelectedSymbol] = useState<SymbolDef | null>(null);
+    const [selectedSymbol, setSelectedSymbol] = useState<any>(null);
     const [isGraphView, setIsGraphView] = useState(false);
 
     const [isTracePanelOpen, setIsTracePanelOpen] = useState(false);
@@ -888,6 +898,8 @@ function App() {
                 return <AgentScreen headerProps={getHeaderProps('Agent Orchestrator')} />;
             case 'realtime':
                 return <RealtimeScreen headerProps={getHeaderProps('Realtime Perception')} />;
+            case 'hebbian':
+                return <HebbianDashboardScreen />;
             default:
                 return <div className="flex-1 flex items-center justify-center text-gray-500 font-mono uppercase tracking-[0.3em]">Module_Loading: {currentView}</div>;
         }
@@ -951,6 +963,17 @@ function App() {
                         >
                             <Activity size={14} />
                             Perception
+                        </button>
+                        <button 
+                            onClick={() => setCurrentView('hebbian')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-widest transition-all ${
+                                currentView === 'hebbian' 
+                                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' 
+                                : 'bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-purple-400 border border-gray-800'
+                            }`}
+                        >
+                            <Activity size={14} />
+                            Hebbian Learning
                         </button>
                     </Header>
                 </div>

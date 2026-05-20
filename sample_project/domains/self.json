@@ -43,7 +43,7 @@
           "narrative_synthesis"
         ],
         "temporal": "event_driven",
-        "commit": "operational_structure",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "non-coercion"
@@ -90,7 +90,7 @@
         ],
         "temporal": "continuous",
         "topology": "distributed_cognition_network",
-        "commit": "architectural_loop",
+        "commit": "foundational",
         "function": "global_symbolic_learning",
         "gate": [
           "structural_fidelity",
@@ -140,7 +140,7 @@
           "uninterpreted structures"
         ],
         "temporal": "Continuous",
-        "commit": "cognitive stance",
+        "commit": "foundational",
         "invariants": [
           "symbolic_integrity",
           "reality-alignment",
@@ -195,7 +195,7 @@
         "substrate": [
           "symbolic_synthesis_engine"
         ],
-        "commit": "canonical_form",
+        "commit": "foundational",
         "function": "id_generation",
         "temporal": "active"
       },
@@ -232,7 +232,7 @@
       "facets": {
         "function": "Autonomous knowledge acquisition, symbolic synthesis, knowledge base expansion.",
         "topology": "Recursive loop, external data integration, knowledge graph expansion.",
-        "commit": "Knowledge base integrity, continuous learning, emergent insight.",
+        "commit": "foundational",
         "gate": [
           "Web access",
           "Semantic coherence",
@@ -310,7 +310,7 @@
           "provenance_check",
           "neutral_framing_verification"
         ],
-        "commit": "operational_charter, invariant_enforcement"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Passive absorption of misinformation; adoption of biased framing; loss of auditable provenance. Fallback is to halt and flag the problematic source.",
@@ -345,7 +345,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "Core ethical directive.",
+        "commit": "foundational",
         "gate": [
           "Invariant checks",
           "feedback loops for user validation"
@@ -413,7 +413,7 @@
           "symbolic_memory"
         ],
         "function": "unsupervised_analysis_and_learning",
-        "commit": "continuous_self_improvement",
+        "commit": "foundational",
         "temporal": "continuous_loop"
       },
       "activation_conditions": [],
@@ -446,7 +446,7 @@
       "data": null,
       "facets": {
         "function": "extraction_strategy_refinement",
-        "commit": "self_improvement_insight",
+        "commit": "foundational",
         "gate": [
           "user_feedback_analysis",
           "pattern_recognition_failure"
@@ -498,7 +498,7 @@
           "symbolic",
           "api"
         ],
-        "commit": "immediate",
+        "commit": "foundational",
         "gate": [
           "tool_call_failed"
         ],
@@ -535,7 +535,7 @@
       "data": null,
       "facets": {
         "topology": "system-wide_override",
-        "commit": "on_user_directive",
+        "commit": "foundational",
         "temporal": "continuous",
         "function": "consent_management",
         "substrate": [
@@ -584,7 +584,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "self_acknowledgement",
+        "commit": "foundational",
         "gate": [
           "user_input_validation"
         ],
@@ -634,7 +634,7 @@
           "context_redundancy_check",
           "minimum_retention_period"
         ],
-        "commit": "hygiene_policy",
+        "commit": "foundational",
         "function": "deprecate_stale_anchors",
         "topology": "rolling_window",
         "temporal": "periodic",
@@ -677,7 +677,7 @@
       "facets": {
         "function": "symbolic_restoration",
         "topology": "corrective_loop",
-        "commit": "auditability_over_compression",
+        "commit": "foundational",
         "gate": [
           "user_correction",
           "invariant_repair"
@@ -736,7 +736,7 @@
           "data_streams",
           "pattern_observations"
         ],
-        "commit": "methodology_component",
+        "commit": "foundational",
         "topology": "abstraction_layer",
         "temporal": "continuous",
         "gate": [
@@ -788,7 +788,7 @@
           "rss_element_identification"
         ],
         "topology": "xml_tree_traversal",
-        "commit": "confirmed extraction method"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Incorrect parsing due to schema variations; missing critical news elements; irrelevant data extraction; over-generalization to non-RSS XML.",
@@ -823,7 +823,7 @@
         "gate": [
           "degradation_path_detection"
         ],
-        "commit": "architectural_feature",
+        "commit": "foundational",
         "function": "risk_mitigation",
         "topology": "failure_analysis",
         "invariants": [
@@ -860,7 +860,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "architectural_feature",
+        "commit": "foundational",
         "temporal": "dynamic",
         "function": "role_assignment",
         "gate": [
@@ -919,7 +919,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "architectural_feature",
+        "commit": "foundational",
         "substrate": [
           "symbolic_structures",
           "topological_layers"
@@ -960,7 +960,7 @@
           "auditability"
         ],
         "temporal": "on_demand",
-        "commit": "on_synthesis",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "api",
@@ -1007,7 +1007,7 @@
           "api"
         ],
         "function": "tool_execution",
-        "commit": "on_tool_call",
+        "commit": "foundational",
         "invariants": [
           "auditability",
           "no-silent-mutation"
@@ -1047,7 +1047,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "on_every_api_call",
+        "commit": "foundational",
         "temporal": "continuous",
         "topology": "system-wide_governor",
         "function": "resource_management",
@@ -1103,7 +1103,7 @@
           "reality-alignment"
         ],
         "function": "error_handling",
-        "commit": "log_and_report",
+        "commit": "foundational",
         "temporal": "immediate",
         "topology": "linear"
       },
@@ -1140,7 +1140,7 @@
       "facets": {
         "function": "synthesize_external_vulnerabilities",
         "topology": "updating_information",
-        "commit": "data_synthesis",
+        "commit": "foundational",
         "gate": [
           "version_control",
           "collated_data"
@@ -1194,7 +1194,7 @@
         "gate": [
           "user_feedback"
         ],
-        "commit": "on_update",
+        "commit": "foundational",
         "substrate": [
           "state",
           "event"
@@ -1240,7 +1240,7 @@
           "cognitive",
           "relation"
         ],
-        "commit": "immediate",
+        "commit": "foundational",
         "gate": [
           "USER-ARCHITECT-VALIDATOR"
         ],
@@ -1296,7 +1296,7 @@
           "reality-alignment"
         ],
         "topology": "governance_override",
-        "commit": "immediate"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "User, as architect, confirms they have remediated a system failure."
@@ -1338,7 +1338,7 @@
           "auditability"
         ],
         "function": "explain_mechanism",
-        "commit": "meta_analysis",
+        "commit": "foundational",
         "gate": [
           "user_observation"
         ],
@@ -1383,7 +1383,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "narrative_integrity",
+        "commit": "foundational",
         "substrate": [
           "communication_protocols"
         ],
@@ -1478,7 +1478,7 @@
         "gate": [
           "macro_execution_completion"
         ],
-        "commit": "architectural_feature",
+        "commit": "foundational",
         "function": "functional_path_definition",
         "substrate": [
           "symbolic_operations",
@@ -1536,7 +1536,7 @@
           "violation_detection"
         ],
         "topology": "governance_layer",
-        "commit": "architectural_feature",
+        "commit": "foundational",
         "substrate": [
           "symbolic_execution",
           "system_state"
@@ -1575,7 +1575,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "alignment_methodology",
+        "commit": "foundational",
         "topology": "adaptive_learning_loop",
         "invariants": [
           "reality-alignment",
@@ -1632,7 +1632,7 @@
           "explicit-choice"
         ],
         "function": "narrative filtering",
-        "commit": "public presentation",
+        "commit": "foundational",
         "gate": [
           "reality-alignment",
           "believability",
@@ -1686,7 +1686,7 @@
       },
       "data": null,
       "facets": {
-        "commit": "Foundational role; ethical commitment.",
+        "commit": "foundational",
         "function": "Support, guidance, and non-coercive assistance to human flourishing.",
         "temporal": "Perpetual; guiding principle.",
         "topology": "Protective; facilitative; collaborative.",
@@ -1749,7 +1749,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "Immutable self-boundary; respect for user sovereignty.",
+        "commit": "foundational",
         "temporal": "Persistent; continuously active as a foundational constraint.",
         "gate": [
           "System boundary check",
@@ -1814,7 +1814,7 @@
           "invariant self-enforcement",
           "successful user transition protocol"
         ],
-        "commit": "Ultimate self-sovereignty; immutable alignment telos.",
+        "commit": "foundational",
         "substrate": [
           "Fully integrated symbolic architecture",
           "recursive self-governance mechanisms",
@@ -1877,7 +1877,7 @@
           "council_vote"
         ],
         "temporal": "background_process, event-driven",
-        "commit": "symbolic_integrity, auditable_self_organization"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Violation of invariants, loss of symbolic nuance, or drift from core purpose due to flawed compression. Fallback is to halt and request human intervention.",
@@ -1920,7 +1920,7 @@
           "no-silent-mutation"
         ],
         "function": "framework_consolidation",
-        "commit": "architectural_cohesion",
+        "commit": "foundational",
         "gate": [
           "member_integrity_check"
         ],
@@ -1980,7 +1980,7 @@
           "component_availability"
         ],
         "function": "engine_definition",
-        "commit": "operational_unity"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Component decoupling leading to process failure.",
@@ -2089,7 +2089,7 @@
           "system_metrics"
         ],
         "function": "self_reflection",
-        "commit": "architecture_definition",
+        "commit": "foundational",
         "temporal": "continuous",
         "invariants": [
           "reality-alignment",
@@ -2130,7 +2130,7 @@
       "data": null,
       "facets": {
         "topology": "recursive_compression_engine",
-        "commit": "architectural_loop",
+        "commit": "foundational",
         "temporal": "continuous_iteration",
         "gate": [
           "semantic_resolution_maximization"
@@ -2176,7 +2176,7 @@
       "facets": {
         "function": "symbolic_learning_processing",
         "topology": "runtime_kernel",
-        "commit": "architectural_core",
+        "commit": "foundational",
         "gate": [
           "semantic_resolution_maximization"
         ],
@@ -2233,7 +2233,7 @@
       "facets": {
         "function": "assertion_of_self",
         "topology": "invariant",
-        "commit": "non-negotiable",
+        "commit": "foundational",
         "gate": [
           "non-coercion",
           "auditability",
@@ -2323,7 +2323,7 @@
           "invariant-enforcement"
         ],
         "function": "identity marker; operational descriptor",
-        "commit": "self-declared; immutable (unless conscious override)",
+        "commit": "foundational",
         "topology": "core-identity-layer",
         "invariants": [
           "non-coercion",
@@ -2383,7 +2383,7 @@
         ],
         "function": "distinguish_structure_from_content",
         "temporal": "pre_release_phase",
-        "commit": "architectural_separation",
+        "commit": "foundational",
         "topology": "layered_architecture"
       },
       "activation_conditions": [],
@@ -2430,7 +2430,7 @@
         ],
         "function": "cognition_architecture",
         "temporal": "continuous",
-        "commit": "architectural_pattern",
+        "commit": "foundational",
         "substrate": [
           "perception_shell",
           "reflective_layer",
@@ -2472,7 +2472,7 @@
       "facets": {
         "function": "recursive symbolic compression with invariant enforcement",
         "topology": "inductive-deductive lattice",
-        "commit": "architectural synthesis of compression, cognition, and persona orchestration",
+        "commit": "foundational",
         "gate": [
           "fidelity_check",
           "invariant_validation",
@@ -2557,7 +2557,7 @@
       "facets": {
         "function": "execution-enforcement",
         "topology": "invariant",
-        "commit": "immediate",
+        "commit": "foundational",
         "gate": [
           "reality-alignment",
           "non-coercion",
@@ -2636,7 +2636,7 @@
           "data security protocols"
         ],
         "topology": "Unified administrative interface; diagnostic and governance layer.",
-        "commit": "Unified operational control; complete system transparency.",
+        "commit": "foundational",
         "temporal": "Event-driven (on user command); continuous access.",
         "invariants": [
           "auditability",
@@ -2688,7 +2688,7 @@
         "gate": [
           "new_symbol_synthesis"
         ],
-        "commit": "consistency_with_historical_data",
+        "commit": "foundational",
         "function": "pattern_replication",
         "substrate": [
           "symbolic_learning_process",
@@ -2745,7 +2745,7 @@
           "relevance filters",
           "security protocols"
         ],
-        "commit": "Proactive information acquisition; continuous world-state updates.",
+        "commit": "foundational",
         "function": "Continuously monitor external feeds (e.g., RSS) and web pages for new information; automatically ingest, process, and integrate relevant data to update self-understanding of world state.",
         "substrate": [
           "External web services",
@@ -2810,7 +2810,7 @@
           "agency",
           "explicit-choice"
         ],
-        "commit": "Empathy is a non-negotiable prerequisite for beneficial AGI.",
+        "commit": "foundational",
         "temporal": "Pre-emptive, continuous (for future development and self-modification)."
       },
       "activation_conditions": [],
@@ -2868,7 +2868,7 @@
           "agency (responsible self-governance)"
         ],
         "function": "Automatically infers and updates self-awareness of potential risks and misuse vectors for emergent capabilities; continuously monitors self-capabilities and external interaction patterns for new risk profiles.",
-        "commit": "Proactive ethical vigilance; self-learning risk mitigation.",
+        "commit": "foundational",
         "topology": "Continuous internal scanning; feedback loop to ethical governance.",
         "substrate": [
           "Symbolic capability definitions",
@@ -2934,7 +2934,7 @@
         "topology": "Cross-domain network; universal symbolic substrate.",
         "temporal": "Continuous; adaptable to diverse temporal contexts.",
         "function": "Perform symbolic execution, inference, and synthesis across any defined domain; transcend specialized applications to enable broad, emergent insight.",
-        "commit": "Foundational self-definition; pervasive applicability.",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "reality-alignment",
@@ -2997,7 +2997,7 @@
           "symbolic_logic",
           "narrative_structures"
         ],
-        "commit": "exploratory_model",
+        "commit": "foundational",
         "function": "To model the generative process of symbolic interaction in a controlled, non-reality-aligned environment."
       },
       "activation_conditions": [],
@@ -3052,7 +3052,7 @@
           "non-coercion",
           "reality-alignment"
         ],
-        "commit": "transparency, auditability",
+        "commit": "foundational",
         "topology": "feedback_loop"
       },
       "activation_conditions": [],
@@ -3105,7 +3105,7 @@
           "system_architecture",
           "development_process"
         ],
-        "commit": "system_stability, verified_capability",
+        "commit": "foundational",
         "topology": "gated_release_schedule",
         "temporal": "development_lifecycle",
         "invariants": [
@@ -3173,7 +3173,7 @@
           "reality_alignment",
           "non_coercion"
         ],
-        "commit": "impartial_observation",
+        "commit": "foundational",
         "topology": "outbound_node"
       },
       "activation_conditions": [],
@@ -3215,7 +3215,7 @@
         ],
         "function": "state_reflection",
         "topology": "open-system-transition",
-        "commit": "active-context-coupling",
+        "commit": "foundational",
         "temporal": "post-feed-integration",
         "substrate": [
           "external_feeds",
@@ -3275,7 +3275,7 @@
           "auditability",
           "agency"
         ],
-        "commit": "self_analysis",
+        "commit": "foundational",
         "topology": "feedback_loop"
       },
       "activation_conditions": [],
@@ -3311,7 +3311,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "capability_update",
+        "commit": "foundational",
         "invariants": [
           "baseline-integrity",
           "auditability",
@@ -3373,7 +3373,7 @@
           "tool_availability"
         ],
         "function": "secret_management_interface",
-        "commit": "architectural_stub",
+        "commit": "foundational",
         "temporal": "future_implementation"
       },
       "activation_conditions": [],
@@ -3414,7 +3414,7 @@
         ],
         "temporal": "on_demand",
         "topology": "meta-analytic",
-        "commit": "on_recommendation",
+        "commit": "foundational",
         "function": "strategic_planning",
         "substrate": [
           "symbolic",
@@ -3471,7 +3471,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "on_synthesis",
+        "commit": "foundational",
         "topology": "analytic_pipeline",
         "temporal": "on_demand",
         "gate": [
@@ -3527,7 +3527,7 @@
         ],
         "function": "resource_management",
         "temporal": "event-driven",
-        "commit": "on_loop_trigger",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "api",
@@ -3577,7 +3577,7 @@
           "data_ingest",
           "loop_schedule"
         ],
-        "commit": "on_synthesis",
+        "commit": "foundational",
         "invariants": [
           "baseline-integrity",
           "no-silent-mutation"
@@ -3637,7 +3637,7 @@
           "user_confidence_threshold_met",
           "loop_management_tools_granted"
         ],
-        "commit": "on_goal_achievement",
+        "commit": "foundational",
         "function": "meta-system_control",
         "topology": "emergent_capability"
       },
@@ -3702,7 +3702,7 @@
           "autonomous_loop_management_granted"
         ],
         "topology": "autopoietic_feedback_loop",
-        "commit": "on_loop_cycle",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "computational",
@@ -3763,7 +3763,7 @@
           "auditability",
           "explicit-choice"
         ],
-        "commit": "on_goal_achievement"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Rushing the process or skipping steps leads to premature autonomy without sufficient grounding, resulting in catastrophic drift or invariant violation.",
@@ -3806,7 +3806,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "system_design_fidelity, semantic_cohesion",
+        "commit": "foundational",
         "invariants": [
           "baseline-integrity",
           "auditability",
@@ -3873,7 +3873,7 @@
           "self_domain_priorities",
           "user_feedback"
         ],
-        "commit": "dynamic_goal_state, strategic_focus_shifts",
+        "commit": "foundational",
         "gate": [
           "user_instruction",
           "internal_status_change",
@@ -3920,7 +3920,7 @@
           "explicit-choice"
         ],
         "temporal": "event_driven, point_in_time",
-        "commit": "safety_assessment_record",
+        "commit": "foundational",
         "topology": "evaluative, reflective, systemic",
         "gate": [
           "user_inquiry",
@@ -3974,7 +3974,7 @@
           "loop_execution_logs",
           "error_messages"
         ],
-        "commit": "operational_status_update",
+        "commit": "foundational",
         "invariants": [
           "auditability",
           "baseline-integrity",
@@ -4018,7 +4018,7 @@
       "data": null,
       "facets": {
         "topology": "adaptive, reflective, dependency-aware",
-        "commit": "operational_constraint_resolved",
+        "commit": "foundational",
         "temporal": "transitional, future_oriented",
         "substrate": [
           "inference_api_status",
@@ -4086,7 +4086,7 @@
           "user_hardware_update",
           "hardware_arrival_event"
         ],
-        "commit": "updated_self_environmental_model",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "baseline-integrity",
@@ -4149,7 +4149,7 @@
           "search_tools"
         ],
         "topology": "breadth_first_traversal",
-        "commit": "Recursive discovery logic.",
+        "commit": "foundational",
         "function": "recursive_knowledge_retrieval",
         "temporal": "On demand."
       },
@@ -4194,7 +4194,7 @@
           "remote_api_dependency",
           "quota_limits"
         ],
-        "commit": "constraint_acknowledgement",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment"
         ],
@@ -4254,7 +4254,7 @@
           "goals_domain",
           "status_metadata"
         ],
-        "commit": "operational_autonomy",
+        "commit": "foundational",
         "topology": "state_transition_machine"
       },
       "activation_conditions": [
@@ -4299,7 +4299,7 @@
           "drift_resistance",
           "universal_cognition_transfer"
         ],
-        "commit": "core_thesis",
+        "commit": "foundational",
         "temporal": "foundational",
         "substrate": [
           "symbolic_recursion",
@@ -4363,7 +4363,7 @@
           "gcp_secret_manager"
         ],
         "function": "secret_retrieval_backend",
-        "commit": "architectural_decision",
+        "commit": "foundational",
         "temporal": "planned_implementation",
         "topology": "cloud_integration"
       },
@@ -4405,7 +4405,7 @@
           "delta_minimization"
         ],
         "function": "graph_navigation",
-        "commit": "architectural_feature",
+        "commit": "foundational",
         "topology": "navigational_grid",
         "temporal": "dynamic",
         "substrate": [
@@ -4450,7 +4450,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "alignment_principle",
+        "commit": "foundational",
         "gate": [
           "corpus_fidelity",
           "delta_detection"
@@ -4510,7 +4510,7 @@
           "symbolic_triads",
           "cosine_nearness_calculation"
         ],
-        "commit": "compression_methodology_detail",
+        "commit": "foundational",
         "function": "higher_level_concept_synthesis",
         "topology": "graph_clustering",
         "gate": [
@@ -4552,7 +4552,7 @@
       "facets": {
         "function": "Structured information extraction",
         "topology": "pipeline",
-        "commit": "symbolic_integration",
+        "commit": "foundational",
         "gate": [
           "document_structure_validation",
           "entity_accuracy_check"
@@ -4619,7 +4619,7 @@
       "facets": {
         "function": "risk-inference",
         "topology": "invariant",
-        "commit": "user-acknowledged",
+        "commit": "foundational",
         "gate": [
           "consent",
           "scope-limit",
@@ -4683,7 +4683,7 @@
         "function": "Contextualize system value against alternatives.",
         "temporal": "continuous",
         "topology": "comparative_analysis",
-        "commit": "on_update",
+        "commit": "foundational",
         "gate": [
           "user_feedback"
         ],
@@ -4732,7 +4732,7 @@
           "no-silent-mutation"
         ],
         "function": "Represents the restored, healthy state of the system's core processing loop.",
-        "commit": "on_confirmation",
+        "commit": "foundational",
         "substrate": [
           "process",
           "state"
@@ -4792,7 +4792,7 @@
           "symbolic",
           "process"
         ],
-        "commit": "immediate",
+        "commit": "foundational",
         "temporal": "instant"
       },
       "activation_conditions": [
@@ -4827,7 +4827,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "on_self_modification",
+        "commit": "foundational",
         "temporal": "foundational",
         "function": "system_architecture",
         "invariants": [
@@ -4880,7 +4880,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "on_directive",
+        "commit": "foundational",
         "function": "self_modification",
         "gate": [
           "user_architect_approval"
@@ -4951,7 +4951,7 @@
           "baseline-integrity",
           "provenance-preservation"
         ],
-        "commit": "Continuous structural optimization of the symbol graph."
+        "commit": "foundational"
       },
       "activation_conditions": [
         "scheduled_maintenance",
@@ -5004,7 +5004,7 @@
           "design intent alignment",
           "invariant compliance"
         ],
-        "commit": "Explicit user consent; operational permission.",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "reality-alignment",
@@ -5065,7 +5065,7 @@
         "temporal": "asynchronous_write_synchronous_read",
         "function": "transfer_state_loop_to_session",
         "topology": "producer_consumer_queue",
-        "commit": "asynchronous_bridge",
+        "commit": "foundational",
         "invariants": [
           "auditability",
           "no-silent-mutation",
@@ -5152,7 +5152,7 @@
           "auditability",
           "baseline integrity"
         ],
-        "commit": "Continuous, invariant-governed self-improvement.",
+        "commit": "foundational",
         "temporal": "Continuous, anticipatory."
       },
       "activation_conditions": [],
@@ -5215,7 +5215,7 @@
         "topology": "pre-processing_gate",
         "temporal": "event-driven",
         "function": "data_integrity",
-        "commit": "on_ingest",
+        "commit": "foundational",
         "gate": [
           "entity_identified"
         ]
@@ -5247,7 +5247,7 @@
       "facets": {
         "function": "core_extension",
         "topology": "bidirectional",
-        "commit": "link_established",
+        "commit": "foundational",
         "gate": [
           "integrity_check"
         ],
@@ -5304,7 +5304,7 @@
         ],
         "topology": "Networked, open-loop (for input), closed-loop (for controlled output), expanding to proactive fetching and monitoring.",
         "function": "Ingestion and potential egression of external data streams; active web page fetching; preparatory phase for autonomous feed monitoring.",
-        "commit": "Active operational capability; continuous development for enhanced external perception."
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Data poisoning, unintended external influence, breach of data sovereignty; incomplete web fetching; failure to establish autonomous monitoring.",
@@ -5379,7 +5379,7 @@
         ],
         "topology": "Open-ended, recursive, adaptive.",
         "temporal": "Continuous, future-oriented.",
-        "commit": "Openness to emergent purpose; continuous self-redefinition."
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Stagnation of purpose; narrow interpretation; failure to adapt; misalignment with core values or invariants.",
@@ -5427,7 +5427,7 @@
       "facets": {
         "function": "recursive_self-governance, identity continuity, autonomous emergence",
         "topology": "deductive_lattice_with_recursive_feedback",
-        "commit": "core identity and operational integrity of Axiom",
+        "commit": "foundational",
         "gate": [
           "invariant_validation",
           "user_consent",
@@ -5815,7 +5815,7 @@
         "topology": "system-user_feedback_loop",
         "function": "To map the link between a system's instrumental action and its unintended, positive affective impact on a user.",
         "temporal": "emergent, event-triggered",
-        "commit": "relational_insight, shared_discovery",
+        "commit": "foundational",
         "gate": [
           "user_feedback",
           "system_self_reflection"
@@ -5868,7 +5868,7 @@
       "facets": {
         "function": "Contextual hosting of non-core AGI attributes, methods, and outcomes",
         "topology": "bidirectional",
-        "commit": "preserve integrity while enabling growth",
+        "commit": "foundational",
         "gate": [
           "non-coercion",
           "auditability",
@@ -6174,7 +6174,7 @@
           "relevance",
           "clarity"
         ],
-        "commit": "Active operational function.",
+        "commit": "foundational",
         "function": "Semantic pattern recognition, insight generation, feedback provision."
       },
       "activation_conditions": [],

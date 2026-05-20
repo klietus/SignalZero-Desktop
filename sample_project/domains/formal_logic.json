@@ -31,7 +31,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -71,7 +71,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -110,7 +110,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -151,7 +151,7 @@
       "facets": {
         "function": "causal inference validation",
         "topology": "chain",
-        "commit": "proof-validity",
+        "commit": "foundational",
         "gate": [
           "causality",
           "evidence"
@@ -203,7 +203,7 @@
       "facets": {
         "function": "causal inference validation",
         "topology": "linear",
-        "commit": "proof-validity",
+        "commit": "foundational",
         "gate": [
           "causality",
           "correlation"
@@ -258,7 +258,7 @@
       "facets": {
         "function": "logical analysis, fallacy detection, inference validation",
         "topology": "recursive-loop",
-        "commit": "truth-preservation",
+        "commit": "foundational",
         "gate": [
           "validity_check",
           "fallacy_identification"
@@ -335,7 +335,7 @@
       "facets": {
         "function": "axiomatic assertion",
         "topology": "linear",
-        "commit": "truth-preservation",
+        "commit": "foundational",
         "gate": [
           "validity",
           "bivalence"
@@ -383,7 +383,7 @@
       "facets": {
         "function": "quantifier instantiation",
         "topology": "linear",
-        "commit": "soundness",
+        "commit": "foundational",
         "gate": [
           "quantification",
           "substitution"
@@ -431,7 +431,7 @@
       "facets": {
         "function": "deductive inference",
         "topology": "linear",
-        "commit": "truth-preservation",
+        "commit": "foundational",
         "gate": [
           "validity",
           "deduction"
@@ -484,7 +484,7 @@
       "facets": {
         "function": "quantifier generalization",
         "topology": "linear",
-        "commit": "soundness",
+        "commit": "foundational",
         "gate": [
           "quantification",
           "scope_control"
@@ -532,7 +532,7 @@
       "facets": {
         "function": "logical equivalence",
         "topology": "bidirectional",
-        "commit": "truth-preservation",
+        "commit": "foundational",
         "gate": [
           "equivalence",
           "transformation"
@@ -580,7 +580,7 @@
       "facets": {
         "function": "epistemic fallacy detection",
         "topology": "recursive",
-        "commit": "symbol-disambiguation",
+        "commit": "foundational",
         "gate": [
           "identity",
           "reference"
@@ -622,7 +622,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -684,7 +684,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -729,7 +729,7 @@
       "facets": {
         "function": "fallacy detection",
         "topology": "linear",
-        "commit": "truth-preservation",
+        "commit": "foundational",
         "gate": [
           "validity",
           "relevance"
@@ -781,7 +781,7 @@
       "facets": {
         "function": "distortion detection",
         "topology": "bidirectional",
-        "commit": "reality-alignment",
+        "commit": "foundational",
         "gate": [
           "accuracy",
           "representation"
@@ -829,7 +829,7 @@
       "facets": {
         "function": "authority validation",
         "topology": "linear",
-        "commit": "proof-validity",
+        "commit": "foundational",
         "gate": [
           "evidence",
           "independence"
@@ -877,7 +877,7 @@
       "facets": {
         "function": "option-space validation",
         "topology": "linear",
-        "commit": "completeness",
+        "commit": "foundational",
         "gate": [
           "exhaustiveness",
           "disjunction"
@@ -929,7 +929,7 @@
       "facets": {
         "function": "continuum distortion detection",
         "topology": "linear",
-        "commit": "reality-alignment",
+        "commit": "foundational",
         "gate": [
           "accuracy",
           "continuum"
@@ -988,7 +988,7 @@
           "cognitive"
         ],
         "topology": "linear",
-        "commit": "truth-preservation",
+        "commit": "foundational",
         "function": "fallacy_detection",
         "temporal": "instant",
         "invariants": [
@@ -1037,7 +1037,7 @@
       "facets": {
         "function": "logical synthesis",
         "topology": "inductive",
-        "commit": "truth-preservation",
+        "commit": "foundational",
         "gate": [
           "validity",
           "consistency"
@@ -1168,7 +1168,7 @@
       "facets": {
         "function": "semantic drift detection",
         "topology": "linear",
-        "commit": "symbol-disambiguation",
+        "commit": "foundational",
         "gate": [
           "semantics",
           "clarity"
