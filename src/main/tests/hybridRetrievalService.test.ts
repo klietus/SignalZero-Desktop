@@ -34,6 +34,15 @@ vi.mock('../services/predicateIndexService.js', () => ({
     }
 }));
 
+vi.mock('../services/lancedbService.js', () => ({
+    lancedbService: {
+        search: vi.fn().mockResolvedValue([]),
+        searchWithDomain: vi.fn().mockResolvedValue([]),
+        indexBatch: vi.fn().mockResolvedValue(0),
+        deleteSymbol: vi.fn().mockResolvedValue(true),
+    }
+}));
+
 const resetDb = () => {
     sqliteService.__sqliteTestUtils.reset();
     sqliteService.run(`PRAGMA foreign_keys = OFF`);
@@ -131,7 +140,7 @@ describe('hybridRetrievalService — retrieve', () => {
         insertSymbol('SYM-2', { name: 'Processor', role: 'processor', kind: 'pattern', symbol_tag: 'volatile' });
         insertSymbol('SYM-3', { name: 'Output', role: 'output', kind: 'data', symbol_tag: 'data' });
 
-        const results = await hybridRetrievalService.retrieve('anchor concept', [], 10, 0);
+        const results = await hybridRetrievalService.retrieve('anchor concept', [], 10, 0, 'test-domain');
 
         expect(results.length).toBeGreaterThan(0);
         expect(results[0].symbol.id).toBeDefined();
@@ -142,7 +151,7 @@ describe('hybridRetrievalService — retrieve', () => {
         insertSymbol('CORE-2', { name: 'Core Processor', role: 'processor', kind: 'pattern', symbol_tag: 'core' });
         insertSymbol('UNRELATED', { name: 'Random Thing', role: 'random', kind: 'data', symbol_tag: 'unrelated' });
 
-        const results = await hybridRetrievalService.retrieve('core anchor concept', [], 10, 0);
+        const results = await hybridRetrievalService.retrieve('core anchor concept', [], 10, 0, 'test-domain');
 
         expect(results.length).toBeGreaterThan(0);
         // CORE-1 should rank higher than UNRELATED
@@ -160,7 +169,7 @@ describe('hybridRetrievalService — retrieve', () => {
         insertSymbol('RECENT', { name: 'Recent', recency_weight: 1.0, last_updated: recentTime });
         insertSymbol('OLD', { name: 'Old', recency_weight: 0.01, last_updated: oldTime });
 
-        const results = await hybridRetrievalService.retrieve('test', [], 10, 0);
+        const results = await hybridRetrievalService.retrieve('test', [], 10, 0, 'test-domain');
 
         // Both should be found
         const recent = results.find(r => r.symbol.id === 'RECENT');
@@ -225,7 +234,7 @@ describe('hybridRetrievalService — cosine similarity', () => {
         insertSymbol('V1', { name: 'Test', symbol_tag: 'test' });
         insertSymbol('V2', { name: 'Test', symbol_tag: 'test' });
 
-        const results = await hybridRetrievalService.retrieve('test', [], 10, 0);
+        const results = await hybridRetrievalService.retrieve('test', [], 10, 0, 'test-domain');
         expect(results.length).toBeGreaterThan(0);
     });
 
@@ -263,7 +272,7 @@ describe('hybridRetrievalService — graph expansion', () => {
         insertLink('ROOT', 'HOP1-B');
         insertLink('HOP1-A', 'HOP2-A');
 
-        const results = await hybridRetrievalService.retrieve('root', [], 10, 2);
+        const results = await hybridRetrievalService.retrieve('root', [], 10, 2, 'test-domain');
         const ids = results.map(r => r.symbol.id);
 
         expect(ids).toContain('ROOT');
@@ -277,7 +286,7 @@ describe('hybridRetrievalService — graph expansion', () => {
         insertSymbol('EXPANDED');
         insertLink('CENTER', 'EXPANDED');
 
-        const results = await hybridRetrievalService.retrieve('center', [], 10, 1);
+        const results = await hybridRetrievalService.retrieve('center', [], 10, 1, 'test-domain');
 
         const ids = results.map(r => r.symbol.id);
         expect(ids).toContain('CENTER');

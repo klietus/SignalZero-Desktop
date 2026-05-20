@@ -7,6 +7,13 @@ vi.mock('child_process', () => ({
     spawn: vi.fn()
 }));
 
+vi.mock('fs', () => ({
+    default: {
+        existsSync: vi.fn(() => true)
+    },
+    existsSync: vi.fn(() => true)
+}));
+
 describe('VisionProcess', () => {
     let mockProcess: any;
 

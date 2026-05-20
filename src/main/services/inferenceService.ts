@@ -464,14 +464,39 @@ const _streamAssistantResponseInternal = async function* (
         }
       } else if (m.role === 'assistant') {
         const parts: any[] = [];
+        // Add thought part if reasoning_content is present
+        const reasoning = (m as any).reasoning_content;
+        if (reasoning) {
+          parts.push({ thought: reasoning });
+        }
+        
         if (m.content) parts.push({ text: m.content });
         if (m.tool_calls) {
-          m.tool_calls.forEach(tc => {
+          let lastSeenSignature: string | undefined = undefined;
+          // First pass: find the signature if it exists anywhere in this message's tool calls
+          for (const tc of m.tool_calls) {
+            if ((tc as any).thought_signature) {
+              lastSeenSignature = (tc as any).thought_signature;
+              break;
+            }
+          }
+
+          m.tool_calls.forEach((tc, idx) => {
             try {
+              const signature = (tc as any).thought_signature || lastSeenSignature;
+              loggerService.catDebug(LogCategory.INFERENCE, "Mapping tool call for Gemini history", { 
+                idx, 
+                name: tc.function.name, 
+                hasSignature: !!(tc as any).thought_signature,
+                usingCarriedSignature: !!(!(tc as any).thought_signature && lastSeenSignature),
+                signaturePreview: signature ? signature.slice(0, 10) + "..." : "none"
+              });
+              
               parts.push({
                 functionCall: {
                   name: tc.function.name,
-                  args: JSON.parse(tc.function.arguments)
+                  args: JSON.parse(tc.function.arguments),
+                  ...(signature ? { thought_signature: signature } : {})
                 }
               });
             } catch (e) {
@@ -524,63 +549,116 @@ const _streamAssistantResponseInternal = async function* (
 
     const result = await chatSession.sendMessageStream(messageToSend.parts);
     let textAccumulator = "";
-    const collectedToolCalls: ChatCompletionMessageToolCall[] = [];
+    let thinkingAccumulator = "";
     let finishReason: string | null = null;
 
+    let fullTextSoFar = "";
+    let fullThinkingSoFar = "";
+
     for await (const chunk of result.stream) {
-      let text = "";
-      let thinking = "";
+      let chunkText = "";
+      let chunkThinking = "";
+      let hasParts = false;
 
       // Extract thinking and narrative from chunk.candidates (available directly during stream)
       const candidates = (chunk as any).candidates || [];
       if (candidates[0]?.content?.parts) {
+        hasParts = true;
         for (const part of candidates[0].content.parts) {
           if (part?.thought) {
-            thinking += part.text || "";
+            // Handle both possible structures: {thought: string} or {thought: true, text: string}
+            chunkThinking += typeof part.thought === 'string' ? part.thought : (part.text || "");
           } else if (part?.text) {
-            text += part.text;
+            chunkText += part.text;
           }
         }
       }
 
-      // Fallback to chunk.text() if no parts structure found
-      if (!text && !thinking) {
-        try { text = chunk.text(); } catch (e) { }
+      // Handle Thinking/Reasoning Delta
+      if (chunkThinking.length > fullThinkingSoFar.length) {
+        const thinkingDelta = chunkThinking.slice(fullThinkingSoFar.length);
+        fullThinkingSoFar = chunkThinking;
+        thinkingAccumulator = fullThinkingSoFar;
+        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: thinking delta", { length: thinkingDelta.length });
+        yield { reasoning: thinkingDelta };
       }
 
-      if (thinking) {
-        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: thinking chunk", { length: thinking.length, preview: thinking.slice(0, 100) });
-        yield { reasoning: thinking };
+      // Handle Narrative Delta
+      if (chunkText.length > fullTextSoFar.length) {
+        const textDelta = chunkText.slice(fullTextSoFar.length);
+        fullTextSoFar = chunkText;
+        textAccumulator = fullTextSoFar;
+        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: narrative delta", { length: textDelta.length });
+        yield { text: textDelta };
       }
-      if (text) {
-        textAccumulator += text;
-        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: narrative chunk", { length: text.length, preview: text.slice(0, 80) });
-        yield { text };
+
+      // Fallback to chunk.text() if no parts structure found OR if we didn't get any text from parts
+      if (!hasParts || (chunkText.length === 0 && !chunkThinking)) {
+        try { 
+          const textDelta = chunk.text(); 
+          if (textDelta) {
+            textAccumulator += textDelta;
+            fullTextSoFar = textAccumulator;
+            loggerService.catDebug(LogCategory.INFERENCE, "Gemini: fallback text delta", { length: textDelta.length });
+            yield { text: textDelta };
+          }
+        } catch (e) { }
       }
-      const calls = chunk.functionCalls();
-      if (calls && calls.length > 0) {
-        calls.forEach((call: any) => {
-          const toolCallObj: any = {
+    }
+
+    // Capture final response after stream is exhausted
+    const response = await result.response;
+    finishReason = response.candidates?.[0]?.finishReason ?? null;
+
+    const collectedToolCalls: ChatCompletionMessageToolCall[] = [];
+    let lastThoughtSignature: string | undefined = undefined;
+    
+    if (response.candidates?.[0]?.content?.parts) {
+      // First pass: find the signature if it exists anywhere
+      for (const part of response.candidates[0].content.parts) {
+        if (part.functionCall?.thought_signature) {
+          lastThoughtSignature = part.functionCall.thought_signature;
+          break;
+        }
+      }
+
+      for (const [idx, part] of response.candidates[0].content.parts.entries()) {
+        if (part.functionCall) {
+          const call = part.functionCall;
+          const signature = call.thought_signature || lastThoughtSignature;
+          
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: functionCall part", {
+            idx,
+            name: call.name,
+            hasSignature: !!call.thought_signature,
+            usingCarriedSignature: !!(!call.thought_signature && lastThoughtSignature),
+            signaturePreview: signature ? signature.slice(0, 10) + "..." : "none"
+          });
+          
+          collectedToolCalls.push({
             id: 'gemini-' + randomUUID(),
             type: 'function',
             function: {
               name: call.name,
               arguments: JSON.stringify(call.args)
-            }
-          };
-          collectedToolCalls.push(toolCallObj);
-        });
+            },
+            thought_signature: signature
+          } as any);
+        } else if (part.thought) {
+          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { idx, length: part.text?.length });
+        }
       }
     }
-
-    // Capture finish reason from final response before yielding
-    finishReason = (result as any).response?.candidates?.[0]?.finishReason ?? null;
 
     const assistantMessage: ChatCompletionMessageParam = {
       role: "assistant",
       content: textAccumulator,
       ...(collectedToolCalls.length > 0 ? { tool_calls: collectedToolCalls } : {}),
     };
+
+    if (thinkingAccumulator) {
+      (assistantMessage as any).reasoning_content = thinkingAccumulator;
+    }
 
     // Attach unified finish reason for turn-ending logic
     const geminiSettings = await settingsService.getInferenceSettings();
@@ -1114,7 +1192,12 @@ Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains a
             role: "assistant",
             content: isEndingTurn ? stripThoughts(totalTextAccumulatedAcrossLoops) : (nextAssistant.content as string || ""),
             timestamp: new Date().toISOString(),
-            toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ id: call.id, name: call.function?.name, arguments: call.function?.arguments })),
+            toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ 
+              id: call.id, 
+              name: call.function?.name, 
+              arguments: call.function?.arguments,
+              thought_signature: call.thought_signature 
+            })),
             metadata: {
               kind: hasTools ? "assistant_tool_call" : "assistant_response",
               ...(reasoning ? { reasoning_content: reasoning } : {})
