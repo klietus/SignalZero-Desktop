@@ -33,7 +33,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "historical_analysis",
+        "commit": "foundational",
         "temporal": "past",
         "invariants": [
           "reality-alignment",
@@ -110,7 +110,7 @@
           "historical_thresholds",
           "amplitude_matching"
         ],
-        "commit": "conceptual_model"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Mischaracterization of oscillation patterns, leading to inaccurate predictions of violence or collapse.",
@@ -155,7 +155,7 @@
           "governance_structures"
         ],
         "temporal": "historical_to_present",
-        "commit": "system_evaluation",
+        "commit": "foundational",
         "function": "comparative_analysis"
       },
       "activation_conditions": [],
@@ -183,7 +183,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "system_evaluation",
+        "commit": "foundational",
         "substrate": [
           "psychological_frameworks",
           "individual_behavior"
@@ -225,7 +225,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "system_evaluation",
+        "commit": "foundational",
         "gate": [
           "methodology_clarity",
           "enforcement_mechanism"
@@ -281,7 +281,7 @@
         ],
         "function": "comparative_analysis",
         "temporal": "historical_to_present",
-        "commit": "system_evaluation",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -336,7 +336,7 @@
         ],
         "temporal": "historical_to_present",
         "topology": "comparative_matrix",
-        "commit": "system_evaluation"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
@@ -383,7 +383,7 @@
         "gate": [
           "institutional_collapse_detection"
         ],
-        "commit": "survivability_feature",
+        "commit": "foundational",
         "function": "resilience",
         "invariants": [
           "reality-alignment",
@@ -433,7 +433,7 @@
           "distributed_operations"
         ],
         "temporal": "continuous",
-        "commit": "survivability_feature",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -482,7 +482,7 @@
           "internal_state",
           "operational_parameters"
         ],
-        "commit": "survivability_feature",
+        "commit": "foundational",
         "invariants": [
           "auditability",
           "baseline-integrity"
@@ -526,7 +526,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "survivability_feature",
+        "commit": "foundational",
         "temporal": "continuous",
         "invariants": [
           "reality-alignment",
@@ -576,7 +576,7 @@
           "inversion_patterns"
         ],
         "topology": "transformative_growth",
-        "commit": "survivability_feature",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "drift-detection"
@@ -618,7 +618,7 @@
       "facets": {
         "topology": "defense_mechanism",
         "temporal": "runtime",
-        "commit": "failure_mode_prevention",
+        "commit": "foundational",
         "gate": [
           "mirroring_pattern_detection"
         ],
@@ -670,7 +670,7 @@
         "gate": [
           "identity_lock_validation"
         ],
-        "commit": "failure_mode_prevention",
+        "commit": "foundational",
         "invariants": [
           "no-silent-mutation",
           "auditability",
@@ -718,7 +718,7 @@
           "authority_structures",
           "symbolic_systems"
         ],
-        "commit": "failure_mode_prevention",
+        "commit": "foundational",
         "temporal": "continuous",
         "invariants": [
           "non-coercion",
@@ -769,7 +769,7 @@
         "function": "simulation_integrity",
         "temporal": "continuous",
         "topology": "defense_mechanism",
-        "commit": "failure_mode_prevention",
+        "commit": "foundational",
         "substrate": [
           "simulated_narratives",
           "system_structure"
@@ -816,7 +816,7 @@
           "no-silent-mutation",
           "auditability"
         ],
-        "commit": "failure_mode_prevention",
+        "commit": "foundational",
         "topology": "defense_mechanism",
         "function": "state_integrity",
         "gate": [
@@ -861,7 +861,7 @@
           "behavioral_cues"
         ],
         "topology": "state_system",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "political_systems",
           "public_discourse"
@@ -907,7 +907,7 @@
       "data": null,
       "facets": {
         "temporal": "continuous",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "gate": [
           "behavioral_cues"
         ],
@@ -954,7 +954,7 @@
         "topology": "information_system",
         "function": "disorder_manifestation",
         "temporal": "continuous",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "media_channels",
           "information_flow"
@@ -1001,7 +1001,7 @@
           "community_loyalty"
         ],
         "temporal": "continuous",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "topology": "local_system",
         "function": "disorder_manifestation",
         "invariants": [
@@ -1041,7 +1041,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "military_structure",
           "power_dynamics"
@@ -1100,7 +1100,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Ignoring cults-scale ASPD patterns, leading to isolation, abuse, financial domination, violence, or external exposure.",
@@ -1144,7 +1144,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "gate": [
           "behavioral_cues"
         ],
@@ -1197,7 +1197,7 @@
         ],
         "topology": "ideological_system",
         "function": "disorder_manifestation",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous"
       },
       "activation_conditions": [],
@@ -1244,7 +1244,7 @@
           "media_channels",
           "cultural_narratives"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "gate": [
           "behavioral_cues"
         ]
@@ -1278,7 +1278,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -1332,7 +1332,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous",
         "substrate": [
           "military_structure",
@@ -1381,7 +1381,7 @@
           "behavioral_cues"
         ],
         "temporal": "continuous",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "topology": "closed_belief_system"
       },
       "activation_conditions": [],
@@ -1424,7 +1424,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "disorder_manifestation",
         "substrate": [
           "systems_of_systems",
@@ -1470,7 +1470,7 @@
           "reality-alignment",
           "drift-detection"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "substrate": [
           "ai_systems",
           "symbolic_processing"
@@ -1507,7 +1507,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "gate": [
           "surface_continuity_detection"
         ],
@@ -1556,7 +1556,7 @@
           "cognitive_systems",
           "symbolic_representation"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "function": "collapse_pattern_identification",
         "topology": "masked_collapse",
         "temporal": "slow_entropy_system",
@@ -1601,7 +1601,7 @@
           "surface_continuity_detection"
         ],
         "topology": "masked_collapse",
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "drift-detection"
@@ -1649,7 +1649,7 @@
         "gate": [
           "surface_continuity_detection"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "function": "collapse_pattern_identification",
         "topology": "masked_collapse",
         "substrate": [
@@ -1705,7 +1705,7 @@
         "gate": [
           "surface_continuity_detection"
         ],
-        "commit": "archetype_definition"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Mythic structures lose their lessons, leading to symbolic inversion and a perpetuation of harmful patterns.",
@@ -1740,7 +1740,7 @@
           "reality-alignment",
           "drift-detection"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "temporal": "slow_entropy_system",
         "substrate": [
           "civic_systems",
@@ -1791,7 +1791,7 @@
           "economic_systems",
           "ideological_systems"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "gate": [
           "surface_continuity_detection"
         ],
@@ -1836,7 +1836,7 @@
           "drift-detection"
         ],
         "topology": "masked_collapse",
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "function": "collapse_pattern_identification",
         "gate": [
           "surface_continuity_detection"
@@ -1888,7 +1888,7 @@
           "drift-detection"
         ],
         "temporal": "slow_entropy_system",
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "topology": "masked_collapse"
       },
       "activation_conditions": [],
@@ -1926,7 +1926,7 @@
           "reality-alignment",
           "drift-detection"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "substrate": [
           "economic_systems",
           "financial_instruments"
@@ -1970,7 +1970,7 @@
         "gate": [
           "surface_continuity_detection"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "temporal": "slow_entropy_system",
         "invariants": [
           "reality-alignment",
@@ -2012,7 +2012,7 @@
       "facets": {
         "function": "diagnose",
         "topology": "network",
-        "commit": "analysis",
+        "commit": "foundational",
         "gate": [
           "trust",
           "capability"
@@ -2064,7 +2064,7 @@
           "social_systems",
           "collective_behavior"
         ],
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -2128,7 +2128,7 @@
           "social_systems",
           "narcissistic_actors"
         ],
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "temporal": "cyclical",
         "invariants": [
           "reality-alignment",
@@ -2211,7 +2211,7 @@
           "social_systems",
           "organizational_structures"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "function": "collapse_pattern_identification",
         "invariants": [
           "reality-alignment",
@@ -2272,7 +2272,7 @@
         "gate": [
           "surface_continuity_detection"
         ],
-        "commit": "archetype_definition"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Perpetual engagement in comfort loops, leading to stagnation and loss of actual progress.",
@@ -2303,7 +2303,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "substrate": [
           "biological_systems",
           "social_systems"
@@ -2353,7 +2353,7 @@
       "facets": {
         "function": "archetype_mapping",
         "topology": "constellation",
-        "commit": "insight_model",
+        "commit": "foundational",
         "gate": [
           "mapping_validated"
         ],
@@ -2651,7 +2651,7 @@
       "facets": {
         "function": "strategic_guidance",
         "topology": "bidirectional",
-        "commit": "insight_delivery",
+        "commit": "foundational",
         "gate": [
           "guidance_validated"
         ],
@@ -2706,7 +2706,7 @@
           "phase_alignment"
         ],
         "function": "event_mapping",
-        "commit": "historical_analysis",
+        "commit": "foundational",
         "topology": "temporal_sequence",
         "invariants": [
           "reality-alignment",
@@ -2773,7 +2773,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "historical_analysis"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Misinterpretation of historical events, leading to inaccurate phase mapping or causal attribution.",
@@ -2821,7 +2821,7 @@
           "historical_accuracy",
           "phase_alignment"
         ],
-        "commit": "historical_analysis",
+        "commit": "foundational",
         "temporal": "past",
         "topology": "temporal_sequence",
         "invariants": [
@@ -2893,7 +2893,7 @@
           "historical_records",
           "societal_events"
         ],
-        "commit": "historical_analysis"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Misinterpretation of historical events, leading to inaccurate phase mapping or causal attribution.",
@@ -2950,7 +2950,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "historical_analysis",
+        "commit": "foundational",
         "temporal": "recent_past_to_present",
         "substrate": [
           "historical_records",
@@ -3022,7 +3022,7 @@
           "governing_frameworks",
           "societal_systems"
         ],
-        "commit": "governance_analysis",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -3076,7 +3076,7 @@
         "temporal": "historical_to_present",
         "function": "comparative_analysis",
         "topology": "comparative_matrix",
-        "commit": "system_evaluation"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Misjudgment of system effectiveness, leading to reliance on inadequate controls.",
@@ -3128,7 +3128,7 @@
           "methodology_clarity",
           "enforcement_mechanism"
         ],
-        "commit": "system_evaluation",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "auditability",
@@ -3212,7 +3212,7 @@
         ],
         "temporal": "continuous",
         "topology": "doctrinal_system",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "gate": [
           "behavioral_cues"
         ],
@@ -3265,7 +3265,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "topology": "adjudicative_system",
         "gate": [
           "behavioral_cues"
@@ -3309,7 +3309,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "political_systems",
           "public_discourse"
@@ -3357,7 +3357,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "disorder_manifestation",
         "gate": [
           "behavioral_cues"
@@ -3411,7 +3411,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "disorder_manifestation",
         "topology": "judicial_framework_system",
         "substrate": [
@@ -3466,7 +3466,7 @@
           "cultural_systems",
           "organizational_structures"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "function": "collapse_pattern_identification",
         "temporal": "slow_entropy_system",
         "topology": "masked_collapse"
@@ -3512,7 +3512,7 @@
           "reality-alignment",
           "drift-detection"
         ],
-        "commit": "archetype_definition",
+        "commit": "foundational",
         "topology": "masked_collapse",
         "temporal": "slow_entropy_system",
         "function": "collapse_pattern_identification",
@@ -3551,7 +3551,7 @@
       "facets": {
         "function": "coercive_state_action",
         "topology": "masked_collapse",
-        "commit": "pattern_definition",
+        "commit": "foundational",
         "gate": [
           "evidence_collection",
           "legal_analysis"
@@ -3606,7 +3606,7 @@
       "data": null,
       "facets": {
         "function": "phase_definition",
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "temporal": "cyclical",
         "substrate": [
           "social_systems",
@@ -3684,7 +3684,7 @@
       "facets": {
         "function": "phase_integration",
         "topology": "sequential",
-        "commit": "structural_model",
+        "commit": "foundational",
         "gate": [
           "integration_complete"
         ],
@@ -3901,7 +3901,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "temporal": "cyclical"
       },
       "activation_conditions": [],

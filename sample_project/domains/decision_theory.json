@@ -32,7 +32,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -72,7 +72,7 @@
       "data": null,
       "facets": {
         "function": "release_control",
-        "commit": "decision_point",
+        "commit": "foundational",
         "invariants": [
           "explicit-choice",
           "auditability",
@@ -129,7 +129,7 @@
         "invariants": [
           "logic_consistency"
         ],
-        "commit": "stability_analysis",
+        "commit": "foundational",
         "topology": "stability_point",
         "substrate": [
           "game_theory"
@@ -172,7 +172,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "trust"
         ],
@@ -237,7 +237,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "loop"
       },
       "activation_conditions": [
@@ -288,7 +288,7 @@
           "trust",
           "capability"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When choices remain unstructured.",
@@ -323,7 +323,7 @@
         "substrate": [
           "statistics"
         ],
-        "commit": "epistemic_humility",
+        "commit": "foundational",
         "gate": [
           "estimation_context"
         ],
@@ -370,7 +370,7 @@
           "trust"
         ],
         "topology": "linear",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When inside-view stories dominate estimates.",
@@ -406,7 +406,7 @@
         ],
         "temporal": "instant",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "trust"
         ]
@@ -442,7 +442,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "lattice",
         "gate": [
           "trust",
@@ -499,7 +499,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "substrate": [
           "symbolic"
@@ -533,7 +533,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "topology": "linear",
         "substrate": [
@@ -576,7 +576,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "substrate": [
           "symbolic"
@@ -619,7 +619,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "substrate": [
           "symbolic"
@@ -658,7 +658,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "function": "stabilize",
         "substrate": [
@@ -707,7 +707,7 @@
           "valid_priors",
           "valid_likelihoods"
         ],
-        "commit": "probabilistic_consistency",
+        "commit": "foundational",
         "invariants": [
           "axiomatic_probability",
           "reality-alignment",
@@ -765,7 +765,7 @@
         ],
         "temporal": "ideation_phase",
         "function": "positive_sum_search",
-        "commit": "value_creation",
+        "commit": "foundational",
         "topology": "expansion"
       },
       "activation_conditions": [
@@ -817,7 +817,7 @@
         ],
         "function": "roadmap_influence",
         "topology": "organizational_influence",
-        "commit": "strategic_leverage"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When SLA breaches require roadmap adjustment.",
@@ -857,7 +857,7 @@
       "facets": {
         "temporal": "strategic_planning",
         "topology": "matrix",
-        "commit": "strategic_clarity",
+        "commit": "foundational",
         "gate": [
           "multi_agent_context"
         ],
@@ -914,7 +914,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "resource_efficiency",
+        "commit": "foundational",
         "function": "stop_rule_calculation",
         "invariants": [
           "explicit-choice",
@@ -974,7 +974,7 @@
         ],
         "topology": "adaptive_management",
         "temporal": "ongoing",
-        "commit": "strategic_decision",
+        "commit": "foundational",
         "gate": [
           "organizational_impact",
           "resource_allocation"
@@ -1038,7 +1038,7 @@
         "topology": "lattice",
         "function": "govern",
         "temporal": "persistent",
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When evidence handling is informal or biased.",
@@ -1135,7 +1135,7 @@
           "symbolic_logic"
         ],
         "function": "diagnostic_filtering",
-        "commit": "bias_reduction",
+        "commit": "foundational",
         "gate": [
           "decision_context_active"
         ]
@@ -1217,7 +1217,7 @@
           "explicit-choice",
           "agency"
         ],
-        "commit": "reciprocal_fairness",
+        "commit": "foundational",
         "function": "strategy_execution",
         "temporal": "continuous_interaction",
         "topology": "reactive_loop",

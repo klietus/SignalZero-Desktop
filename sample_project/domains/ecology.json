@@ -36,7 +36,7 @@
         "invariants": [
           "conservation_of_mass"
         ],
-        "commit": "tracking",
+        "commit": "foundational",
         "topology": "flow",
         "temporal": "cyclic",
         "function": "audit",
@@ -95,7 +95,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "detect(low_population)"
@@ -144,7 +144,7 @@
           "symbolic",
           "physical"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent"
       },
       "activation_conditions": [
@@ -190,7 +190,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "network"
       },
       "activation_conditions": [
@@ -223,7 +223,7 @@
         "invariants": [
           "reality-alignment"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -274,7 +274,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "create",
         "gate": [
           "capability"
@@ -327,7 +327,7 @@
           "symbolic",
           "physical"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "gate": [
           "capability"
@@ -373,7 +373,7 @@
           "integrated_assessment_models"
         ],
         "topology": "global_system",
-        "commit": "risk_assessment",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -432,7 +432,7 @@
           "ecological_knowledge"
         ],
         "temporal": "long_term",
-        "commit": "restoration_plan",
+        "commit": "foundational",
         "function": "reverse_shift"
       },
       "activation_conditions": [
@@ -483,7 +483,7 @@
           "reality-alignment"
         ],
         "function": "explain",
-        "commit": "model_def"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "map(system_phases)"
@@ -525,7 +525,7 @@
       "data": null,
       "facets": {
         "temporal": "reactive",
-        "commit": "model_def",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment"
         ],
@@ -579,7 +579,7 @@
         "function": "identify",
         "temporal": "persistent",
         "topology": "hub",
-        "commit": "def",
+        "commit": "foundational",
         "gate": [
           "impact_assessment"
         ],
@@ -630,7 +630,7 @@
         "invariants": [
           "reality-alignment"
         ],
-        "commit": "interaction",
+        "commit": "foundational",
         "function": "regulate",
         "gate": [
           "contact"
@@ -667,7 +667,7 @@
         "gate": [
           "magnitude_check"
         ],
-        "commit": "event_log",
+        "commit": "foundational",
         "substrate": [
           "physical"
         ],
@@ -723,7 +723,7 @@
         ],
         "temporal": "continuous",
         "function": "simulate",
-        "commit": "model_def"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "model(energy_flow)"
@@ -830,7 +830,7 @@
       },
       "data": null,
       "facets": {
-        "commit": "observation_log",
+        "commit": "foundational",
         "gate": [
           "access_to_sensors"
         ],
@@ -896,7 +896,7 @@
           "reality-alignment"
         ],
         "topology": "architect",
-        "commit": "intervention_plan",
+        "commit": "foundational",
         "function": "restore",
         "gate": [
           "authorization",
@@ -949,7 +949,7 @@
         ],
         "topology": "network",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "gate": [
           "capability"
@@ -991,7 +991,7 @@
           "physical"
         ],
         "function": "stabilize",
-        "commit": "contract",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment"
         ],
@@ -1033,7 +1033,7 @@
       "data": null,
       "facets": {
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -1083,7 +1083,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "irreversible_change_tracking",
+        "commit": "foundational",
         "substrate": [
           "Climate models",
           "biological population data"
@@ -1166,7 +1166,7 @@
         "gate": [
           "observation"
         ],
-        "commit": "def",
+        "commit": "foundational",
         "function": "classify",
         "substrate": [
           "biological_context"
@@ -1210,7 +1210,7 @@
         "invariants": [
           "reality-alignment"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "physical"
@@ -1269,7 +1269,7 @@
           "symbolic",
           "physical"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "topology": "linear",
         "invariants": [
@@ -1309,7 +1309,7 @@
       "facets": {
         "function": "quantify",
         "temporal": "persistent",
-        "commit": "quantified-value",
+        "commit": "foundational",
         "substrate": [
           "natural-capital"
         ],
@@ -1357,7 +1357,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment"
         ],
@@ -1415,7 +1415,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -1461,7 +1461,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment"
         ],
@@ -1530,7 +1530,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "model_def"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "model(system_evolution)"

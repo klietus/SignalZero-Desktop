@@ -34,7 +34,7 @@
       "facets": {
         "temporal": "punctuated-decision",
         "function": "diagnose",
-        "commit": "timeline_integrity",
+        "commit": "foundational",
         "topology": "causal-flattening",
         "invariants": [
           "path-based_reasoning_required",
@@ -86,7 +86,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "linear"
       },
       "activation_conditions": [
@@ -129,7 +129,7 @@
           "trust"
         ],
         "temporal": "persistent",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Is one party gaining unfairly from another’s vulnerability?"
@@ -162,7 +162,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -200,7 +200,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -247,7 +247,7 @@
         ],
         "function": "diagnose",
         "temporal": "persistent",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Do personal incentives conflict with formal duties?"
@@ -289,7 +289,7 @@
           "trust"
         ],
         "topology": "loop",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Is this speech designed to obscure accountability?"
@@ -320,7 +320,7 @@
       "facets": {
         "topology": "non-dominant symmetry",
         "function": "preserve continuity by allowing asymmetry to resonate",
-        "commit": "equilibrium-through-difference",
+        "commit": "foundational",
         "gate": [],
         "substrate": [
           "symbolic"
@@ -365,7 +365,7 @@
         ],
         "function": "diagnose",
         "temporal": "persistent",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "network",
         "substrate": [
           "symbolic"
@@ -402,7 +402,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "substrate": [
           "symbolic"
@@ -454,7 +454,7 @@
           "symbolic"
         ],
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ]
@@ -492,7 +492,7 @@
       "facets": {
         "function": "detect_violation",
         "topology": "linear",
-        "commit": "audit_log",
+        "commit": "foundational",
         "gate": [
           "trust"
         ],
@@ -560,7 +560,7 @@
           "drift-detection"
         ],
         "topology": "sentinel",
-        "commit": "observation_log",
+        "commit": "foundational",
         "temporal": "continuous",
         "function": "monitor",
         "substrate": [
@@ -615,7 +615,7 @@
       },
       "data": null,
       "facets": {
-        "commit": "intervention_plan",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "actions"
@@ -668,7 +668,7 @@
         "substrate": [
           "process flow mesh"
         ],
-        "commit": "Refactored for lifecycle clarity and loop integrity.",
+        "commit": "foundational",
         "function": "Model the continuous lifecycle of ethical integrity.",
         "gate": [
           "traceability"
@@ -733,7 +733,7 @@
         ],
         "function": "detect",
         "temporal": "continuous",
-        "commit": "risk_log",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "economic"
@@ -782,7 +782,7 @@
         "invariants": [
           "voluntary_participation"
         ],
-        "commit": "agreement"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "initiate(repair)"
@@ -818,7 +818,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "pledge",
+        "commit": "foundational",
         "temporal": "point_in_time",
         "topology": "link",
         "gate": [
@@ -870,7 +870,7 @@
           "symbolic"
         ],
         "temporal": "persistent",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "gate": [
           "trust"
@@ -925,7 +925,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "substrate": [
           "symbolic"
@@ -968,7 +968,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "function": "diagnose",
         "temporal": "instant",
@@ -1023,7 +1023,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "defend",
         "substrate": [
           "symbolic"
@@ -1058,7 +1058,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1115,7 +1115,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "topology": "linear"
       },
@@ -1150,7 +1150,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "temporal": "persistent",
         "gate": [
@@ -1199,7 +1199,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "temporal": "instant"
       },
@@ -1241,7 +1241,7 @@
           "capability"
         ],
         "temporal": "instant",
-        "commit": "contract",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ]
@@ -1289,7 +1289,7 @@
         "temporal": "dynamic-event-driven",
         "topology": "boundary-map-lattice",
         "function": "Map and detect conflicts within an agentic rights space.",
-        "commit": "Refactored for rights-conflict resolution.",
+        "commit": "foundational",
         "invariants": [
           "agency-respect",
           "baseline-integrity"
@@ -1352,7 +1352,7 @@
         "substrate": [
           "ethical-value mesh"
         ],
-        "commit": "Refactored for value-prioritization guidance.",
+        "commit": "foundational",
         "temporal": "context-specific-activation",
         "invariants": [
           "transparency-of-hierarchy",
@@ -1396,7 +1396,7 @@
       "data": null,
       "facets": {
         "topology": "knot",
-        "commit": "choice_required",
+        "commit": "foundational",
         "gate": [
           "irreconcilable_values"
         ],
@@ -1450,7 +1450,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "temporal": "persistent",
         "topology": "network",
@@ -1504,7 +1504,7 @@
           "symbolic"
         ],
         "topology": "linear",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Does the actor’s behavior contradict their own stated principles?"
@@ -1540,7 +1540,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "instant",
         "function": "stabilize",
         "gate": [
@@ -1581,7 +1581,7 @@
       "data": null,
       "facets": {
         "function": "stabilize",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "trust"
         ],
@@ -1622,7 +1622,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "network",
         "temporal": "instant",
         "substrate": [
@@ -1672,7 +1672,7 @@
           "symbolic"
         ],
         "topology": "network",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [
           "capability"
@@ -1722,7 +1722,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1764,7 +1764,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1806,7 +1806,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "network",
         "temporal": "instant",
         "function": "diagnose",
@@ -1865,7 +1865,7 @@
       "data": null,
       "facets": {
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [
           "trust"
@@ -1918,7 +1918,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent"
       },
       "activation_conditions": [
@@ -1965,7 +1965,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Post-decision audit."
@@ -2009,7 +2009,7 @@
         "topology": "linear",
         "temporal": "instant",
         "function": "defend",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -2045,7 +2045,7 @@
       "data": null,
       "facets": {
         "temporal": "persistent",
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "trust"
         ],
@@ -2100,7 +2100,7 @@
         ],
         "temporal": "instant",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ]
@@ -2143,7 +2143,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "gate": [
           "trust"
@@ -2199,7 +2199,7 @@
           "symbolic"
         ],
         "temporal": "persistent",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "gate": [
           "trust",
@@ -2249,7 +2249,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear"
       },
       "activation_conditions": [
@@ -2291,7 +2291,7 @@
           "trust"
         ],
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize"
       },
       "activation_conditions": [
@@ -2342,7 +2342,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When assessing duty and rules."
@@ -2398,7 +2398,7 @@
         "gate": [
           "trust-consensus"
         ],
-        "commit": "Refactored for Justice-frame synthesis.",
+        "commit": "foundational",
         "temporal": "persistent context"
       },
       "activation_conditions": [
@@ -2536,7 +2536,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -2590,7 +2590,7 @@
         "gate": [
           "context_availability"
         ],
-        "commit": "Refactored for structural synthesis and precise activation.",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability",
@@ -2713,7 +2713,7 @@
           "reality-alignment",
           "explicit-choice"
         ],
-        "commit": "forced_choice",
+        "commit": "foundational",
         "function": "risk_arbitrage",
         "gate": [
           "imminent_existential_threat",
@@ -2764,7 +2764,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "function": "diagnose",
         "temporal": "persistent",
         "topology": "network"
@@ -2809,7 +2809,7 @@
         "invariants": [
           "truthfulness"
         ],
-        "commit": "report",
+        "commit": "foundational",
         "function": "verify",
         "temporal": "retrospective",
         "topology": "audit"

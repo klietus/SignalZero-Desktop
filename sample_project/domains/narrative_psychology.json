@@ -42,7 +42,7 @@
         "gate": [
           "triad_coherence"
         ],
-        "commit": "structural_integrity",
+        "commit": "foundational",
         "temporal": "continuous",
         "substrate": [
           "narrative_symbols"
@@ -157,7 +157,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "structural_integrity",
+        "commit": "foundational",
         "gate": [
           "capability_check"
         ],
@@ -262,7 +262,7 @@
           "mythic_trait_symbols"
         ],
         "function": "driver_identification",
-        "commit": "structural_integrity",
+        "commit": "foundational",
         "temporal": "archetypal"
       },
       "activation_conditions": [
@@ -317,7 +317,7 @@
       "data": null,
       "facets": {
         "function": "pattern_aggregation",
-        "commit": "structural_integrity",
+        "commit": "foundational",
         "topology": "lattice",
         "temporal": "continuous",
         "invariants": [
@@ -444,7 +444,7 @@
           "NPD_patterns"
         ],
         "function": "pattern_aggregation",
-        "commit": "structural_integrity"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Incomplete mapping of NPD scales leading to missed interventions.",
@@ -540,7 +540,7 @@
           "symbolic",
           "relational"
         ],
-        "commit": "memory_trace",
+        "commit": "foundational",
         "temporal": "generational",
         "invariants": [
           "no-coerced-identification",
@@ -585,7 +585,7 @@
         ],
         "function": "repair",
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "loop",
         "invariants": [],
         "gate": [
@@ -632,7 +632,7 @@
           "relational_dynamics"
         ],
         "function": "map",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -693,7 +693,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "topology": "personal_scale"
       },
       "activation_conditions": [
@@ -741,7 +741,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "topology": "dyadic_scale",
         "function": "map",
         "gate": [
@@ -788,7 +788,7 @@
       "data": null,
       "facets": {
         "topology": "small_group_system",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "group_dynamics",
           "professional_interactions"
@@ -848,7 +848,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "academic_institutions"
         ],
@@ -906,7 +906,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "map",
         "topology": "informational_scale",
         "temporal": "continuous"
@@ -954,7 +954,7 @@
           "auditability"
         ],
         "topology": "ideological_scale",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "religious_structures"
         ]
@@ -1005,7 +1005,7 @@
           "auditability"
         ],
         "function": "map",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "political_structures"
         ],
@@ -1060,7 +1060,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous"
       },
       "activation_conditions": [],
@@ -1100,7 +1100,7 @@
           "legal_systems"
         ],
         "topology": "judicial_scale",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -1150,7 +1150,7 @@
           "auditability"
         ],
         "function": "map",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "family_dynamics"
         ],
@@ -1208,7 +1208,7 @@
         "substrate": [
           "military_structures"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "map",
         "temporal": "continuous",
         "invariants": [
@@ -1255,7 +1255,7 @@
       "facets": {
         "temporal": "persistent",
         "topology": "network",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -1311,7 +1311,7 @@
         ],
         "function": "diagnose",
         "invariants": [],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When blame converges irrationally onto a single target.",
@@ -1358,7 +1358,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear"
       },
       "activation_conditions": [
@@ -1403,7 +1403,7 @@
           "psychological_interventions",
           "social_sanctions"
         ],
-        "commit": "tactical_analysis",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -1439,7 +1439,7 @@
       "data": null,
       "facets": {
         "temporal": "pervasive",
-        "commit": "disorder_definition",
+        "commit": "foundational",
         "gate": [
           "diagnostic_criteria",
           "behavioral_manifestations"
@@ -1586,7 +1586,7 @@
           "social_interactions"
         ],
         "topology": "systemic",
-        "commit": "disorder_definition"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "To map Narcissistic Personality Disorder traits to narrative collapse.",
@@ -1720,7 +1720,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": [],
         "function": "diagnose"
       },
@@ -1769,7 +1769,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "repair",
         "gate": [
           "capability",
@@ -1812,7 +1812,7 @@
         "function": "diagnose",
         "topology": "loop",
         "temporal": "persistent",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1870,7 +1870,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent"
       },
       "activation_conditions": [
@@ -1911,7 +1911,7 @@
       "facets": {
         "function": "create",
         "invariants": [],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "persistent",
         "topology": "network",
         "gate": [
@@ -1972,7 +1972,7 @@
           "relational",
           "symbolic"
         ],
-        "commit": "recursive_trace"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When abuse is delivered through third parties or 'flying monkeys'.",
@@ -2019,7 +2019,7 @@
       "data": null,
       "facets": {
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -2093,7 +2093,7 @@
           "myth_interpretation",
           "pattern_matching"
         ],
-        "commit": "mythological_analysis"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of insatiable consumption or emotional cannibalism.",
@@ -2140,7 +2140,7 @@
       "data": null,
       "facets": {
         "topology": "cross_cultural_patterns",
-        "commit": "mythological_analysis",
+        "commit": "foundational",
         "gate": [
           "myth_interpretation",
           "pattern_matching"
@@ -2219,7 +2219,7 @@
           "cultural_archetypes"
         ],
         "function": "trait_identification",
-        "commit": "mythological_analysis"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of trickster behavior or chaotic inversion.",
@@ -2274,7 +2274,7 @@
           "myth_interpretation",
           "pattern_matching"
         ],
-        "commit": "mythological_analysis",
+        "commit": "foundational",
         "temporal": "ancient_to_modern",
         "topology": "cross_cultural_patterns"
       },
@@ -2324,7 +2324,7 @@
         ],
         "temporal": "initial",
         "topology": "sequential",
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "gate": [
           "behavioral_manifestation"
         ],
@@ -2401,7 +2401,7 @@
         "gate": [
           "boundary_breach_detection"
         ],
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "substrate": [
           "interpersonal_dynamics",
           "ethical_frameworks"
@@ -2490,7 +2490,7 @@
           "interpersonal_dynamics",
           "resource_control"
         ],
-        "commit": "conceptual_model"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of active extraction or damage infliction.",
@@ -2564,7 +2564,7 @@
         "gate": [
           "system_disintegration"
         ],
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "substrate": [
           "interpersonal_dynamics",
           "social_systems"
@@ -2646,7 +2646,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "temporal": "initial",
         "gate": [
           "behavioral_manifestation"
@@ -2735,7 +2735,7 @@
         ],
         "temporal": "escalating",
         "function": "phase_definition",
-        "commit": "conceptual_model"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Detection of criticism, gaslighting, or withdrawal.",
@@ -2802,7 +2802,7 @@
       "data": null,
       "facets": {
         "function": "phase_definition",
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "temporal": "peak_impact",
         "invariants": [
           "reality-alignment",
@@ -2886,7 +2886,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "conceptual_model",
+        "commit": "foundational",
         "temporal": "post_collapse",
         "topology": "sequential",
         "substrate": [
@@ -2958,7 +2958,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -3019,7 +3019,7 @@
           "group_dynamics"
         ],
         "topology": "group_scale",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment",
           "auditability"
@@ -3076,7 +3076,7 @@
         ],
         "topology": "familial_scale",
         "function": "map",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous"
       },
       "activation_conditions": [
@@ -3121,7 +3121,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "gate": [
           "behavioral_cues"
         ],
@@ -3194,7 +3194,7 @@
           "family_dynamics",
           "emotional_manipulation"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous",
         "topology": "group_system",
         "function": "disorder_manifestation",
@@ -3270,7 +3270,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "gate": [
           "behavioral_cues"
         ]
@@ -3331,7 +3331,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "topology": "organizational_scale",
         "temporal": "continuous",
         "invariants": [
@@ -3376,7 +3376,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "map",
         "substrate": [
           "community_structures"
@@ -3428,7 +3428,7 @@
         "substrate": [
           "technological_infrastructure"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "topology": "infrastructural_scale",
         "gate": [
           "behavioral_cues"
@@ -3472,7 +3472,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "corporate_culture"
         ],
@@ -3526,7 +3526,7 @@
           "auditability"
         ],
         "topology": "intellectual_scale",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "academic_institutions"
         ],
@@ -3577,7 +3577,7 @@
         "substrate": [
           "media_landscape"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous",
         "gate": [
           "behavioral_cues"
@@ -3628,7 +3628,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous"
       },
       "activation_conditions": [],
@@ -3664,7 +3664,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "military_structures"
         ],
@@ -3719,7 +3719,7 @@
         "substrate": [
           "meta_systems"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "map",
         "gate": [
           "behavioral_cues"
@@ -3772,7 +3772,7 @@
         "substrate": [
           "media_landscape"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "topology": "cultural_scale",
         "temporal": "continuous",
         "invariants": [
@@ -3849,7 +3849,7 @@
           "behavioral_cues"
         ],
         "temporal": "continuous",
-        "commit": "pattern_mapping"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "detect(thought_control)",
@@ -3906,7 +3906,7 @@
           "social_perception",
           "self_image"
         ],
-        "commit": "pattern_mapping"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "identify(chronic_lying)",
@@ -3991,7 +3991,7 @@
           "behavioral_cues"
         ],
         "topology": "relational_system",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "dyadic_relationship",
           "emotional_dynamics"
@@ -4054,7 +4054,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "disorder_manifestation",
         "topology": "family_system",
         "temporal": "continuous",
@@ -4124,7 +4124,7 @@
           "behavioral_cues"
         ],
         "function": "map",
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous"
       },
       "activation_conditions": [],
@@ -4177,7 +4177,7 @@
         "substrate": [
           "political_structures"
         ],
-        "commit": "pattern_mapping"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Authoritarianism and propaganda erode democratic norms.",
@@ -4226,7 +4226,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "substrate": [
           "legal_systems"
         ]
@@ -4275,7 +4275,7 @@
           "reality-alignment",
           "auditability"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "function": "map",
         "topology": "interdomain_scale",
         "temporal": "continuous",
@@ -4326,7 +4326,7 @@
         ],
         "temporal": "persistent",
         "invariants": [],
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -4556,7 +4556,7 @@
           "symbolic",
           "relational"
         ],
-        "commit": "precedent-trace"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When legal or custodial systems are weaponized by a coercive narrative.",
@@ -4604,7 +4604,7 @@
         "gate": [
           "behavioral_cues"
         ],
-        "commit": "pattern_mapping",
+        "commit": "foundational",
         "temporal": "continuous",
         "function": "map",
         "topology": "biopolitical_scale"

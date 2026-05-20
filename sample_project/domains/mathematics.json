@@ -31,7 +31,7 @@
       "facets": {
         "function": "number_theory_proof",
         "topology": "linear",
-        "commit": "theorem_validation",
+        "commit": "foundational",
         "gate": [
           "proof_verified"
         ],
@@ -73,7 +73,7 @@
       "facets": {
         "function": "geometry_proof",
         "topology": "linear",
-        "commit": "theorem_validation",
+        "commit": "foundational",
         "gate": [
           "proof_verified"
         ],
@@ -115,7 +115,7 @@
       "facets": {
         "function": "algebraic_structure",
         "topology": "node",
-        "commit": "definition_record",
+        "commit": "foundational",
         "gate": [
           "axioms_validated"
         ],
@@ -157,7 +157,7 @@
       "facets": {
         "function": "analysis_foundation",
         "topology": "node",
-        "commit": "axiom_record",
+        "commit": "foundational",
         "gate": [
           "axioms_validated"
         ],
@@ -199,7 +199,7 @@
       "facets": {
         "function": "set_theory_proof",
         "topology": "linear",
-        "commit": "theorem_validation",
+        "commit": "foundational",
         "gate": [
           "proof_verified"
         ],
@@ -241,7 +241,7 @@
       "facets": {
         "function": "number_theory_proof",
         "topology": "linear",
-        "commit": "theorem_validation",
+        "commit": "foundational",
         "gate": [
           "proof_verified"
         ],
@@ -283,7 +283,7 @@
       "facets": {
         "function": "set_theory_proof",
         "topology": "nonlinear",
-        "commit": "theorem_validation",
+        "commit": "foundational",
         "gate": [
           "proof_verified"
         ],
@@ -325,7 +325,7 @@
       "facets": {
         "function": "analysis_proof",
         "topology": "linear",
-        "commit": "theorem_validation",
+        "commit": "foundational",
         "gate": [
           "proof_verified"
         ],
@@ -367,7 +367,7 @@
       "facets": {
         "function": "algebra_proof",
         "topology": "linear",
-        "commit": "theorem_validation",
+        "commit": "foundational",
         "gate": [
           "proof_verified"
         ],
@@ -409,7 +409,7 @@
       "facets": {
         "function": "probability_proof",
         "topology": "linear",
-        "commit": "theorem_validation",
+        "commit": "foundational",
         "gate": [
           "proof_verified"
         ],
@@ -458,7 +458,7 @@
       "facets": {
         "function": "logic_guidance",
         "topology": "bidirectional",
-        "commit": "proof_assistance",
+        "commit": "foundational",
         "gate": [
           "strategy_validated"
         ],
@@ -504,7 +504,7 @@
       "facets": {
         "function": "foundational synthesis",
         "topology": "inductive",
-        "commit": "truth-preservation",
+        "commit": "foundational",
         "gate": [
           "validity",
           "consistency",

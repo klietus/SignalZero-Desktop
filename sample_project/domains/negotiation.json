@@ -41,7 +41,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "temporal": "instant",
         "invariants": [
           "non-coercion"
@@ -87,7 +87,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Affect flooding drives decisions",
@@ -123,7 +123,7 @@
           "symbolic"
         ],
         "temporal": "instant",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Rigid posture blocks creative trades",
@@ -154,7 +154,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "function": "diagnose",
         "substrate": [
           "symbolic"
@@ -196,7 +196,7 @@
       "facets": {
         "temporal": "instant",
         "invariants": [],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "unknown",
         "gate": [],
         "topology": "linear",
@@ -240,7 +240,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "gate": []
       },
@@ -285,7 +285,7 @@
         "invariants": [],
         "topology": "linear",
         "function": "unknown",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -383,7 +383,7 @@
       "data": null,
       "facets": {
         "gate": [],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "temporal": "instant",
         "function": "unknown",
@@ -464,7 +464,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -498,7 +498,7 @@
       "data": null,
       "facets": {
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -538,7 +538,7 @@
         ],
         "topology": "loop",
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -585,7 +585,7 @@
           "active_listening"
         ],
         "temporal": "immediate",
-        "commit": "professionalism",
+        "commit": "foundational",
         "function": "communication",
         "substrate": [
           "symbolic"
@@ -627,7 +627,7 @@
           "agency"
         ],
         "topology": "linear",
-        "commit": "information",
+        "commit": "foundational",
         "temporal": "immediate",
         "function": "clarification",
         "substrate": [
@@ -667,7 +667,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "transparency",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "reality-alignment",
@@ -718,7 +718,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "credibility",
+        "commit": "foundational",
         "invariants": [
           "non-coercion",
           "reality-alignment",
@@ -771,7 +771,7 @@
       "data": null,
       "facets": {
         "topology": "branch",
-        "commit": "flexibility",
+        "commit": "foundational",
         "temporal": "immediate",
         "substrate": [
           "symbolic"
@@ -818,7 +818,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "Identifies internal team observations that suggest a successful or attempted divide-and-conquer strategy by an external party.",
         "gate": [
           "transparency",
@@ -860,7 +860,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "Detects proposals or arguments from an opposing party specifically crafted to appeal to the individual interests, vulnerabilities, or ego of a key stakeholder, potentially undermining collective objectives.",
         "gate": [
           "capability",
@@ -908,7 +908,7 @@
       "facets": {
         "function": "unknown",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -943,7 +943,7 @@
       "facets": {
         "function": "unknown",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -986,7 +986,7 @@
       "facets": {
         "function": "unknown",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -1021,7 +1021,7 @@
       "facets": {
         "function": "unknown",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -1056,7 +1056,7 @@
       "facets": {
         "function": "unknown",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -1090,7 +1090,7 @@
       "data": null,
       "facets": {
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [
           "capability"
@@ -1136,7 +1136,7 @@
         ],
         "temporal": "instant",
         "function": "Interrupts manipulative silence with a neutral clarification",
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "gate": [
           "capability"
@@ -1189,7 +1189,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Binary choice forced."
@@ -1224,7 +1224,7 @@
         "temporal": "instant",
         "topology": "loop",
         "function": "stabilize",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ]
@@ -1268,7 +1268,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "loop",
         "substrate": [
           "symbolic"
@@ -1318,7 +1318,7 @@
           "symbolic"
         ],
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant"
       },
       "activation_conditions": [
@@ -1361,7 +1361,7 @@
         ],
         "function": "diagnose",
         "topology": "linear",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Potential bluff detected."
@@ -1399,7 +1399,7 @@
           "symbolic"
         ],
         "function": "diagnose",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Bluff exposed."
@@ -1431,7 +1431,7 @@
         "temporal": "persistent",
         "topology": "loop",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -1469,7 +1469,7 @@
       "facets": {
         "topology": "loop",
         "function": "stabilize",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "gate": [
           "trust"
@@ -1510,7 +1510,7 @@
           "capability"
         ],
         "topology": "loop",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1550,7 +1550,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "temporal": "instant",
         "topology": "loop"
@@ -1589,7 +1589,7 @@
         "invariants": [
           "non-coercion"
         ],
-        "commit": "power_assertion",
+        "commit": "foundational",
         "function": "domination",
         "topology": "asymmetric",
         "temporal": "continuous",
@@ -1644,7 +1644,7 @@
           "symbolic"
         ],
         "topology": "network",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -1696,7 +1696,7 @@
           "symbolic"
         ],
         "topology": "network",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "continuous"
       },
       "activation_conditions": [],
@@ -1735,7 +1735,7 @@
         "gate": [],
         "function": "unknown",
         "invariants": [],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Incremental change detected."
@@ -1777,7 +1777,7 @@
           "trust"
         ],
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize"
       },
       "activation_conditions": [],
@@ -1808,7 +1808,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "function": "stabilize",
         "invariants": [
           "non-coercion"
@@ -1857,7 +1857,7 @@
         ],
         "topology": "linear",
         "temporal": "instant",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Appeal to fairness masks asymmetric gain",
@@ -1893,7 +1893,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Negotiation centers around unrealistic starting point",
@@ -1923,7 +1923,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "Detects use of personal relationship to override fair terms",
         "temporal": "instant",
         "topology": "loop",
@@ -1962,7 +1962,7 @@
           "non-coercion"
         ],
         "temporal": "instant",
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "linear",
         "function": "stabilize",
         "gate": [
@@ -2002,7 +2002,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -2042,7 +2042,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "substrate": [
           "symbolic"
@@ -2088,7 +2088,7 @@
         ],
         "function": "unknown",
         "gate": [],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear"
       },
       "activation_conditions": [
@@ -2142,7 +2142,7 @@
       "data": null,
       "facets": {
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "unknown",
         "substrate": [
           "symbolic"
@@ -2244,7 +2244,7 @@
         "invariants": [],
         "function": "unknown",
         "gate": [],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant"
       },
       "activation_conditions": [
@@ -2326,7 +2326,7 @@
           "capability"
         ],
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -2375,7 +2375,7 @@
       "facets": {
         "topology": "continuous",
         "temporal": "continuous",
-        "commit": "integrity",
+        "commit": "foundational",
         "function": "communication_governance",
         "substrate": [
           "symbolic"
@@ -2429,7 +2429,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "Detects changes in behavior or communication from a targeted stakeholder indicating susceptibility to divisive tactics.",
         "gate": [
           "observation",
@@ -2471,7 +2471,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "Detects attempts by an opposing party to engage a specific stakeholder in private or exclusive communication, bypassing the main negotiating team.",
         "gate": [
           "capability",
@@ -2515,7 +2515,7 @@
       "facets": {
         "function": "unknown",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -2562,7 +2562,7 @@
       "facets": {
         "function": "unknown",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -2609,7 +2609,7 @@
       "facets": {
         "function": "unknown",
         "topology": "linear",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "gate": [],
         "substrate": [
@@ -2652,7 +2652,7 @@
         "temporal": "instant",
         "topology": "linear",
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ]
@@ -2700,7 +2700,7 @@
           "explicit-choice"
         ],
         "topology": "linear",
-        "commit": "contract",
+        "commit": "foundational",
         "function": "diagnose"
       },
       "activation_conditions": [
@@ -2734,7 +2734,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "substrate": [
           "symbolic"
@@ -2780,7 +2780,7 @@
       "data": null,
       "facets": {
         "function": "diagnose",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -2836,7 +2836,7 @@
           "symbolic"
         ],
         "function": "stabilize",
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "linear"
       },
       "activation_conditions": [
@@ -2870,7 +2870,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -2915,7 +2915,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "linear",
         "function": "stabilize",
         "invariants": [
@@ -2965,7 +2965,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "temporal": "instant",
         "substrate": [
@@ -3010,7 +3010,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -3066,7 +3066,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability"
         ]
@@ -3111,7 +3111,7 @@
           "capability"
         ],
         "function": "diagnose",
-        "commit": "contract"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Dominance strategy detected."
@@ -3149,7 +3149,7 @@
       "data": null,
       "facets": {
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -3202,7 +3202,7 @@
         "invariants": [
           "mutual-benefit"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "network",
         "function": "Reinforces common objectives to resist divide tactics",
         "substrate": [
@@ -3254,7 +3254,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "instant",
         "substrate": [
           "symbolic"
@@ -3299,7 +3299,7 @@
           "explicit-choice"
         ],
         "temporal": "instant",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "Separates bundled items for individual evaluation",
         "gate": [
           "capability"
@@ -3353,7 +3353,7 @@
         "temporal": "instant",
         "topology": "linear",
         "function": "Spots alterations to terms right before closure",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Late term change detected."
@@ -3402,7 +3402,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "invariants": [
           "auditability",
           "explicit-choice"
@@ -3447,7 +3447,7 @@
         "function": "Reopens full review process when late changes are detected",
         "topology": "linear",
         "temporal": "instant",
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -3497,7 +3497,7 @@
       },
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "Strategically elevates the role, contributions, and visible integration of a potentially targeted stakeholder within public negotiation settings to visibly reinforce their importance and team alignment.",
         "gate": [
           "empathy",
@@ -3593,7 +3593,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "Identifies specific actions taken by an opposing party to isolate or undermine a key stakeholder.",
         "gate": [
           "observation",
@@ -3642,7 +3642,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "alignment",
+        "commit": "foundational",
         "gate": [
           "shared_vision",
           "persuasion"
@@ -3696,7 +3696,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [],
         "temporal": "instant",
         "function": "unknown",
@@ -3765,7 +3765,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -3810,7 +3810,7 @@
         "temporal": "instant",
         "gate": [],
         "invariants": [],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "function": "unknown"
       },
@@ -3973,7 +3973,7 @@
         "invariants": [
           "auditability"
         ],
-        "commit": "contract",
+        "commit": "foundational",
         "topology": "linear",
         "function": "Demands clear, verifiable details for any future-oriented term",
         "substrate": [

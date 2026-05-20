@@ -45,7 +45,7 @@
           "validity"
         ],
         "topology": "network",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "govern",
         "invariants": [
           "no-negative-stock",
@@ -85,7 +85,7 @@
           "safety-time ≥ p95 variability"
         ],
         "function": "govern",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "data",
           "operational"
@@ -174,7 +174,7 @@
           "data",
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "govern",
         "topology": "mesh"
       },
@@ -246,7 +246,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "playbook",
+        "commit": "foundational",
         "function": "analyze",
         "substrate": [
           "data",
@@ -317,7 +317,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic",
           "financial"
@@ -409,7 +409,7 @@
         ],
         "topology": "market",
         "function": "govern",
-        "commit": "ledger"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Ecosystem design",
@@ -471,7 +471,7 @@
           "risk-assessment-complete",
           "resource-allocation"
         ],
-        "commit": "continuous-improvement",
+        "commit": "foundational",
         "temporal": "continuous",
         "invariants": [
           "baseline-integrity",
@@ -540,7 +540,7 @@
         ],
         "function": "stabilize",
         "temporal": "continuous",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "operational"
         ]
@@ -626,7 +626,7 @@
           "financial"
         ],
         "topology": "portfolio",
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "govern"
       },
       "activation_conditions": [
@@ -701,7 +701,7 @@
         "substrate": [
           "operational"
         ],
-        "commit": "playbook",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -777,7 +777,7 @@
       "data": null,
       "facets": {
         "temporal": "window",
-        "commit": "playbook",
+        "commit": "foundational",
         "topology": "bipartite",
         "invariants": [
           "changeover-time within bounds",
@@ -861,7 +861,7 @@
           "no single-point-of-failure",
           "min-max path portfolio"
         ],
-        "commit": "playbook",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -941,7 +941,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "trust_verification",
           "contract_validity"
@@ -1043,7 +1043,7 @@
           "data_integrity",
           "flow_validity"
         ],
-        "commit": "physics-engine"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Flow optimization analysis",
@@ -1110,7 +1110,7 @@
         "substrate": [
           "data"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "topology": "loop",
         "temporal": "window"

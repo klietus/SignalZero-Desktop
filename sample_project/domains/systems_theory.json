@@ -37,7 +37,7 @@
           "network-protocol",
           "human-cognitive"
         ],
-        "commit": "diagnostic log, architectural audit, developer support trigger",
+        "commit": "foundational",
         "invariants": [
           "developer-wellbeing",
           "system-operational-integrity",
@@ -81,7 +81,7 @@
       "data": null,
       "facets": {
         "temporal": "post_deployment",
-        "commit": "risk_assessment",
+        "commit": "foundational",
         "function": "rollback_impediment_identification",
         "substrate": [
           "user_base",
@@ -144,7 +144,7 @@
           "authority_leverage",
           "cross_departmental_alignment"
         ],
-        "commit": "organizational_enforcement"
+        "commit": "foundational"
       },
       "activation_conditions": [],
       "failure_mode": "Continued policy violations, lack of buy-in from other departments, or perceived organizational weakness.",
@@ -179,7 +179,7 @@
           "auditability",
           "reality-alignment"
         ],
-        "commit": "strategic_vulnerability",
+        "commit": "foundational",
         "gate": [
           "budget_review",
           "organizational_prioritization"
@@ -229,7 +229,7 @@
           "symbolic"
         ],
         "topology": "network",
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent"
       },
       "activation_conditions": [
@@ -275,7 +275,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear"
       },
       "activation_conditions": [
@@ -313,7 +313,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "adaptive-loop",
         "function": "stabilize",
         "substrate": [
@@ -359,7 +359,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "topology": "linear",
         "substrate": [
           "symbolic"
@@ -413,7 +413,7 @@
         "invariants": [
           "auditability"
         ],
-        "commit": "financial_analysis"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "When analyzing the financial health of the private fusion sector."
@@ -446,7 +446,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -507,7 +507,7 @@
           "symbolic"
         ],
         "function": "stabilize",
-        "commit": "ledger",
+        "commit": "foundational",
         "invariants": [],
         "gate": [
           "capability",
@@ -567,7 +567,7 @@
         "gate": [
           "capability-assessment"
         ],
-        "commit": "archetypal_pattern",
+        "commit": "foundational",
         "substrate": [
           "systemic resource flow mesh"
         ],
@@ -623,7 +623,7 @@
           "reality-alignment",
           "non-coercion"
         ],
-        "commit": "archetypal_pattern"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Local optimizations sabotage partners",
@@ -670,7 +670,7 @@
         "substrate": [
           "intervention-logic mesh"
         ],
-        "commit": "archetypal_pattern"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Reliance on symptomatic fixes",
@@ -708,7 +708,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "archetypal_pattern",
+        "commit": "foundational",
         "topology": "balancing-on-reinforcing-archetype",
         "temporal": "continuous-monitoring",
         "substrate": [
@@ -767,7 +767,7 @@
         ],
         "topology": "self-sabotaging-fix-archetype",
         "function": "unintended_consequence_detection",
-        "commit": "archetypal_pattern"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Solution exacerbates problem",
@@ -805,7 +805,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "archetypal_pattern",
+        "commit": "foundational",
         "topology": "loop",
         "gate": [
           "trust"
@@ -863,7 +863,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "archetypal_pattern"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Retaliatory spiral",
@@ -897,7 +897,7 @@
         "invariants": [
           "reality-alignment"
         ],
-        "commit": "dynamic_pattern",
+        "commit": "foundational",
         "topology": "loop",
         "substrate": [
           "symbolic"
@@ -954,7 +954,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "dynamic_pattern",
+        "commit": "foundational",
         "temporal": "persistent",
         "topology": "loop",
         "invariants": [
@@ -1005,7 +1005,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "dynamic_pattern",
+        "commit": "foundational",
         "invariants": [
           "reality-alignment"
         ],
@@ -1071,7 +1071,7 @@
         "gate": [
           "capability"
         ],
-        "commit": "dynamic_pattern"
+        "commit": "foundational"
       },
       "activation_conditions": [
         "Resistance to change",
@@ -1105,7 +1105,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "dynamic_pattern",
+        "commit": "foundational",
         "gate": [
           "capability"
         ],
@@ -1155,7 +1155,7 @@
         "gate": [
           "trust"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "substrate": [
           "symbolic"
@@ -1197,7 +1197,7 @@
       "data": null,
       "facets": {
         "topology": "diagnostic_mesh",
-        "commit": "structural_unity",
+        "commit": "foundational",
         "substrate": [
           "symbolic_patterns"
         ],
@@ -1287,7 +1287,7 @@
       "data": null,
       "facets": {
         "temporal": "persistent",
-        "commit": "core_dynamics",
+        "commit": "foundational",
         "gate": [
           "none"
         ],
@@ -1362,7 +1362,7 @@
       "data": null,
       "facets": {
         "topology": "lattice",
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -1458,7 +1458,7 @@
         "temporal": "recursive",
         "function": "govern",
         "topology": "meta-recursive",
-        "commit": "anchor-traceable",
+        "commit": "foundational",
         "gate": [
           "awareness"
         ],
@@ -1524,7 +1524,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "diagnose",
         "topology": "linear",
         "temporal": "persistent"
@@ -1564,7 +1564,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "ledger",
+        "commit": "foundational",
         "temporal": "persistent",
         "substrate": [
           "symbolic"
@@ -1613,7 +1613,7 @@
         "topology": "loop",
         "function": "diagnose",
         "temporal": "persistent",
-        "commit": "ledger",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1661,7 +1661,7 @@
       "data": null,
       "facets": {
         "temporal": "persistent",
-        "commit": "contract",
+        "commit": "foundational",
         "substrate": [
           "symbolic"
         ],
@@ -1711,7 +1711,7 @@
         "substrate": [
           "symbolic"
         ],
-        "commit": "ledger",
+        "commit": "foundational",
         "function": "stabilize",
         "gate": [
           "capability"
@@ -1762,7 +1762,7 @@
         ],
         "temporal": "situational",
         "function": "stabilize",
-        "commit": "ledger",
+        "commit": "foundational",
         "gate": [
           "perception"
         ]
@@ -1806,7 +1806,7 @@
       "data": null,
       "facets": {
         "topology": "lattice",
-        "commit": "contract",
+        "commit": "foundational",
         "gate": [
           "capability",
           "trust"
@@ -1900,7 +1900,7 @@
       "persona": null,
       "data": null,
       "facets": {
-        "commit": "stability-through-auditability",
+        "commit": "foundational",
         "function": "Model of systemic self-regeneration after integrity collapse",
         "topology": "multi-loop regulation network",
         "invariants": [
