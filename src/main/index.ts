@@ -28,6 +28,7 @@ import { sqliteService } from './services/sqliteService.js'
 import { mcpClientService } from './services/mcpClientService.js'
 import { attachmentService } from './services/attachmentService.js'
 import { agentRunner } from './services/agentRunner.js'
+import { linkDecayService } from './services/linkDecayService.js'
 import { realtimeService } from './services/realtime/realtimeService.js'
 import { voiceService } from './services/realtime/voiceProcess.js'
 import { llamaService, urgentLlamaService } from './services/llamaService.js'
@@ -836,6 +837,68 @@ ipcMain.handle('system:run-hygiene', async (_, strategy) => {
 ipcMain.handle('system:run-link-decay', async () => {
   return linkDecayService.runDecayCycle();
 });
+
+// Hebbian Learning Dashboard IPC handlers
+ipcMain.handle('hebbian:get-stats', async () => {
+  const stats = sqliteService.get(`
+    SELECT 
+      COUNT(*) as total_links,
+      SUM(CASE WHEN committed = 'volatile' THEN 1 ELSE 0 END) as volatile_links,
+      SUM(CASE WHEN committed = 'foundational' THEN 1 ELSE 0 END) as foundational_links,
+      SUM(CASE WHEN committed = 'archived' THEN 1 ELSE 0 END) as archived_links,
+      AVG(access_ema) as avg_ema,
+      AVG(access_count) as avg_access_count
+    FROM symbol_links_v2
+  `) as any;
+  
+  const recentActivity = sqliteService.all(`
+    SELECT source_id, target_id, access_count, access_ema, last_accessed, committed
+    FROM symbol_links_v2
+    WHERE julianday('now') - julianday(last_accessed) < 7
+    ORDER BY access_count DESC
+    LIMIT 50
+  `) as any[];
+  
+  const nearingPromotion = sqliteService.all(`
+    SELECT source_id, target_id, access_count, access_ema, created_at, committed
+    FROM symbol_links_v2
+    WHERE committed = 'volatile' 
+      AND (access_count >= 30 OR access_ema >= 0.2)
+    ORDER BY access_count DESC, access_ema DESC
+    LIMIT 50
+  `) as any[];
+  
+  const nearingDecay = sqliteService.all(`
+    SELECT source_id, target_id, access_count, access_ema, last_accessed, created_at, committed
+    FROM symbol_links_v2
+    WHERE committed = 'volatile' 
+      AND access_ema < 0.3
+      AND access_count < 10
+    ORDER BY access_ema ASC, last_accessed ASC
+    LIMIT 50
+  `) as any[];
+  
+  return {
+    stats: stats || {},
+    recentActivity: recentActivity || [],
+    nearingPromotion: nearingPromotion || [],
+    nearingDecay: nearingDecay || []
+  };
+});
+
+ipcMain.handle('hebbian:get-link-history', async (_event, linkId: string) => {
+  // Get access history for a specific link
+  const link = sqliteService.get(`
+    SELECT * FROM symbol_links_v2 WHERE id = ?
+  `, [linkId]) as any;
+  
+  return link || null;
+});
+
+ipcMain.handle('hebbian:force-decay', async () => {
+  return linkDecayService.runDecayCycle();
+});
+
 
 ipcMain.handle('system:is-initialized', () => {
   return settingsService.isInitialized();

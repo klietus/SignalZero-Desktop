@@ -33,6 +33,7 @@ The Kernel is organized into specialized services located in `src/main/services/
 | **DomainService** | Manages symbolic domains, symbol CRUD, and vector indexing. |
 | **DocumentMeaningService** | Parses local attachments and performs multimodal vision analysis. |
 | **EventBusService** | Central nervous system for internal and cross-process communication. |
+| **LinkDecayService** | Memory state stabilization via EMA decay, Hebbian learning, and automatic link promotion/pruning. |
 
 ## 3. Communication Patterns
 
@@ -48,3 +49,23 @@ To prevent "GPU Starvation" on local hardware, the system implements a **Priorit
 - **Priority 1 (User Chat):** Jumps to the front of the queue for immediate responsiveness.
 - **Priority 0 (Background Agents):** Runs only when the hardware is idle or between user turns.
 - **Hardware Awareness:** The lock only enforces a queue if the inference provider is `local`. Cloud-based providers (Gemini/OpenAI) can run in parallel with local tasks.
+
+## 5. Memory State Stabilization
+
+The kernel maintains dynamic knowledge graph health through automatic stabilization routines:
+
+**Link Lifecycle:**
+1. **Volatile**: New links subject to decay and promotion evaluation
+2. **Foundational**: Stable links promoted via sustained use (immune to decay)
+3. **Archived**: Dormant links preserved but excluded from active reasoning
+
+**Stabilization Pipeline:**
+- **Access Recording**: Track usage patterns (`access_count`, `access_ema`) on every link activation
+- **EMA Decay**: Hourly exponential decay (10% per hour) for volatile links
+- **Promotion Check**: Elevate high-value links based on activity thresholds
+- **Pruning**: Remove stale links (low EMA + no recent access)
+- **Archival**: Preserve old, weak links for potential recovery
+
+**Current Status:** Routines implemented in `LinkDecayService` but not yet auto-scheduled. Manual invocation available via Hebbian Dashboard "Force Decay Cycle" button.
+
+See [Memory State Stabilization](MEMORY_STATE_STABILIZATION.md) for detailed mechanics.

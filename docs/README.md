@@ -22,3 +22,6 @@ Guide to the event-driven agent runner, neural gating (vibe checks), and priorit
 
 ## ♻️ [Graph Hygiene](HYGIENE_AND_TOPOLOGY.md)
 How the kernel maintains structural integrity through background topology analysis and self-organization.
+
+## 🧬 [Memory State Stabilization](MEMORY_STATE_STABILIZATION.md)
+EMA decay, Hebbian learning, and automatic link promotion/pruning routines that maintain a dynamic knowledge graph.

@@ -9,7 +9,6 @@ import { eventBusService } from './eventBusService.js';
 import { KernelEventType } from '../types.js';
 import { SymbolDef, GraphHygieneSettings } from '../types.js';
 import { embedTexts } from './embeddingService.js';
-import { linkDecayService } from './linkDecayService.js';
 
 export interface TopologyStats {
     symbolCount: number;
