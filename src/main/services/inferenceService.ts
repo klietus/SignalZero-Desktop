@@ -135,7 +135,10 @@ export const callFastInference = async (
           }));
           const model = client.getGenerativeModel({ 
             model: settings.agentModel,
-            systemInstruction: sysMsg ? { role: 'system', parts: [{ text: sysMsg.content }] } : undefined
+            systemInstruction: sysMsg ? { role: 'system', parts: [{ text: sysMsg.content }] } : undefined,
+            ...(settings.model === 'gemini-3.5-flash' && {
+              thinkingConfig: { thinkingLevel: 'high', includeThoughts: true }
+            })
           });
           const geminiResult = await model.generateContent({
             contents,
@@ -422,7 +425,13 @@ const _streamAssistantResponseInternal = async function* (
   if (settings.provider === 'gemini') {
     const client = await getGeminiClient();
     const geminiTools = toGeminiTools(activeTools);
-    const geminiModel = client.getGenerativeModel({ model: model, tools: geminiTools });
+    const geminiModel = client.getGenerativeModel({
+      model,
+      tools: geminiTools,
+      ...(model === 'gemini-3.5-flash' && {
+        thinkingConfig: { thinkingLevel: 'high', includeThoughts: true }
+      })
+    });
 
     const systemMessage = messages.find(m => m.role === 'system');
     const history: any[] = [];
@@ -484,14 +493,7 @@ const _streamAssistantResponseInternal = async function* (
           m.tool_calls.forEach((tc, idx) => {
             try {
               const signature = (tc as any).thought_signature || lastSeenSignature;
-              loggerService.catDebug(LogCategory.INFERENCE, "Mapping tool call for Gemini history", { 
-                idx, 
-                name: tc.function.name, 
-                tcKeys: Object.keys(tc),
-                hasSignature: !!(tc as any).thought_signature,
-                usingCarriedSignature: !!(!(tc as any).thought_signature && lastSeenSignature),
-                signature: signature || "none"
-              });
+    
               
               const part: any = {
                 functionCall: {
@@ -508,13 +510,6 @@ const _streamAssistantResponseInternal = async function* (
             }
           });
         }
-
-        loggerService.catDebug(LogCategory.INFERENCE, "Reconstructed assistant message parts", { 
-          partCount: parts.length,
-          types: parts.map(p => Object.keys(p)[0]),
-          hasThought: parts.some(p => (p as any).thought),
-          signatures: parts.map(p => (p as any).thoughtSignature ? "present" : "missing").filter((_, i) => parts[i].functionCall)
-        });
 
         if (parts.length === 0) parts.push({ text: ' ' });
 
@@ -661,32 +656,17 @@ const _streamAssistantResponseInternal = async function* (
         }
       }
 
-      // Debug: log raw chunk data
-      loggerService.catDebug(LogCategory.INFERENCE, "Gemini stream chunk", {
-        idx: chunkIdx,
-        hasParts,
-        chunkTextLen: chunkText.length,
-        chunkThinkingLen: chunkThinking.length,
-        maxTextLen,
-        willEmitText: chunkText.length > maxTextLen,
-        chunkTextPreview: chunkText.slice(0, 120) || '(empty)',
-        partTypes: candidates[0]?.content?.parts?.map((p: any) => Object.keys(p)),
-        chunkTextKeys: Object.keys(chunk)
-      });
-
       // Handle Thinking/Reasoning Delta
       if (chunkThinking.length > fullThinkingSoFar.length) {
         const thinkingDelta = chunkThinking.slice(fullThinkingSoFar.length);
         fullThinkingSoFar = chunkThinking;
         thinkingAccumulator = fullThinkingSoFar;
-        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: thinking delta", { length: thinkingDelta.length });
         yield { reasoning: thinkingDelta };
       }
 
       // Emit full text from every chunk
       if (chunkText.length > 0) {
         textAccumulator = chunkText;
-        loggerService.catDebug(LogCategory.INFERENCE, "Gemini: narrative chunk", { length: chunkText.length });
         yield { text: chunkText };
       }
 
@@ -697,7 +677,6 @@ const _streamAssistantResponseInternal = async function* (
           if (textDelta) {
             textAccumulator += textDelta;
             fullTextSoFar = textAccumulator;
-            loggerService.catDebug(LogCategory.INFERENCE, "Gemini: fallback text delta", { length: textDelta.length });
             yield { text: textDelta };
           }
         } catch (e) { }
@@ -1804,14 +1783,6 @@ export const processMessageAsync = async (
     for await (const chunk of stream) {
       if (chunk.text) fullText += chunk.text;
       if (!isSilent && (chunk.text || chunk.toolCalls || chunk.reasoning)) {
-        loggerService.catDebug(LogCategory.INFERENCE, "processMessageAsync: emitting chunk", {
-          hasText: !!chunk.text,
-          textPreview: chunk.text?.slice(0, 80),
-          hasReasoning: !!chunk.reasoning,
-          reasoningPreview: chunk.reasoning?.slice(0, 200),
-          toolCallCount: chunk.toolCalls?.length || 0,
-          isComplete: !!chunk.isComplete
-        });
         eventBusService.emitKernelEvent(KernelEventType.INFERENCE_CHUNK, { ...chunk, sessionId: contextSessionId, messageId } as const);
       }
       if (chunk.isComplete) {

@@ -228,7 +228,6 @@ class VisionSidecar:
                 results = landmarker.detect_for_video( mp_image, int(timestamp_ms))
                 
                 if not results.face_landmarks: 
-                    self.log(f"No face landmarks detected (frame {timestamp_ms})")
                     return [], [], False
 
                 has_people = True

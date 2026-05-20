@@ -1122,6 +1122,8 @@ export const createToolExecutor = (contextSessionId?: string) => {
               // Store v2 metadata in extended fields
               v2_commit: data.facets?.commit || 'volatile',
               v2_last_updated: data.retrieval?.last_updated_epoch ? Math.floor(data.retrieval.last_updated_epoch * 1000) : Date.now(),
+              // Preserve data symbol payload
+              data: data.data || undefined,
             };
             await domainService.addSymbol(data.symbol_domain || '', v1Symbol);
           } else {

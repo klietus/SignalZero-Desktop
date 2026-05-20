@@ -399,15 +399,6 @@ function createWindow(): void {
       if (type === KernelEventType.TRACE_LOGGED) broadcast('trace:logged', raw);
       if (type === KernelEventType.INFERENCE_CHUNK) {
         const chunk = raw as { sessionId: string; text?: string; reasoning?: string; toolCalls?: unknown[]; isComplete?: boolean };
-        loggerService.catDebug(LogCategory.SYSTEM, "IPC → inference:chunk", {
-          sessionId: chunk.sessionId,
-          hasText: !!chunk.text,
-          hasReasoning: !!chunk.reasoning,
-          reasoningPreview: chunk.reasoning?.slice(0, 200),
-          toolCallCount: chunk.toolCalls?.length || 0,
-          isComplete: !!chunk.isComplete
-        });
-        
         // Broadcast final content chunks immediately (not batched) to prevent race with completion event
         if (chunk.isComplete && !chunk.text && !chunk.reasoning) {
           broadcast('inference:chunk', raw);
@@ -734,6 +725,9 @@ ipcMain.handle('domain:search', async (_, query, limit, options) => {
 });
 
 ipcMain.handle('domain:upsert-symbol', async (_, domainId, symbol) => {
+  if (symbol.v2 === true && symbol.schema_version === 2) {
+    return await domainService.addSymbolV2(domainId, symbol);
+  }
   return await domainService.addSymbol(domainId, symbol);
 });
 

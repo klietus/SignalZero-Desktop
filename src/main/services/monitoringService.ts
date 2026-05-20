@@ -406,7 +406,7 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
 
         return this.withRetries(
             async () => {
-                const summary = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.LOW);
+                const summary = await callFastInference([{ role: "user", content: prompt }], 16384, undefined, LlamaPriority.LOW);
                 return {
                     summary: (summary || "").trim(),
                     imageUrl,
@@ -435,7 +435,7 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
 
         return this.withRetries(
             async () => {
-                const fastText = await callFastInference([{ role: "user", content: prompt }], 4192, undefined, LlamaPriority.LOW);
+                const fastText = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.LOW);
             const response = extractJson(fastText);
                 return response;
             },
@@ -625,7 +625,7 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
                     const client = await getGeminiClient();
                     const model = client.getGenerativeModel({
                         model: agentModel,
-                        generationConfig: { maxOutputTokens: 4096 }
+                        generationConfig: { maxOutputTokens: 16384 }
                     });
                     const result = await model.generateContent(prompt);
                     res = extractJson(result.response.text());
@@ -713,7 +713,7 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
             Output a concise, impactful bulleted summary. Incorporate visual details if relevant.`;
 
             try {
-                const refined = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.LOW);
+                const refined = await callFastInference([{ role: "user", content: prompt }], 16384, undefined, LlamaPriority.LOW);
 
                 if (refined) {
                     const updatedMeta = {
