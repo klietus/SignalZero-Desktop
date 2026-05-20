@@ -49,16 +49,16 @@ describe('Gemini thought_signature Handling', () => {
   it('should capture thought_signature from Gemini response and pass it back in history', async () => {
     const thoughtSignature = 'test-signature-123';
     
-    // 1. Mock Gemini response with thought_signature
+    // 1. Mock Gemini response with thoughtSignature as sibling to functionCall (Gemini wire format)
     const mockResponse = {
       candidates: [{
         content: {
           parts: [{
             functionCall: {
               name: 'test_tool',
-              args: { arg1: 'val1' },
-              thought_signature: thoughtSignature
-            }
+              args: { arg1: 'val1' }
+            },
+            thoughtSignature: thoughtSignature
           }]
         },
         finishReason: 'STOP'
@@ -129,6 +129,6 @@ describe('Gemini thought_signature Handling', () => {
     expect(assistantHistoryMsg).toBeDefined();
     const fcPart = assistantHistoryMsg.parts.find((p: any) => p.functionCall);
     expect(fcPart).toBeDefined();
-    expect(fcPart.functionCall.thought_signature).toBe(thoughtSignature);
+    expect(fcPart.thoughtSignature).toBe(thoughtSignature);
   });
 });

@@ -493,13 +493,16 @@ const _streamAssistantResponseInternal = async function* (
                 signature: signature || "none"
               });
               
-              parts.push({
+              const part: any = {
                 functionCall: {
                   name: tc.function.name,
-                  args: JSON.parse(tc.function.arguments),
-                  ...(signature ? { thought_signature: signature } : {})
+                  args: JSON.parse(tc.function.arguments)
                 }
-              });
+              };
+              if (signature) {
+                part.thoughtSignature = signature;
+              }
+              parts.push(part);
             } catch (e) {
               loggerService.catWarn(LogCategory.INFERENCE, "Failed to parse tool arguments for Gemini history", { tool: tc.function.name });
             }
@@ -510,7 +513,7 @@ const _streamAssistantResponseInternal = async function* (
           partCount: parts.length,
           types: parts.map(p => Object.keys(p)[0]),
           hasThought: parts.some(p => (p as any).thought),
-          signatures: parts.map(p => (p.functionCall as any)?.thought_signature ? "present" : "missing").filter((_, i) => parts[i].functionCall)
+          signatures: parts.map(p => (p as any).thoughtSignature ? "present" : "missing").filter((_, i) => parts[i].functionCall)
         });
 
         if (parts.length === 0) parts.push({ text: ' ' });
@@ -602,7 +605,7 @@ const _streamAssistantResponseInternal = async function* (
       historyPartCounts: validatedHistory.map(h => h.parts.length),
       historyParts: validatedHistory.map(h => h.parts.map(p => ({
         type: Object.keys(p)[0],
-        signature: (p.functionCall as any)?.thought_signature ? "present" : (p.functionCall ? "missing" : "n/a")
+        signature: (p as any).thoughtSignature ? "present" : (p.functionCall ? "missing" : "n/a")
       })))
     });
 
@@ -687,10 +690,10 @@ const _streamAssistantResponseInternal = async function* (
     let lastThoughtSignature: string | undefined = undefined;
     
     if (response.candidates?.[0]?.content?.parts) {
-      // First pass: find the signature if it exists anywhere
+      // First pass: find the signature from sibling thoughtSignature fields (Gemini wire format)
       for (const part of response.candidates[0].content.parts) {
-        if ((part.functionCall as any)?.thought_signature) {
-          lastThoughtSignature = (part.functionCall as any).thought_signature;
+        if ((part as any).thoughtSignature) {
+          lastThoughtSignature = (part as any).thoughtSignature;
           break;
         }
       }
@@ -698,14 +701,14 @@ const _streamAssistantResponseInternal = async function* (
       for (const [idx, part] of response.candidates[0].content.parts.entries()) {
         if (part.functionCall) {
           const call = part.functionCall as any;
-          const signature = call.thought_signature || lastThoughtSignature;
+          // Check sibling thoughtSignature first, then fall back to carried signature
+          const signature = (part as any).thoughtSignature || lastThoughtSignature;
           
           loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: functionCall part", {
             idx,
             name: call.name,
-            callKeys: Object.keys(call),
-            hasSignature: !!call.thought_signature,
-            usingCarriedSignature: !!(!call.thought_signature && lastThoughtSignature),
+            hasSignature: !!(part as any).thoughtSignature,
+            usingCarriedSignature: !!(!(part as any).thoughtSignature && lastThoughtSignature),
             signature: signature || "none"
           });
           

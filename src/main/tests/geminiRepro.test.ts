@@ -46,9 +46,10 @@ describe('Gemini Inference Bug Reproduction', () => {
     vi.clearAllMocks();
   });
 
-  it('should reproduce duplication and missing signatures with multiple tool calls', async () => {
+  it('should capture thoughtSignature from sibling field on Part (Gemini wire format)', async () => {
     const thoughtSignature = 'sig-123';
     
+    // Gemini wire format: thoughtSignature is a sibling to functionCall, not nested inside it
     const finalResponse = {
       candidates: [{
         content: {
@@ -58,23 +59,23 @@ describe('Gemini Inference Bug Reproduction', () => {
             {
               functionCall: {
                 name: 'tool_1',
-                args: { a: 1 },
-                thought_signature: thoughtSignature
-              }
+                args: { a: 1 }
+              },
+              thoughtSignature: thoughtSignature
             },
             {
               functionCall: {
                 name: 'tool_2',
-                args: { b: 2 },
-                thought_signature: thoughtSignature
-              }
+                args: { b: 2 }
+              },
+              thoughtSignature: thoughtSignature
             },
             {
               functionCall: {
                 name: 'tool_3',
-                args: { c: 3 },
-                thought_signature: thoughtSignature
-              }
+                args: { c: 3 }
+              },
+              thoughtSignature: thoughtSignature
             }
           ]
         },
@@ -160,8 +161,8 @@ describe('Gemini Inference Bug Reproduction', () => {
     expect(assistantHistoryMsg.parts[0].thought).toBe('Let me think...');
     expect(assistantHistoryMsg.parts[1].text).toBe('I will call tools.');
     
-    // Both function calls should have the signature now
-    expect(assistantHistoryMsg.parts[2].functionCall.thought_signature).toBe(thoughtSignature);
-    expect(assistantHistoryMsg.parts[3].functionCall.thought_signature).toBe(thoughtSignature);
+    // Both function calls should have thoughtSignature as a sibling on the Part
+    expect(assistantHistoryMsg.parts[2].thoughtSignature).toBe(thoughtSignature);
+    expect(assistantHistoryMsg.parts[3].thoughtSignature).toBe(thoughtSignature);
   });
 });
