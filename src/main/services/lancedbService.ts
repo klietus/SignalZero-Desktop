@@ -209,12 +209,24 @@ export const lancedbService = {
 
     async search(query: string, nResults: number = 5, filter?: Record<string, any>): Promise<VectorSearchResult[]> {
         try {
+            loggerService.catDebug(LogCategory.LANCEDB, `[DEBUG lancedbService.search] Input`, {
+                query,
+                nResults,
+                filter,
+            });
             const table = await getTable();
-            if (!table) return [];
+            if (!table) {
+                loggerService.catDebug(LogCategory.LANCEDB, `[DEBUG lancedbService.search] No table available`);
+                return [];
+            }
 
             const [queryVector] = await workerService.embedTexts([query]);
+            loggerService.catDebug(LogCategory.LANCEDB, `[DEBUG lancedbService.search] Query vector`, {
+                dim: queryVector.length,
+                sample: queryVector.slice(0, 5).map(v => v.toFixed(6)),
+            });
             
-            let searchBuilder = table.search(queryVector).limit(nResults);
+            let searchBuilder = table.search(queryVector).distanceType("cosine").limit(nResults);
             
             let metadataFilter = filter;
             if (filter?.metadata_filter) {
@@ -239,11 +251,23 @@ export const lancedbService = {
                 }
                 if (filterParts.length > 0) {
                     const filterStr = filterParts.join(' AND ');
+                    loggerService.catDebug(LogCategory.LANCEDB, `[DEBUG lancedbService.search] Applying filter`, { filterStr });
                     searchBuilder = searchBuilder.where(filterStr);
                 }
             }
 
             const results = await searchBuilder.toArray();
+
+            loggerService.catDebug(LogCategory.LANCEDB, `[DEBUG lancedbService.search] Output`, {
+                query,
+                rawResults: results.length,
+                topResults: results.slice(0, 20).map((r: any) => ({
+                    id: r.id,
+                    distance: r._distance,
+                    similarity: (1 - (r._distance || 0)).toFixed(4),
+                    name: r.name,
+                })),
+            });
 
             return results.map((r: any) => ({
                 id: r.id,
@@ -262,6 +286,10 @@ export const lancedbService = {
                 document: r.text
             }));
         } catch (e) {
+            loggerService.catDebug(LogCategory.LANCEDB, `[DEBUG lancedbService.search] Error`, {
+                query,
+                error: e instanceof Error ? e.message : String(e),
+            });
             console.error("[LanceDB] Search failed", e);
             return [];
         }
@@ -293,6 +321,7 @@ export const lancedbService = {
 
             const results = await table
                 .search(queryVector)
+                .distanceType("cosine")
                 .where(`symbol_domain = '${domain}'`)
                 .limit(nResults)
                 .toArray();
@@ -487,7 +516,7 @@ export const lancedbService = {
             const [queryVector] = await workerService.embedTexts([query]);
             // We search by vector and sort by timestamp descending (most recent first)
             // Note: sorting in LanceDB might be expensive if the table is huge, but for monitoring it should be fine.
-            let searchBuilder = table.search(queryVector).limit(nResults);
+            let searchBuilder = table.search(queryVector).distanceType("cosine").limit(nResults);
 
             if (filter) {
                 const filterParts: string[] = [];
