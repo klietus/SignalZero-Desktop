@@ -794,6 +794,22 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
+      name: 'file_replace',
+      description: 'Replace text in a file using a regex pattern. Finds the first match of the regex and replaces it with the replacement string. Throws an error if the regex is not found.',
+      parameters: {
+        type: 'object',
+        properties: {
+          file_path: { type: 'string', description: 'Path to the file to modify' },
+          pattern: { type: 'string', description: 'Regex pattern to search for' },
+          replacement: { type: 'string', description: 'Text to replace the match with. Use $1, $2, etc. for capture groups.' }
+        },
+        required: ['file_path', 'pattern', 'replacement']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
       name: 'sys_info',
       description: 'Get host system information.',
       parameters: {
@@ -1266,6 +1282,33 @@ export const createToolExecutor = (contextSessionId?: string) => {
       case 'run_command': {
         try {
           const { stdout, stderr } = await execAsync(args.command, { cwd: args.cwd || os.homedir() });
+          
+          if (contextSessionId && (stdout || stderr)) {
+            const searchTerms = [
+              args.command,
+              stdout?.slice(0, 500) || '',
+              stderr?.slice(0, 500) || ''
+            ].filter(t => t && t.length > 3);
+            
+            loggerService.catInfo(LogCategory.TOOL, `run_command: Searching for symbolic matches from command and output...`);
+            const foundSymbols: SymbolDef[] = [];
+            
+            for (const term of searchTerms.slice(0, 15)) {
+              const res = await domainService.search(term, 3);
+              res.forEach((r: any) => {
+                if (r?.metadata && !foundSymbols.find(s => s.id === r.metadata.id)) {
+                  foundSymbols.push(r.metadata as SymbolDef);
+                }
+              });
+            }
+            
+            if (foundSymbols.length > 0) {
+              const { added } = await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
+              loggerService.catInfo(LogCategory.TOOL, `run_command: Injected ${added} new symbols into cache from command output.`);
+              await symbolCacheService.emitCacheLoad(contextSessionId);
+            }
+          }
+          
           return { stdout, stderr };
         } catch (e: any) {
           return { error: e.message };
@@ -1281,6 +1324,33 @@ export const createToolExecutor = (contextSessionId?: string) => {
           const endLine = Math.min(startLine + length, lines.length);
           const sliced = lines.slice(startLine, endLine);
           const withLineNumbers = sliced.map((line, i) => `${startLine + i + 1}: ${line}`).join('\n');
+          
+          if (contextSessionId && content.length > 0) {
+            const searchTerms = [
+              args.file_path,
+              content.slice(0, 200),
+              content.slice(0, 500)
+            ].filter(t => t && t.length > 3);
+            
+            loggerService.catInfo(LogCategory.TOOL, `read_file: Searching for symbolic matches from file content...`);
+            const foundSymbols: SymbolDef[] = [];
+            
+            for (const term of searchTerms.slice(0, 10)) {
+              const res = await domainService.search(term, 3);
+              res.forEach((r: any) => {
+                if (r?.metadata && !foundSymbols.find(s => s.id === r.metadata.id)) {
+                  foundSymbols.push(r.metadata as SymbolDef);
+                }
+              });
+            }
+            
+            if (foundSymbols.length > 0) {
+              const { added } = await symbolCacheService.batchUpsertSymbols(contextSessionId, foundSymbols);
+              loggerService.catInfo(LogCategory.TOOL, `read_file: Injected ${added} new symbols into cache from file content.`);
+              await symbolCacheService.emitCacheLoad(contextSessionId);
+            }
+          }
+          
           return { content: withLineNumbers };
         } catch (e: any) {
           return { error: e.message };
@@ -1292,6 +1362,27 @@ export const createToolExecutor = (contextSessionId?: string) => {
           fs.writeFileSync(args.file_path, args.content);
           return { status: "success" };
         } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'file_replace': {
+        try {
+          const content = fs.readFileSync(args.file_path, 'utf-8');
+          const regex = new RegExp(args.pattern);
+          const replaced = content.replace(regex, args.replacement);
+          fs.writeFileSync(args.file_path, replaced);
+          return { status: "success" };
+        } catch (e: any) {
+          if (e instanceof SyntaxError && e.message.includes('Invalid regular expression')) {
+            return { error: `Invalid regex pattern: ${args.pattern}` };
+          }
+          if (e.code === 'ENOENT') {
+            return { error: `File not found: ${args.file_path}` };
+          }
+          if (e.message.includes('no match for regex pattern')) {
+            return { error: `Pattern not found in file: ${args.pattern}` };
+          }
           return { error: e.message };
         }
       }
