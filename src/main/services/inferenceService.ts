@@ -6,7 +6,7 @@ import type {
   ChatCompletionMessageToolCall,
   ChatCompletionTool,
 } from "openai/resources/chat/completions";
-import { getPrimaryTools, SECONDARY_TOOLS_MAP } from "./toolsService.js";
+import { getPrimaryTools } from "./toolsService.js";
 import { SymbolDef, ContextMessage } from "../types.js";
 import { domainService } from "./domainService.js";
 import { settingsService } from "./settingsService.js";
@@ -709,14 +709,6 @@ const _streamAssistantResponseInternal = async function* (
           // Try direct field first (non-streaming path), then stream-captured signatures
           const signature = (part as any).thoughtSignature || lastThoughtSignature || getStreamSig();
           
-          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: functionCall part", {
-            idx,
-            name: call.name,
-            hasSignature: !!(part as any).thoughtSignature,
-            usingCarriedSignature: !!(!(part as any).thoughtSignature && lastThoughtSignature),
-            signature: signature || "none"
-          });
-          
           collectedToolCalls.push({
             id: 'gemini-' + randomUUID(),
             type: 'function',
@@ -1068,11 +1060,8 @@ export async function* sendMessageAndHandleTools(
         let activeToolList = [...await getPrimaryTools()];
         if (contextSessionId) {
           try {
-            const currentSession = await contextService.getSession(contextSessionId);
-            const requestedTools = currentSession?.metadata?.active_tools || [];
-            const secondaryTools = requestedTools.map((name: string) => SECONDARY_TOOLS_MAP[name]).filter(Boolean);
             const remoteTools = await mcpClientService.getAllTools();
-            activeToolList = [...await getPrimaryTools(), ...secondaryTools, ...remoteTools];
+            activeToolList = [...activeToolList, ...remoteTools];
           } catch (e) {
             loggerService.catWarn(LogCategory.INFERENCE, "Failed to fetch active tools", { error: e });
           }

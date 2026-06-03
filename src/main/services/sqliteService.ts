@@ -174,6 +174,21 @@ const initDb = () => {
                 FOREIGN KEY (target_id) REFERENCES symbols(id) ON DELETE CASCADE
             );
 
+            -- Symbol Relationships V2 (with decay tracking)
+            CREATE TABLE IF NOT EXISTS symbol_links_v2 (
+                source_id TEXT NOT NULL,
+                target_id TEXT NOT NULL,
+                link_type TEXT DEFAULT 'relates_to',
+                access_count INTEGER DEFAULT 0,
+                access_ema REAL DEFAULT 0,
+                last_accessed TEXT,
+                committed TEXT DEFAULT 'volatile',
+                created_at TEXT,
+                PRIMARY KEY (source_id, target_id, link_type),
+                FOREIGN KEY (source_id) REFERENCES symbols(id) ON DELETE CASCADE,
+                FOREIGN KEY (target_id) REFERENCES symbols(id) ON DELETE CASCADE
+            );
+
             -- Contexts (Sessions)
             CREATE TABLE IF NOT EXISTS contexts (
                 id TEXT PRIMARY KEY,
@@ -396,6 +411,7 @@ export const sqliteService = {
             initDb();
             // Clear all data relational tables
             db.transaction(() => {
+                db.prepare(`DELETE FROM symbol_links_v2`).run();
                 db.prepare(`DELETE FROM symbol_links`).run();
                 db.prepare(`DELETE FROM symbols`).run();
                 db.prepare(`DELETE FROM domains`).run();

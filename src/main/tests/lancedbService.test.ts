@@ -21,6 +21,7 @@ describe('lancedbService Search Filters', () => {
         lancedbService.__resetDb();
 
         mockSearchBuilder = {
+            distanceType: vi.fn().mockReturnThis(),
             limit: vi.fn().mockReturnThis(),
             where: vi.fn().mockReturnThis(),
             toArray: vi.fn().mockResolvedValue([])

@@ -361,66 +361,6 @@ async function parseQueryToPredicates(query: string): Promise<ParsedPredicate[]>
   return predicates;
 }
 
-export const SECONDARY_TOOLS_MAP: Record<string, ChatCompletionTool> = {
-  run_shell_command: {
-    type: 'function',
-    function: {
-      name: 'run_shell_command',
-      description: 'Execute a bash command on the host system. High privilege.',
-      parameters: {
-        type: 'object',
-        properties: {
-          command: { type: 'string' },
-          cwd: { type: 'string' }
-        },
-        required: ['command']
-      }
-    }
-  },
-  read_host_file: {
-    type: 'function',
-    function: {
-      name: 'read_host_file',
-      description: 'Read a file from the host filesystem.',
-      parameters: {
-        type: 'object',
-        properties: {
-          file_path: { type: 'string' }
-        },
-        required: ['file_path']
-      }
-    }
-  },
-  write_host_file: {
-    type: 'function',
-    function: {
-      name: 'write_host_file',
-      description: 'Write or overwrite a file on the host filesystem.',
-      parameters: {
-        type: 'object',
-        properties: {
-          file_path: { type: 'string' },
-          content: { type: 'string' }
-        },
-        required: ['file_path', 'content']
-      }
-    }
-  },
-  sys_info: {
-    type: 'function',
-    function: {
-      name: 'sys_info',
-      description: 'Get host system information.',
-      parameters: {
-        type: 'object',
-        properties: {
-          categories: { type: 'array', items: { type: 'string' } }
-        }
-      }
-    }
-  }
-};
-
 export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
   // --- DISABLED: replaced by adaptive_search ---
   // {
@@ -804,6 +744,65 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
         }
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'shell_command',
+      description: 'Execute a bash command on the host system. High privilege.',
+      parameters: {
+        type: 'object',
+        properties: {
+          command: { type: 'string' },
+          cwd: { type: 'string' }
+        },
+        required: ['command']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'read_file',
+      description: 'Read a file from the host filesystem. Supports line-range selection with start_line (1-indexed) and length (number of lines to read). Omit both to read the entire file.',
+      parameters: {
+        type: 'object',
+        properties: {
+          file_path: { type: 'string' },
+          start_line: { type: 'integer', description: 'Starting line number (1-indexed). Defaults to 1.' },
+          length: { type: 'integer', description: 'Number of lines to read from start_line. Omit to read to end of file.' }
+        },
+        required: ['file_path']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'write_file',
+      description: 'Write or overwrite a file on the host filesystem.',
+      parameters: {
+        type: 'object',
+        properties: {
+          file_path: { type: 'string' },
+          content: { type: 'string' }
+        },
+        required: ['file_path', 'content']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'sys_info',
+      description: 'Get host system information.',
+      parameters: {
+        type: 'object',
+        properties: {
+          categories: { type: 'array', items: { type: 'string' } }
+        }
+      }
+    }
   }
 ];
 
@@ -1148,43 +1147,6 @@ export const createToolExecutor = (contextSessionId?: string) => {
         return { status: "success" };
       }
 
-      case 'run_shell_command': {
-        try {
-          const { stdout, stderr } = await execAsync(args.command, { cwd: args.cwd || os.homedir() });
-          return { stdout, stderr };
-        } catch (e: any) {
-          return { error: e.message };
-        }
-      }
-
-      case 'read_host_file': {
-        try {
-          const content = fs.readFileSync(args.file_path, 'utf-8');
-          return { content };
-        } catch (e: any) {
-          return { error: e.message };
-        }
-      }
-
-      case 'write_host_file': {
-        try {
-          fs.writeFileSync(args.file_path, args.content);
-          return { status: "success" };
-        } catch (e: any) {
-          return { error: e.message };
-        }
-      }
-
-      case 'sys_info': {
-        return {
-          platform: os.platform(),
-          release: os.release(),
-          arch: os.arch(),
-          cpus: os.cpus().length,
-          memory: { total: os.totalmem(), free: os.freemem() }
-        };
-      }
-
       case 'web_search': {
         try {
           const { results, provider } = await webSearchService.search(args.query);
@@ -1299,6 +1261,49 @@ export const createToolExecutor = (contextSessionId?: string) => {
         const filtered = args.includeLow ? alerts : alerts.filter(a => a.severity !== 'low');
         const bySource = args.source ? filtered.filter(a => a.source === args.source) : filtered;
         return { alerts: bySource };
+      }
+
+      case 'run_command': {
+        try {
+          const { stdout, stderr } = await execAsync(args.command, { cwd: args.cwd || os.homedir() });
+          return { stdout, stderr };
+        } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'read_file': {
+        try {
+          const content = fs.readFileSync(args.file_path, 'utf-8');
+          const lines = content.split('\n');
+          const startLine = Math.max(1, (args.start_line || 1)) - 1;
+          const length = args.length || lines.length;
+          const endLine = Math.min(startLine + length, lines.length);
+          const sliced = lines.slice(startLine, endLine);
+          const withLineNumbers = sliced.map((line, i) => `${startLine + i + 1}: ${line}`).join('\n');
+          return { content: withLineNumbers };
+        } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'write_file': {
+        try {
+          fs.writeFileSync(args.file_path, args.content);
+          return { status: "success" };
+        } catch (e: any) {
+          return { error: e.message };
+        }
+      }
+
+      case 'sys_info': {
+        return {
+          platform: os.platform(),
+          release: os.release(),
+          arch: os.arch(),
+          cpus: os.cpus().length,
+          memory: { total: os.totalmem(), free: os.freemem() }
+        };
       }
 
       default:

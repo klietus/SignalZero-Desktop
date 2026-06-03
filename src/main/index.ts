@@ -863,7 +863,8 @@ ipcMain.handle('hebbian:get-stats', async () => {
     SELECT source_id, target_id, access_count, access_ema, created_at, committed
     FROM symbol_links_v2
     WHERE committed = 'volatile' 
-      AND (access_count >= 30 OR access_ema >= 0.2)
+      AND access_count >= 30
+      AND access_ema >= 0.2
     ORDER BY access_count DESC, access_ema DESC
     LIMIT 50
   `) as any[];
@@ -872,8 +873,9 @@ ipcMain.handle('hebbian:get-stats', async () => {
     SELECT source_id, target_id, access_count, access_ema, last_accessed, created_at, committed
     FROM symbol_links_v2
     WHERE committed = 'volatile' 
-      AND access_ema < 0.3
+      AND access_ema < 0.15
       AND access_count < 10
+      AND julianday('now') - julianday(last_accessed) > 3
     ORDER BY access_ema ASC, last_accessed ASC
     LIMIT 50
   `) as any[];

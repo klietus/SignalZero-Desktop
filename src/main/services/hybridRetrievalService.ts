@@ -13,6 +13,14 @@ export interface Predicate {
   operator?: 'eq' | 'contains' | 'in' | 'similar';
 }
 
+export interface RetrievalMetadata {
+  total_candidates: number;
+  after_embedding_filter: number;
+  after_domain_filter: number;
+  after_final_limit: number;
+  sources: string[];
+}
+
 export interface HybridRetrievalResult {
   symbol: SymbolDefV2;
   score: number;
@@ -26,6 +34,7 @@ export interface HybridRetrievalResult {
     predicates: number;
   };
   expansion_reason?: string;
+  metadata?: RetrievalMetadata;
 }
 
 export interface AdaptiveSearchRecommendation {
@@ -51,6 +60,7 @@ export interface AdaptiveSearchResult {
     stage: 'predicate' | 'embedding' | 'expansion';
     predicates_matched: string[];
     expansion_reason?: string;
+    metadata?: RetrievalMetadata;
   }>;
   summary: {
     total_candidates: number;
@@ -145,7 +155,7 @@ export class HybridRetrievalService {
   /**
    * Stage 2: Embedding rank (dense, expensive)
    */
-  private async embeddingRank(query: string, candidates: SymbolDefV2[], limit: number): Promise<HybridRetrievalResult[]> {
+  private async embeddingRank(query: string, candidates: SymbolDefV2[]): Promise<HybridRetrievalResult[]> {
     if (candidates.length === 0) return [];
 
     // Query embedding (isolated — uses embeddingService directly)
@@ -196,11 +206,13 @@ export class HybridRetrievalService {
 
     // Compute similarities
     const results: HybridRetrievalResult[] = [];
+    const allSimilarities: { index: number; name: string; similarity: number }[] = [];
     for (let i = 0; i < candidates.length; i++) {
       const embedding = symbolEmbeddings[i];
       if (!embedding || embedding.length === 0) continue;
 
       const similarity = this.cosineSimilarity(queryEmbedding[0], embedding);
+      allSimilarities.push({ index: i, name: candidates[i].name || candidates[i].id, similarity });
 
       if (similarity >= this.MIN_EMBEDDING_SIMILARITY) {
         const recency = (candidates[i] as any).recency_weight || 1.0;
@@ -225,7 +237,21 @@ export class HybridRetrievalService {
 
     // Sort by similarity descending
     results.sort((a, b) => b.embedding_similarity - a.embedding_similarity);
-    return results.slice(0, limit);
+
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG embeddingRank] Similarity distribution`, {
+      totalCandidates: candidates.length,
+      aboveThreshold: results.length,
+      belowThreshold: allSimilarities.length - results.length,
+      minSim: allSimilarities.length > 0 ? Math.min(...allSimilarities.map(s => s.similarity)).toFixed(4) : 'N/A',
+      maxSim: allSimilarities.length > 0 ? Math.max(...allSimilarities.map(s => s.similarity)).toFixed(4) : 'N/A',
+      avgSim: allSimilarities.length > 0 ? (allSimilarities.reduce((a, b) => a + b.similarity, 0) / allSimilarities.length).toFixed(4) : 'N/A',
+      top10: allSimilarities.slice(0, 10).map(s => ({ name: s.name, similarity: s.similarity.toFixed(4) })),
+      belowThresholdTop: allSimilarities.length > 10
+        ? allSimilarities.slice(10, 20).map(s => ({ name: s.name, similarity: s.similarity.toFixed(4) }))
+        : [],
+    });
+
+    return results;
   }
 
   /**
@@ -234,6 +260,16 @@ export class HybridRetrievalService {
    */
   private async lanceResultsToHybrid(lanceResults: any[]): Promise<HybridRetrievalResult[]> {
     if (lanceResults.length === 0) return [];
+
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG lanceResultsToHybrid] Input`, {
+      rawResults: lanceResults.length,
+      topResults: lanceResults.slice(0, 10).map(r => ({
+        id: r.id,
+        distance: r._distance,
+        similarity: (1 - (r._distance || 0)).toFixed(4),
+        name: r.name || r.metadata?.name,
+      })),
+    });
 
     const results: HybridRetrievalResult[] = [];
 
@@ -265,12 +301,21 @@ export class HybridRetrievalService {
       });
     }
 
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG lanceResultsToHybrid] Output`, {
+      inputCount: lanceResults.length,
+      outputCount: results.length,
+      filteredOut: lanceResults.length - results.length,
+      results: results.map(r => ({
+        id: r.symbol.id,
+        name: r.symbol.name,
+        embedding_similarity: r.embedding_similarity,
+        score: r.score,
+      })),
+    });
+
     return results;
   }
-
-  /**
-   * Convert a single LanceDB search result to SymbolDefV2.
-   * Fetches full symbol data from SQLite.
+   /* Fetches full symbol data from SQLite.
    */
   private async symbolFromLanceResult(result: any): Promise<SymbolDefV2> {
     const symbol = await domainService.findById(result.id);
@@ -311,7 +356,7 @@ export class HybridRetrievalService {
     // Expand by one hop
     for (const result of results) {
       const links = sqliteService.all(`
-        SELECT target_id as id, link_type FROM symbol_links WHERE source_id = ?
+        SELECT target_id as id, link_type FROM symbol_links_v2 WHERE source_id = ?
       `, [result.symbol.id]) as any[];
 
       for (const link of links) {
@@ -361,28 +406,85 @@ export class HybridRetrievalService {
     // Stage 1: Predicate pre-filter
     if (predicates.length > 0) {
       candidates = await this.predicatePreFilter(predicates);
+      loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] Stage 1 predicatePreFilter`, {
+        predicates: JSON.stringify(predicates),
+        candidatesFound: candidates.length,
+      });
+    } else {
+      loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] Stage 1 skipped (no predicates)`);
     }
 
     // Stage 2: Embedding rank
-    let ranked = await this.embeddingRank(query, candidates.length > 0 ? candidates : [], limit);
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] Stage 2 embeddingRank`, {
+      candidatesFromPredicates: candidates.length,
+      query,
+      limit,
+    });
+    let ranked = await this.embeddingRank(query, candidates.length > 0 ? candidates : []);
+
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] After embeddingRank`, {
+      query,
+      rankedCount: ranked.length,
+      topResults: ranked.slice(0, 10).map(r => ({
+        id: r.symbol.id,
+        name: r.symbol.name,
+        embedding_similarity: r.embedding_similarity,
+      })),
+    });
 
     // If no candidates from predicates and no results, use LanceDB vector search
     // This avoids computing embeddings for all symbols in a domain
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] Checking LanceDB fallback`, {
+      candidatesLength: candidates.length,
+      rankedLength: ranked.length,
+      domain,
+    });
+    let rawLanceCount = 0;
+    let postEmbedCount = 0;
     if (candidates.length === 0 && ranked.length === 0) {
       if (domain) {
         // Use LanceDB's ANN search with domain filter — much faster than getAllSymbols + embed all
-        const lanceResults = await lancedbService.searchWithDomain(query, domain, limit * 3);
+        loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] LanceDB searchWithDomain`, {
+          query,
+          domain,
+          limit: limit * 3,
+        });
+        const lanceResults = await lancedbService.searchWithDomain(query, domain, 500);
+        loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] LanceDB searchWithDomain results`, {
+          query,
+          domain,
+          rawResults: lanceResults.length,
+          topDistances: lanceResults.slice(0, 10).map((r: any) => ({ id: r.id, distance: r._distance })),
+        });
+        rawLanceCount = lanceResults.length;
         ranked = await this.lanceResultsToHybrid(lanceResults);
+        postEmbedCount = ranked.length;
         // If LanceDB returned nothing (embedding failed or no results), fall back to SQLite
         if (ranked.length === 0) {
           loggerService.catDebug(LogCategory.KERNEL, `LanceDB domain search returned 0 results, falling back to SQLite`, { domain, query });
           const allSymbols = await domainService.getAllSymbols();
           const domainSymbols = allSymbols.filter(s => s.symbol_domain === domain);
-          ranked = await this.embeddingRank(query, domainSymbols.map(s => this.symbolToV2(s)), limit);
+          loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] SQLite fallback`, {
+            domain,
+            allSymbols: allSymbols.length,
+            domainSymbols: domainSymbols.length,
+          });
+          ranked = await this.embeddingRank(query, domainSymbols.map(s => this.symbolToV2(s)));
+          postEmbedCount = ranked.length;
         }
       } else {
         // No domain specified — use LanceDB vector search (pre-computed embeddings, no on-the-fly embedding)
-        const lanceResults = await lancedbService.search(query, limit * 3);
+        loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] LanceDB search (no domain)`, {
+          query,
+          limit: limit * 3,
+        });
+        const lanceResults = await lancedbService.search(query, 500);
+        loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] LanceDB search results`, {
+          query,
+          rawResults: lanceResults.length,
+          topScores: lanceResults.slice(0, 10).map((r: any) => ({ id: r.id, score: r.score, distance: r._distance })),
+        });
+        rawLanceCount = lanceResults.length;
         if (lanceResults.length > 0) {
           ranked = await Promise.all(lanceResults.map(async (r) => {
             const symbol = await this.symbolFromLanceResult(r);
@@ -403,6 +505,7 @@ export class HybridRetrievalService {
               },
             };
           }));
+          postEmbedCount = ranked.length;
         }
       }
     }
@@ -418,12 +521,50 @@ export class HybridRetrievalService {
     }
 
     // Compute final scores
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] computeFinalScore`, {
+      query,
+      resultsCount: ranked.length,
+      results: ranked.map(r => ({
+        id: r.symbol.id,
+        name: r.symbol.name,
+        embedding_similarity: r.embedding_similarity,
+        preScore: r.score,
+      })),
+    });
     for (const result of ranked) {
       result.score = this.computeFinalScore(result);
     }
 
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG retrieve] After computeFinalScore`, {
+      query,
+      results: ranked.map(r => ({
+        id: r.symbol.id,
+        name: r.symbol.name,
+        score: r.score,
+        score_breakdown: r.score_breakdown,
+      })),
+    });
+
     // Sort by final score
     ranked.sort((a, b) => b.score - a.score);
+
+    // Set metadata on final results before slicing
+    const metadata: RetrievalMetadata = {
+      total_candidates: postEmbedCount || rawLanceCount || candidates.length,
+      after_embedding_filter: postEmbedCount || rawLanceCount,
+      after_domain_filter: ranked.length,
+      after_final_limit: limit,
+      sources: [
+        ...(predicates.length > 0 ? ['predicate'] : []),
+        ...(candidates.length > 0 ? ['embedding_full'] : []),
+        ...(rawLanceCount > 0 ? ['lancedb' + (domain ? '_domain' : '')] : []),
+        ...(postEmbedCount === 0 && rawLanceCount > 0 && domain ? ['sqlite_fallback'] : []),
+      ],
+    };
+    for (const r of ranked) {
+      r.metadata = metadata;
+    }
+
     return ranked.slice(0, limit);
   }
 
@@ -559,8 +700,18 @@ export class HybridRetrievalService {
     const scoringConfig = options.scoring || {};
     const domains = options.domains || [];
 
-    // Run standard retrieval with adjusted params
     const minRelevance = scoringConfig.minRelevance ?? 0.3;
+
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG adaptiveSearch] START`, {
+      query,
+      predicates: JSON.stringify(predicates),
+      domains,
+      complexity,
+      initialLimit,
+      finalLimit,
+      minRelevance,
+      expandConfig,
+    });
     const results = await this.retrieve(
       query,
       predicates,
@@ -569,8 +720,31 @@ export class HybridRetrievalService {
       domains.length > 0 ? domains[0] : undefined
     );
 
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG adaptiveSearch] After retrieve()`, {
+      query,
+      resultsCount: results.length,
+      results: results.map(r => ({
+        id: r.symbol.id,
+        name: r.symbol.name,
+        embedding_similarity: r.embedding_similarity,
+        score: r.score,
+        score_breakdown: r.score_breakdown,
+        stage: r.stage,
+        predicates_matched: r.predicates_matched,
+      })),
+    });
+
     // Apply min relevance filter
     const filtered = results.filter(r => r.score >= minRelevance);
+
+    loggerService.catDebug(LogCategory.KERNEL, `[DEBUG adaptiveSearch] After minRelevance filter`, {
+      query,
+      before: results.length,
+      after: filtered.length,
+      minRelevance,
+      filteredOut: results.length - filtered.length,
+      topScores: filtered.slice(0, 5).map(r => ({ id: r.symbol.id, name: r.symbol.name, score: r.score })),
+    });
 
     // Sort by score descending
     filtered.sort((a, b) => b.score - a.score);
@@ -578,8 +752,12 @@ export class HybridRetrievalService {
     // Take final limit
     const ranked = filtered.slice(0, finalLimit);
 
+    // Get actual total_candidates from metadata
+    const firstMeta = ranked[0]?.metadata;
+    const actualTotalCandidates = firstMeta?.total_candidates ?? initialLimit;
+
     // Generate recommendation
-    const recommendation = this.generateRecommendation(ranked, initialLimit, complexity);
+    const recommendation = this.generateRecommendation(ranked, actualTotalCandidates, complexity);
 
     const scores = ranked.map(r => r.score);
     const topScore = scores.length > 0 ? scores[0] : 0;
@@ -602,7 +780,7 @@ export class HybridRetrievalService {
     return {
       query,
       complexity,
-      candidates_found: initialLimit,
+      candidates_found: actualTotalCandidates,
       results: ranked.map(r => ({
         symbol: r.symbol,
         score: r.score,
@@ -610,9 +788,10 @@ export class HybridRetrievalService {
         stage: r.stage,
         predicates_matched: r.predicates_matched,
         expansion_reason: (r as any).expansion_reason,
+        metadata: r.metadata,
       })),
       summary: {
-        total_candidates: initialLimit,
+        total_candidates: actualTotalCandidates,
         after_filtering: filtered.length,
         top_score: topScore,
         bottom_score: bottomScore,
@@ -648,7 +827,7 @@ export class HybridRetrievalService {
 
       if (depth < maxDepth) {
         const links = sqliteService.all(`
-          SELECT target_id as id FROM symbol_links WHERE source_id = ?
+          SELECT target_id as id FROM symbol_links_v2 WHERE source_id = ?
         `, [id]) as any[];
 
         for (const link of links) {

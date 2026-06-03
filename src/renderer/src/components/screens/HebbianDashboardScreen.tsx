@@ -83,8 +83,8 @@ const HebbianDashboardScreen: React.FC = () => {
   };
 
   const getDecayRisk = (link: HebbianLink) => {
-    // Risk based on low EMA and age
-    const emaRisk = Math.max(0, (0.3 - link.access_ema) / 0.3 * 100);
+    // Risk based on distance from pruning threshold (0.1)
+    const emaRisk = Math.max(0, (0.1 - link.access_ema) / 0.1 * 100);
     return emaRisk;
   };
 
@@ -339,7 +339,7 @@ const PromotionTab: React.FC<{
   return (
     <div className="space-y-3">
       <div className="text-sm text-gray-400 mb-4">
-        Fast-track: ≥50 accesses in 7 days AND EMA {'>'} 0.3 | Stability: ≥30 days old AND EMA {'>'} 0.001
+        Fast-track: ≥50 accesses in 7 days AND EMA {'>'} 0.3 AND accessed within 72h | Stability: ≥30 days old AND EMA {'>'} 0.0005
       </div>
       {links.map((link) => {
         const progress = getPromotionProgress(link);
@@ -406,7 +406,7 @@ const DecayTab: React.FC<{
   return (
     <div className="space-y-3">
       <div className="text-sm text-gray-400 mb-4">
-        Links with EMA {'<'} 0.3 and access count {'<'} 10 - will be pruned if not reinforced
+        Links with EMA {'<'} 0.15, access count {'<'} 10, and no access in 3+ days - will be pruned if not reinforced
       </div>
       {links.map((link) => {
         const risk = getDecayRisk(link);

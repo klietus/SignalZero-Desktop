@@ -39,6 +39,25 @@ This log tracks the critical technical pivots and architectural choices made dur
 - **Context:** Unidirectional links created "dead-end" reasoning paths in the graph.
 - **Logic:** Every link (e.g., `A part_of B`) automatically triggers its inverse (`B contains A`), ensuring the graph is fully traversable.
 
+### 8. Memory State Stabilization via EMA Decay & Hebbian Learning (Feb 2026)
+- **Decision:** Implement biologically-inspired link stabilization with exponential moving average (EMA) decay and access-based promotion.
+- **Context:** Static graph topology fails to reflect changing relevance; manual curation doesn't scale for autonomous systems.
+- **Logic:** 
+  - **Hebbian reinforcement**: Links strengthen when symbols are accessed together (`access_count`, `access_ema`)
+  - **Temporal decay**: Volatile links lose activation over time (10% hourly decay)
+  - **Progressive stabilization**: Links promote to foundational after sustained use (≥50 accesses, EMA>0.3) or age (≥30 days, EMA>0.001)
+  - **Automatic pruning**: Stale links (EMA<0.1, no access for 7 days) are removed; old weak links archived for recovery
+- **Status:** Implementation complete (`linkDecayService`), but automatic scheduling not yet enabled
+
+### 9. Structural Alignment Integration (Feb 2026)
+- **Decision:** Adopt structural alignment principles from https://github.com/klietus/StructuralAlignment for safety through input format constraints.
+- **Context:** Probabilistic alignment methods (RLHF, fine-tuning) cannot guarantee constraint enforcement.
+- **Logic:** 
+  - **Classification engine**: Symbol catalog identifies harmful patterns via structured IDs and facets
+  - **Constraint backstop**: Invariants defined in symbolic lattice enforce boundary conditions
+  - **Dual-control mechanism**: Non-linear interaction between classification and constraints creates emergent safety properties
+- **Reference:** See [Structural Alignment paper](https://github.com/klietus/StructuralAlignment/blob/main/paper/Structural_Alignment.pdf) for empirical results (100% refusal rate on 60 test cases with full suite)
+
 ---
 
 ## Dec 2025: The Server-Era Foundations (Deprecated)
@@ -71,25 +90,6 @@ This log tracks the critical technical pivots and architectural choices made dur
 ### 14. Use-Case Driven Lattice Development
 - **Decision:** Architecting high-level Lattices based on "Wicked Problem" archetypes (e.g., Ethical Triangulation, Ecological Cascade Risk).
 - **Logic:** Recognized that raw LLM reasoning often collapses under the weight of competing value systems. Forced the model to perform "Structured Ethical Synthesis."
-
-### 15. Memory State Stabilization via EMA Decay & Hebbian Learning (Feb 2026)
-- **Decision:** Implement biologically-inspired link stabilization with exponential moving average (EMA) decay and access-based promotion.
-- **Context:** Static graph topology fails to reflect changing relevance; manual curation doesn't scale for autonomous systems.
-- **Logic:** 
-  - **Hebbian reinforcement**: Links strengthen when symbols are accessed together (`access_count`, `access_ema`)
-  - **Temporal decay**: Volatile links lose activation over time (10% hourly decay)
-  - **Progressive stabilization**: Links promote to foundational after sustained use (≥50 accesses, EMA>0.3) or age (≥30 days, EMA>0.001)
-  - **Automatic pruning**: Stale links (EMA<0.1, no access for 7 days) are removed; old weak links archived for recovery
-- **Status:** Implementation complete (`linkDecayService`), but automatic scheduling not yet enabled
-
-### 16. Structural Alignment Integration (Feb 2026)
-- **Decision:** Adopt structural alignment principles from https://github.com/klietus/StructuralAlignment for safety through input format constraints.
-- **Context:** Probabilistic alignment methods (RLHF, fine-tuning) cannot guarantee constraint enforcement.
-- **Logic:** 
-  - **Classification engine**: Symbol catalog identifies harmful patterns via structured IDs and facets
-  - **Constraint backstop**: Invariants defined in symbolic lattice enforce boundary conditions
-  - **Dual-control mechanism**: Non-linear interaction between classification and constraints creates emergent safety properties
-- **Reference:** See [Structural Alignment paper](https://github.com/klietus/StructuralAlignment/blob/main/paper/Structural_Alignment.pdf) for empirical results (100% refusal rate on 60 test cases with full suite)
 
 ---
 

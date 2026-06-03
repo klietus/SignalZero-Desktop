@@ -130,13 +130,11 @@ export function isLinkStale(link: SymbolLinkV2): boolean {
 export function recordLinkAccess(link: Partial<SymbolLinkV2>): Partial<SymbolLinkV2> {
   const now = Date.now();
   const ema = link.access_ema || 0;
-  const count = link.access_count || 0;
-  const lastAccessed = link.last_accessed ? new Date(link.last_accessed).getTime() : now;
-  const hoursElapsed = (now - lastAccessed) / (1000 * 60 * 60);
-  const timeDecay = Math.exp(-hoursElapsed / 168);
-  const newEma = (ema * timeDecay * 0.9) + 0.1;
+  const newCount = (link.access_count || 0) + 1;
+  const alpha = 1 / (newCount + 1);
+  const newEma = ema * alpha + (1 - alpha);
   return {
-    access_count: count + 1,
+    access_count: newCount,
     access_ema: newEma,
     last_accessed: new Date(now).toISOString(),
   };
@@ -147,16 +145,19 @@ export function checkLinkPromotion(link: SymbolLinkV2): boolean {
   if (!link.created_at || isNaN(new Date(link.created_at).getTime())) return false;
   const hours = (Date.now() - new Date(link.created_at).getTime()) / (1000 * 60 * 60);
   const days = hours / 24;
+  const lastAccessed = link.last_accessed ? new Date(link.last_accessed).getTime() : 0;
+  const hoursSinceAccess = lastAccessed ? (Date.now() - lastAccessed) / (1000 * 60 * 60) : Infinity;
 
-  // Fast-track: high access within time window
+  // Fast-track: high access within time window, with recency check
   if (link.access_count >= criteria.access_count_threshold &&
       hours <= criteria.time_window_hours &&
-      link.access_ema > criteria.centrality_threshold) {
+      link.access_ema > criteria.centrality_threshold &&
+      hoursSinceAccess <= 72) {
     return true;
   }
 
   // Stability: moderate access sustained over long period
-  if (days >= criteria.stability_days && link.access_ema > 0.001) {
+  if (days >= criteria.stability_days && link.access_ema > 0.0005) {
     return true;
   }
 
