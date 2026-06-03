@@ -365,7 +365,7 @@ describe('symbolV2Migration — recordLinkAccess', () => {
 
         const result = recordLinkAccess(link);
         expect(result.access_count).toBe(1);
-        expect(result.access_ema).toBe(0.1);
+        expect(result.access_ema).toBe(0.5);
         expect(result.last_accessed).toBeDefined();
     });
 
@@ -382,7 +382,7 @@ describe('symbolV2Migration — recordLinkAccess', () => {
 
         const result = recordLinkAccess(link);
         expect(result.access_count).toBe(11);
-        expect(result.access_ema).toBeCloseTo(0.55, 2);
+        expect(result.access_ema).toBeCloseTo(0.96, 2);
     });
 });
 

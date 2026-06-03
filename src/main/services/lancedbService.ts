@@ -226,7 +226,8 @@ export const lancedbService = {
                 sample: queryVector.slice(0, 5).map(v => v.toFixed(6)),
             });
             
-            let searchBuilder = table.search(queryVector).distanceType("cosine").limit(nResults);
+            let searchBuilder: any = (table.search(queryVector) as any).distanceType("cosine");
+            searchBuilder = searchBuilder.limit(nResults);
             
             let metadataFilter = filter;
             if (filter?.metadata_filter) {
@@ -319,8 +320,7 @@ export const lancedbService = {
                 return [];
             }
 
-            const results = await table
-                .search(queryVector)
+            const results = await (table.search(queryVector) as any)
                 .distanceType("cosine")
                 .where(`symbol_domain = '${domain}'`)
                 .limit(nResults)
@@ -516,7 +516,8 @@ export const lancedbService = {
             const [queryVector] = await workerService.embedTexts([query]);
             // We search by vector and sort by timestamp descending (most recent first)
             // Note: sorting in LanceDB might be expensive if the table is huge, but for monitoring it should be fine.
-            let searchBuilder = table.search(queryVector).distanceType("cosine").limit(nResults);
+            let searchBuilder: any = (table.search(queryVector) as any).distanceType("cosine");
+            searchBuilder = searchBuilder.limit(nResults);
 
             if (filter) {
                 const filterParts: string[] = [];

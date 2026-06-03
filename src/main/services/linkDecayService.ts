@@ -58,7 +58,7 @@ export const linkDecayService = {
 
     let updated = 0;
     for (const link of links) {
-      const newEma = (link.access_ema ?? 0) * Math.pow(DECAY_FACTOR, hoursSinceDecay);
+      const newEma = Math.max(0.0001, (link.access_ema ?? 0) * Math.pow(DECAY_FACTOR, hoursSinceDecay));
       sqliteService.run(`
         UPDATE symbol_links_v2 SET access_ema = ? WHERE source_id = ? AND target_id = ?
       `, [newEma, link.source_id, link.target_id]);
@@ -138,8 +138,8 @@ export const linkDecayService = {
   },
 
   runDecayCycle(): { decayed: number; promoted: string[]; pruned: number; archived: number } {
-    const decayed = this.decayEMAs();
     const promoted = this.checkPromotion();
+    const decayed = this.decayEMAs();
     const { pruned } = this.pruneStale();
     const { archived } = this.archiveStale();
 
