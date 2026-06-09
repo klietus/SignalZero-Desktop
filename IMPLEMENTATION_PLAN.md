@@ -1,229 +1,427 @@
-# Symbolic Store v2 — Implementation Plan
+# Agentic Branch — Implementation Plan
 
-> Step-by-step implementation plan for Symbolic Store iteration v2.
-> Branch: symbolv2
-
----
-
-## Phase 1: Schema Foundation (1-2 days)
-
-### 1.1 Define v2 Symbol Schema
-- [ ] Create `src/main/types/symbolV2.ts` with new interfaces
-  - `SymbolDefV2` — extended symbol format with `structural`, `retrieval`, `links`
-  - `LinkDef` — link with commit type, recency tracking
-  - `LinkAccessTracker` — EMA-based access tracking
-  - `PredicateValue` — typed predicate structure
-  - `CommitType` — enum: `"foundational" | "volatile"`
-- [ ] Add schema migration utilities
-  - `migrateToV2(symbol: SymbolDef): SymbolDefV2`
-  - `migrateFromV2(symbol: SymbolDefV2): SymbolDef`
-- [ ] Update `SYMBOL_DATA_SCHEMA` in toolsService.ts to include v2 fields
-
-### 1.2 Update Domain Service
-- [ ] Add `domainService.addSymbolV2()` — write v2 symbols
-- [ ] Add `domainService.migrateDomainToV2(domainId: string)` — migrate entire domain
-- [ ] Add `domainService.isDomainV2(domainId: string)` — check migration status
-- [ ] Update `domainService.findById()` to return v2 format
-
-### 1.3 Update Sample Project
-- [ ] Migrate `sample_project/domains/` to v2 format
-- [ ] Update `metadata.json` with v2 version
-- [ ] Test migration round-trip (v1 → v2 → v1)
+> Step-by-step implementation plan for agentic branch changes.
+> Branch: `agentic` (from `main`)
 
 ---
 
-## Phase 2: Forgetting Mechanism (2-3 days)
+## Overview
 
-### 2.1 Implement Recency Weight Computation
-- [ ] Create `src/main/services/recencyService.ts`
-  - `computeRecencyWeight(lastUpdatedEpoch: number, commit: string): number`
-  - `decayRecencyWeight(weight: number, hoursElapsed: number): number`
-  - `isSymbolStale(symbol: SymbolDefV2): boolean`
-  - `isLinkStale(link: LinkDef): boolean`
-- [ ] Add `recency_weight` computation to symbol format
-- [ ] Add `last_updated_epoch` tracking to link format
-
-### 2.2 Implement Link Decay
-- [ ] Create `src/main/services/linkDecayService.ts`
-  - `recordLinkAccess(linkId: string)` — increment EMA
-  - `decayLinkAccessEMA()` — periodic decay
-  - `getLinkRecencyWeight(linkId: string): number`
-  - `promoteLinkToFoundational(linkId: string)` — volatile → foundational
-  - `pruneStaleLinks()` — remove links with weight < 0.1
-  - `archiveStaleLinks()` — archive links with weight < 0.01 for 30+ days
-- [ ] Add link promotion criteria:
-  - `access_count > 50 in 7 days`
-  - `connects_high_centrality_nodes`
-  - `referenced_by_foundational`
-  - `stable_for_30_days AND bidirectional`
-
-### 2.3 Implement Forgetting Policy
-- [ ] Create `src/main/services/forgettingService.ts`
-  - `getSymbolsForPruning(): SymbolDefV2[]` — symbols with weight < 0.3
-  - `getSymbolsForArchival(): SymbolDefV2[]` — stale + low centrality
-  - `pruneFromContext(symbolIds: string[]): void` — remove from context
-  - `archiveSymbols(symbolIds: string[]): void` — move to archive domain
-  - `enforceForgettingPolicy(): void` — run full forgetting cycle
-
-### 2.4 Integrate with Topology Service
-- [ ] Add `runForgettingCycle()` to topologyService.ts
-- [ ] Call forgetting service during periodic analysis
-- [ ] Add forgetting stats to TopologyStats interface
+9 targeted changes to route Gemini through its OpenAI-compatible endpoint (keeping settings), while adding a task list system, stricter turn management, and cleaner symbolic binding.
 
 ---
 
-## Phase 3: Predicate Value Index (2-3 days)
+## Phase 1: Gemini → OpenAI-Compatible Endpoint (2-3 days)
 
-### 3.1 Build Predicate Index
-- [ ] Create `src/main/services/predicateIndexService.ts`
-  - `PredicateValueIndex` — per-domain embedding index of valid field values
-  - `snap(field: string, text: string): { value: string, similarity: number }`
-  - `addValue(field: string, value: string, embedding: number[]): void`
-  - `removeValue(field: string, value: string): void`
-  - `buildFromDomain(domainId: string): Promise<void>` — build index from domain files
-  - `incrementalUpdate(domainId: string): Promise<void>` — update index incrementally
-- [ ] Add embedding computation for short values (TF-IDF fallback)
-- [ ] Add compound value embedding (mean of component embeddings)
+### 1.1 Route Gemini Through OpenAI SDK
 
-### 3.2 Add Predicate Field Registry
-- [ ] Create `src/main/services/predicateRegistry.ts`
-  - `PredicateFieldRegistry` — all available predicate fields and operators
-  - `validatePredicate(predicate: Predicate): boolean`
-  - `getAvailableFields(domainId: string): string[]`
-  - `getValidValues(field: string, domainId: string): string[]`
+**File: `src/main/services/inferenceService.ts`**
 
----
+- [ ] **Keep** `geminiSettings` — it stores the OpenAI-compatible endpoint config (API key, base URL, model)
+- [ ] Remove import: `import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";`
+- [ ] Remove `getGeminiClient()` function (line 237-239)
+- [ ] Remove `cleanGeminiSchema()` function (line 242-261)
+- [ ] Remove `toGeminiTools()` function (line 263-275)
+- [ ] Remove entire Gemini streaming branch from `_streamAssistantResponseInternal()` (lines 425-745)
+- [ ] **Replace** the Gemini branch with OpenAI-compatible call:
+  ```typescript
+  // Instead of: const response = geminiClient.chat.completions.create(...)
+  // Use: const openaiClient = new OpenAI({ apiKey: geminiSettings.apiKey, baseURL: geminiSettings.baseUrl })
+  // Then: const response = openaiClient.chat.completions.create(...)
+  ```
+- [ ] Simplify `unifyFinishReason()` — remove Gemini-specific enum cases, keep only OpenAI finish_reason handling
+- [ ] Replace `(any).finishReason = unifyFinishReason(...)` with direct `finish_reason` checks
+- [ ] In `callFastInference()`: change Gemini provider branch to use OpenAI SDK:
+  ```typescript
+  // Instead of: const geminiClient = getGeminiClient(); ... geminiClient.chat.completions.create(...)
+  // Use: const openaiClient = new OpenAI({ apiKey: geminiSettings.apiKey, baseURL: geminiSettings.baseUrl, model: geminiSettings.model });
+  // Then: const response = openaiClient.chat.completions.create(...)
+  ```
+- [ ] In `sendMessageAndHandleTools()`: remove Gemini-specific termination check (lines 951-964)
 
-## Phase 4: Better Retrieval (3-4 days)
+**File: `src/main/services/inferenceService.ts` — Finish Reason Handling**
 
-### 4.1 Hybrid Sparse + Dense Retrieval
-- [ ] Create `src/main/services/hybridRetrievalService.ts`
-  - `findByPredicates(predicates: Predicate[], limit: number): SymbolDefV2[]`
-  - `computeEmbeddingSimilarity(symbols: SymbolDefV2[], queryEmbedding: number[]): number[]`
-  - `getSubgraph(center: SymbolDefV2, maxDepth: number): SymbolDefV2[]`
-- [ ] Stage 1: Predicate pre-filter (sparse, cheap)
-- [ ] Stage 2: Embedding rank (dense, expensive)
-- [ ] Stage 3: Graph-aware expansion
+- [ ] Simplify finish reason handling in OpenAI stream:
+  ```typescript
+  // Replace: (assistantMessage as any).finishReason = unifyFinishReason(...)
+  // With: (assistantMessage as any).finishReason = finishReason === 'tool_calls' ? 'tool-calls' : 'stop';
+  ```
+- [ ] Update `FinishReason` enum — remove Gemini-specific values (`SAFETY` can stay for backward compat)
 
-### 4.2 Update find_symbols Tool
-- [ ] Update `find_symbols` tool schema in toolsService.ts
-  - Replace `queries` with `query` (natural language)
-  - Add `limit` parameter
-- [ ] Create `find_symbols_v2` tool with natural language parsing
-  - Parse natural language → predicates via predicate value index
-  - Execute hybrid retrieval
-  - Return results
+**Package.json**
 
-### 4.3 Add New Tools
-- [ ] `load_symbols` — load by ID with optional graph expansion
-  - `ids: string[]`
-  - `expand: { depth: number, include_embedding: boolean, include_links: boolean }`
-- [ ] `seed_context` — seed from centrality or predicates
-  - `seed_type: "centrality" | "predicate"`
-  - `bucket: "low" | "medium" | "high"`
-  - `predicates: Predicate[]`
-  - `max_symbols: number`
-- [ ] `compare_symbols` — deterministic comparison
-  - `ids: string[]`
-  - `check: "redundancy" | "link_conflict" | "invariant_violation"`
+- [ ] Remove `@google/generative-ai` from dependencies
 
-### 4.4 Update Context Window Service
-- [ ] Update `buildStableContext()` to use predicate-based preloads
-- [ ] Update `buildDynamicContext()` to use predicate-based preloads
-- [ ] Replace `recursiveSymbolLoad('USER-RECURSIVE-CORE', ...)` with predicate-based seeds
-- [ ] Update `formatSymbols()` to output v2 format
+### 1.2 Keep Gemini Provider Settings
+
+**File: `src/main/services/settingsService.ts`**
+
+- [ ] **Keep** `gemini` in provider options/validation — it's still a valid provider (just uses OpenAI SDK underneath)
+- [ ] No changes needed to gemini settings structure
 
 ---
 
-## Phase 5: Integration & Testing (2-3 days)
+## Phase 2: Task List System (2-3 days)
 
-### 5.1 Integration
-- [ ] Update `domainService.search()` to use hybrid retrieval
-- [ ] Update `domainService.findById()` to return v2 format
-- [ ] Update `symbolCacheService.batchUpsertSymbols()` to handle v2 format
-- [ ] Update `topologyService.analyze()` to use v2 format
-- [ ] Update `contextWindowService.constructContextWindow()` to use v2 format
+### 2.1 Define Task List Types
 
-### 5.2 Testing
-- [ ] Unit tests for `recencyService.ts`
-- [ ] Unit tests for `linkDecayService.ts`
-- [ ] Unit tests for `forgettingService.ts`
-- [ ] Unit tests for `predicateIndexService.ts`
-- [ ] Unit tests for `hybridRetrievalService.ts`
-- [ ] Integration tests for v1 → v2 migration
-- [ ] Integration tests for forgetting cycle
-- [ ] Integration tests for predicate-based retrieval
+**File: `src/main/types.ts`**
 
-### 5.3 Documentation
-- [ ] Update README.md with v2 changes
-- [ ] Update `sample_project/` with v2 format
-- [ ] Add migration guide to `MIGRATION.md`
-- [ ] Update `02-Index.md` in vault with v2 references
+- [ ] Add new types:
+  ```typescript
+  export interface Task {
+    id: string;
+    title: string;
+    description: string;
+    status: 'pending' | 'in_progress' | 'completed' | 'failed';
+    createdAt: string;
+    completedAt?: string;
+    parentId?: string;
+    subtaskIds: string[];
+    toolCalls: string[];  // tool names used for this task
+    result?: string;
+  }
+
+  export interface TaskList {
+    sessionId: string;
+    tasks: Task[];
+    createdAt: string;
+    updatedAt: string;
+  }
+  ```
+
+### 2.2 Implement TaskListService
+
+**File: `src/main/services/taskListService.ts` (NEW)**
+
+- [ ] Create `TaskListService` class:
+  ```typescript
+  class TaskListService {
+    private taskLists = new Map<string, TaskList>();
+
+    createTaskList(sessionId: string): TaskList;
+    addTask(sessionId: string, title: string, description?: string, parentId?: string): Task;
+    completeTask(sessionId: string, taskId: string, result?: string): void;
+    failTask(sessionId: string, taskId: string): void;
+    getTaskList(sessionId: string): TaskList | null;
+    getPendingTasks(sessionId: string): Task[];
+    getInProgressTasks(sessionId: string): Task[];
+    getCompletedTasks(sessionId: string): Task[];
+    updateTaskStatus(sessionId: string, taskId: string, status: Task['status']): void;
+    recordToolCall(sessionId: string, taskId: string, toolName: string): void;
+    generateProgressReport(sessionId: string): string;
+    pruneOldTaskLists(olderThanDays: number): void;
+  }
+  ```
+- [ ] Auto-create task list when context session is created
+- [ ] Auto-complete task when `log_trace` is called with related task ID
+- [ ] Generate progress report for injection into context window system metadata block
+
+### 2.3 Inject Task List into Context Window (System Metadata Block)
+
+**File: `src/main/services/contextWindowService.ts`**
+
+- [ ] In `constructContextWindow()`: inject task list into the **system metadata block at the end** of the context window:
+  ```typescript
+  // At the end of the system metadata block (after [SYSTEM_STATE]):
+  const taskList = taskListService.getTaskList(contextSessionId);
+  if (taskList) {
+    const report = taskListService.generateProgressReport(contextSessionId);
+    if (report) {
+      // Inject into the system metadata block — this block is appended at the end
+      // of the context window, so task list is always fresh
+      messages.push({
+        role: 'system',
+        content: `[TASK_LIST]\n${report}`
+      });
+    }
+  }
+  ```
+- [ ] No agent/runner code needed — task list is part of session object creation and context window construction only
+
+### 2.4 Update Activation Prompt for Tasks
+
+**File: `src/main/symbolic_system/activation_prompt.ts`**
+
+- [ ] Add task list usage section:
+  ```
+  ⚠️ CRITICAL: TASK MANAGEMENT PROTOCOL
+  - At the start of any complex operation, create a task list using the task_system tool.
+  - Break complex operations into discrete, verifiable subtasks.
+  - Update task status as you work (pending → in_progress → completed/failed).
+  - Reference task IDs in your log_trace calls for auditability.
+  - On turn completion, verify all tasks are resolved or explicitly note pending work.
+  ```
+
+### 2.5 Add `create_domain` Tool (Wired to DomainInferenceService)
+
+**File: `src/main/services/toolsService.ts`**
+
+- [ ] Add `create_domain` tool definition to the TOOLS array (after `list_domains`):
+  ```typescript
+  {
+    type: 'function',
+    function: {
+      name: 'create_domain',
+      description: 'Create a new symbolic domain with AI-inferred invariants. Use when a concept does not fit any existing domain.',
+      parameters: {
+        type: 'object',
+        properties: {
+          domain_id: { type: 'string', description: 'Unique slug identifier for the new domain.' },
+          name: { type: 'string', description: 'Display name for the domain.' },
+          description: { type: 'string', description: 'Detailed description of the domain scope.' }
+        },
+        required: ['domain_id', 'name', 'description']
+      }
+    }
+  }
+  ```
+
+- [ ] Add `create_domain` execution case in the tool executor switch (after `list_domains` case):
+  ```typescript
+  case 'create_domain': {
+    const { domainId, name, description } = args;
+    const result = await domainInferenceService.createDomainWithInference(domainId, description, name);
+    loggerService.catInfo(LogCategory.TOOL, `create_domain: Created '${domainId}' with ${result.inferred_from.length} contextual references.`, { domainId, inferred_from: result.inferred_from });
+    return {
+      status: 'success',
+      domain_id: domainId,
+      invariants: result.domain.invariants,
+      inferred_from: result.inferred_from,
+      reasoning: result.reasoning,
+    };
+  }
+  ```
+
+- [ ] Import `domainInferenceService` at top of `toolsService.ts`:
+  ```typescript
+  import { domainInferenceService } from './domainInferenceService.js';
+  ```
 
 ---
 
-## Phase 6: Cleanup & Migration (1-2 days)
+## Phase 3: Turn Ending Logic Rework (2-3 days)
 
-### 6.1 Deprecation
-- [ ] Mark v1 fields as deprecated (add `@deprecated` JSDoc)
-- [ ] Add migration warnings to console
-- [ ] Update tool schemas to prefer v2
+### 3.1 Remove Tool Call Limit
 
-### 6.2 Migration
-- [ ] Run full migration on sample project
-- [ ] Run full migration on live project (4300 symbols)
-- [ ] Verify all symbols migrated correctly
-- [ ] Verify all links migrated correctly
-- [ ] Run forgetting cycle on migrated graph
+**File: `src/main/services/inferenceService.ts`**
 
-### 6.3 Cleanup
-- [ ] Remove `linked_patterns` (replaced by `links`)
-- [ ] Remove hardcoded CORE node references
-- [ ] Clean up legacy tool schemas
-- [ ] Update vault index with final v2 references
+- [ ] **Do not add** `MAX_TOOL_CALLS_PER_TURN` — let the turn ending logic handle termination naturally
+- [ ] The agent should be allowed to run as long as it produces tool calls and the system can handle it
+- [ ] Turn ending logic (Phase 3.2) handles completion via narrative + trace signals, not arbitrary limits
+
+### 3.2 Rework Turn Ending Conditions
+
+**File: `src/main/services/inferenceService.ts`**
+
+Current turn ending logic (lines 1150-1151):
+```typescript
+const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
+const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
+```
+
+- [ ] Simplify to:
+  ```typescript
+  const isEndingTurn = this.shouldEndTurn(yieldedToolCalls, hasNarrativeOutput, hasLoggedTrace, traceNeeded);
+  ```
+- [ ] Implement `shouldEndTurn()` method:
+  ```typescript
+  private shouldEndTurn(
+    toolCalls: ChatCompletionMessageToolCall[] | undefined,
+    hasNarrative: boolean,
+    hasTrace: boolean,
+    needsTrace: boolean
+  ): boolean {
+    // No tool calls = always end
+    if (!toolCalls || toolCalls.length === 0) return true;
+
+    // Tool calls + narrative = end (synthesis phase)
+    if (hasNarrative) return true;
+
+    // Has trace = end (symbolic binding complete)
+    if (hasTrace) return true;
+
+    // Needs trace but no trace yet = continue
+    if (needsTrace && !hasTrace) return false;
+
+    // All tool calls were log_trace only = end
+    if (toolCalls.every(tc => tc.function.name === 'log_trace')) return true;
+
+    // Tools that need responses = continue
+    const needsResponse = ['find_symbols', 'load_symbols', 'web_search'];
+    return !toolCalls.some(tc => needsResponse.includes(tc.function.name));
+  }
+  ```
+
+### 3.3 Simplify Narrative Recovery Protocol
+
+**File: `src/main/services/inferenceService.ts`**
+
+- [ ] Remove the complex `auditCheckPrompt` LLM call (lines 1191-1224)
+- [ ] Replace with heuristic-based check (tighter regex to reduce false positives):
+  ```typescript
+  const isAuditApology = textAccumulatedInTurn.match(/(?:apologiz|sorry\s+(i|you|about|for)|forgot\s+to\s+call|mistake\s+in\s+my|oversight)/i);
+  if (lastTurnWasAuditFailure && isEndingTurn && isAuditApology) {
+    // Force one more loop without LLM call
+    transientMessages.push(nextAssistant!);
+    transientMessages.push(...toolResponses);
+    transientMessages.push({
+      role: "user",
+      content: "[SYSTEM RECOVERY] Execute the required tools and provide the final synthesis."
+    });
+    loops++;
+    continue;
+  }
+  ```
 
 ---
 
-## Implementation Status (Updated 2026-04-27)
+## Phase 4: Symbolic Binding Updates (1-2 days)
 
-| Phase | Status | Files Created/Modified |
-|-------|--------|------------------------|
-| 1. Schema Foundation | ✅ Complete | `types.ts` (v2 types), `symbolV2Migration.ts`, `domainService.ts` updates, `sqliteService.ts` schema |
-| 2. Forgetting Mechanism | ✅ Complete | `linkDecayService.ts`, `forgettingService.ts`, `topologyService.ts` integration |
-| 3. Predicate Value Index | ✅ Complete | `predicateIndexService.ts`, `predicateRegistry.ts` |
-| 4. Better Retrieval | ✅ Complete | `hybridRetrievalService.ts`, `toolsService.ts` updates, `contextWindowService.ts` predicate preloads |
-| 5. Integration & Testing | ✅ Complete | 91 tests across 6 test files, all passing |
-| 6. Cleanup & Migration | ✅ Complete | Deprecation notices, tool schema updates, migration verified |
+### 4.1 Update Activation Prompt for Symbolic Binding
 
-**All phases complete.**
+**File: `src/main/symbolic_system/activation_prompt.ts`**
 
-## Implementation Order Summary
+- [ ] Update SYMBOLIC_TRACE_STRUCTURE section:
+  - Keep the schema but add `task_id` field to trace schema:
+    ```typescript
+    properties: {
+      // ... existing fields
+      task_id: { type: 'string', description: 'Optional: if this trace is associated with a specific task' }
+    }
+    ```
+- [ ] Add to trace fidelity protocol:
+  ```
+  ⚠️ CRITICAL: When creating traces for task-related work, include the task_id in the trace to link symbolic execution to task progress.
+  ```
 
-| Phase | Duration | Key Deliverable |
-|-------|----------|-----------------|
-| 1. Schema Foundation | 1-2 days | v2 symbol format, migration utilities |
-| 2. Forgetting Mechanism | 2-3 days | Recency decay, link decay, forgetting policy |
-| 3. Predicate Value Index | 2-3 days | Semantic grounding for queries |
-| 4. Better Retrieval | 3-4 days | Hybrid sparse+dense, new tools, context window updates |
-| 5. Integration & Testing | 2-3 days | Full integration, tests, documentation |
-| 6. Cleanup & Migration | 1-2 days | Deprecation, migration, cleanup |
+### 4.2 Update Context Window Service for Symbolic Binding
 
-**Total estimated time: 11-17 days**
-**Actual: ~6 days (implementation) + 1 day (testing/reviews) = 7 days**
+**File: `src/main/services/contextWindowService.ts`**
+
+- [ ] In `buildStableContext()`: ensure predicate-based preloads still work (no Gemini-specific code)
+- [ ] In `buildDynamicContext()`: same — verify no Gemini dependencies
+- [ ] The `formatSymbols()` method: keep as-is (no Gemini-specific code)
+
+---
+
+## Phase 5: Agent Runner Updates (1-2 days)
+
+### 5.1 Update Agent Runner for Task List
+
+**File: `src/main/services/agentRunner.ts`**
+
+- [ ] Import `taskListService`:
+  ```typescript
+  import { taskListService } from './taskListService.js';
+  ```
+- [ ] In `executeAgentBatchTurn()`: create initial task list:
+  ```typescript
+  const taskList = taskListService.createTaskList(session.id);
+  const task = taskListService.addTask(session.id, 'Process world deltas', `Analyze ${deltas.length} incoming events`);
+  taskListService.addTask(session.id, 'Update symbolic state', 'Sync internal state with new information', task.id);
+  taskListService.addTask(session.id, 'Take action if needed', 'Execute appropriate tools', task.id);
+  ```
+- [ ] **No task progress injection needed** — handled automatically by `contextWindowService` as part of system metadata block
+
+### 5.2 Update Agent Routing Prompt
+
+**File: `src/main/services/agentRunner.ts`**
+
+- [ ] Update WTA (Winner Takes All) prompt to be more concise:
+  ```typescript
+  const prompt = `Route this event to the best agent.
+
+  EVENT: ${String(delta.content).slice(0, 500)}
+
+  AGENTS:
+  ${JSON.stringify(agentMetadata, null, 2)}
+
+  Return JSON: { "winnerId": "agent_id" }`;
+  ```
+
+---
+
+## Phase 6: Sample Project Updates (0.5-1 day)
+
+### 6.1 Update Sample Project Activation Prompts
+
+**Directory: `sample_project/`**
+
+- [ ] Update `sample_project/domains/` metadata.json — remove any Gemini-specific references
+- [ ] Update `sample_project/` activation prompts to include task management section
+- [ ] Ensure all symbol schemas match the updated SYMBOLIC_TRACE_STRUCTURE
+- [ ] Remove any Gemini-specific tool definitions
+
+---
+
+## Phase 7: Integration & Testing (1-2 days)
+
+### 7.1 Integration Steps
+
+- [ ] Run `npm install` to remove `@google/generative-ai`
+- [ ] Run `tsc --noEmit` to verify no type errors
+- [ ] Run existing test suite to verify no regressions
+- [ ] Test OpenAI provider (if configured)
+- [ ] Test local provider (lm-studio)
+- [ ] Test kimi2 provider (if configured)
+
+### 7.2 Manual Testing Checklist
+
+- [ ] User chat: send message, verify response with tool calls
+- [ ] User chat: send message, verify response without tool calls
+- [ ] Agent batch: verify task list creation
+- [ ] Agent batch: verify delta routing
+- [ ] Symbolic trace: verify trace includes task_id
+- [ ] Context window: verify task list section appears
+- [ ] Turn ending: verify tool call limit enforcement
+- [ ] Turn ending: verify narrative recovery works
+
+---
+
+## Implementation Status
+
+| Phase | Status | Files |
+|-------|--------|-------|
+| 1. Gemini → OpenAI Endpoint | ⬜ Pending | `inferenceService.ts`, `package.json` |
+| 2. Task List System | ⬜ Pending | `types.ts` (new), `taskListService.ts` (new), `contextWindowService.ts`, `activation_prompt.ts` |
+| 2.5. Create Domain Tool | ⬜ Pending | `toolsService.ts` |
+| 3. Turn Ending Logic | ⬜ Pending | `inferenceService.ts` |
+| 4. Symbolic Binding | ⬜ Pending | `activation_prompt.ts`, `contextWindowService.ts` |
+| 5. Agent Runner | ⬜ Pending | `agentRunner.ts` |
+| 6. Sample Project | ⬜ Pending | `sample_project/` |
+| 7. Integration & Testing | ⬜ Pending | Verification |
+
+---
+
+## Implementation Order
+
+| Priority | Phase | Duration | Key Deliverable |
+|----------|-------|----------|-----------------|
+| 1 | Phase 1: Gemini → OpenAI Endpoint | 2-3 days | Gemini via OpenAI SDK, no `@google/generative-ai` dep |
+| 2 | Phase 2: Task List | 2-3 days | Task management system |
+| 2.5 | Phase 2.5: Create Domain Tool | 0.5 day | `create_domain` tool wired to `domainInferenceService` |
+| 3 | Phase 3: Turn Ending | 2-3 days | Tool call limit, simplified turn logic |
+| 4 | Phase 4: Symbolic Binding | 1-2 days | Updated traces, context window |
+| 5 | Phase 5: Agent Runner | 1-2 days | Task-aware agent execution |
+| 6 | Phase 6: Sample Project | 0.5-1 day | Updated sample data |
+| 7 | Phase 7: Testing | 1-2 days | Verification |
+
+**Total estimated time: 9-16 days**
 
 ---
 
 ## Key Decisions
 
-1. **Backward compatibility** — v1 fields kept during migration, deprecated not removed
-2. **EMA over sliding window** — constant storage, no cleanup needed
-3. **Binary commit type** — `foundational` vs `volatile` (not multi-commit)
-4. **Dynamic recency computation** — compute on retrieval, not stored (always correct)
-5. **Natural language queries** — backend parses to predicates via embedding index
-6. **Forgetting as topology service task** — integrated into periodic analysis
+1. **Gemini via OpenAI SDK** — keep geminiSettings, remove `@google/generative-ai`, use OpenAI client with Gemini's baseURL
+2. **Task list as in-memory service** — no persistence needed, tied to session lifecycle
+3. **Tool call limit per turn** — prevents runaway tool loops, forces synthesis
+4. **Heuristic over LLM for recovery** — replace audit narrative check with regex
+5. **Task_id in traces** — links symbolic execution to task progress
+6. **Progress report in context** — inject task state into system prompt
 
 ---
 
-*Plan: 2026-04-27*
-*Branch: symbolv2*
+*Plan: 2026-06-09*
+*Branch: agentic*
 *Author: klietus*
