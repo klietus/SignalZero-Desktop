@@ -4,6 +4,7 @@ import { domainService } from './domainService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { alertTriggerService } from './alertTriggerService.js';
 import { taskListService } from './taskListService.js';
+import { settingsService } from './settingsService.js';
 import { SymbolDef, ContextMessage, ContextKind, SymbolDefV2 } from '../types.js';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { loggerService, LogCategory } from './loggerService.js';
@@ -156,7 +157,7 @@ export class ContextWindowService {
 
             if (round.length === 0) continue;
 
-            let roundMessages = round.map(msg => this.mapToOpenAIMessage(msg));
+            let roundMessages = await Promise.all(round.map(msg => this.mapToOpenAIMessage(msg)));
             let roundTokens = roundMessages.reduce((sum, msg) => sum + this.estimateTokens(JSON.stringify(msg)), 0);
 
             // Check if adding this round exceeds limit
@@ -261,7 +262,7 @@ export class ContextWindowService {
         });
     }
 
-    private mapToOpenAIMessage(msg: ContextMessage): ChatCompletionMessageParam {
+    private async mapToOpenAIMessage(msg: ContextMessage): Promise<ChatCompletionMessageParam> {
         let role = msg.role;
         if (role === 'model') role = 'assistant';
 
@@ -275,15 +276,26 @@ export class ContextWindowService {
         }
 
         if (msg.toolCalls && msg.toolCalls.length > 0) {
-            chatMsg.tool_calls = msg.toolCalls.map((tc: any) => ({
-                id: tc.id,
-                type: 'function',
-                function: {
-                    name: tc.name,
-                    arguments: typeof tc.arguments === 'string' ? tc.arguments : JSON.stringify(tc.arguments)
-                },
-                thought_signature: tc.thought_signature
-            }));
+            const settings = await settingsService.getInferenceSettings();
+            chatMsg.tool_calls = msg.toolCalls.map((tc: any) => {
+                const call: any = {
+                    id: tc.id,
+                    type: 'function',
+                    function: {
+                        name: tc.name,
+                        arguments: typeof tc.arguments === 'string' ? tc.arguments : JSON.stringify(tc.arguments)
+                    }
+                };
+                // Only include thought_signature for Gemini provider (nested inside extra_content.google)
+                if (settings.provider === 'gemini' && tc.thought_signature) {
+                    call.extra_content = {
+                        google: {
+                            thought_signature: tc.thought_signature
+                        }
+                    };
+                }
+                return call;
+            });
         }
 
         if (role === 'tool') {

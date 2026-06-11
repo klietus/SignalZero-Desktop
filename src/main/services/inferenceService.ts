@@ -229,6 +229,17 @@ const mergeToolCallDelta = (
     };
     const nextArgs = call.function?.arguments ?? "";
     const nextName = call.function?.name || existing.function.name;
+    
+    // Extract thought_signature from multiple possible locations
+    let thoughtSig: string | undefined;
+    if (call.thought_signature) {
+      thoughtSig = call.thought_signature;
+    } else if ((call as any).thoughtSignature) {
+      thoughtSig = (call as any).thoughtSignature;
+    } else if (call.extra_content?.google?.thought_signature) {
+      thoughtSig = call.extra_content.google.thought_signature;
+    }
+    
     collected.set(index, {
       ...existing,
       id: call.id || existing.id,
@@ -238,6 +249,7 @@ const mergeToolCallDelta = (
       },
       type: "function",
       index,
+      thought_signature: thoughtSig || (existing as any).thought_signature,
     } as any);
   }
   return collected;
@@ -341,6 +353,15 @@ const _streamAssistantResponseInternal = async function* (
   assistantMessage?: ChatCompletionMessageParam;
 }> {
   const settings = await settingsService.getInferenceSettings();
+  
+  // Build request parameters
+  const requestParams: any = {
+    model,
+    messages,
+    tools: activeTools,
+    stream: true,
+    max_tokens: 4096
+  };
 
   // DEBUG: Log request to file for Gemini debugging
   try {
@@ -351,37 +372,64 @@ const _streamAssistantResponseInternal = async function* (
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const logFile = path.join(logDir, `gemini_request_${timestamp}.json`);
-    
+
+
+
     const payload = {
       timestamp: new Date().toISOString(),
       model,
       messages: messages.map(m => ({
         role: m.role,
         content: typeof m.content === 'string' ? m.content : (m.content ?? ''),  // Use empty string instead of [] for consistency
-        tool_calls: (m as any).tool_calls?.map(tc => ({
-          id: tc.id,
-          type: tc.type,
-          function: { name: tc.function?.name, arguments: tc.function?.arguments },
-          thought_signature: (tc as any).thought_signature
-        })),
+        tool_calls: settings.provider === 'gemini' 
+          ? (m as any).tool_calls?.map(tc => ({ 
+              id: tc.id, 
+              type: tc.type, 
+              function: { name: tc.function?.name, arguments: tc.function?.arguments },
+              extra_content: {
+                google: {
+                  thought_signature: (tc as any).thought_signature
+                }
+              }
+            }))
+          : (m as any).tool_calls?.map(tc => ({ 
+              id: tc.id, 
+              type: tc.type, 
+              function: { name: tc.function?.name, arguments: tc.function?.arguments }
+            })),
         tool_call_id: (m as any).tool_call_id,
         name: (m as any).name
       }))
     };
     
-    fs.writeFileSync(logFile, JSON.stringify(payload, null, 2));
+    fs.writeFileSync(logFile, JSON.stringify({
+      ...payload,
+      extra_content: requestParams.extra_content
+    }, null, 2));
     loggerService.catInfo(LogCategory.INFERENCE, `GEMINI DEBUG: Request logged`, { file: logFile });
   } catch (err) { /* ignore */ }
 
   // Use OpenAI SDK for all providers (including Gemini via OpenAI-compatible endpoint)
   const client = await getClient();
-  const stream = await client.chat.completions.create({
-    model,
-    messages,
-    tools: activeTools,
-    stream: true,
-    max_tokens: 4096
-  });
+  
+  // For Gemini provider, extract thought_signatures from previous tool calls and pass in extra_content
+  if (settings.provider === 'gemini') {
+    const thoughtSignatures = messages
+      .filter(m => (m as any).tool_calls)
+      .flatMap((m: any) => m.tool_calls || [])
+      .map((tc: any) => tc.thought_signature)
+      .filter(Boolean);
+    
+    if (thoughtSignatures.length > 0) {
+      requestParams.extra_content = {
+        google: {
+          thought_signature: thoughtSignatures[0] // Use first signature for now
+        }
+      };
+    }
+  }
+  
+  const stream: any = await client.chat.completions.create(requestParams);
 
   let textAccumulator = "";
   let reasoningAccumulator = "";
@@ -408,6 +456,35 @@ const _streamAssistantResponseInternal = async function* (
       yield { text: textChunk };
     }
     if (delta.tool_calls && delta.tool_calls.length > 0) {
+      // DEBUG: Log tool call deltas to see what we're receiving from API
+      try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const logDir = '/tmp/gemini_debug';
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+        
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const logFile = path.join(logDir, `gemini_toolcall_delta_${timestamp}.json`);
+        
+        fs.writeFileSync(logFile, JSON.stringify({
+          received_at: new Date().toISOString(),
+          tool_calls: delta.tool_calls.map((tc: any) => ({
+            id: tc.id,
+            index: tc.index,
+            function: tc.function,
+            thought_signature: tc.thought_signature,
+            thoughtSignature: (tc as any).thoughtSignature,
+            extra_content: tc.extra_content
+          }))
+        }, null, 2));
+        
+        loggerService.catInfo(LogCategory.INFERENCE, `GEMINI DEBUG: Tool call delta logged`, { 
+          file: logFile,
+          count: delta.tool_calls.length,
+          has_extra_content: delta.tool_calls.some((tc: any) => tc.extra_content)
+        });
+      } catch (err) { /* ignore */ }
+      
       mergeToolCallDelta(collectedToolCalls, delta.tool_calls as any);
     }
   }
@@ -749,9 +826,6 @@ export async function* sendMessageAndHandleTools(
       const assistantDoesNotNeedToolResponse = !currentToolNames.has('find_symbols') && !currentToolNames.has('load_symbols') && !currentToolNames.has('web_search');
       const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (assistantDoesNotNeedToolResponse && hasNarrativeOutput);
 
-      // FORCE NARRATIVE: If we've done ≥2 tool-only loops with no narrative, force synthesis
-      const isStuckInToolLoop = loops >= 2 && !hasNarrativeOutput && yieldedToolCalls && yieldedToolCalls.length > 0;
-
       loggerService.catDebug(LogCategory.INFERENCE, "Turn ending decision", {
         contextSessionId,
         toolNames: Array.from(currentToolNames),
@@ -825,29 +899,11 @@ export async function* sendMessageAndHandleTools(
         yield { text: totalTextAccumulatedAcrossLoops.trim() };
       }
 
-      // FORCE NARRATIVE: If stuck in tool loop, inject directive to synthesize and end
-      if (isStuckInToolLoop) {
-        loggerService.catInfo(LogCategory.INFERENCE, "Detected tool-only loop. Forcing narrative synthesis.", {
-          contextSessionId,
-          loops,
-          toolNames: Array.from(currentToolNames)
-        });
-
-        transientMessages.push(nextAssistant!);
-        if (toolResponses.length > 0) transientMessages.push(...toolResponses);
-        transientMessages.push({
-          role: "user",
-          content: "[SYSTEM DIRECTIVE] You have executed the necessary tools. Now provide a concise narrative synthesis of your findings and end the turn. DO NOT call any more tools."
-        });
-
-        loops++;
-        continue;
-      }
-
       // Record Assistant message if it contained tool calls OR if it's the final turn
       const hasTools = (nextAssistant as any).tool_calls && (nextAssistant as any).tool_calls.length > 0;
       const reasoning = (nextAssistant as any).reasoning_content;
-
+      const settings = await settingsService.getInferenceSettings();
+      
       if (contextSessionId && nextAssistant) {
         if (hasTools || isEndingTurn) {
           await contextService.recordMessage(contextSessionId, {
@@ -855,12 +911,18 @@ export async function* sendMessageAndHandleTools(
             role: "assistant",
             content: isEndingTurn ? stripThoughts(totalTextAccumulatedAcrossLoops) : (nextAssistant.content as string || ""),
             timestamp: new Date().toISOString(),
-            toolCalls: (nextAssistant as any).tool_calls?.map((call: any) => ({ 
-              id: call.id, 
-              name: call.function?.name, 
-              arguments: call.function?.arguments,
-              thought_signature: call.thought_signature 
-            })),
+            toolCalls: settings.provider === 'gemini' 
+              ? (nextAssistant as any).tool_calls?.map((call: any) => ({ 
+                  id: call.id, 
+                  name: call.function?.name, 
+                  arguments: call.function?.arguments,
+                  thought_signature: call.thought_signature 
+                }))
+              : (nextAssistant as any).tool_calls?.map((call: any) => ({ 
+                  id: call.id, 
+                  name: call.function?.name, 
+                  arguments: call.function?.arguments
+                })),
             metadata: {
               kind: hasTools ? "assistant_tool_call" : "assistant_response",
               ...(reasoning ? { reasoning_content: reasoning } : {})
