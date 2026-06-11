@@ -265,10 +265,10 @@ export class ContextWindowService {
         let role = msg.role;
         if (role === 'model') role = 'assistant';
 
-        const chatMsg: any = {
-            role: role,
-            content: msg.content || null,
-        };
+    const chatMsg: any = {
+        role: role,
+        content: msg.content ?? '',  // Use empty string instead of null for consistency
+    };
 
         if (msg.metadata?.reasoning_content) {
             chatMsg.reasoning_content = msg.metadata.reasoning_content;

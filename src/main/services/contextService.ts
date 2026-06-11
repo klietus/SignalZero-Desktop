@@ -67,7 +67,41 @@ export const contextService = {
 
   async getHistory(sessionId: string): Promise<ContextMessage[]> {
     const rows = sqliteService.all(`SELECT * FROM messages WHERE context_id = ? ORDER BY timestamp ASC`, [sessionId]);
-    return rows.map(mapRowToMessage);
+    const allMessages = rows.map(mapRowToMessage);
+    
+    // Reorder to ensure assistant messages with tool_calls come BEFORE their tool responses
+    const result: ContextMessage[] = [];
+    const toolResponseBuffer = new Map<string, ContextMessage>();
+    
+    for (const msg of allMessages) {
+      if (msg.role === 'tool' && msg.toolCallId) {
+        // Buffer tool responses by their tool_call_id
+        toolResponseBuffer.set(msg.toolCallId!, msg);
+      } else if (msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0) {
+        // Emit assistant message first
+        result.push(msg);
+        
+        // Then emit all corresponding tool responses in order
+        for (const call of msg.toolCalls) {
+          const toolResponse = toolResponseBuffer.get(call.id!);
+          if (toolResponse) {
+            result.push(toolResponse);
+            toolResponseBuffer.delete(call.id!);
+          }
+        }
+      } else {
+        // Regular messages (user, assistant without tool calls, etc.) emit immediately
+        result.push(msg);
+      }
+    }
+    
+    // Emit any remaining buffered tool responses that don't have a matching assistant
+    // (shouldn't happen in normal operation, but handle gracefully)
+    for (const msg of toolResponseBuffer.values()) {
+      result.push(msg);
+    }
+    
+    return result;
   },
 
   async getUnfilteredHistory(sessionId: string): Promise<ContextMessage[]> {

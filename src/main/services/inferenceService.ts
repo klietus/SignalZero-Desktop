@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { randomUUID } from "crypto";
+import path from "path";
 import type {
   ChatCompletionMessageParam,
   ChatCompletionMessageToolCall,
@@ -340,6 +341,37 @@ const _streamAssistantResponseInternal = async function* (
   assistantMessage?: ChatCompletionMessageParam;
 }> {
   const settings = await settingsService.getInferenceSettings();
+
+  // DEBUG: Log request to file for Gemini debugging
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const logDir = '/tmp/gemini_debug';
+    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const logFile = path.join(logDir, `gemini_request_${timestamp}.json`);
+    
+    const payload = {
+      timestamp: new Date().toISOString(),
+      model,
+      messages: messages.map(m => ({
+        role: m.role,
+        content: typeof m.content === 'string' ? m.content : (m.content ?? ''),  // Use empty string instead of [] for consistency
+        tool_calls: (m as any).tool_calls?.map(tc => ({
+          id: tc.id,
+          type: tc.type,
+          function: { name: tc.function?.name, arguments: tc.function?.arguments },
+          thought_signature: (tc as any).thought_signature
+        })),
+        tool_call_id: (m as any).tool_call_id,
+        name: (m as any).name
+      }))
+    };
+    
+    fs.writeFileSync(logFile, JSON.stringify(payload, null, 2));
+    loggerService.catInfo(LogCategory.INFERENCE, `GEMINI DEBUG: Request logged`, { file: logFile });
+  } catch (err) { /* ignore */ }
 
   // Use OpenAI SDK for all providers (including Gemini via OpenAI-compatible endpoint)
   const client = await getClient();
@@ -813,10 +845,10 @@ export async function* sendMessageAndHandleTools(
       }
 
       // Record Assistant message if it contained tool calls OR if it's the final turn
-      if (contextSessionId && nextAssistant) {
-        const hasTools = (nextAssistant as any).tool_calls && (nextAssistant as any).tool_calls.length > 0;
-        const reasoning = (nextAssistant as any).reasoning_content;
+      const hasTools = (nextAssistant as any).tool_calls && (nextAssistant as any).tool_calls.length > 0;
+      const reasoning = (nextAssistant as any).reasoning_content;
 
+      if (contextSessionId && nextAssistant) {
         if (hasTools || isEndingTurn) {
           await contextService.recordMessage(contextSessionId, {
             id: randomUUID(),
@@ -838,8 +870,18 @@ export async function* sendMessageAndHandleTools(
         }
       }
 
-      transientMessages.push(nextAssistant!);
-      if (toolResponses.length > 0) transientMessages.push(...toolResponses);
+      // Only push to transientMessages if NOT already persisted to context (avoids duplicates)
+      // When hasTools=true, assistant message is persisted above and will be in next loop's context
+      // When toolResponses exist, they are also persisted to context
+      const shouldAddToTransient = !contextSessionId || (!hasTools && !isEndingTurn);
+      
+      if (shouldAddToTransient) {
+        transientMessages.push(nextAssistant!);
+      }
+      // Only add toolResponses to transient if not persisted to context
+      if (toolResponses.length > 0 && !contextSessionId) {
+        transientMessages.push(...toolResponses);
+      }
 
       if (isEndingTurn) {
         if (contextSessionId) {
