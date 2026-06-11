@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { randomUUID } from "crypto";
 import type {
   ChatCompletionMessageParam,
@@ -36,44 +35,18 @@ export enum FinishReason {
 /**
  * Unify provider-specific stop reasons into a single internal enum.
  * OpenAI: "stop" | "tool_calls" | "length" | "content_filter" | null
- * Gemini: STOP | MAX_TOKENS | SAFETY | RECITATION | LANGUAGE | OTHER | BLOCKLIST | etc.
  */
 export const unifyFinishReason = (provider: string, rawReason: string | null | undefined): FinishReason => {
   if (!rawReason) return FinishReason.STOP;
 
-  if (provider === 'openai' || provider === 'kimi2') {
-    switch (rawReason) {
-      case 'stop': return FinishReason.STOP;
-      case 'tool_calls': return FinishReason.TOOL_CALLS;
-      case 'length':
-      case 'max_output_tokens': return FinishReason.MAX_TOKENS;
-      case 'content_filter': return FinishReason.SAFETY;
-      default: return FinishReason.ERROR;
-    }
+  switch (rawReason.toLowerCase()) {
+    case 'stop': return FinishReason.STOP;
+    case 'tool_calls': return FinishReason.TOOL_CALLS;
+    case 'length':
+    case 'max_output_tokens': return FinishReason.MAX_TOKENS;
+    case 'content_filter': return FinishReason.SAFETY;
+    default: return FinishReason.ERROR;
   }
-
-  if (provider === 'gemini') {
-    switch (rawReason) {
-      case 'STOP': return FinishReason.STOP;
-      case 'MAX_TOKENS': return FinishReason.MAX_TOKENS;
-      case 'SAFETY':
-      case 'RECITATION':
-      case 'LANGUAGE':
-      case 'BLOCKLIST':
-      case 'PROHIBITED_CONTENT':
-      case 'SPII':
-      case 'IMAGE_SAFETY':
-      case 'IMAGE_PROHIBITED_CONTENT': return FinishReason.SAFETY;
-      case 'MALFORMED_FUNCTION_CALL':
-      case 'UNEXPECTED_TOOL_CALL':
-      case 'TOO_MANY_TOOL_CALLS':
-      case 'MISSING_THOUGHT_SIGNATURE':
-      case 'MALFORMED_RESPONSE': return FinishReason.ERROR;
-      default: return FinishReason.STOP;
-    }
-  }
-
-  return FinishReason.ERROR;
 };
 
 interface ChatSessionState {
@@ -126,35 +99,14 @@ export const callFastInference = async (
 
     if (priority >= LlamaPriority.HIGH && isApiConfigured) {
       try {
-        if (settings.provider === 'gemini') {
-          const client = await getGeminiClient();
-          const sysMsg = augmentedMessages.find(m => m.role === 'system');
-          const contents = augmentedMessages.filter(m => m.role !== 'system').map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.content }]
-          }));
-          const model = client.getGenerativeModel({ 
-            model: settings.agentModel,
-            systemInstruction: sysMsg ? { role: 'system', parts: [{ text: sysMsg.content }] } : undefined,
-            ...(settings.model === 'gemini-3.5-flash' && {
-              thinkingConfig: { thinkingLevel: 'high', includeThoughts: true }
-            })
-          });
-          const geminiResult = await model.generateContent({
-            contents,
-            generationConfig: { maxOutputTokens: maxTokens }
-          });
-          responseText = stripThoughts(geminiResult.response.text()).trim();
-        } else {
-          const client = await getClient();
-          const response = await client.chat.completions.create({
-            model: settings.agentModel,
-            messages: augmentedMessages as any,
-            max_tokens: maxTokens,
-            stream: false
-          });
-          responseText = stripThoughts(response.choices[0].message.content || "").trim();
-        }
+        const client = await getClient();
+        const response = await client.chat.completions.create({
+          model: settings.agentModel,
+          messages: augmentedMessages as any,
+          max_tokens: maxTokens,
+          stream: false
+        });
+        responseText = stripThoughts(response.choices[0].message.content || "").trim();
         
         if (responseText) {
           loggerService.catInfo(LogCategory.INFERENCE, "Fast inference completed via API", { provider: settings.provider, model: settings.agentModel, requestId });
@@ -228,50 +180,17 @@ export const getClient = async () => {
     });
   }
 
+  if (provider === 'gemini') {
+    return new OpenAI({
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+      apiKey: apiKey || "",
+    });
+  }
+
   return new OpenAI({
     baseURL: effectiveEndpoint,
     apiKey: apiKey || "lm-studio",
   });
-};
-
-export const getGeminiClient = async () => {
-  const { apiKey } = await settingsService.getInferenceSettings();
-  return new GoogleGenerativeAI(apiKey);
-};
-
-const cleanGeminiSchema = (schema: any): any => {
-  if (!schema || typeof schema !== 'object') return schema;
-  if (Array.isArray(schema)) return schema.map(cleanGeminiSchema);
-
-  const cleaned: any = {};
-  for (const [key, value] of Object.entries(schema)) {
-    if (key === 'additionalProperties') continue;
-    if (key === 'enum') {
-      // Gemini requires enum values to be strings
-      cleaned[key] = (value as any[]).map(v => String(v));
-    } else if (key === 'oneOf' || key === 'anyOf' || key === 'allOf') {
-      cleaned[key] = (value as any[]).map(cleanGeminiSchema);
-    } else if (typeof value === 'object') {
-      cleaned[key] = cleanGeminiSchema(value);
-    } else {
-      cleaned[key] = value;
-    }
-  }
-  return cleaned;
-};
-
-const toGeminiTools = (tools: any[]) => {
-  return [{
-    functionDeclarations: tools.map((t) => ({
-      name: t.function.name,
-      description: t.function.description,
-      parameters: cleanGeminiSchema({
-        type: SchemaType.OBJECT,
-        properties: t.function.parameters.properties,
-        required: t.function.parameters.required,
-      }),
-    }))
-  }];
 };
 
 const getModel = async () => (await settingsService.getInferenceSettings()).model;
@@ -422,329 +341,7 @@ const _streamAssistantResponseInternal = async function* (
 }> {
   const settings = await settingsService.getInferenceSettings();
 
-  if (settings.provider === 'gemini') {
-    const client = await getGeminiClient();
-    const geminiTools = toGeminiTools(activeTools);
-    const geminiModel = client.getGenerativeModel({
-      model,
-      tools: geminiTools,
-      ...(model === 'gemini-3.5-flash' && {
-        thinkingConfig: { thinkingLevel: 'high', includeThoughts: true }
-      })
-    });
-
-    const systemMessage = messages.find(m => m.role === 'system');
-    const history: any[] = [];
-    let lastRole: string | null = '';
-
-    for (const m of messages) {
-      if (m.role === 'system') continue;
-      if (m.role === 'user') {
-        const parts: any[] = [];
-        if (typeof m.content === 'string') {
-          parts.push({ text: m.content || ' ' });
-        } else if (Array.isArray(m.content)) {
-          for (const part of m.content as any[]) {
-            if (part.text) {
-              parts.push({ text: part.text });
-            } else if (part.type === 'text') {
-              parts.push({ text: part.text || ' ' });
-            } else if (part.inlineData) {
-              parts.push({ inlineData: part.inlineData });
-            } else if (part.type === 'image_url' && part.image_url?.url?.startsWith('data:')) {
-              // Convert OpenAI-style base64 image to Gemini format
-              const dataUrl = part.image_url.url;
-              const matches = dataUrl.match(/^data:(.*);base64,(.*)$/);
-              if (matches) {
-                parts.push({ inlineData: { mimeType: matches[1], data: matches[2] } });
-              }
-            }
-          }
-        }
-
-        if (parts.length === 0) parts.push({ text: ' ' });
-
-        if (lastRole === 'user') {
-          const lastMsg = history[history.length - 1];
-          lastMsg.parts.push(...parts);
-        } else {
-          history.push({ role: 'user', parts });
-          lastRole = 'user';
-        }
-      } else if (m.role === 'assistant') {
-        const parts: any[] = [];
-        // Add thought part if reasoning_content is present
-        const reasoning = (m as any).reasoning_content;
-        if (reasoning) {
-          parts.push({ thought: reasoning });
-        }
-        
-        if (m.content) parts.push({ text: m.content });
-        if (m.tool_calls) {
-          let lastSeenSignature: string | undefined = undefined;
-          // First pass: find the signature if it exists anywhere in this message's tool calls
-          for (const tc of m.tool_calls) {
-            if ((tc as any).thought_signature) {
-              lastSeenSignature = (tc as any).thought_signature;
-              break;
-            }
-          }
-
-          m.tool_calls.forEach((tc, idx) => {
-            try {
-              const signature = (tc as any).thought_signature || lastSeenSignature;
-    
-              
-              const part: any = {
-                functionCall: {
-                  name: tc.function.name,
-                  args: JSON.parse(tc.function.arguments)
-                }
-              };
-              if (signature) {
-                part.thoughtSignature = signature;
-              }
-              parts.push(part);
-            } catch (e) {
-              loggerService.catWarn(LogCategory.INFERENCE, "Failed to parse tool arguments for Gemini history", { tool: tc.function.name });
-            }
-          });
-        }
-
-        if (parts.length === 0) parts.push({ text: ' ' });
-
-        if (lastRole === 'model') {
-          const lastMsg = history[history.length - 1];
-          lastMsg.parts.push(...parts);
-        } else {
-          history.push({ role: 'model', parts });
-          lastRole = 'model';
-        }
-      } else if (m.role === 'tool') {
-        let toolName = "unknown_tool";
-        const assistantMsg = messages.find(msg =>
-          msg.role === 'assistant' &&
-          msg.tool_calls?.some(tc => tc.id === m.tool_call_id)
-        );
-        if (assistantMsg && assistantMsg.role === 'assistant' && assistantMsg.tool_calls) {
-          const tc = assistantMsg.tool_calls.find(c => c.id === m.tool_call_id);
-          if (tc) toolName = tc.function.name;
-        }
-        const part = { functionResponse: { name: toolName, response: { result: m.content } } };
-        
-        // Gemini: functionResponse MUST follow a model turn.
-        // If the last role was NOT model, we might have a disconnected tool response.
-        if (lastRole === 'function' || lastRole === 'model') {
-          const lastMsg = history[history.length - 1];
-          // If the last turn was model, we MUST start a new turn with role 'user' (for function responses in some versions)
-          // or role 'function' (in others). The current SDK uses role 'user' for function responses often, 
-          // but the 'function' role is also supported in startChat.
-          if (lastRole === 'model') {
-            history.push({ role: 'function', parts: [part] });
-          } else {
-            lastMsg.parts.push(part);
-          }
-          lastRole = 'function';
-        } else {
-          // If we have a tool response without a preceding model turn, it's an orphan.
-          // We'll prepend an empty model turn to keep the sequence valid if needed, 
-          // but usually we just start a function turn.
-          history.push({ role: 'function', parts: [part] });
-          lastRole = 'function';
-        }
-      }
-    }
-
-    // --- GEMINI ROLE ALTERNATION VALIDATION ---
-    // Gemini requires: user, model, user (with functionResponse), model, ...
-    // Our 'function' role in history is mapped to 'user' with functionResponse parts by the SDK or handled internally.
-    // We must ensure we don't have consecutive same roles.
-    const validatedHistory: any[] = [];
-    lastRole = null;
-    
-    for (const turn of history) {
-      // Normalize role for alternation check: 'function' acts as 'user'
-      const normalizedRole = turn.role === 'function' ? 'user' : turn.role;
-      const normalizedLastRole = lastRole === 'function' ? 'user' : lastRole;
-
-      if (normalizedRole === normalizedLastRole) {
-        // Inject bridge turn
-        if (normalizedRole === 'user') {
-          validatedHistory.push({ role: 'model', parts: [{ text: ' ' }] });
-        } else {
-          validatedHistory.push({ role: 'user', parts: [{ text: ' ' }] });
-        }
-      }
-      
-      validatedHistory.push(turn);
-      lastRole = turn.role;
-    }
-    
-    // The last turn in validatedHistory is the one we want to send, 
-    // BUT we must remove it from history first.
-    if (validatedHistory.length === 0) {
-      validatedHistory.push({ role: 'user', parts: [{ text: 'Hello' }] });
-    }
-    
-    let messageToSend = validatedHistory.pop();
-    
-    // Ensure messageToSend is 'user' (Gemini requires the active message to be from the user/function)
-    if (messageToSend?.role === 'model') {
-      validatedHistory.push(messageToSend);
-      messageToSend = { role: 'user', parts: [{ text: 'Continue' }] };
-    }
-
-    loggerService.catDebug(LogCategory.INFERENCE, "Starting Gemini Chat Session", { 
-      historyTurns: validatedHistory.length,
-      historyTypes: validatedHistory.map(h => h.role),
-      historyPartCounts: validatedHistory.map(h => h.parts.length),
-      historyParts: validatedHistory.map(h => h.parts.map(p => ({
-        type: Object.keys(p)[0],
-        signature: (p as any).thoughtSignature ? "present" : (p.functionCall ? "missing" : "n/a")
-      })))
-    });
-
-    const chatSession = geminiModel.startChat({
-      history: validatedHistory,
-      systemInstruction: systemMessage?.content ? { role: 'system', parts: [{ text: systemMessage.content as string }] } : undefined
-    });
-
-    loggerService.catDebug(LogCategory.INFERENCE, "Gemini sending message", { 
-      role: messageToSend.role,
-      partCount: messageToSend.parts.length,
-      parts: messageToSend.parts.map(p => ({
-        type: Object.keys(p)[0],
-        signature: (p.functionCall as any)?.thought_signature ? "present" : (p.functionCall ? "missing" : "n/a")
-      }))
-    });
-
-    const result = await chatSession.sendMessageStream(messageToSend.parts);
-    let textAccumulator = "";
-    let thinkingAccumulator = "";
-    let finishReason: string | null = null;
-
-    let fullTextSoFar = "";
-    let fullThinkingSoFar = "";
-
-    // The Gemini SDK strips thoughtSignature from the final .response object.
-    // Capture it from stream chunks where it's still present.
-    const streamThoughtSignatures: string[] = [];
-
-    let chunkIdx = 0;
-    let maxTextLen = 0;
-    for await (const chunk of result.stream) {
-      chunkIdx++;
-      let chunkText = "";
-      let chunkThinking = "";
-      let hasParts = false;
-
-      // Extract thinking and narrative from chunk.candidates (available directly during stream)
-      const candidates = (chunk as any).candidates || [];
-      if (candidates[0]?.content?.parts) {
-        hasParts = true;
-        for (const part of candidates[0].content.parts) {
-          if (part?.thought) {
-            // Handle both possible structures: {thought: string} or {thought: true, text: string}
-            chunkThinking += typeof part.thought === 'string' ? part.thought : (part.text || "");
-          } else if (part?.text) {
-            chunkText += part.text;
-          }
-          // Capture thoughtSignature from stream chunks (SDK strips it from .response)
-          if ((part as any).thoughtSignature && part.functionCall) {
-            streamThoughtSignatures.push((part as any).thoughtSignature);
-          }
-        }
-      }
-
-      // Handle Thinking/Reasoning Delta
-      if (chunkThinking.length > fullThinkingSoFar.length) {
-        const thinkingDelta = chunkThinking.slice(fullThinkingSoFar.length);
-        fullThinkingSoFar = chunkThinking;
-        thinkingAccumulator = fullThinkingSoFar;
-        yield { reasoning: thinkingDelta };
-      }
-
-      // Emit full text from every chunk
-      if (chunkText.length > 0) {
-        textAccumulator = chunkText;
-        yield { text: chunkText };
-      }
-
-      // Fallback to chunk.text() if no parts structure found OR if we didn't get any text from parts
-      if (!hasParts || (chunkText.length === 0 && !chunkThinking)) {
-        try { 
-          const textDelta = chunk.text(); 
-          if (textDelta) {
-            textAccumulator += textDelta;
-            fullTextSoFar = textAccumulator;
-            yield { text: textDelta };
-          }
-        } catch (e) { }
-      }
-    }
-
-    // Capture final response after stream is exhausted
-    const response = await result.response;
-    finishReason = response.candidates?.[0]?.finishReason ?? null;
-
-    const collectedToolCalls: ChatCompletionMessageToolCall[] = [];
-    let lastThoughtSignature: string | undefined = undefined;
-    
-    if (response.candidates?.[0]?.content?.parts) {
-      // First pass: find the signature from sibling thoughtSignature fields (Gemini wire format)
-      for (const part of response.candidates[0].content.parts) {
-        if ((part as any).thoughtSignature) {
-          lastThoughtSignature = (part as any).thoughtSignature;
-          break;
-        }
-      }
-
-      // SDK strips thoughtSignature from .response in streaming mode. Use stream-captured signatures as fallback.
-      let sigIdx = 0;
-      const getStreamSig = () => sigIdx < streamThoughtSignatures.length ? streamThoughtSignatures[sigIdx++] : undefined;
-
-      for (const [idx, part] of response.candidates[0].content.parts.entries()) {
-        if (part.functionCall) {
-          const call = part.functionCall as any;
-          // Try direct field first (non-streaming path), then stream-captured signatures
-          const signature = (part as any).thoughtSignature || lastThoughtSignature || getStreamSig();
-          
-          collectedToolCalls.push({
-            id: 'gemini-' + randomUUID(),
-            type: 'function',
-            function: {
-              name: call.name,
-              arguments: JSON.stringify(call.args)
-            },
-            thought_signature: signature
-          } as any);
-        } else if ((part as any).thought) {
-          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: thought part", { idx, length: (part as any).thought?.length || (part as any).text?.length });
-        } else {
-          loggerService.catDebug(LogCategory.INFERENCE, "Gemini final response: unknown part type", { idx, keys: Object.keys(part) });
-        }
-      }
-    }
-
-    const assistantMessage: ChatCompletionMessageParam = {
-      role: "assistant",
-      content: textAccumulator,
-      ...(collectedToolCalls.length > 0 ? { tool_calls: collectedToolCalls } : {}),
-    };
-
-    if (thinkingAccumulator) {
-      (assistantMessage as any).reasoning_content = thinkingAccumulator;
-    }
-
-    // Attach unified finish reason for turn-ending logic
-    const geminiSettings = await settingsService.getInferenceSettings();
-    (assistantMessage as any).finishReason = unifyFinishReason(geminiSettings.provider || 'gemini', finishReason);
-
-    if (collectedToolCalls.length > 0) yield { toolCalls: collectedToolCalls };
-    yield { assistantMessage };
-    return;
-  }
-
+  // Use OpenAI SDK for all providers (including Gemini via OpenAI-compatible endpoint)
   const client = await getClient();
   const stream = await client.chat.completions.create({
     model,
@@ -946,22 +543,6 @@ export async function* sendMessageAndHandleTools(
           yield { text: "\n[System] Context archived. Inference aborted." };
           break;
         }
-
-        const settings = await settingsService.getInferenceSettings();
-        if (settings.provider === 'gemini') {
-          const history = await contextService.getUnfilteredHistory(contextSessionId);
-          if (history.length >= 2) {
-            const lastMsg = history[history.length - 1];
-            const penultMsg = history[history.length - 2];
-            const hasNarrative = isNarrativeText(penultMsg.content || "");
-            const hasTrace = penultMsg.toolCalls?.some(tc => tc.name === 'log_trace');
-            const lastIsTool = lastMsg.role === 'tool';
-            if (penultMsg.role === 'assistant' && hasNarrative && hasTrace && lastIsTool) {
-              loggerService.catInfo(LogCategory.INFERENCE, "Gemini Termination: Detected narrative + trace followed by tool result.", { contextSessionId, loops });
-              break;
-            }
-          }
-        }
       }
 
       const MAX_RETRIES = 3;
@@ -972,7 +553,6 @@ export async function* sendMessageAndHandleTools(
 
       while (retries < MAX_RETRIES) {
         let contextMessages: ChatCompletionMessageParam[] = [];
-        const settings = await settingsService.getInferenceSettings();
 
         if (contextSessionId) {
           const result = await contextWindowService.constructContextWindow(contextSessionId, systemInstruction || chat.systemInstruction);
@@ -1003,24 +583,14 @@ export async function* sendMessageAndHandleTools(
 
               // 2. Inject Multimodal Data (Pixels) if available
               if (attachments.length > 0) {
-                if (settings.provider === 'gemini') {
-                  const contentParts: any[] = [{ text: finalUserContentText }];
-                  for (const att of attachments) {
-                    if (att.image_base64) {
-                      contentParts.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
-                    }
+                const contentParts: any[] = [{ type: 'text', text: finalUserContentText }];
+                for (const att of attachments) {
+                  if (att.image_base64) {
+                    contentParts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
                   }
-                  contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
-                } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-                  const contentParts: any[] = [{ type: 'text', text: finalUserContentText }];
-                  for (const att of attachments) {
-                    if (att.image_base64) {
-                      contentParts.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
-                    }
-                  }
-                  contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
-                  loggerService.catDebug(LogCategory.INFERENCE, `Final user content updated with ${contentParts.length} parts (text + images).`);
                 }
+                contextMessages[lastUserMsgIdx] = { ...userMsg, content: contentParts as any };
+                loggerService.catDebug(LogCategory.INFERENCE, `Final user content updated with ${contentParts.length} parts (text + images).`);
               } else {
                 userMsg.content = finalUserContentText;
                 loggerService.catDebug(LogCategory.INFERENCE, "Final user content updated (text only).");
@@ -1032,16 +602,9 @@ export async function* sendMessageAndHandleTools(
           const finalUserContentText = message || resolvedContent;
           let userContent: any = finalUserContentText;
           if (attachments.length > 0) {
-            if (settings.provider === 'gemini') {
-              userContent = [{ text: finalUserContentText }];
-              for (const att of attachments) {
-                if (att.image_base64) userContent.push({ inlineData: { data: att.image_base64, mimeType: att.mime_type || 'image/jpeg' } });
-              }
-            } else if (settings.provider === 'openai' || settings.provider === 'local' || settings.provider === 'kimi2') {
-              userContent = [{ type: 'text', text: finalUserContentText }];
-              for (const att of attachments) {
-                if (att.image_base64) userContent.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
-              }
+            userContent = [{ type: 'text', text: finalUserContentText }];
+            for (const att of attachments) {
+              if (att.image_base64) userContent.push({ type: 'image_url', image_url: { url: `data:${att.mime_type || 'image/jpeg'};base64,${att.image_base64}` } });
             }
           }
           contextMessages = [{ role: 'system', content: systemInstruction || chat.systemInstruction }, { role: 'user', content: userContent }] as ChatCompletionMessageParam[];
@@ -1112,29 +675,33 @@ export async function* sendMessageAndHandleTools(
       if (yieldedToolCalls && yieldedToolCalls.length > 0) {
         for (const call of yieldedToolCalls) {
           if (!call.function?.name) continue;
+          
+          // Ensure we have a valid tool_call_id - generate one if missing
+          const toolCallId = call.id || `toolcall-${correlationId}-${call.function.name}`;
+          
           let toolName = call.function.name;
           if (toolName === 'log_trace') hasLoggedTrace = true;
           const { data: args, error: parseError } = parseToolArguments(call.function.arguments || "");
 
           if (parseError) {
             const errorPayload = { status: "error", error: "Malformed JSON", details: parseError };
-            toolResponses.push({ role: "tool", content: JSON.stringify(errorPayload), tool_call_id: call.id });
+            toolResponses.push({ role: "tool", content: JSON.stringify(errorPayload), tool_call_id: toolCallId });
             if (contextSessionId) {
-              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify(errorPayload), timestamp: new Date().toISOString(), toolName, toolCallId: call.id, metadata: { kind: "tool_error" }, correlationId: correlationId } as any);
+              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify(errorPayload), timestamp: new Date().toISOString(), toolName, toolCallId, metadata: { kind: "tool_error" }, correlationId: correlationId } as any);
             }
             continue;
           }
 
           try {
             const result = await toolExecutor(toolName, args);
-            toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: call.id });
+            toolResponses.push({ role: "tool", content: JSON.stringify(result), tool_call_id: toolCallId });
             if (contextSessionId) {
-              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify(result), timestamp: new Date().toISOString(), toolName, toolCallId: call.id, metadata: { kind: "tool_result" }, correlationId: correlationId } as any);
+              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify(result), timestamp: new Date().toISOString(), toolName, toolCallId, metadata: { kind: "tool_result" }, correlationId: correlationId } as any);
             }
           } catch (err) {
-            toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: call.id });
+            toolResponses.push({ role: "tool", content: JSON.stringify({ error: String(err) }), tool_call_id: toolCallId });
             if (contextSessionId) {
-              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify({ error: String(err) }), timestamp: new Date().toISOString(), toolName, toolCallId: call.id, metadata: { kind: "tool_error" }, correlationId: correlationId } as any);
+              await contextService.recordMessage(contextSessionId, { id: randomUUID(), role: "tool", content: JSON.stringify({ error: String(err) }), timestamp: new Date().toISOString(), toolName, toolCallId, metadata: { kind: "tool_error" }, correlationId: correlationId } as any);
             }
           }
         }
@@ -1188,39 +755,30 @@ export async function* sendMessageAndHandleTools(
       const lastTurnWasAuditFailure = transientMessages.length > 0 && (transientMessages[transientMessages.length - 1] as any).role === 'user' && (transientMessages[transientMessages.length - 1] as any).content?.includes('[SYSTEM AUDIT]');
 
       if (lastTurnWasAuditFailure && isEndingTurn && hasNarrativeOutput) {
-        const auditCheckPrompt = `Analyze the following assistant response. Is this response primarily an apology, a meta-commentary about a system error, or a statement about failing an audit (e.g., "I forgot to log a trace", "I will now log a trace", "I apologize for the oversight")?
-          
-RESPONSE:
-"${textAccumulatedInTurn}"
+        // Heuristic regex check instead of LLM call for narrative recovery
+        const isApologyOrMetaCommentary = /(?:apologiz|forgot to log|will now log|oversight|sorry|my mistake|failed to)/i.test(textAccumulatedInTurn);
 
-Return ONLY 'YES' if it is a failure narrative/apology, or 'NO' if it contains actual useful content or a valid conclusion.`;
+        if (isApologyOrMetaCommentary) {
+          loggerService.catInfo(LogCategory.INFERENCE, "Audit Failure Narrative detected. Discarding and forcing retry loop.", {
+            contextSessionId,
+            narrative: textAccumulatedInTurn.slice(0, 50) + "..."
+          });
 
-        try {
-          const auditResult = await callFastInference([{ role: 'user', content: auditCheckPrompt }], 20, undefined, LlamaPriority.URGENT);
-          if (auditResult.toUpperCase().includes('YES')) {
-            loggerService.catInfo(LogCategory.INFERENCE, "Audit Failure Narrative detected. Discarding and forcing retry loop.", {
-              contextSessionId,
-              narrative: textAccumulatedInTurn.slice(0, 50) + "..."
-            });
+          // Discard the text from this turn
+          textAccumulatedInTurn = "";
 
-            // Discard the text from this turn
-            textAccumulatedInTurn = "";
+          // Add this assistant message to transient so the model sees its own mistake
+          transientMessages.push(nextAssistant!);
+          if (toolResponses.length > 0) transientMessages.push(...toolResponses);
 
-            // Add this assistant message to transient so the model sees its own mistake
-            transientMessages.push(nextAssistant!);
-            if (toolResponses.length > 0) transientMessages.push(...toolResponses);
+          // Add a nudge to actually do the work
+          transientMessages.push({
+            role: "user",
+            content: "[SYSTEM RECOVERY] That narrative was an apology for an audit failure. DO NOT apologize. Just execute the required tools and provide the final synthesis now."
+          });
 
-            // Add a nudge to actually do the work
-            transientMessages.push({
-              role: "user",
-              content: "[SYSTEM RECOVERY] That narrative was an apology for an audit failure. DO NOT apologize. Just execute the required tools and provide the final synthesis now."
-            });
-
-            loops++;
-            continue;
-          }
-        } catch (e) {
-          loggerService.catError(LogCategory.INFERENCE, "Audit narrative check failed", { error: e });
+          loops++;
+          continue;
         }
       }
 

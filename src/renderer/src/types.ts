@@ -1,6 +1,11 @@
 
 
-import { FunctionDeclaration } from "@google/generative-ai";
+// FunctionDeclaration type (used for tool definitions)
+export interface FunctionDeclaration {
+  name: string;
+  description?: string;
+  parameters?: Record<string, any>;
+}
 
 export enum Sender {
   USER = 'user',

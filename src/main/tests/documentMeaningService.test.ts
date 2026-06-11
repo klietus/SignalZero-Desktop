@@ -20,7 +20,7 @@ vi.mock('../services/loggerService.js', () => ({
 
 vi.mock('../services/llamaService.js', () => ({
   llamaService: {
-    completion: vi.fn().mockResolvedValue({ content: 'Mocked Gemini description of the image.' })
+    completion: vi.fn().mockResolvedValue({ content: 'Mocked OpenAI description of the image.' })
   },
   LlamaPriority: { MEDIUM: 1 }
 }));
@@ -30,18 +30,6 @@ vi.mock('../services/sqliteService.js', () => ({
     get: vi.fn().mockReturnValue(null),
     run: vi.fn()
   }
-}));
-
-vi.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-    getGenerativeModel: vi.fn().mockImplementation(() => ({
-      generateContent: vi.fn().mockResolvedValue({
-        response: {
-          text: () => 'Mocked Gemini description of the image.'
-        }
-      })
-    }))
-  }))
 }));
 
 vi.mock('openai', () => {
@@ -84,6 +72,6 @@ describe('DocumentMeaningService', () => {
 
     const result = await documentMeaningService.parse(Buffer.from('fake-image-data'), 'image/jpeg');
     expect(result.type).toBe('image');
-    expect(result.content).toBe('Mocked Gemini description of the image.'); // Still using the same mock return for simplicity
+    expect(result.content).toBe('Mocked OpenAI description of the image.');
   });
 });

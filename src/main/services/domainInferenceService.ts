@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { domainService } from "./domainService.js";
 import { embedText } from "./embeddingService.js";
 import { settingsService } from "./settingsService.js";
-import { getGeminiClient, extractJson } from "./inferenceService.js";
+import { extractJson } from "./inferenceService.js";
 
 interface DomainDescriptor {
     id: string;
@@ -75,22 +75,15 @@ ROOT DOMAIN INVARIANTS: ${(rootDomain.invariants || []).join('; ') || 'None reco
 CLOSEST DOMAINS: ${closest.map(d => `- ${d.id}: ${d.invariants.join('; ')}`).join('\n')}
 Return JSON with field "invariants" (concise statements).`;
 
-        const { provider, model } = await settingsService.getInferenceSettings();
+        const { model } = await settingsService.getInferenceSettings();
         let parsed: any = {};
 
-        if (provider === 'gemini') {
-            const genAI = await getGeminiClient();
-            const genModel = genAI.getGenerativeModel({ model });
-            const result = await genModel.generateContent(prompt);
-            parsed = extractJson(result.response.text());
-        } else {
-            const client = await getClient();
-            const result = await client.chat.completions.create({
-                model,
-                messages: [{ role: 'user', content: prompt }]
-            });
-            parsed = extractJson(result.choices[0]?.message?.content || "{}");
-        }
+        const client = await getClient();
+        const result = await client.chat.completions.create({
+            model,
+            messages: [{ role: 'user', content: prompt }]
+        });
+        parsed = extractJson(result.choices[0]?.message?.content || "{}");
 
         return {
             invariants: (parsed.invariants || []) as string[],

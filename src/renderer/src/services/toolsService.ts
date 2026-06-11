@@ -1,4 +1,4 @@
-import { FunctionDeclaration } from "@google/generative-ai";
+import type { FunctionDeclaration } from '../types.js';
 
 export const toolDeclarations: FunctionDeclaration[] = [
     {

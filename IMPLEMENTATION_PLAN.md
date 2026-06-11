@@ -383,14 +383,14 @@ const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (as
 
 | Phase | Status | Files |
 |-------|--------|-------|
-| 1. Gemini → OpenAI Endpoint | ⬜ Pending | `inferenceService.ts`, `package.json` |
-| 2. Task List System | ⬜ Pending | `types.ts` (new), `taskListService.ts` (new), `contextWindowService.ts`, `activation_prompt.ts` |
-| 2.5. Create Domain Tool | ⬜ Pending | `toolsService.ts` |
-| 3. Turn Ending Logic | ⬜ Pending | `inferenceService.ts` |
-| 4. Symbolic Binding | ⬜ Pending | `activation_prompt.ts`, `contextWindowService.ts` |
-| 5. Agent Runner | ⬜ Pending | `agentRunner.ts` |
-| 6. Sample Project | ⬜ Pending | `sample_project/` |
-| 7. Integration & Testing | ⬜ Pending | Verification |
+| 1. Gemini → OpenAI Endpoint | ✅ Complete | `inferenceService.ts`, `package.json` |
+| 2. Task List System | ✅ Complete | `types.ts` (new), `taskListService.ts` (new), `contextWindowService.ts`, `activation_prompt.ts` |
+| 2.5. Create Domain Tool | ✅ Complete | `toolsService.ts` |
+| 3. Turn Ending Logic | ✅ Complete | `inferenceService.ts` |
+| 4. Symbolic Binding | ✅ Complete | `activation_prompt.ts`, `contextWindowService.ts` |
+| 5. Agent Runner | ✅ Complete | `agentRunner.ts` |
+| 6. Sample Project | ✅ Complete | `sample_project/` |
+| 7. Integration & Testing | ✅ Complete | `taskListIntegration.test.ts`, `agentRunnerTaskAwareness.test.ts` |
 
 ---
 
@@ -398,16 +398,16 @@ const isEndingTurn = (!yieldedToolCalls || yieldedToolCalls.length === 0) || (as
 
 | Priority | Phase | Duration | Key Deliverable |
 |----------|-------|----------|-----------------|
-| 1 | Phase 1: Gemini → OpenAI Endpoint | 2-3 days | Gemini via OpenAI SDK, no `@google/generative-ai` dep |
-| 2 | Phase 2: Task List | 2-3 days | Task management system |
-| 2.5 | Phase 2.5: Create Domain Tool | 0.5 day | `create_domain` tool wired to `domainInferenceService` |
-| 3 | Phase 3: Turn Ending | 2-3 days | Tool call limit, simplified turn logic |
-| 4 | Phase 4: Symbolic Binding | 1-2 days | Updated traces, context window |
-| 5 | Phase 5: Agent Runner | 1-2 days | Task-aware agent execution |
-| 6 | Phase 6: Sample Project | 0.5-1 day | Updated sample data |
-| 7 | Phase 7: Testing | 1-2 days | Verification |
+| 1 | Phase 1: Gemini → OpenAI Endpoint | 2-3 days ✅ | Gemini via OpenAI SDK, no `@google/generative-ai` dep |
+| 2 | Phase 2: Task List | 2-3 days ✅ | Task management system |
+| 2.5 | Phase 2.5: Create Domain Tool | 0.5 day ✅ | `create_domain` tool wired to `domainInferenceService` |
+| 3 | Phase 3: Turn Ending | 2-3 days ✅ | Tool call limit, simplified turn logic |
+| 4 | Phase 4: Symbolic Binding | 1-2 days ✅ | Updated traces, context window |
+| 5 | Phase 5: Agent Runner | 1-2 day ✅ | Task-aware agent execution |
+| 6 | Phase 6: Sample Project | 0.5-1 day ✅ | Updated sample data |
+| 7 | Phase 7: Testing | 1-2 days ✅ | Verification (23 tests, all passing) |
 
-**Total estimated time: 9-16 days**
+**Total estimated time: 9-16 days — COMPLETED**
 
 ---
 

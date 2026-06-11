@@ -625,6 +625,25 @@ export interface DeltaAlert {
     expiresAt: number;
 }
 
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  task_id?: string; // Symbolic execution trace ID
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskList {
+  id: string;
+  name: string;
+  tasks: Task[];
+  current_task_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface GraphHygieneSettings {
   positional: {
     autoCompress: boolean;

@@ -16,6 +16,7 @@ import { loggerService, LogCategory } from './loggerService.js';
 import { MonitoringDelta, AgentDefinition } from '../types.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { linkDecayService } from './linkDecayService.js';
+import { taskListService } from './taskListService.js';
 
 class AgentRunner {
     private isProcessingBatch = false;
@@ -113,14 +114,12 @@ class AgentRunner {
                 const agent = agents.find(a => a.id === agentId);
                 if (agent && deltas.length > 0) {
                     try {
-                        await this.executeAgentBatchTurn(agent, deltas);
-                        // Mark all as processed after success
+                        await this.executeTaskAwareBatchTurn(agent, deltas);
                         for (const d of deltas) {
                             await agentService.markDeltaProcessed(agent.id, d.id);
                         }
                     } catch (e: any) {
-                        loggerService.catError(LogCategory.AGENT, `Agent ${agentId} batch execution failed`, { error: e.message });
-                        // Re-queue on failure? For now, we just log.
+                        loggerService.catError(LogCategory.AGENT, `Agent ${agentId} task-aware batch execution failed`, { error: e.message });
                     }
                 }
             }));
@@ -186,7 +185,6 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
 
             const chat = await getChatSession(activeSystemPrompt, session.id, agentModel);
             
-            // Increment turns AFTER load (consistent with processMessageAsync)
             await symbolCacheService.incrementTurns(session.id);
             linkDecayService.runDecayCycle();
 
@@ -207,10 +205,145 @@ Return JSON: { "winnerId": "agent_id_here", "reason": "..." } or null.`;
             const stream = sendMessageAndHandleTools(chat, message, toolExecutor, false, activeSystemPrompt, session.id, undefined, undefined, undefined, undefined, message, [], { is_autonomous: true });
             
             for await (const _chunk of stream) {
-                // Potential future: log or process assistant response chunks
             }
         } catch (error: any) {
             loggerService.catError(LogCategory.AGENT, `Failed to execute batch for agent ${agent.id}`, { error: error.message });
+        }
+    }
+
+    private async executeTaskAwareBatchTurn(agent: AgentDefinition, deltas: MonitoringDelta[]) {
+        try {
+            let taskListId = (await contextService.getSession(agent.id))?.metadata?.taskListId;
+            
+            if (!taskListId) {
+                const taskList = await taskListService.createTaskList(`Agent: ${agent.id}`);
+                taskListId = taskList.id;
+                
+                const existingSession = await contextService.getSession(agent.id);
+                if (existingSession) {
+                    await contextService.updateSession({
+                        ...existingSession,
+                        metadata: { 
+                            ...(existingSession.metadata || {}),
+                            taskListId 
+                        }
+                    });
+                } else {
+                    await contextService.createSession('agent', { taskListId }, `Agent: ${agent.id}`);
+                }
+                
+                loggerService.catInfo(LogCategory.AGENT, `Created task list for agent`, { agentId: agent.id, taskListId });
+            }
+
+            const currentTask = await taskListService.getCurrentTask(taskListId);
+            
+            if (!currentTask || currentTask.status === 'completed') {
+                const list = await taskListService.getTaskList(taskListId);
+                if (!list) {
+                    loggerService.catWarn(LogCategory.AGENT, `Could not get task list`, { agentId: agent.id });
+                    return;
+                }
+
+                let nextTaskIndex = 0;
+                if (currentTask && currentTask.status === 'completed') {
+                    const currentIndex = list.tasks.findIndex(t => t.id === currentTask.id);
+                    nextTaskIndex = Math.min(currentIndex + 1, list.tasks.length - 1);
+                }
+
+                if (list.tasks.length > nextTaskIndex) {
+                    const nextTask = list.tasks[nextTaskIndex];
+                    await taskListService.setCurrentTask(taskListId, nextTaskIndex);
+                    await taskListService.updateTaskStatus(taskListId, nextTask.id, 'in_progress');
+                    
+                    loggerService.catInfo(LogCategory.AGENT, `Advanced to next task`, { 
+                        agentId: agent.id, 
+                        taskId: nextTask.id, 
+                        title: nextTask.title 
+                    });
+                } else {
+                    loggerService.catInfo(LogCategory.AGENT, `No pending tasks for agent`, { agentId: agent.id });
+                    return;
+                }
+            }
+
+            const updatedCurrentTask = await taskListService.getCurrentTask(taskListId);
+            if (!updatedCurrentTask) {
+                loggerService.catWarn(LogCategory.AGENT, `Could not get current task after update`, { agentId: agent.id });
+                return;
+            }
+
+            const contexts = await contextService.listSessions();
+            let session = contexts.find(c => c.name === `Agent: ${agent.id}` && c.status === 'open');
+
+            if (!session) {
+                session = await contextService.createSession('agent', {}, `Agent: ${agent.id}`);
+            }
+
+            const settings = await settingsService.getInferenceSettings();
+            const activeSystemPrompt = await systemPromptService.loadPrompt(agent.prompt || ACTIVATION_PROMPT);
+            const agentModel = settings.agentModel || settings.model;
+
+            const chat = await getChatSession(activeSystemPrompt, session.id, agentModel);
+            
+            await symbolCacheService.incrementTurns(session.id);
+            linkDecayService.runDecayCycle();
+
+            const toolExecutor = createToolExecutor(session.id);
+
+            const deltaSummary = deltas.map((d, i) => {
+                let header = `[EVENT ${i + 1}]\nSource: ${d.sourceId}\nContent: ${d.content}`;
+                if (d.metadata) {
+                    header += `\nMetadata: ${JSON.stringify(d.metadata)}`;
+                }
+                return header;
+            }).join('\n\n---\n\n');
+
+            const taskContext = `### CURRENT TASK CONTEXT\n\nYou are operating under an active task list. Your current objective is:\n\n**Task**: ${updatedCurrentTask.title}\n**Status**: ${updatedCurrentTask.status}\n${updatedCurrentTask.description ? '**Description**: ' + updatedCurrentTask.description + '\n' : ''}Use this context to prioritize and focus your operations.`;
+
+            const message = `${taskContext}\n\n### AUTONOMOUS BATCH INGESTION\n\nThe following world deltas have been routed to your operational theater. Synthesize this information in the context of your current task, update your internal symbolic state if necessary, and take action if required.\n\n${deltaSummary}`;
+
+            loggerService.catInfo(LogCategory.AGENT, `Dispatching task-aware batch to Agent ${agent.id}`, { 
+                deltaCount: deltas.length, 
+                sessionId: session.id,
+                taskId: updatedCurrentTask.id,
+                taskTitle: updatedCurrentTask.title
+            });
+
+            const stream = sendMessageAndHandleTools(chat, message, toolExecutor, false, activeSystemPrompt, session.id, undefined, undefined, undefined, undefined, message, [], { is_autonomous: true });
+            
+            for await (const _chunk of stream) {
+            }
+
+            if (currentTask && currentTask.status !== updatedCurrentTask.status) {
+                loggerService.catInfo(LogCategory.AGENT, `Task status changed during execution`, { 
+                    agentId: agent.id,
+                    taskId: updatedCurrentTask.id,
+                    oldStatus: currentTask.status,
+                    newStatus: updatedCurrentTask.status
+                });
+
+                if (updatedCurrentTask.status === 'completed') {
+                    const list = await taskListService.getTaskList(taskListId);
+                    if (list && list.current_task_index >= 0) {
+                        const nextIndex = Math.min(list.current_task_index + 1, list.tasks.length - 1);
+                        if (nextIndex < list.tasks.length && list.tasks[nextIndex].status === 'pending') {
+                            await taskListService.setCurrentTask(taskListId, nextIndex);
+                            const nextTask = list.tasks[nextIndex];
+                            await taskListService.updateTaskStatus(taskListId, nextTask.id, 'in_progress');
+                            
+                            loggerService.catInfo(LogCategory.AGENT, `Auto-advanced to next task`, { 
+                                agentId: agent.id,
+                                taskId: nextTask.id,
+                                title: nextTask.title
+                            });
+                        } else if (nextIndex >= list.tasks.length) {
+                            loggerService.catInfo(LogCategory.AGENT, `All tasks completed for agent`, { agentId: agent.id });
+                        }
+                    }
+                }
+            }
+        } catch (error: any) {
+            loggerService.catError(LogCategory.AGENT, `Failed to execute task-aware batch for agent ${agent.id}`, { error: error.message });
         }
     }
 }

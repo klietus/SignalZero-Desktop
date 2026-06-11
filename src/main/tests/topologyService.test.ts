@@ -67,7 +67,6 @@ vi.mock('../services/inferenceService.js', () => ({
             }
         }
     }),
-    getGeminiClient: vi.fn(),
     extractJson: vi.fn().mockImplementation((t) => JSON.parse(t))
 }));
 

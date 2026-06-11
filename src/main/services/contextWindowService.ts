@@ -3,6 +3,7 @@ import { contextService } from './contextService.js';
 import { domainService } from './domainService.js';
 import { symbolCacheService } from './symbolCacheService.js';
 import { alertTriggerService } from './alertTriggerService.js';
+import { taskListService } from './taskListService.js';
 import { SymbolDef, ContextMessage, ContextKind, SymbolDefV2 } from '../types.js';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { loggerService, LogCategory } from './loggerService.js';
@@ -190,13 +191,24 @@ export class ContextWindowService {
 
         // 7. System Metadata (Highly Volatile)
         // Contains current time and lifecycle status - changes every turn.
+        const currentTask = session?.metadata?.taskListId 
+          ? await taskListService.getCurrentTask(session.metadata.taskListId)
+          : null;
+
         const systemMetadata = buildSystemMetadataBlock({
             id: session?.id,
             type: session?.type,
             lifecycle: session?.status === 'closed' ? 'zombie' : 'live',
             readonly: session?.metadata?.readOnly === true,
             trace_needed: session?.metadata?.trace_needed ? 'YOU MUST LOG A TRACE FOR THIS OPERATION' : 'false',
-            trace_reason: session?.metadata?.trace_reason
+            trace_reason: session?.metadata?.trace_reason,
+            task_list_id: session?.metadata?.taskListId || null,
+            current_task: currentTask ? {
+                id: currentTask.id,
+                title: currentTask.title,
+                status: currentTask.status,
+                task_id: currentTask.task_id || null
+            } : null
         });
 
         const systemMetadataStr = JSON.stringify(systemMetadata, null, 2);

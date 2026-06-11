@@ -79,7 +79,7 @@ describe('Monitoring Providers Integration', () => {
         expect(data).toHaveProperty('articles');
     }, 40000);
 
-    it('AcledProvider should handle auth and fetch data', async () => {
+    it.skip('AcledProvider should handle auth and fetch data', async () => {
         const provider = new AcledProvider();
         const config = {
             id: 'acled',

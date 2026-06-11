@@ -17,19 +17,6 @@ vi.mock('openai', () => {
   };
 });
 
-// Mock Gemini
-const mockGenerateContent = vi.fn();
-vi.mock('@google/generative-ai', () => {
-  return {
-    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-      getGenerativeModel: vi.fn().mockReturnValue({
-        generateContent: mockGenerateContent
-      })
-    })),
-    SchemaType: {}
-  };
-});
-
 vi.mock('../services/settingsService.js', () => ({
   settingsService: {
     getInferenceSettings: vi.fn()
@@ -114,22 +101,22 @@ describe('callFastInference', () => {
     expect(urgentLlamaService.completion).toHaveBeenCalled();
   });
 
-  it('should use Gemini API when provider is gemini', async () => {
+  it('should use custom endpoint when provider is not openai/kimi2', async () => {
     vi.mocked(settingsService.getInferenceSettings).mockResolvedValue({
-      provider: 'gemini',
+      provider: 'custom',
       apiKey: 'test-key',
-      agentModel: 'test-agent-model',
+      agentModel: 'local-model',
       model: 'test-model',
-      endpoint: 'test-endpoint'
+      endpoint: 'http://localhost:1234/v1'
     } as any);
 
-    mockGenerateContent.mockResolvedValue({
-      response: { text: () => 'gemini response' }
+    mockOpenAICreate.mockResolvedValue({
+      choices: [{ message: { content: 'custom api response' } }]
     });
 
     const result = await callFastInference([{ role: 'user', content: 'hello' }], 100, undefined, LlamaPriority.HIGH);
 
-    expect(result).toBe('gemini response');
-    expect(mockGenerateContent).toHaveBeenCalled();
+    expect(result).toBe('custom api response');
+    expect(mockOpenAICreate).toHaveBeenCalled();
   });
 });

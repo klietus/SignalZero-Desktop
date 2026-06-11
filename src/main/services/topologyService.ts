@@ -3,7 +3,7 @@ import { linkDecayService } from './linkDecayService.js';
 import { sqliteService } from './sqliteService.js';
 import { loggerService, LogCategory } from './loggerService.js';
 import { settingsService } from './settingsService.js';
-import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
+import { getClient, extractJson, callFastInference } from './inferenceService.js';
 import { LlamaPriority } from './llamaService.js';
 import { eventBusService } from './eventBusService.js';
 import { KernelEventType } from '../types.js';
@@ -1022,27 +1022,14 @@ A Lattice is a high-level abstract container providing structural "docking point
 }`;
 
                 let response: any = {};
-                if (settings.provider === 'gemini') {
-                    const client = await getGeminiClient();
-                    const model = client.getGenerativeModel({
-                        model: bigModel,
-                        generationConfig: {
-                            maxOutputTokens: 8192,
-                            temperature: 0.2
-                        }
-                    });
-                    const result = await model.generateContent(prompt);
-                    response = extractJson(result.response.text());
-                } else {
-                    const client = await getClient();
-                    const result = await client.chat.completions.create({
-                        model: bigModel,
-                        messages: [{ role: "user", content: prompt }],
-                        max_tokens: 8192,
-                        temperature: 0.2
-                    });
-                    response = extractJson(result.choices[0]?.message?.content || "{}");
-                }
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                    model: bigModel,
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 8192,
+                    temperature: 0.2
+                });
+                response = extractJson(result.choices[0]?.message?.content || "{}");
 
                 if (Array.isArray(response.lattices)) {
                     for (const latDef of response.lattices) {
@@ -1499,16 +1486,9 @@ For each pattern, determine if it conceptually belongs inside one of the EXISTIN
 3. **FORMAT**: Output EXCLUSIVELY valid JSON.`;
 
                 let migrationResponse: any = {};
-                if (settings.provider === 'gemini') {
-                    const client = await getGeminiClient();
-                    const model = client.getGenerativeModel({ model: bigModel, generationConfig: { temperature: 0.1 } });
-                    const result = await model.generateContent(migrationPrompt);
-                    migrationResponse = extractJson(result.response.text());
-                } else {
-                    const client = await getClient();
-                    const result = await client.chat.completions.create({ model: bigModel, messages: [{ role: "user", content: migrationPrompt }], temperature: 0.1 });
-                    migrationResponse = extractJson(result.choices[0]?.message?.content || "{}");
-                }
+                const client = await getClient();
+                const result = await client.chat.completions.create({ model: bigModel, messages: [{ role: "user", content: migrationPrompt }], temperature: 0.1 });
+                migrationResponse = extractJson(result.choices[0]?.message?.content || "{}");
 
                 const patternsNeedingSynthesis: SymbolDef[] = [];
                 const patternsToMigrate: { pattern: SymbolDef, targetLattice: SymbolDef }[] = [];
@@ -1580,16 +1560,9 @@ ${patternsNeedingSynthesis.map(p => `- ID: ${p.id} | Name: "${p.name}" | Role: $
 2. **FORMAT**: Output EXCLUSIVELY valid JSON.`;
 
                     let synthesisResponse: any = {};
-                    if (settings.provider === 'gemini') {
-                        const client = await getGeminiClient();
-                        const model = client.getGenerativeModel({ model: bigModel, generationConfig: { temperature: 0.1 } });
-                        const result = await model.generateContent(synthesisPrompt);
-                        synthesisResponse = extractJson(result.response.text());
-                    } else {
-                        const client = await getClient();
-                        const result = await client.chat.completions.create({ model: bigModel, messages: [{ role: "user", content: synthesisPrompt }], temperature: 0.1 });
-                        synthesisResponse = extractJson(result.choices[0]?.message?.content || "{}");
-                    }
+                    const client = await getClient();
+                    const result = await client.chat.completions.create({ model: bigModel, messages: [{ role: "user", content: synthesisPrompt }], temperature: 0.1 });
+                    synthesisResponse = extractJson(result.choices[0]?.message?.content || "{}");
 
                     if (Array.isArray(synthesisResponse.subLattices)) {
                         for (const subDef of synthesisResponse.subLattices) {

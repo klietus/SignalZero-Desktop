@@ -28,7 +28,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
-    "@google/generative-ai": "^0.24.1",
+
     "@huggingface/transformers": "^3.8.1",
     "@lancedb/lancedb": "^0.27.1",
     "@mozilla/readability": "^0.6.0",

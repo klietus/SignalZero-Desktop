@@ -23,7 +23,6 @@ vi.mock('../services/inferenceService.js', () => ({
         yield { text: "Batch processed" };
     }),
     getChatSession: vi.fn().mockResolvedValue({}),
-    getGeminiClient: vi.fn(),
     getClient: vi.fn(),
     extractJson: vi.fn()
 }));
@@ -42,6 +41,16 @@ vi.mock('../services/systemPromptService.js', () => ({
 
 vi.mock('../services/toolsService.js', () => ({
     createToolExecutor: vi.fn()
+}));
+
+vi.mock('../services/taskListService.js', () => ({
+    taskListService: {
+        createTaskList: vi.fn().mockResolvedValue({ id: 'mock-task-list' }),
+        getCurrentTask: vi.fn().mockResolvedValue(null),
+        getTaskList: vi.fn().mockResolvedValue({ tasks: [], current_task_index: -1 }),
+        setCurrentTask: vi.fn(),
+        updateTaskStatus: vi.fn()
+    }
 }));
 
 vi.mock('../services/loggerService.js', () => ({
@@ -99,8 +108,8 @@ describe('AgentRunner Chunking', () => {
             (agentRunner as any).pendingBatches.set(aid, chunks[ci]);
         });
 
-        // Spy on executeAgentBatchTurn
-        const executeSpy = vi.spyOn(agentRunner as any, 'executeAgentBatchTurn').mockResolvedValue(undefined);
+        // Spy on executeTaskAwareBatchTurn (the actual method being called)
+        const executeSpy = vi.spyOn(agentRunner as any, 'executeTaskAwareBatchTurn').mockResolvedValue(undefined);
 
         await (agentRunner as any).runBatchRound();
 

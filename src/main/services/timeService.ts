@@ -71,5 +71,12 @@ export const getBucketKeysFromTimestamps = (
 
 export const buildSystemMetadataBlock = (context?: Record<string, any>) => ({
   system_time_iso: new Date().toISOString(),
-  ...(context ? { context } : {}),
+  ...(context?.id ? { context_id: context.id } : {}),
+  ...(context?.type ? { context_type: context.type } : {}),
+  ...(context?.lifecycle ? { lifecycle: context.lifecycle } : {}),
+  ...(typeof context?.readonly === 'boolean' ? { readonly: context.readonly } : {}),
+  ...(context?.trace_needed ? { trace_needed: context.trace_needed } : {}),
+  ...(context?.trace_reason ? { trace_reason: context.trace_reason } : {}),
+  ...(context?.task_list_id ? { task_list_id: context.task_list_id } : {}),
+  ...(context?.current_task ? { current_task: context.current_task } : {}),
 });

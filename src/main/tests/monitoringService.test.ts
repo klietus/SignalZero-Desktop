@@ -33,11 +33,17 @@ vi.mock('../services/inferenceService.js', () => {
         generateContent: mockGenerateContent
     });
 
+    // Mock OpenAI client structure for getClient
+    const mockClient = {
+        chat: {
+            completions: {
+                create: vi.fn()
+            }
+        }
+    };
+
     return {
-        getGeminiClient: vi.fn().mockResolvedValue({
-            getGenerativeModel: mockGetGenerativeModel
-        }),
-        getClient: vi.fn(),
+        getClient: vi.fn().mockResolvedValue(mockClient),
         extractJson: vi.fn(text => {
             try {
                 return JSON.parse(text);
@@ -251,12 +257,12 @@ describe('MonitoringService', () => {
                 }
             };
 
-            const { getGeminiClient } = await import('../services/inferenceService.js');
-            const client: any = await getGeminiClient();
-            const mockGenerateContent = client.getGenerativeModel().generateContent;
+            const { getClient } = await import('../services/inferenceService.js');
+            const client: any = await getClient();
+            const mockCreate = client.chat.completions.create;
 
-            (mockGenerateContent as any).mockResolvedValueOnce({
-                response: { text: () => JSON.stringify(mockRollupResponse) }
+            (mockCreate as any).mockResolvedValueOnce({
+                choices: [{ message: { content: JSON.stringify(mockRollupResponse) } }]
             });
 
             await (monitoringService as any).performRollup('test-source', 'hour', 'day', constituents);

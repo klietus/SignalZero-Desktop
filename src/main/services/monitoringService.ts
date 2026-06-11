@@ -5,7 +5,7 @@ import { loggerService, LogCategory } from './loggerService.js';
 import { sqliteService } from './sqliteService.js';
 import { lancedbService } from './lancedbService.js';
 import { eventBusService } from './eventBusService.js';
-import { getClient, getGeminiClient, extractJson, callFastInference } from './inferenceService.js';
+import { getClient, extractJson, callFastInference } from './inferenceService.js';
 import { LlamaPriority } from './llamaService.js';
 import { MonitoringSourceConfig, MonitoringDelta, MonitoringPeriod } from '../types.js';
 import { randomUUID } from 'crypto';
@@ -621,23 +621,13 @@ ${imageDescription ? `VISUAL CONTEXT (Image Description): ${imageDescription}` :
         const response = await this.withRetries(
             async () => {
                 let res: any = {};
-                if (settings.provider === 'gemini') {
-                    const client = await getGeminiClient();
-                    const model = client.getGenerativeModel({
-                        model: agentModel,
-                        generationConfig: { maxOutputTokens: 16384 }
-                    });
-                    const result = await model.generateContent(prompt);
-                    res = extractJson(result.response.text());
-                } else {
-                    const client = await getClient();
-                    const result = await client.chat.completions.create({
-                        model: agentModel,
-                        messages: [{ role: "user", content: prompt }],
-                        max_tokens: 16384
-                    });
-                    res = extractJson(result.choices[0]?.message?.content || "{}");
-                }
+                const client = await getClient();
+                const result = await client.chat.completions.create({
+                    model: agentModel,
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 16384
+                });
+                res = extractJson(result.choices[0]?.message?.content || "{}");
                 return res;
             },
             (result) => result && !!result.content,

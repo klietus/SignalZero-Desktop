@@ -703,6 +703,27 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
+      name: 'create_domain',
+      description: 'Create a new symbolic domain (ontological container) for organizing symbols. Use when no existing domain fits the concept. If invariants are omitted, they will be inferred automatically.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Unique domain identifier (e.g., "my_domain").' },
+          name: { type: 'string', description: 'Human-readable domain name.' },
+          description: { type: 'string', description: 'Domain purpose and scope.' },
+          invariants: { 
+            type: 'array', 
+            items: { type: 'string' },
+            description: 'Optional domain-specific rules (e.g., "non-coercion", "auditability"). If omitted, will be inferred.'
+          }
+        },
+        required: ['id', 'name', 'description']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
       name: 'web_fetch',
       description: 'Fetch content from a URL and extract structured metadata (actors, quotes, summary, timeline).',
       parameters: {
@@ -748,7 +769,7 @@ export const STATIC_PRIMARY_TOOLS: ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
-      name: 'shell_command',
+      name: 'run_command',
       description: 'Execute a bash command on the host system. High privilege.',
       parameters: {
         type: 'object',
@@ -832,6 +853,43 @@ export const createToolExecutor = (contextSessionId?: string) => {
         const domains = await domainService.listDomains();
         loggerService.catInfo(LogCategory.TOOL, `list_domains: Returning ${domains.length} domains.`, { domains });
         return { domains };
+      }
+
+      case 'create_domain': {
+        // If invariants are provided explicitly, use upsert (agent knows what they want)
+        if (args.invariants && args.invariants.length > 0) {
+          const domain = await domainService.upsertDomain(args.id, {
+            name: args.name,
+            description: args.description,
+            invariants: args.invariants
+          });
+          loggerService.catInfo(LogCategory.TOOL, `create_domain: Created/updated with explicit invariants`, { id: args.id, domain });
+          return { success: true, domain };
+        }
+
+        // Otherwise, use inference to create domain with auto-inferred invariants
+        try {
+          const result = await domainInferenceService.createDomainWithInference(
+            args.id,
+            args.description,
+            args.name
+          );
+          loggerService.catInfo(LogCategory.TOOL, `create_domain: Created with inferred invariants`, { 
+            id: args.id, 
+            domain: result.domain,
+            inferred_from: result.inferred_from 
+          });
+          return { success: true, ...result };
+        } catch (err: any) {
+          // If domain exists or inference fails, fall back to basic upsert with empty invariants
+          loggerService.catInfo(LogCategory.TOOL, `create_domain: Falling back to basic create`, { id: args.id, error: err.message });
+          const domain = await domainService.upsertDomain(args.id, {
+            name: args.name,
+            description: args.description,
+            invariants: []
+          });
+          return { success: true, domain, note: 'Created without inferred invariants' };
+        }
       }
 
       // --- DISABLED: replaced by adaptive_search ---
