@@ -363,52 +363,6 @@ const _streamAssistantResponseInternal = async function* (
     max_tokens: 4096
   };
 
-  // DEBUG: Log request to file for Gemini debugging
-  try {
-    const fs = await import('fs');
-    const path = await import('path');
-    const logDir = '/tmp/gemini_debug';
-    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const logFile = path.join(logDir, `gemini_request_${timestamp}.json`);
-
-
-
-    const payload = {
-      timestamp: new Date().toISOString(),
-      model,
-      messages: messages.map(m => ({
-        role: m.role,
-        content: typeof m.content === 'string' ? m.content : (m.content ?? ''),  // Use empty string instead of [] for consistency
-        tool_calls: settings.provider === 'gemini' 
-          ? (m as any).tool_calls?.map(tc => ({ 
-              id: tc.id, 
-              type: tc.type, 
-              function: { name: tc.function?.name, arguments: tc.function?.arguments },
-              extra_content: {
-                google: {
-                  thought_signature: (tc as any).thought_signature
-                }
-              }
-            }))
-          : (m as any).tool_calls?.map(tc => ({ 
-              id: tc.id, 
-              type: tc.type, 
-              function: { name: tc.function?.name, arguments: tc.function?.arguments }
-            })),
-        tool_call_id: (m as any).tool_call_id,
-        name: (m as any).name
-      }))
-    };
-    
-    fs.writeFileSync(logFile, JSON.stringify({
-      ...payload,
-      extra_content: requestParams.extra_content
-    }, null, 2));
-    loggerService.catInfo(LogCategory.INFERENCE, `GEMINI DEBUG: Request logged`, { file: logFile });
-  } catch (err) { /* ignore */ }
-
   // Use OpenAI SDK for all providers (including Gemini via OpenAI-compatible endpoint)
   const client = await getClient();
   
@@ -456,35 +410,6 @@ const _streamAssistantResponseInternal = async function* (
       yield { text: textChunk };
     }
     if (delta.tool_calls && delta.tool_calls.length > 0) {
-      // DEBUG: Log tool call deltas to see what we're receiving from API
-      try {
-        const fs = await import('fs');
-        const path = await import('path');
-        const logDir = '/tmp/gemini_debug';
-        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-        
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const logFile = path.join(logDir, `gemini_toolcall_delta_${timestamp}.json`);
-        
-        fs.writeFileSync(logFile, JSON.stringify({
-          received_at: new Date().toISOString(),
-          tool_calls: delta.tool_calls.map((tc: any) => ({
-            id: tc.id,
-            index: tc.index,
-            function: tc.function,
-            thought_signature: tc.thought_signature,
-            thoughtSignature: (tc as any).thoughtSignature,
-            extra_content: tc.extra_content
-          }))
-        }, null, 2));
-        
-        loggerService.catInfo(LogCategory.INFERENCE, `GEMINI DEBUG: Tool call delta logged`, { 
-          file: logFile,
-          count: delta.tool_calls.length,
-          has_extra_content: delta.tool_calls.some((tc: any) => tc.extra_content)
-        });
-      } catch (err) { /* ignore */ }
-      
       mergeToolCallDelta(collectedToolCalls, delta.tool_calls as any);
     }
   }
