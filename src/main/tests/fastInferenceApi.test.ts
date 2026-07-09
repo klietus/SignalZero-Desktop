@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { callFastInference } from '../services/inferenceService.js';
 import { settingsService } from '../services/settingsService.js';
-import { urgentLlamaService, llamaService, LlamaPriority } from '../services/llamaService.js';
+import OpenAI from 'openai';
 
 // Mock OpenAI
 const mockOpenAICreate = vi.fn();
@@ -23,48 +23,16 @@ vi.mock('../services/settingsService.js', () => ({
   }
 }));
 
-vi.mock('../services/llamaService.js', () => ({
-  urgentLlamaService: {
-    completion: vi.fn()
-  },
-  llamaService: {
-    completion: vi.fn()
-  },
-  LlamaPriority: {
-    LOW: 0,
-    MEDIUM: 5,
-    HIGH: 10,
-    URGENT: 20
-  }
-}));
-
 describe('callFastInference', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should use llama sidecar when priority is LOW', async () => {
+  it('should use API when configured with fastInferenceModel', async () => {
     vi.mocked(settingsService.getInferenceSettings).mockResolvedValue({
       provider: 'openai',
       apiKey: 'test-key',
-      agentModel: 'test-agent-model',
-      model: 'test-model',
-      endpoint: 'test-endpoint'
-    } as any);
-
-    vi.mocked(llamaService.completion).mockResolvedValue({ content: 'llama response' } as any);
-
-    const result = await callFastInference([{ role: 'user', content: 'hello' }], 100, undefined, LlamaPriority.LOW);
-
-    expect(result).toBe('llama response');
-    expect(llamaService.completion).toHaveBeenCalled();
-    expect(mockOpenAICreate).not.toHaveBeenCalled();
-  });
-
-  it('should use API when priority is HIGH and API is configured', async () => {
-    vi.mocked(settingsService.getInferenceSettings).mockResolvedValue({
-      provider: 'openai',
-      apiKey: 'test-key',
+      fastInferenceModel: 'fast-model',
       agentModel: 'test-agent-model',
       model: 'test-model',
       endpoint: 'test-endpoint'
@@ -74,38 +42,68 @@ describe('callFastInference', () => {
       choices: [{ message: { content: 'api response' } }]
     });
 
-    const result = await callFastInference([{ role: 'user', content: 'hello' }], 100, undefined, LlamaPriority.HIGH);
+    const result = await callFastInference([{ role: 'user', content: 'hello' }], 100);
 
     expect(result).toBe('api response');
     expect(mockOpenAICreate).toHaveBeenCalledWith(expect.objectContaining({
-      model: 'test-agent-model'
+      model: 'fast-model'
     }));
-    expect(urgentLlamaService.completion).not.toHaveBeenCalled();
   });
 
-  it('should fallback to llama sidecar if API fails', async () => {
+  it('should use agentModel when fastInferenceModel is not configured', async () => {
     vi.mocked(settingsService.getInferenceSettings).mockResolvedValue({
       provider: 'openai',
       apiKey: 'test-key',
+      agentModel: 'agent-model',
+      model: 'test-model',
+      endpoint: 'test-endpoint'
+    } as any);
+
+    mockOpenAICreate.mockResolvedValue({
+      choices: [{ message: { content: 'api response' } }]
+    });
+
+    const result = await callFastInference([{ role: 'user', content: 'hello' }], 100);
+
+    expect(result).toBe('api response');
+    expect(mockOpenAICreate).toHaveBeenCalledWith(expect.objectContaining({
+      model: 'agent-model'
+    }));
+  });
+
+  it('should throw error when API is not configured', async () => {
+    vi.mocked(settingsService.getInferenceSettings).mockResolvedValue({
+      provider: 'local',
+      apiKey: '',
+      model: 'test-model',
+      endpoint: ''
+    } as any);
+
+    await expect(callFastInference([{ role: 'user', content: 'hello' }], 100))
+      .rejects.toThrow('Fast inference requires a configured API endpoint');
+  });
+
+  it('should throw error when API call fails', async () => {
+    vi.mocked(settingsService.getInferenceSettings).mockResolvedValue({
+      provider: 'openai',
+      apiKey: 'test-key',
+      fastInferenceModel: 'fast-model',
       agentModel: 'test-agent-model',
       model: 'test-model',
       endpoint: 'test-endpoint'
     } as any);
 
     mockOpenAICreate.mockRejectedValue(new Error('API Error'));
-    vi.mocked(urgentLlamaService.completion).mockResolvedValue({ content: 'fallback response' } as any);
 
-    const result = await callFastInference([{ role: 'user', content: 'hello' }], 100, undefined, LlamaPriority.HIGH);
-
-    expect(result).toBe('fallback response');
-    expect(urgentLlamaService.completion).toHaveBeenCalled();
+    await expect(callFastInference([{ role: 'user', content: 'hello' }], 100))
+      .rejects.toThrow('Fast inference API error');
   });
 
-  it('should use custom endpoint when provider is not openai/kimi2', async () => {
+  it('should use custom endpoint when provider is not openai/kimi2/gemini', async () => {
     vi.mocked(settingsService.getInferenceSettings).mockResolvedValue({
       provider: 'custom',
       apiKey: 'test-key',
-      agentModel: 'local-model',
+      fastInferenceModel: 'local-model',
       model: 'test-model',
       endpoint: 'http://localhost:1234/v1'
     } as any);
@@ -114,7 +112,7 @@ describe('callFastInference', () => {
       choices: [{ message: { content: 'custom api response' } }]
     });
 
-    const result = await callFastInference([{ role: 'user', content: 'hello' }], 100, undefined, LlamaPriority.HIGH);
+    const result = await callFastInference([{ role: 'user', content: 'hello' }], 100);
 
     expect(result).toBe('custom api response');
     expect(mockOpenAICreate).toHaveBeenCalled();

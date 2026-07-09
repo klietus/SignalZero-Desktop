@@ -21,7 +21,7 @@ import { eventBusService } from './eventBusService.js';
 import { KernelEventType } from '../types.js';
 import { webSearchService } from './webSearchService.js';
 import { realtimeService } from './realtime/realtimeService.js';
-import { llamaService, urgentLlamaService, LlamaPriority } from './llamaService.js';
+import { llamaService } from './llamaService.js';
 
 // --- Unified Finish Reason ---
 
@@ -67,8 +67,7 @@ let _isCancelled = false;
 export const callFastInference = async (
   messages: { role: string, content: string }[],
   maxTokens: number = 4096,
-  _attachments?: any[],
-  priority: LlamaPriority = LlamaPriority.LOW
+  _attachments?: any[]
 ): Promise<string> => {
   const startTime = performance.now();
   const requestId = randomUUID();
@@ -78,58 +77,33 @@ export const callFastInference = async (
   try {
     // Inject "No Thinking" constraint into the first system message if it exists, otherwise add one.
     const augmentedMessages = [...messages];
-    const systemIdx = augmentedMessages.findIndex(m => m.role === 'system');
-    const noThinkingDirective = "CRITICAL: Output ONLY the final result. Do NOT include any reasoning, thinking, or <think> blocks.";
-
-    if (systemIdx !== -1) {
-      augmentedMessages[systemIdx].content = `${noThinkingDirective}\n\n${augmentedMessages[systemIdx].content}`;
-    } else {
-      augmentedMessages.unshift({ role: 'system', content: noThinkingDirective });
+    const settings = await settingsService.getInferenceSettings();
+    
+    // Validate that a proper API is configured for fast inference
+    if (settings.provider === 'local' && (!settings.endpoint || settings.endpoint.trim() === '')) {
+      throw new Error('Fast inference requires a configured API endpoint with provider set to "local" and a valid endpoint URL');
     }
 
-    // Qwen/ChatML template
-    let prompt = "";
-    for (const m of augmentedMessages) {
-      prompt += `<|im_start|>${m.role}\n${m.content}<|im_end|>\n`;
-    }
-    prompt += `<|im_start|>assistant\n`;
+    // Use fastInferenceModel if configured, otherwise fall back to agentModel or model
+    const fastModel = settings.fastInferenceModel || settings.agentModel || settings.model;
 
     let responseText = "";
-    const settings = await settingsService.getInferenceSettings();
-    const isApiConfigured = settings.apiKey && settings.provider !== 'local';
-
-    if (priority >= LlamaPriority.HIGH && isApiConfigured) {
-      try {
-        const client = await getClient();
-        const response = await client.chat.completions.create({
-          model: settings.agentModel,
-          messages: augmentedMessages as any,
-          max_tokens: maxTokens,
-          stream: false
-        });
-        responseText = stripThoughts(response.choices[0].message.content || "").trim();
-        
-        if (responseText) {
-          loggerService.catInfo(LogCategory.INFERENCE, "Fast inference completed via API", { provider: settings.provider, model: settings.agentModel, requestId });
-        }
-      } catch (apiError: any) {
-        loggerService.catError(LogCategory.INFERENCE, "Fast inference API failed, falling back to llama sidecar", { error: apiError.message, requestId });
-      }
-    }
-
-    if (!responseText) {
-      // Route to appropriate sidecar based on priority
-      const service = (priority >= LlamaPriority.HIGH) ? urgentLlamaService : llamaService;
-
-      const result = await service.completion(prompt, {
-        maxTokens,
-        priority,
-        stop: ["<|im_end|>", "<|im_start|>", "assistant:", "user:", "system:"]
+    try {
+      const client = await getClient();
+      const response = await client.chat.completions.create({
+        model: fastModel,
+        messages: augmentedMessages as any,
+        max_tokens: maxTokens,
+        stream: false
       });
-
-      // Strip thoughts if the model ignored the directive
-      const rawResponse = result.content || "";
-      responseText = stripThoughts(rawResponse).trim();
+      responseText = stripThoughts(response.choices[0].message.content || "").trim();
+      
+      if (responseText) {
+        loggerService.catInfo(LogCategory.INFERENCE, "Fast inference completed", { provider: settings.provider, model: fastModel, requestId, responseText: responseText.length });
+      }
+    } catch (apiError: any) {
+      loggerService.catError(LogCategory.INFERENCE, "Fast inference failed", { error: apiError.message, model: fastModel, provider: settings.provider, requestId });
+      throw new Error(`Fast inference API error: ${apiError.message}`);
     }
 
     const duration = performance.now() - startTime;
@@ -155,7 +129,7 @@ export const callFastInference = async (
       timestamp: new Date().toISOString()
     } as const);
 
-    loggerService.catError(LogCategory.INFERENCE, "Fast inference (llama sidecar) failed", { error: error.message, durationMs: duration });
+    loggerService.catError(LogCategory.INFERENCE, "Fast inference API failed", { error: error.message, durationMs: duration });
     throw error;
   }
 };
@@ -163,34 +137,27 @@ export const callFastInference = async (
 export const getClient = async () => {
   const { endpoint, provider, apiKey } = await settingsService.getInferenceSettings();
 
-  let effectiveEndpoint = endpoint;
-  if (provider === 'openai') effectiveEndpoint = 'https://api.openai.com/v1';
-  if (provider === 'kimi2') effectiveEndpoint = 'https://api.moonshot.ai/v1';
-
+  let effectiveBaseURL = endpoint;
+  
   if (provider === 'openai') {
-    return new OpenAI({
-      baseURL: 'https://api.openai.com/v1',
-      apiKey: apiKey,
-    });
+    effectiveBaseURL = 'https://api.openai.com/v1';
+    return new OpenAI({ baseURL: effectiveBaseURL, apiKey });
   }
 
   if (provider === 'kimi2') {
-    return new OpenAI({
-      baseURL: 'https://api.moonshot.ai/v1',
-      apiKey: apiKey ? apiKey.trim() : apiKey,
-    });
+    effectiveBaseURL = 'https://api.moonshot.ai/v1';
+    return new OpenAI({ baseURL: effectiveBaseURL, apiKey: apiKey?.trim() });
   }
 
   if (provider === 'gemini') {
-    return new OpenAI({
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-      apiKey: apiKey || "",
-    });
+    effectiveBaseURL = 'https://generativelanguage.googleapis.com/v1beta/openai/';
+    return new OpenAI({ baseURL: effectiveBaseURL, apiKey: apiKey || "" });
   }
 
+  // local or any custom provider - use configured endpoint
   return new OpenAI({
-    baseURL: effectiveEndpoint,
-    apiKey: apiKey || "lm-studio",
+    baseURL: effectiveBaseURL || 'http://localhost:1234/v1',
+    apiKey: apiKey || "dummy-key",
   });
 };
 
@@ -327,16 +294,50 @@ export const streamAssistantResponse = async function* (
   toolCalls?: ChatCompletionMessageToolCall[];
   assistantMessage?: ChatCompletionMessageParam;
 }> {
+  const startTime = performance.now();
+  let tokenCount = 0;
+  let lastTokenTime = startTime;
+  
   try {
     const normalized = normalizeMessages(messages);
     const tools = activeTools || await getPrimaryTools();
+    
     for await (const chunk of _streamAssistantResponseInternal(normalized, model, tools)) {
       yield chunk;
+      
+      if (chunk.text || chunk.reasoning) {
+        tokenCount++;
+        const now = performance.now();
+        const timeSinceLastToken = now - lastTokenTime;
+        
+        if (timeSinceLastToken > 1000) {
+          loggerService.catWarn(LogCategory.INFERENCE, "Slow token detected", { 
+            timeSinceLastTokenMs: Math.round(timeSinceLastToken),
+            cumulativeTokens: tokenCount,
+            model
+          });
+        }
+        
+        lastTokenTime = now;
+      }
     }
+    
+    const duration = performance.now() - startTime;
+    const tokensPerSecond = tokenCount > 0 ? (tokenCount / duration) * 1000 : 0;
+    
+    loggerService.catInfo(LogCategory.INFERENCE, "Streaming inference completed", { 
+      model,
+      tokenCount,
+      durationMs: Math.round(duration),
+      tokensPerSecond: parseFloat(tokensPerSecond.toFixed(2))
+    });
   } catch (error: any) {
+    const duration = performance.now() - startTime;
     loggerService.catError(LogCategory.INFERENCE, "AI Provider Error (Stream)", {
       model,
-      error: error.message || String(error)
+      error: error.message || String(error),
+      durationMs: Math.round(duration),
+      tokensProduced: tokenCount
     });
     throw error;
   }
@@ -353,14 +354,17 @@ const _streamAssistantResponseInternal = async function* (
   assistantMessage?: ChatCompletionMessageParam;
 }> {
   const settings = await settingsService.getInferenceSettings();
-  
+  const streamStart = performance.now();
+  let chunkCount = 0;
+  let firstTokenTime: number | null = null;
+  let lastChunkTime = streamStart;
+
   // Build request parameters
   const requestParams: any = {
     model,
     messages,
     tools: activeTools,
-    stream: true,
-    max_tokens: 4096
+    stream: true
   };
 
   // Use OpenAI SDK for all providers (including Gemini via OpenAI-compatible endpoint)
@@ -391,6 +395,18 @@ const _streamAssistantResponseInternal = async function* (
   let finishReason: string | null = null;
 
   for await (const part of stream) {
+    chunkCount++;
+    const now = performance.now();
+    
+    if (!firstTokenTime && part.choices?.[0]?.delta) {
+      firstTokenTime = now - streamStart;
+      loggerService.catInfo(LogCategory.INFERENCE, "First token received", { 
+        timeToFirstTokenMs: Math.round(firstTokenTime),
+        model,
+        provider: settings.provider
+      });
+    }
+
     const delta = part.choices?.[0]?.delta;
     finishReason = part.choices?.[0]?.finish_reason ?? null;
     if (!delta) continue;
@@ -399,20 +415,33 @@ const _streamAssistantResponseInternal = async function* (
     if ((delta as any).reasoning_content) {
       const reasoning = (delta as any).reasoning_content;
       reasoningAccumulator += reasoning;
-      loggerService.catDebug(LogCategory.INFERENCE, "OpenAI stream: reasoning delta", { length: reasoning.length, preview: reasoning.slice(0, 200), deltaKeys: Object.keys(delta) });
       yield { reasoning };
     }
 
     const textChunk = extractTextDelta(delta);
     if (textChunk) {
       textAccumulator += textChunk;
-      loggerService.catDebug(LogCategory.INFERENCE, "OpenAI stream: text delta", { length: textChunk.length, preview: textChunk.slice(0, 80), deltaKeys: Object.keys(delta) });
       yield { text: textChunk };
     }
     if (delta.tool_calls && delta.tool_calls.length > 0) {
       mergeToolCallDelta(collectedToolCalls, delta.tool_calls as any);
     }
+    
+    lastChunkTime = now;
   }
+
+  const totalDuration = performance.now() - streamStart;
+  const interTokenLatency = chunkCount > 1 ? (totalDuration - (firstTokenTime || 0)) / (chunkCount - 1) : 0;
+
+  loggerService.catInfo(LogCategory.INFERENCE, "Stream completed with end token detection", {
+    model,
+    provider: settings.provider,
+    finishReason,
+    chunkCount,
+    firstTokenTimeMs: Math.round(firstTokenTime || totalDuration),
+    interTokenLatencyMs: parseFloat(interTokenLatency.toFixed(2)),
+    totalDurationMs: Math.round(totalDuration)
+  });
 
   const completedToolCalls = Array.from(collectedToolCalls.values());
   if (completedToolCalls.length > 0) yield { toolCalls: completedToolCalls };
@@ -489,7 +518,6 @@ export async function* sendMessageAndHandleTools(
   userMessageId?: string,
   anticipatedWebResults?: any[],
   anticipatedWebBrief?: string,
-  _priority: number = 1, // Default to High (User Chat)
   cleanMessage?: string,
   sceneAttachments?: any[],
   metadata?: Record<string, any>
@@ -895,7 +923,7 @@ export async function* sendMessageAndHandleTools(
                 const historyText = history.filter(m => m.role !== 'system').map(m => `${m.role.toUpperCase()}: ${stripThoughts(m.content || "").slice(0, 200)}`).join('\n');
                 const namingPrompt = `Based on the following start of a conversation, generate a very concise (2-4 words) natural language title for this chat. Output ONLY the title text.\n\n${historyText}\n\nTITLE:`;
 
-                void callFastInference([{ role: "user", content: namingPrompt }], 1024, undefined, LlamaPriority.URGENT).then(async (newName) => {
+                void callFastInference([{ role: "user", content: namingPrompt }], 2048, undefined).then(async (newName) => {
                   if (newName) {
                     const cleanName = newName.replace(/^["']|["']$/g, '').slice(0, 50);
                     loggerService.catInfo(LogCategory.INFERENCE, "Session renamed", { contextSessionId, oldName: session.name, newName: cleanName });
@@ -1081,8 +1109,7 @@ export const summarizeHistory = async (history: ContextMessage[], currentSummary
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const summary = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.URGENT
-      );
+      const summary = await callFastInference([{ role: "user", content: prompt }], 8192);
       if (summary && summary.trim()) return summary.trim();
     } catch (error) {
       if (attempt === 2) return currentSummary || "";
@@ -1108,7 +1135,7 @@ export const synthesizeWebResults = async (
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const brief = await callFastInference([{ role: "user", content: prompt }], 8192, undefined, LlamaPriority.URGENT);
+      const brief = await callFastInference([{ role: "user", content: prompt }], 8192, undefined);
       if (brief && brief.trim()) return brief.trim();
     } catch (error) {
       if (attempt === 2) return "";
@@ -1184,7 +1211,7 @@ export const primeSymbolicContext = async (
 
     let fastResponse: any = {};
     try {
-      const fastText = await callFastInference([{ role: "user", content: prompt }], 512, undefined, LlamaPriority.URGENT);
+      const fastText = await callFastInference([{ role: "user", content: prompt }], 512, undefined);
       fastResponse = extractJson(fastText) || {};
     } catch (jsonError: any) {
       loggerService.catWarn(LogCategory.INFERENCE, "Fast model priming failed, using defaults", { error: jsonError.message });
@@ -1345,7 +1372,7 @@ export const processMessageAsync = async (
     await symbolCacheService.incrementTurns(contextSessionId);
     linkDecayService.runDecayCycle();
 
-    const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, 1, message, sceneAttachments, metadata);
+    const stream = sendMessageAndHandleTools(chat, augmentedMessage, toolExecutor, messageTraceNeeded, finalSystemInstruction, contextSessionId, messageId, webResults, webBrief, message, sceneAttachments, metadata);
 
     // Clear any stale cancellation flag before starting new inference
     _isCancelled = false;
